@@ -105,109 +105,106 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Management - Community Health Tracker</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/admin-styles.css">
+    <style>
+        * { font-family: 'Poppins', sans-serif !important; }
+        .stat-card { position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+        .stat-card-blue::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .stat-card-green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+        .stat-card-gray::before { background: linear-gradient(90deg, #6b7280, #9ca3af); }
+    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     
-    <div class="container mx-auto px-4 py-6">
-        <!-- Dashboard Header -->
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">
-                Staff Management
-            </h1>
-            <a href="/community-health-tracker/admin/dashboard.php" class="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition-colors flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+    <div class="container mx-auto px-4 py-8">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-title">
+                <div class="page-header-icon bg-blue-100 text-blue-600">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div>
+                    <h1>Staff Management</h1>
+                    <p>View and manage all staff members</p>
+                </div>
+            </div>
+            <a href="/community-health-tracker/admin/dashboard.php" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
         
         <?php if (isset($_SESSION['error_message'])): ?>
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
                 <?= $_SESSION['error_message'] ?>
                 <?php unset($_SESSION['error_message']); ?>
             </div>
         <?php endif; ?>
         
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Total Staff Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                        <i class="fas fa-user-shield text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Total Staff</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['total_staff'] ?></p>
-                    </div>
+        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-card stat-card-blue">
+                <div class="stat-card-icon bg-blue-100">
+                    <i class="fas fa-user-shield text-blue-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-blue-600"><?= $stats['total_staff'] ?></div>
+                <div class="stat-card-label">Total Staff</div>
             </div>
             
-            <!-- Active Staff Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                        <i class="fas fa-user-check text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Active Staff</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['active_staff'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-green">
+                <div class="stat-card-icon bg-green-100">
+                    <i class="fas fa-user-check text-green-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-green-600"><?= $stats['active_staff'] ?></div>
+                <div class="stat-card-label">Active Staff</div>
             </div>
             
-            <!-- Inactive Staff Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-gray-100 text-gray-600 mr-4">
-                        <i class="fas fa-user-times text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Inactive Staff</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['inactive_staff'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-gray">
+                <div class="stat-card-icon bg-gray-100">
+                    <i class="fas fa-user-times text-gray-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-gray-600"><?= $stats['inactive_staff'] ?></div>
+                <div class="stat-card-label">Inactive Staff</div>
             </div>
         </div>
         
         <!-- Search and Filter Section -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="main-container p-6 mb-6">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <h2 class="text-lg font-semibold text-gray-800">Filter Staff</h2>
                 
-                <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex flex-col sm:flex-row gap-4 flex-wrap">
                     <!-- Search Form -->
                     <form method="GET" class="flex">
                         <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" 
                                placeholder="Search staff..." 
-                               class="px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full">
+                               class="form-input rounded-r-none" style="border-radius: 8px 0 0 8px;">
                         <input type="hidden" name="filter" value="<?= $filter ?>">
-                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 transition-colors">
+                        <button type="submit" class="btn btn-primary-solid" style="border-radius: 0 8px 8px 0;">
                             <i class="fas fa-search"></i>
                         </button>
                     </form>
                     
                     <!-- Status Filter -->
-                    <div class="flex space-x-2">
+                    <div class="tabs-container">
                         <a href="?filter=all<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            All Staff
-                        </a>
+                           class="tab-btn <?= $filter === 'all' ? 'active' : '' ?>">All</a>
                         <a href="?filter=active<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'active' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Active
-                        </a>
+                           class="tab-btn <?= $filter === 'active' ? 'active' : '' ?>">Active</a>
                         <a href="?filter=inactive<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'inactive' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Inactive
-                        </a>
+                           class="tab-btn <?= $filter === 'inactive' ? 'active' : '' ?>">Inactive</a>
                     </div>
                 </div>
             </div>
         </div>
         
         <!-- Staff List -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="main-container p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-lg font-semibold text-gray-800">
                     <?php 
@@ -220,39 +217,39 @@ try {
                     }
                     ?>
                 </h2>
-                <div class="text-gray-600">
+                <div class="badge badge-blue">
                     Showing <?= count($staff) ?> of <?= $total_records ?> staff member(s)
                 </div>
             </div>
             
             <?php if (empty($staff)): ?>
-                <div class="text-center py-8">
-                    <i class="fas fa-user-shield text-gray-300 text-4xl mb-3"></i>
-                    <h3 class="text-lg font-semibold text-gray-500 mb-2">No staff members found</h3>
-                    <p class="text-gray-500">There are no staff members matching your current filter.</p>
+                <div class="empty-state">
+                    <i class="fas fa-user-shield"></i>
+                    <h3>No staff members found</h3>
+                    <p>There are no staff members matching your current filter.</p>
                 </div>
             <?php else: ?>
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="data-table">
                         <thead>
-                            <tr class="border-b border-gray-200">
-                                <th class="text-left py-3 px-4 text-gray-600">Staff Information</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Position & Specialization</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Status</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Created</th>
+                            <tr>
+                                <th>Staff Information</th>
+                                <th>Position & Specialization</th>
+                                <th>Status</th>
+                                <th>Created</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($staff as $staff_member): ?>
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="py-3 px-4">
+                                <tr>
+                                    <td>
                                         <div class="font-medium text-gray-800"><?= htmlspecialchars($staff_member['full_name']) ?></div>
                                         <div class="text-sm text-gray-500">@<?= htmlspecialchars($staff_member['username']) ?></div>
                                         <div class="text-xs text-gray-400 mt-1">
                                             Created by: <?= !empty($staff_member['created_by_username']) ? htmlspecialchars($staff_member['created_by_username']) : 'System' ?>
                                         </div>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <div class="font-medium text-gray-800">
                                             <?= !empty($staff_member['position']) ? htmlspecialchars($staff_member['position']) : 'No position' ?>
                                         </div>
@@ -269,13 +266,13 @@ try {
                                             </div>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <?php if ($staff_member['status'] === 'active' && $staff_member['is_active'] == 1): ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="badge badge-green">
                                                 <i class="fas fa-check-circle mr-1"></i> Active
                                             </span>
                                         <?php else: ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <span class="badge badge-gray">
                                                 <i class="fas fa-times-circle mr-1"></i> Inactive
                                             </span>
                                         <?php endif; ?>
@@ -288,7 +285,7 @@ try {
                                             <?php endif; ?>
                                         </div>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <div class="text-sm text-gray-700">
                                             <?= date('M j, Y', strtotime($staff_member['created_at'])) ?>
                                         </div>

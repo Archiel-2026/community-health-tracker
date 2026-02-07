@@ -3,6 +3,7 @@ ob_start();
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 redirectIfNotLoggedIn();
 if (!isStaff()) {
@@ -183,31 +184,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_health_info'])) 
             $pdo->beginTransaction();
 
             // Update main patient table with ALL personal information
-            $updatePatientQuery = "UPDATE sitio1_patients SET 
-                full_name = ?, 
-                date_of_birth = ?, 
-                age = ?, 
-                gender = ?, 
-                address = ?, 
-                sitio = ?, 
-                civil_status = ?, 
-                occupation = ?, 
-                contact = ?, 
-                last_checkup = ?,
-                phic_no = ?, 
-                bhw_assigned = ?, 
-                family_no = ?, 
-                fourps_member = ?,
-                updated_at = NOW()
-                WHERE id = ? AND added_by = ?";
-            
-            $stmt = $pdo->prepare($updatePatientQuery);
-            $stmt->execute([
-                $full_name, $date_of_birth, $age, $gender, $address, 
-                $sitio, $civil_status, $occupation, $contact, $last_checkup,
-                $phic_no, $bhw_assigned, $family_no, $fourps_member,
-                $patient_id, $_SESSION['user']['id']
-            ]);
+            if (staff_can_view_all()) {
+                $updatePatientQuery = "UPDATE sitio1_patients SET 
+                    full_name = ?, 
+                    date_of_birth = ?, 
+                    age = ?, 
+                    gender = ?, 
+                    address = ?, 
+                    sitio = ?, 
+                    civil_status = ?, 
+                    occupation = ?, 
+                    contact = ?, 
+                    last_checkup = ?,
+                    phic_no = ?, 
+                    bhw_assigned = ?, 
+                    family_no = ?, 
+                    fourps_member = ?,
+                    updated_at = NOW()
+                    WHERE id = ?";
+
+                $stmt = $pdo->prepare($updatePatientQuery);
+                $stmt->execute([
+                    $full_name, $date_of_birth, $age, $gender, $address, 
+                    $sitio, $civil_status, $occupation, $contact, $last_checkup,
+                    $phic_no, $bhw_assigned, $family_no, $fourps_member,
+                    $patient_id
+                ]);
+            } else {
+                $updatePatientQuery = "UPDATE sitio1_patients SET 
+                    full_name = ?, 
+                    date_of_birth = ?, 
+                    age = ?, 
+                    gender = ?, 
+                    address = ?, 
+                    sitio = ?, 
+                    civil_status = ?, 
+                    occupation = ?, 
+                    contact = ?, 
+                    last_checkup = ?,
+                    phic_no = ?, 
+                    bhw_assigned = ?, 
+                    family_no = ?, 
+                    fourps_member = ?,
+                    updated_at = NOW()
+                    WHERE id = ? AND added_by = ?";
+
+                $stmt = $pdo->prepare($updatePatientQuery);
+                $stmt->execute([
+                    $full_name, $date_of_birth, $age, $gender, $address, 
+                    $sitio, $civil_status, $occupation, $contact, $last_checkup,
+                    $phic_no, $bhw_assigned, $family_no, $fourps_member,
+                    $patient_id, $_SESSION['user']['id']
+                ]);
+            }
 
             // Check if medical record exists
             $stmt = $pdo->prepare("SELECT id FROM existing_info_patients WHERE patient_id = ?");
@@ -251,6 +280,233 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_health_info'])) 
     }
 }
 
+/**
+ * Function to check if a patient record already exists
+ * Checks by full name and date of birth combination
+ * 
+ * @param PDO $pdo Database connection
+ * @param string $fullName Patient's full name
+ * @param string $dateOfBirth Patient's date of birth (YYYY-MM-DD)
+ * @param int|null $staffId Current staff member's ID (for non-shared records)
+ * @param bool $isStaffViewAll Whether staff can view all records
+ * @return array|bool Returns array with existing patient data if found, false otherwise
+ */
+function checkDuplicatePatient($pdo, $fullName, $dateOfBirth, $staffId, $isStaffViewAll) {
+    try {
+        if ($isStaffViewAll) {
+            // Check all records without staff restriction
+            $stmt = $pdo->prepare("SELECT id, full_name, date_of_birth, contact FROM sitio1_patients 
+                                 WHERE LOWER(TRIM(full_name)) = LOWER(TRIM(?)) 
+                                 AND date_of_birth = ? 
+                                 AND deleted_at IS NULL
+                                 LIMIT 1");
+            $stmt->execute([$fullName, $dateOfBirth]);
+        } else {
+            // Check only records added by current staff member
+            $stmt = $pdo->prepare("SELECT id, full_name, date_of_birth, contact FROM sitio1_patients 
+                                 WHERE LOWER(TRIM(full_name)) = LOWER(TRIM(?)) 
+                                 AND date_of_birth = ? 
+                                 AND added_by = ?
+                                 AND deleted_at IS NULL
+                                 LIMIT 1");
+            $stmt->execute([$fullName, $dateOfBirth, $staffId]);
+        }
+        
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result : false;
+    } catch (PDOException $e) {
+        error_log("Duplicate check error: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Handle Child Health Record submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_child_health'])) {
+    try {
+        // Prepare child health record data
+        $childData = [
+            'family_no' => $_POST['family_no'] ?? '',
+            'ufc_no' => $_POST['ufc_no'] ?? '',
+            'fullname' => $_POST['fullname'] ?? '',
+            'sex' => $_POST['sex'] ?? '',
+            'dob' => $_POST['dob'] ?? '',
+            'birth_order' => $_POST['birth_order'] ?? null,
+            'place_of_delivery' => $_POST['place_of_delivery'] ?? null,
+            'mother' => $_POST['mother'] ?? null,
+            'mother_age' => !empty($_POST['mother_age']) ? (int)$_POST['mother_age'] : null,
+            'father_occupation' => $_POST['father_occupation'] ?? null,
+            'father' => $_POST['father'] ?? null,
+            'father_age' => !empty($_POST['father_age']) ? (int)$_POST['father_age'] : null,
+            'address' => $_POST['address'] ?? null,
+            'type_of_feeding' => $_POST['type_of_feeding'] ?? null,
+            'date_referred_newborn' => !empty($_POST['date_referred_newborn']) ? $_POST['date_referred_newborn'] : null,
+            'bf1' => !empty($_POST['bf1']) ? $_POST['bf1'] : null,
+            'bf2' => !empty($_POST['bf2']) ? $_POST['bf2'] : null,
+            'bf3' => !empty($_POST['bf3']) ? $_POST['bf3'] : null,
+            'bf4' => !empty($_POST['bf4']) ? $_POST['bf4'] : null,
+            'bf5' => !empty($_POST['bf5']) ? $_POST['bf5'] : null,
+            'child_protected_at_birth' => $_POST['child_protected_at_birth'] ?? null,
+            'date_assessed' => !empty($_POST['date_assessed']) ? $_POST['date_assessed'] : null,
+            'tt_status_mother' => $_POST['tt_status_mother'] ?? null,
+            'anemic_children_seen' => $_POST['anemic_children_seen'] ?? null,
+            'anemic_children_iron' => $_POST['anemic_children_iron'] ?? null,
+            'birthwt' => $_POST['birthwt'] ?? null,
+            'low_birthwt_seen' => $_POST['low_birthwt_seen'] ?? null,
+            'low_birthwt_iron' => $_POST['low_birthwt_iron'] ?? null,
+            'date_iron_started' => !empty($_POST['date_iron_started']) ? $_POST['date_iron_started'] : null,
+            'vit_a_1' => $_POST['vit_a_1'] ?? null,
+            'vit_a_2' => $_POST['vit_a_2'] ?? null,
+            'vit_a_3' => $_POST['vit_a_3'] ?? null,
+            'completed' => $_POST['completed'] ?? null
+        ];
+        
+        // Insert into child_health_records
+        $stmt = $pdo->prepare("INSERT INTO child_health_records 
+            (family_no, ufc_no, fullname, sex, dob, birth_order, place_of_delivery, mother, mother_age, 
+             father_occupation, father, father_age, address, type_of_feeding, date_referred_newborn,
+             bf1, bf2, bf3, bf4, bf5, child_protected_at_birth, date_assessed, tt_status_mother,
+             anemic_children_seen, anemic_children_iron, birthwt, low_birthwt_seen, low_birthwt_iron,
+             date_iron_started, vit_a_1, vit_a_2, vit_a_3, completed, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        
+        $stmt->execute(array_values($childData));
+        $childRecordId = $pdo->lastInsertId();
+        
+        // Handle immunizations
+        if (isset($_POST['immunizations']) && is_array($_POST['immunizations'])) {
+            foreach ($_POST['immunizations'] as $type => $vaccinations) {
+                $stmt = $pdo->prepare("INSERT INTO child_immunizations 
+                    (child_health_record_id, type, within_24hrs, first, second, third) 
+                    VALUES (?, ?, ?, ?, ?, ?)");
+                
+                $stmt->execute([
+                    $childRecordId,
+                    $type,
+                    isset($vaccinations['24hrs']) ? 1 : 0,
+                    isset($vaccinations['1st']) ? 1 : 0,
+                    isset($vaccinations['2nd']) ? 1 : 0,
+                    isset($vaccinations['3rd']) ? 1 : 0
+                ]);
+            }
+        }
+        
+        // Handle results
+        if (isset($_POST['results']) && is_array($_POST['results'])) {
+            foreach ($_POST['results'] as $result) {
+                $stmt = $pdo->prepare("INSERT INTO child_health_results 
+                    (child_health_record_id, result_date, age, weight, temperature, height, findings, notes) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                
+                $stmt->execute([
+                    $childRecordId,
+                    $result['date'] ?? null,
+                    $result['age'] ?? null,
+                    $result['weight'] ?? null,
+                    $result['temperature'] ?? null,
+                    $result['height'] ?? null,
+                    $result['findings'] ?? null,
+                    $result['notes'] ?? null
+                ]);
+            }
+        }
+        
+        $message = "Child Health Record saved successfully!";
+        
+    } catch (PDOException $e) {
+        $error = "Error saving Child Health Record: " . $e->getMessage();
+    }
+}
+
+// Handle Present Pregnant Record submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_present_pregnant'])) {
+    try {
+        // Prepare present pregnant record data
+        $pregnantData = [
+            'patient_id' => !empty($_POST['patient_id']) ? (int)$_POST['patient_id'] : null,
+            'birth_plan' => $_POST['birth_plan'] ?? '',
+            'nutrition_breastfeeding' => $_POST['nutrition_breastfeeding'] ?? '',
+            'family_planning' => $_POST['family_planning'] ?? '',
+            'tt_vaccination' => $_POST['tt_vaccination'] ?? '',
+            'iron_folic' => $_POST['iron_folic'] ?? '',
+            'vitamin_a' => $_POST['vitamin_a'] ?? '',
+            'prenatal_schedule' => $_POST['prenatal_schedule'] ?? '',
+            'visit_notes' => $_POST['visit_notes'] ?? null,
+            'referrals' => $_POST['referrals'] ?? null,
+            'gravidity' => !empty($_POST['gravidity']) ? (int)$_POST['gravidity'] : null,
+            'parity' => !empty($_POST['parity']) ? (int)$_POST['parity'] : null,
+            'prev_outcomes' => $_POST['prev_outcomes'] ?? null,
+            'lmp' => !empty($_POST['lmp']) ? $_POST['lmp'] : null,
+            'cycle_regularity' => $_POST['cycle_regularity'] ?? null,
+            'contraceptive_history' => $_POST['contraceptive_history'] ?? null,
+            'past_illnesses' => $_POST['past_illnesses'] ?? null,
+            'allergies' => $_POST['allergies'] ?? null,
+            'family_history' => $_POST['family_history'] ?? null,
+            'edd' => !empty($_POST['edd']) ? $_POST['edd'] : null,
+            'gestational_age' => $_POST['gestational_age'] ?? null,
+            'risk_assessment' => $_POST['risk_assessment'] ?? null,
+            'danger_signs' => $_POST['danger_signs'] ?? null,
+            'bp' => $_POST['bp'] ?? null,
+            'hr' => $_POST['hr'] ?? null,
+            'rr' => $_POST['rr'] ?? null,
+            'temperature' => $_POST['temperature'] ?? null,
+            'weight' => $_POST['weight'] ?? null,
+            'height' => $_POST['height'] ?? null,
+            'fundal_height' => $_POST['fundal_height'] ?? null,
+            'fetal_heart_tones' => $_POST['fetal_heart_tones'] ?? null,
+            'edema' => $_POST['edema'] ?? null,
+            'hemoglobin' => $_POST['hemoglobin'] ?? null,
+            'urinalysis' => $_POST['urinalysis'] ?? null,
+            'blood_typing' => $_POST['blood_typing'] ?? null,
+            'syphilis_test' => $_POST['syphilis_test'] ?? null,
+            'hiv_test' => $_POST['hiv_test'] ?? null,
+            'hepatitis_b' => $_POST['hepatitis_b'] ?? null,
+            'fbs' => $_POST['fbs'] ?? null,
+            'emergency_prep' => $_POST['emergency_prep'] ?? null
+        ];
+        
+        // Note: The current table structure only has basic fields.
+        // You may need to expand the table to include all these fields.
+        $stmt = $pdo->prepare("INSERT INTO present_pregnant_records 
+            (patient_id, birth_plan, nutrition_breastfeeding, family_planning, tt_vaccination, 
+             iron_folic, vitamin_a, prenatal_schedule, visit_notes, referrals, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        
+        $stmt->execute([
+            $pregnantData['patient_id'],
+            $pregnantData['birth_plan'],
+            $pregnantData['nutrition_breastfeeding'],
+            $pregnantData['family_planning'],
+            $pregnantData['tt_vaccination'],
+            $pregnantData['iron_folic'],
+            $pregnantData['vitamin_a'],
+            $pregnantData['prenatal_schedule'],
+            $pregnantData['visit_notes'],
+            $pregnantData['referrals']
+        ]);
+        
+        $message = "Present Pregnant Record saved successfully!";
+        
+    } catch (PDOException $e) {
+        $error = "Error saving Present Pregnant Record: " . $e->getMessage();
+    }
+}
+
+// Fetch Child Health Records for display
+try {
+    $childHealthRecords = $pdo->query("SELECT * FROM child_health_records ORDER BY created_at DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $childHealthRecords = [];
+    error_log("Error fetching child health records: " . $e->getMessage());
+}
+
+// Fetch Present Pregnant Records for display
+try {
+    $pregnantRecords = $pdo->query("SELECT * FROM present_pregnant_records ORDER BY created_at DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $pregnantRecords = [];
+    error_log("Error fetching present pregnant records: " . $e->getMessage());
+}
+
 // Handle form submission for adding new patient
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_patient'])) {
     $fullName = trim($_POST['full_name']);
@@ -284,6 +540,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_patient'])) {
     $chronicConditions = trim($_POST['chronic_conditions']);
 
     if (!empty($fullName) && !empty($dateOfBirth)) {
+        // Check if patient already exists
+        $existingPatient = checkDuplicatePatient($pdo, $fullName, $dateOfBirth, $_SESSION['user']['id'], staff_can_view_all());
+        
+        if ($existingPatient) {
+            // Patient already exists - show error
+            $error = "This patient record already exists! <br><strong>" . htmlspecialchars($existingPatient['full_name']) . "</strong> 
+                     with Date of Birth: <strong>" . date('M d, Y', strtotime($existingPatient['date_of_birth'])) . "</strong><br>
+                     Contact: " . htmlspecialchars($existingPatient['contact']) . " <br>
+                     <a href='javascript:void(0);' onclick='openViewModal(" . $existingPatient['id'] . ")' class='text-blue-600 hover:text-blue-800 font-semibold'>Click here to view this patient record</a>";
+        } else {
         try {
             // Start transaction
             $pdo->beginTransaction();
@@ -355,12 +621,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_patient'])) {
             ]);
 
             $pdo->commit();
+            
+            // Log staff activity for adding patient
+            try {
+                $staff_id = $_SESSION['user']['id'] ?? null;
+                $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
+                $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+                $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                
+                $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    staff_id INT,
+                    action_type VARCHAR(100),
+                    related_id INT,
+                    details JSON,
+                    ip_address VARCHAR(45),
+                    user_agent TEXT,
+                    created_at DATETIME
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                
+                $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'add_patient', ?, ?, ?, ?, NOW())");
+                $stmtLog->execute([$staff_id, $patientId, json_encode(['full_name' => $staff_name, 'patient_name' => $fullName, 'patient_id' => $patientId]), $ip, $ua]);
+            } catch (Exception $e) {
+                error_log('Staff activity log error (add_patient): ' . $e->getMessage());
+            }
+            
             $_SESSION['success_message'] = 'Patient record added successfully!';
             header('Location: existing_info_patients.php?tab=patients-tab');
             exit();
         } catch (PDOException $e) {
             $pdo->rollBack();
             $error = 'Error adding patient record: ' . $e->getMessage();
+        }
         }
     } else {
         $error = 'Full name and date of birth are required.';
@@ -380,9 +672,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_consultation_note
     
     if (!empty($patient_id) && !empty($note) && !empty($consultation_date) && !empty($doctor_name)) {
         try {
-            // Verify patient belongs to current staff member
-            $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
-            $stmt->execute([$patient_id, $_SESSION['user']['id']]);
+            // Verify patient belongs to current staff member or sharing is enabled
+            require_once __DIR__ . '/../includes/functions.php';
+            if (staff_can_view_all()) {
+                $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ?");
+                $stmt->execute([$patient_id]);
+            } else {
+                $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
+                $stmt->execute([$patient_id, $_SESSION['user']['id']]);
+            }
             
             if (!$stmt->fetch()) {
                 $error = "Patient not found or access denied!";
@@ -422,10 +720,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_pdf'])) {
             FROM sitio1_patients p
             LEFT JOIN existing_info_patients e ON p.id = e.patient_id
             LEFT JOIN sitio1_users u ON p.user_id = u.id
-            WHERE p.id IN ($placeholders) AND p.added_by = ? AND p.deleted_at IS NULL
+            WHERE p.id IN ($placeholders) AND p.deleted_at IS NULL
             ORDER BY p.full_name ASC";
 
-            $params = array_merge($selectedPatients, [$_SESSION['user']['id']]);
+            // Respect shared-mode: when enabled, do not restrict by added_by
+            $params = $selectedPatients;
+            if (!staff_can_view_all()) {
+                $query = "SELECT 
+                p.*,
+                e.*,
+                CASE 
+                    WHEN p.user_id IS NOT NULL THEN 'Registered Patient'
+                    ELSE 'Regular Patient'
+                END as patient_type,
+                u.email as user_email,
+                u.unique_number
+            FROM sitio1_patients p
+            LEFT JOIN existing_info_patients e ON p.id = e.patient_id
+            LEFT JOIN sitio1_users u ON p.user_id = u.id
+            WHERE p.id IN ($placeholders) AND p.added_by = ? AND p.deleted_at IS NULL
+            ORDER BY p.full_name ASC";
+                $params = array_merge($selectedPatients, [$_SESSION['user']['id']]);
+            }
+
             $stmt = $pdo->prepare($query);
             $stmt->execute($params);
             $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -465,10 +782,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_manual'])) {
             FROM sitio1_patients p
             LEFT JOIN existing_info_patients e ON p.id = e.patient_id
             LEFT JOIN sitio1_users u ON p.user_id = u.id
-            WHERE p.id IN ($placeholders) AND p.added_by = ? AND p.deleted_at IS NULL
+            WHERE p.id IN ($placeholders) AND p.deleted_at IS NULL
             ORDER BY p.full_name ASC";
 
-            $params = array_merge($selectedPatients, [$_SESSION['user']['id']]);
+            $params = $selectedPatients;
+            if (!staff_can_view_all()) {
+                $query = "SELECT 
+                p.*,
+                e.*,
+                CASE 
+                    WHEN p.user_id IS NOT NULL THEN 'Registered Patient'
+                    ELSE 'Regular Patient'
+                END as patient_type,
+                u.email as user_email,
+                u.unique_number
+            FROM sitio1_patients p
+            LEFT JOIN existing_info_patients e ON p.id = e.patient_id
+            LEFT JOIN sitio1_users u ON p.user_id = u.id
+            WHERE p.id IN ($placeholders) AND p.added_by = ? AND p.deleted_at IS NULL
+            ORDER BY p.full_name ASC";
+                $params = array_merge($selectedPatients, [$_SESSION['user']['id']]);
+            }
+
             $stmt = $pdo->prepare($query);
             $stmt->execute($params);
             $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -487,112 +822,178 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_manual'])) {
 
             echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
             echo '<head>';
-            echo '<meta charset="UTF-8">';
+            echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
+            echo '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Patient Records</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
             echo '<style>';
-            echo 'table { border-collapse: collapse; width: 100%; font-family: Calibri, Arial, sans-serif; }';
-            echo 'th { background-color: #12AF03; color: white; font-weight: bold; padding: 12px; text-align: left; border: 1px solid #ddd; }';
-            echo 'td { padding: 10px; border: 1px solid #ddd; vertical-align: top; }';
-            echo '.header-row { background-color: #2c3e50; color: white; font-size: 14pt; font-weight: bold; }';
-            echo '.info-row { background-color: #f0f9ff; }';
-            echo '.selected-count { background-color: #d1fae5; font-weight: bold; }';
+            echo '
+                body { font-family: "Calibri", "Arial", sans-serif; font-size: 11pt; }
+                table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+                th { 
+                    background-color: #4472C4; 
+                    color: white; 
+                    border: 0.5pt solid #000000; 
+                    padding: 8px; 
+                    text-align: center; 
+                    vertical-align: middle;
+                    font-weight: bold;
+                }
+                td { 
+                    border: 0.5pt solid #000000; 
+                    padding: 5px 8px; 
+                    vertical-align: middle;
+                    color: #000000;
+                }
+                .header-row { height: 30pt; }
+                .title { 
+                    font-size: 18pt; 
+                    font-weight: bold; 
+                    color: #1F4E78; 
+                    text-align: center; 
+                    border: none;
+                }
+                .subtitle { 
+                    font-size: 14pt; 
+                    color: #1F4E78; 
+                    text-align: center; 
+                    border: none;
+                }
+                .meta-label { 
+                    font-weight: bold; 
+                    background-color: #D9E1F2; 
+                    color: #000;
+                    text-align: right;
+                }
+                .meta-value {
+                    background-color: #FFFFFF;
+                    text-align: left;
+                }
+                .section-header { 
+                    background-color: #A9D08E; 
+                    color: #006100; 
+                    font-weight: bold; 
+                    text-align: left; 
+                    padding-left: 10px;
+                    font-size: 12pt;
+                }
+                .success-msg {
+                    color: #006100;
+                    background-color: #C6EFCE;
+                    font-weight: bold;
+                    text-align: center;
+                    border: 1px solid #006100;
+                }
+                .text-center { text-align: center; }
+                .text-right { text-align: right; }
+                .text-bold { font-weight: bold; }
+                .alt-row { background-color: #F2F2F2; }
+                /* Type formats */
+                .fmt-text { mso-number-format:"\@"; }
+                .fmt-date { mso-number-format:"Short Date"; }
+                .fmt-num { mso-number-format:"0"; }
+                .fmt-dec { mso-number-format:"0.0"; }
+            ';
             echo '</style>';
             echo '</head>';
             echo '<body>';
             
-            // Header
-            echo '<table border="1">';
-            echo '<tr class="header-row">';
-            echo '<td colspan="15" style="text-align: center; padding: 15px;">BARANGAY LUZ HEALTH CENTER - MANUAL PATIENT EXPORT</td>';
-            echo '</tr>';
-            echo '<tr class="info-row">';
-            echo '<td colspan="5">Export Date:</td>';
-            echo '<td colspan="5">' . date('F j, Y') . '</td>';
-            echo '<td colspan="5">Export Time:</td>';
-            echo '<td colspan="5">' . date('h:i A') . '</td>';
-            echo '</tr>';
-            echo '<tr class="info-row">';
-            echo '<td colspan="5">Generated By:</td>';
-            echo '<td colspan="5">' . $_SESSION['user']['full_name'] . '</td>';
-            echo '<td colspan="5">Total Selected:</td>';
-            echo '<td colspan="5" class="selected-count">' . count($selectedPatients) . ' patients</td>';
-            echo '</tr>';
-            echo '<tr class="selected-count">';
-            echo '<td colspan="15" style="text-align: center; padding: 10px;">';
-            echo '✅ SUCCESSFUL MANUAL EXPORT - ' . count($selectedPatients) . ' PATIENTS SELECTED';
-            echo '</td>';
-            echo '</tr>';
-            echo '<tr><td colspan="15">&nbsp;</td></tr>';
+            // Header Section
+            echo '<table>';
+            echo '<tr><td colspan="15" class="title" style="border:none;">BARANGAY LUZ HEALTH CENTER</td></tr>';
+            echo '<tr><td colspan="15" class="subtitle" style="border:none;">Patient Records Export - Manual Selection</td></tr>';
+            echo '<tr><td colspan="15" style="border:none;">&nbsp;</td></tr>';
             
-            // Main data table
+            // Meta Info
             echo '<tr>';
-            echo '<th>No.</th>';
-            echo '<th>Patient ID</th>';
-            echo '<th>Full Name</th>';
-            echo '<th>Date of Birth</th>';
-            echo '<th>Age</th>';
-            echo '<th>Gender</th>';
-            echo '<th>Sitio</th>';
-            echo '<th>Civil Status</th>';
-            echo '<th>Occupation</th>';
-            echo '<th>Contact</th>';
-            echo '<th>Blood Type</th>';
-            echo '<th>Height (cm)</th>';
-            echo '<th>Weight (kg)</th>';
-            echo '<th>Last Checkup</th>';
-            echo '<th>Patient Type</th>';
+            echo '<td colspan="2" class="meta-label">Export Date:</td>';
+            echo '<td colspan="3" class="meta-value class="fmt-date">' . date('Y-m-d') . '</td>';
+            echo '<td colspan="2" class="meta-label">Time:</td>';
+            echo '<td colspan="3" class="meta-value">' . date('h:i A') . '</td>';
+            echo '<td colspan="2" class="meta-label">Generated By:</td>';
+            echo '<td colspan="3" class="meta-value">' . htmlspecialchars($_SESSION['user']['full_name']) . '</td>';
             echo '</tr>';
+
+            echo '<tr>';
+            echo '<td colspan="2" class="meta-label">Total Records:</td>';
+            echo '<td colspan="3" class="meta-value">' . count($patients) . '</td>';
+            echo '<td colspan="10" class="success-msg">Manual Selection Export Successful</td>';
+            echo '</tr>';
+            echo '<tr><td colspan="15" style="border:none;">&nbsp;</td></tr>';
+            echo '</table>';
+            
+            // Main Data Table
+            echo '<table>';
+            echo '<thead>';
+            echo '<tr style="height: 25pt;">';
+            echo '<th style="width: 50px;">No.</th>';
+            echo '<th style="width: 80px;">ID</th>';
+            echo '<th style="width: 200px;">Full Name</th>';
+            echo '<th style="width: 100px;">Birth Date</th>';
+            echo '<th style="width: 60px;">Age</th>';
+            echo '<th style="width: 80px;">Gender</th>';
+            echo '<th style="width: 120px;">Sitio</th>';
+            echo '<th style="width: 100px;">Civil Status</th>';
+            echo '<th style="width: 120px;">Occupation</th>';
+            echo '<th style="width: 120px;">Contact</th>';
+            echo '<th style="width: 80px;">Blood Type</th>';
+            echo '<th style="width: 80px;">Height (cm)</th>';
+            echo '<th style="width: 80px;">Weight (kg)</th>';
+            echo '<th style="width: 80px;">BMI</th>';
+            echo '<th style="width: 120px;">Last Checkup</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
             
             $counter = 1;
             foreach ($patients as $patient) {
-                echo '<tr>';
-                echo '<td>' . $counter++ . '</td>';
-                echo '<td>' . ($patient['id'] ?? '') . '</td>';
-                echo '<td>' . htmlspecialchars($patient['full_name'] ?? '') . '</td>';
-                echo '<td>' . (!empty($patient['date_of_birth']) ? date('Y-m-d', strtotime($patient['date_of_birth'])) : '') . '</td>';
-                echo '<td>' . ($patient['age'] ?? '') . '</td>';
-                echo '<td>' . htmlspecialchars($patient['gender'] ?? '') . '</td>';
-                echo '<td>' . htmlspecialchars($patient['sitio'] ?? '') . '</td>';
-                echo '<td>' . htmlspecialchars($patient['civil_status'] ?? '') . '</td>';
+                $rowStyle = ($counter % 2 == 0) ? ' class="alt-row"' : '';
+                
+                // BMI logic
+                $height = floatval($patient['height'] ?? 0);
+                $weight = floatval($patient['weight'] ?? 0);
+                $bmi = ($height > 0) ? number_format($weight / (($height/100) ** 2), 1) : '';
+                
+                // Date logic
+                $dob = !empty($patient['date_of_birth']) ? date('Y-m-d', strtotime($patient['date_of_birth'])) : '';
+                $lastCheckup = !empty($patient['last_checkup']) ? date('Y-m-d', strtotime($patient['last_checkup'])) : '';
+
+                echo "<tr{$rowStyle}>";
+                echo '<td class="text-center">' . $counter++ . '</td>';
+                echo '<td class="fmt-text text-center">' . ($patient['id'] ?? '') . '</td>';
+                echo '<td class="text-bold">' . htmlspecialchars($patient['full_name'] ?? '') . '</td>';
+                echo '<td class="fmt-date text-center">' . $dob . '</td>';
+                echo '<td class="text-center">' . ($patient['age'] ?? '') . '</td>';
+                echo '<td class="text-center">' . htmlspecialchars($patient['gender'] ?? '') . '</td>';
+                echo '<td class="text-center">' . htmlspecialchars($patient['sitio'] ?? '') . '</td>';
+                echo '<td class="text-center">' . htmlspecialchars($patient['civil_status'] ?? '') . '</td>';
                 echo '<td>' . htmlspecialchars($patient['occupation'] ?? '') . '</td>';
-                echo '<td>' . htmlspecialchars($patient['contact'] ?? '') . '</td>';
-                echo '<td style="font-weight: bold; color: #e74c3c;">' . htmlspecialchars($patient['blood_type'] ?? '') . '</td>';
-                echo '<td>' . ($patient['height'] ?? '') . '</td>';
-                echo '<td>' . ($patient['weight'] ?? '') . '</td>';
-                echo '<td>' . (!empty($patient['last_checkup']) ? date('Y-m-d', strtotime($patient['last_checkup'])) : '') . '</td>';
-                echo '<td>' . ($patient['patient_type'] ?? '') . '</td>';
+                echo '<td class="fmt-text text-center">' . htmlspecialchars($patient['contact'] ?? '') . '</td>';
+                echo '<td class="text-center text-bold">' . htmlspecialchars($patient['blood_type'] ?? '') . '</td>';
+                echo '<td class="fmt-dec text-center">' . ($height ?: '') . '</td>';
+                echo '<td class="fmt-dec text-center">' . ($weight ?: '') . '</td>';
+                
+                // BMI Color coding
+                $bmiStyle = '';
+                if ($bmi !== '') {
+                    if ($bmi < 18.5) $bmiStyle = 'color: #0070C0; font-weight:bold;';
+                    elseif ($bmi >= 25) $bmiStyle = 'color: #C00000; font-weight:bold;';
+                    else $bmiStyle = 'color: #006100; font-weight:bold;';
+                }
+                echo '<td class="fmt-dec text-center" style="' . $bmiStyle . '">' . $bmi . '</td>';
+                echo '<td class="fmt-date text-center">' . $lastCheckup . '</td>';
                 echo '</tr>';
             }
             
-            echo '</table>';
-            
-            // Summary section
-            echo '<br><br>';
-            echo '<table border="1">';
-            echo '<tr class="header-row">';
-            echo '<td colspan="3" style="text-align: center; padding: 10px;">EXPORT SUMMARY</td>';
-            echo '</tr>';
-            echo '<tr class="info-row">';
-            echo '<td><strong>Export Type:</strong></td>';
-            echo '<td colspan="2">Manual Patient Selection</td>';
-            echo '</tr>';
-            echo '<tr class="info-row">';
-            echo '<td><strong>Selection Criteria:</strong></td>';
-            echo '<td colspan="2">Manually selected by staff member</td>';
-            echo '</tr>';
-            echo '<tr class="info-row">';
-            echo '<td><strong>Data Included:</strong></td>';
-            echo '<td colspan="2">Complete patient health records with medical information</td>';
-            echo '</tr>';
+            echo '</tbody>';
             echo '</table>';
             
             // Footer
-            echo '<br><br>';
-            echo '<table border="0">';
+            echo '<br/><br/>';
+            echo '<table style="border:none;">';
             echo '<tr>';
-            echo '<td style="font-size: 9pt; color: #666; padding-top: 20px; border-top: 2px solid #12AF03;">';
-            echo '<strong>EXPORT COMPLETE:</strong> This export contains ' . count($patients) . ' patient records selected manually.<br>';
-            echo 'File generated: ' . $filename . '<br>';
-            echo '© ' . date('Y') . ' Barangay Luz Health Center. Confidential patient information.';
+            echo '<td colspan="15" style="border:none; color: #767676; font-size: 9pt; text-align: center;">';
+            echo '*** END OF REPORT ***<br/>';
+            echo 'CONFIDENTIAL: This document contains detailed medical information including BMI and health records.<br/>';
+            echo 'Generated by Community Health Tracker System';
             echo '</td>';
             echo '</tr>';
             echo '</table>';
@@ -625,9 +1026,15 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
         FROM sitio1_patients p
         LEFT JOIN existing_info_patients e ON p.id = e.patient_id
         LEFT JOIN sitio1_users u ON p.user_id = u.id
-        WHERE p.added_by = ? AND p.deleted_at IS NULL";
+        WHERE p.deleted_at IS NULL";
 
-        $params = [$_SESSION['user']['id']];
+        // If staff are configured to view all records, do not restrict by added_by
+        $params = [];
+        if (!staff_can_view_all()) {
+            $query .= " AND p.added_by = ?";
+            $params[] = $_SESSION['user']['id'];
+        }
+
         if (!empty($searchTerm)) {
             if ($searchBy === 'unique_number') {
                 $query .= " AND EXISTS (
@@ -975,12 +1382,23 @@ if (isset($_SESSION['success_message'])) {
 if (isset($_GET['delete_patient'])) {
     $patientId = $_GET['delete_patient'];
     try {
+        require_once __DIR__ . '/../includes/functions.php';
         $pdo->beginTransaction();
-        $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ? AND added_by = ?");
-        $stmt->execute([$patientId, $_SESSION['user']['id']]);
+        if (staff_can_view_all()) {
+            $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ?");
+            $stmt->execute([$patientId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ? AND added_by = ?");
+            $stmt->execute([$patientId, $_SESSION['user']['id']]);
+        }
         $patient = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($patient) {
+            // Get medical info before archiving
+            $stmt = $pdo->prepare("SELECT * FROM existing_info_patients WHERE patient_id = ?");
+            $stmt->execute([$patientId]);
+            $medicalInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+
             // Get column information from deleted_patients table
             $stmt = $pdo->prepare("SHOW COLUMNS FROM deleted_patients");
             $stmt->execute();
@@ -1005,6 +1423,18 @@ if (isset($_GET['delete_patient'])) {
                     $values[] = $value;
                 }
             }
+            
+            // Add medical info to archive if exists
+            if ($medicalInfo) {
+                $medicalFields = ['gender', 'height', 'weight', 'temperature', 'blood_pressure', 'blood_type', 'allergies', 'medical_history', 'current_medications', 'family_history', 'immunization_record', 'chronic_conditions'];
+                foreach ($medicalFields as $field) {
+                    if (in_array($field, $deletedTableColumns) && !in_array($field, $columns)) {
+                        $columns[] = $field;
+                        $placeholders[] = '?';
+                        $values[] = $medicalInfo[$field] ?? null;
+                    }
+                }
+            }
 
             // Add deleted_by column
             $columns[] = 'deleted_by';
@@ -1026,6 +1456,20 @@ if (isset($_GET['delete_patient'])) {
             $stmt->execute([$patientId]);
 
             $pdo->commit();
+            
+            // Log staff activity for archiving patient
+            try {
+                $staff_id = $_SESSION['user']['id'] ?? null;
+                $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
+                $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+                $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                
+                $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'archive_patient', ?, ?, ?, ?, NOW())");
+                $stmtLog->execute([$staff_id, $patientId, json_encode(['full_name' => $staff_name, 'patient_name' => $patient['full_name'], 'original_id' => $patientId]), $ip, $ua]);
+            } catch (Exception $e) {
+                error_log('Staff activity log error (archive_patient): ' . $e->getMessage());
+            }
+            
             $_SESSION['success_message'] = 'Patient record moved to archive successfully!';
             header('Location: existing_info_patients.php');
             exit();
@@ -1058,8 +1502,9 @@ $offset = ($currentPage - 1) * $recordsPerPage;
 
 // Get total count of patients based on filter
 try {
-    $countQuery = "SELECT COUNT(*) as total FROM sitio1_patients p 
-                   WHERE p.added_by = ? AND p.deleted_at IS NULL";
+    // Respect shared view toggle
+    $countQuery = "SELECT COUNT(*) as total FROM sitio1_patients p WHERE p.deleted_at IS NULL";
+    $countParams = [];
 
     if ($patientTypeFilter == 'registered') {
         $countQuery .= " AND p.user_id IS NOT NULL";
@@ -1067,8 +1512,13 @@ try {
         $countQuery .= " AND p.user_id IS NULL";
     }
 
+    if (!staff_can_view_all()) {
+        $countQuery .= " AND p.added_by = ?";
+        $countParams[] = $_SESSION['user']['id'];
+    }
+
     $stmt = $pdo->prepare($countQuery);
-    $stmt->execute([$_SESSION['user']['id']]);
+    $stmt->execute($countParams);
     $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     $totalPages = ceil($totalRecords / $recordsPerPage);
 } catch (PDOException $e) {
@@ -1078,6 +1528,7 @@ try {
 }
 
 // Get all patients with their medical info
+$allPatients = []; // initialize so it's always defined
 try {
     $selectQuery = "SELECT 
             p.id,
@@ -1111,7 +1562,10 @@ try {
         FROM sitio1_patients p
         LEFT JOIN existing_info_patients e ON p.id = e.patient_id
         LEFT JOIN sitio1_users u ON p.user_id = u.id
-        WHERE p.added_by = ? AND p.deleted_at IS NULL";
+        WHERE p.deleted_at IS NULL";
+
+    // Build params based on shared-mode and filters
+    $selectParams = [];
 
     if ($patientTypeFilter == 'registered') {
         $selectQuery .= " AND p.user_id IS NOT NULL";
@@ -1119,22 +1573,40 @@ try {
         $selectQuery .= " AND p.user_id IS NULL";
     }
 
+    if (!staff_can_view_all()) {
+        $selectQuery .= " AND p.added_by = ?";
+        $selectParams[] = $_SESSION['user']['id'];
+    }
+
     $selectQuery .= " ORDER BY p.created_at DESC";
 
+    $limitNeeded = false;
     if (!$viewAll && !$manualSelectMode) {
         $selectQuery .= " LIMIT ? OFFSET ?";
+        $limitNeeded = true;
     }
 
     $stmt = $pdo->prepare($selectQuery);
 
-    if ($viewAll || $manualSelectMode) {
-        $stmt->execute([$_SESSION['user']['id']]);
-    } else {
-        $stmt->bindParam(1, $_SESSION['user']['id'], PDO::PARAM_INT);
-        $stmt->bindParam(2, $recordsPerPage, PDO::PARAM_INT);
-        $stmt->bindParam(3, $offset, PDO::PARAM_INT);
-        $stmt->execute();
+    // Bind non-limit params first
+    $pos = 1;
+    foreach ($selectParams as $param) {
+        if (is_int($param) || ctype_digit((string)$param)) {
+            $stmt->bindValue($pos, (int)$param, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue($pos, $param, PDO::PARAM_STR);
+        }
+        $pos++;
     }
+
+    // Bind LIMIT and OFFSET as integers (avoid them being quoted)
+    if ($limitNeeded) {
+        $stmt->bindValue($pos, (int)$recordsPerPage, PDO::PARAM_INT);
+        $pos++;
+        $stmt->bindValue($pos, (int)$offset, PDO::PARAM_INT);
+    }
+
+    $stmt->execute();
 
     $allPatients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1159,17 +1631,30 @@ if (!empty($searchTerm)) {
             $stmt->execute(["%$searchTerm%"]);
             $searchedUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else {
-            $selectQuery = "SELECT p.id, p.full_name, p.date_of_birth, p.age, 
-                                   p.gender, p.sitio, p.civil_status, p.occupation,
-                                   p.phic_no, p.bhw_assigned, p.family_no, p.fourps_member,
-                                   e.blood_type, e.height, e.weight, e.temperature, e.blood_pressure
-                            FROM sitio1_patients p 
-                            LEFT JOIN existing_info_patients e ON p.id = e.patient_id 
-                            WHERE p.added_by = ? AND p.deleted_at IS NULL AND p.full_name LIKE ? 
-                            ORDER BY p.full_name LIMIT 10";
+                 $selectQuery = "SELECT p.id, p.full_name, p.date_of_birth, p.age, 
+                            COALESCE(e.gender, p.gender) as gender, p.sitio, p.civil_status, p.occupation,
+                            p.phic_no, p.bhw_assigned, p.family_no, p.fourps_member,
+                            e.blood_type, e.height, e.weight, e.temperature, e.blood_pressure
+                        FROM sitio1_patients p 
+                        LEFT JOIN existing_info_patients e ON p.id = e.patient_id 
+                        WHERE p.deleted_at IS NULL AND p.full_name LIKE ? 
+                        ORDER BY p.full_name LIMIT 10";
+
+            $params = ["%$searchTerm%"];
+            if (!staff_can_view_all()) {
+                  $selectQuery = "SELECT p.id, p.full_name, p.date_of_birth, p.age, 
+                            COALESCE(e.gender, p.gender) as gender, p.sitio, p.civil_status, p.occupation,
+                            p.phic_no, p.bhw_assigned, p.family_no, p.fourps_member,
+                            e.blood_type, e.height, e.weight, e.temperature, e.blood_pressure
+                        FROM sitio1_patients p 
+                        LEFT JOIN existing_info_patients e ON p.id = e.patient_id 
+                        WHERE p.added_by = ? AND p.deleted_at IS NULL AND p.full_name LIKE ? 
+                        ORDER BY p.full_name LIMIT 10";
+                $params = [$_SESSION['user']['id'], "%$searchTerm%"];
+            }
 
             $stmt = $pdo->prepare($selectQuery);
-            $stmt->execute([$_SESSION['user']['id'], "%$searchTerm%"]);
+            $stmt->execute($params);
             $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
     } catch (PDOException $e) {
@@ -1183,9 +1668,14 @@ if (!empty($searchTerm)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Health Records - Barangay Luz Health Center</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+    <!-- Flatpickr - Professional Calendar Date Picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/light.css">
     <link rel="stylesheet" href="/asssets/css/normalize.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
@@ -1302,6 +1792,9 @@ if (!empty($searchTerm)) {
         .export-option:hover { background-color: #f0f9ff; color: #3498db; }
         .export-option i { margin-right: 8px; width: 20px; }
         .export-btn-wrapper { position: relative; display: inline-block; }
+        .export-card { cursor: pointer; transition: all 0.3s ease; }
+        .export-card:active { transform: scale(0.98); }
+        .export-card:disabled { opacity: 0.5; cursor: not-allowed; }
         .patient-checkbox { width: 20px; height: 20px; cursor: pointer; }
         .manual-selection-header { background-color: #f0f9ff; border: 2px solid #3498db; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
         .manual-export-form { margin-top: 20px; padding: 20px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
@@ -1427,6 +1920,7 @@ if (!empty($searchTerm)) {
             text-overflow: ellipsis;
             display: -webkit-box;
             -webkit-line-clamp: 8;
+            line-clamp: 8;
             -webkit-box-orient: vertical;
         }
         
@@ -1575,11 +2069,200 @@ if (!empty($searchTerm)) {
             padding-top: 1rem;
             border-top: 1px solid #f3f4f6;
         }
+        
+        /* Export Modal Styles */
+        #exportModal, #manualSelectionModal {
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        #exportModal > div, #manualSelectionModal > div {
+            animation: scaleIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        /* Export Modal Header Styles */
+        #exportModal .sticky, #manualSelectionModal .sticky {
+            z-index: 40;
+        }
+        
+        /* Warm blue header for export modal */
+        #exportModal .sticky {
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            box-shadow: 0 4px 12px rgba(53, 122, 189, 0.18);
+        }
+        
+        /* Blue header for manual selection */
+        #manualSelectionModal .sticky {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+        }
+        
+        /* Scrollable content area */
+        #exportModal > div > div:nth-child(2),
+        #manualSelectionModal > div > div:nth-child(2) {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+
+        /* Export modal warm blue background with white footer */
+        #exportModal > div {
+            background: #F8FBFF;
+        }
+
+        #exportModal > div > div:nth-child(2) {
+            background: #F8FBFF !important;
+        }
+
+        #exportModal > div > div:last-child {
+            background: #ffffff !important;
+        }
+
+        #manualSelectionModal > div {
+            background: #F8FBFF;
+        }
+
+        #manualSelectionModal > div > div:nth-child(2) {
+            background: #F8FBFF !important;
+        }
+
+        #manualSelectionModal > div > div:last-child {
+            background: #ffffff !important;
+        }
+        
+        #exportModal > div > div:nth-child(2)::-webkit-scrollbar,
+        #manualSelectionModal > div > div:nth-child(2)::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #exportModal > div > div:nth-child(2)::-webkit-scrollbar-track,
+        #manualSelectionModal > div > div:nth-child(2)::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        #exportModal > div > div:nth-child(2)::-webkit-scrollbar-thumb,
+        #manualSelectionModal > div > div:nth-child(2)::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        #exportModal > div > div:nth-child(2)::-webkit-scrollbar-thumb:hover,
+        #manualSelectionModal > div > div:nth-child(2)::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Export card hover effects */
+        .export-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .export-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        
+        .export-card:hover::before {
+            left: 100%;
+        }
+        
+        /* Patient selection table */
+        .patient-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .patient-table thead {
+            background: #f8fafc;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        
+        .patient-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        
+        .patient-table tbody tr {
+            border-bottom: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        
+        .patient-table tbody tr:hover {
+            background: #f0f9ff;
+        }
+        
+        .patient-table td {
+            padding: 1rem;
+            color: #4b5563;
+        }
+        
+        .checkbox-column input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #3498db;
+        }
+        
+        /* Footer button styles */
+        #exportModal button, #manualSelectionModal button {
+            transition: all 0.3s ease;
+        }
+        
+        #exportModal button:disabled, #manualSelectionModal button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .page-container {
+            max-width: 100%;
+        }
+
+        @media (min-width: 1024px) {
+            .page-container {
+                max-width: 98%;
+            }
+        }
+
+        @media (min-width: 1536px) {
+            .page-container {
+                max-width: 96%;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
-    <div class="container mx-auto px-4 py-1">
+    <div class="container mx-auto px-4 py-1 page-container">
         <h1 class="text-3xl font-semibold mb-6 text-secondary">Resident Patient Records</h1>
+        
 
         <?php if ($message): ?>
             <div id="successMessage" class="alert-success px-4 py-3 rounded mb-4 flex items-center">
@@ -1597,44 +2280,331 @@ if (!empty($searchTerm)) {
         <div class="main-container rounded-lg shadow-sm mb-8">
             <!-- Single Tab with Add Patient Button on the right -->
             <div class="flex border-b border-gray-200 justify-between items-center">
-                <div class="flex">
+                <div class="flex items-center gap-4">
                     <button class="tab-btn py-4 px-6 font-medium text-gray-600 hover:text-primary border-b-2 border-transparent hover:border-primary transition active" data-tab="patients-tab">
                         <i class="fas fa-list mr-2"></i>Patient Records
                     </button>
-                </div>
-                <div class="pr-6">
                     <button onclick="openAddPatientModal()" class="btn-add-patient inline-flex items-center">
-                        <i class="fas fa-plus-circle mr-2"></i>Add New Patient
+                        <i class="fas fa-plus-circle mr-2"></i>Add New Record
+                    </button>
+                    <!-- Add Health Record Category Dropdown -->
+                    <div class="relative inline-block text-left ml-2">
+                        <button id="healthRecordDropdownBtn" type="button" class="btn-add-patient inline-flex items-center" onclick="toggleHealthRecordDropdown()">
+                            <i class="fas fa-notes-medical mr-2"></i>Add Health Record Category
+                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="healthRecordDropdown" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 hidden">
+                            <div class="py-1">
+                                <a href="#" onclick="openChildHealthModal(); return false;" class="block px-4 py-2 text-gray-700 hover:bg-blue-100">Child Health Record</a>
+                                <a href="#" onclick="openPresentPregnantModal(); return false;" class="block px-4 py-2 text-gray-700 hover:bg-blue-100">Present Pregnant</a>
+                            </div>
+                                                <!-- Child Health Record Modal -->
+                                                <div id="childHealthModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal" style="display:none;">
+                                                    <div class="bg-white rounded-lg shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
+                                                        <!-- Header -->
+                                                        <div class="sticky top-0 z-20 bg-[#2563EB] px-10 py-6 flex items-center">
+                                                            <h3 class="text-xl font-medium flex gap-3 text-center w-full items-center text-white">
+                                                                <i class="fas fa-baby mr-2"></i>Child Health Record
+                                                            </h3>
+                                                            <button onclick="closeChildHealthModal()" class="modal-close-btn"><i class="fas fa-times"></i></button>
+                                                        </div>
+                                                        <!-- Content -->
+                                                        <div class="flex-1 overflow-y-auto px-16">
+                                                            <form id="childHealthForm">
+                                                                <div class="bg-white my-10">
+                                                                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                                                                        <i class="fas fa-baby mr-2"></i>Personal and Demographic Information
+                                                                    </h3>
+                                                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                                        <div><label class="form-label-modal">Family No: <span class="text-red-500">*</span></label><input type="text" name="family_no" class="form-input-modal" placeholder="Enter Family Number" required title="Required"></div>
+                                                                        <div><label class="form-label-modal">UFC No. <span class="text-red-500">*</span></label><input type="text" name="ufc_no" class="form-input-modal" placeholder="Enter UFC Number" required title="Required"></div>
+                                                                        <div><label class="form-label-modal">Fullname <span class="text-red-500">*</span></label><input type="text" name="fullname" class="form-input-modal" placeholder="Enter Full Name" required title="Required"></div>
+                                                                        <div><label class="form-label-modal">Sex <span class="text-red-500">*</span></label><select name="sex" class="form-select-modal" required title="Required"><option value="">Select Sex</option><option>Male</option><option>Female</option></select></div>
+                                                                        <div><label class="form-label-modal">Date of Birth <span class="text-red-500">*</span></label><input type="date" name="dob" class="form-input-modal" required title="Required"></div>
+                                                                        <div><label class="form-label-modal">Birth Order</label><input type="text" name="birth_order" class="form-input-modal" placeholder="Enter Birth Order"></div>
+                                                                        <div><label class="form-label-modal">Place of Delivery</label><select name="place_of_delivery" class="form-select-modal"><option value="">Select Place</option><option>Gov't Hospital</option><option>Private Hospital</option><option>Home</option><option>Private Clinic</option><option>Lying In</option><option>HC</option></select></div>
+                                                                        <div><label class="form-label-modal">Mother</label><input type="text" name="mother" class="form-input-modal" placeholder="Enter Mother's Name"></div>
+                                                                        <div><label class="form-label-modal">Mother Age</label><input type="number" name="mother_age" class="form-input-modal" placeholder="Enter Mother's Age"></div>
+                                                                        <div><label class="form-label-modal">Father Occupation</label><input type="text" name="father_occupation" class="form-input-modal" placeholder="Enter Father's Occupation"></div>
+                                                                        <div><label class="form-label-modal">Father</label><input type="text" name="father" class="form-input-modal" placeholder="Enter Father's Name"></div>
+                                                                        <div><label class="form-label-modal">Father Age</label><input type="number" name="father_age" class="form-input-modal" placeholder="Enter Father's Age"></div>
+                                                                        <div class="md:col-span-2"><label class="form-label-modal">Complete Address w/ LandMarks</label><input type="text" name="address" class="form-input-modal" placeholder="Enter Address and Landmarks"></div>
+                                                                        <div class="md:col-span-2"><label class="form-label-modal">Type of Feeding</label><input type="text" name="type_of_feeding" class="form-input-modal" placeholder="Enter Type of Feeding"></div>
+                                                                        <div class="md:col-span-2"><label class="form-label-modal">Date Referred for newborn screening</label><input type="date" name="date_referred_newborn" class="form-input-modal" placeholder="Select Date"></div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="bg-white my-10">
+                                                                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                                                                        <i class="fas fa-baby mr-2"></i>Exclusive BF Check
+                                                                    </h3>
+                                                                    <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                                                                        <div><label class="form-label-modal">1 BF - what date?</label><input type="date" name="bf1" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">2 BF - what date?</label><input type="date" name="bf2" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">3 BF - what date?</label><input type="date" name="bf3" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">4 BF - what date?</label><input type="date" name="bf4" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">5 BF - what date?</label><input type="date" name="bf5" class="form-input-modal"></div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="bg-white my-10">
+                                                                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                                                                        <i class="fas fa-syringe mr-2"></i>Type of Immunization
+                                                                    </h3>
+                                                                    <div class="overflow-x-auto">
+                                                                        <table class="min-w-full border text-xs text-center">
+                                                                            <thead><tr class="bg-gray-100"><th>Type of Immunization</th><th>w/in 24 hrs</th><th>1st</th><th>2nd</th><th>3rd</th></tr></thead>
+                                                                            <tbody>
+                                                                                <tr><td>BCG</td><td><input type="checkbox" name="immunization[BCG][24hrs]"></td><td><input type="checkbox" name="immunization[BCG][1st]"></td><td><input type="checkbox" name="immunization[BCG][2nd]"></td><td><input type="checkbox" name="immunization[BCG][3rd]"></td></tr>
+                                                                                <tr><td>Hep BV</td><td><input type="checkbox" name="immunization[Hep BV][24hrs]"></td><td><input type="checkbox" name="immunization[Hep BV][1st]"></td><td><input type="checkbox" name="immunization[Hep BV][2nd]"></td><td><input type="checkbox" name="immunization[Hep BV][3rd]"></td></tr>
+                                                                                <tr><td>DPT</td><td><input type="checkbox" name="immunization[DPT][24hrs]"></td><td><input type="checkbox" name="immunization[DPT][1st]"></td><td><input type="checkbox" name="immunization[DPT][2nd]"></td><td><input type="checkbox" name="immunization[DPT][3rd]"></td></tr>
+                                                                                <tr><td>OPV</td><td><input type="checkbox" name="immunization[OPV][24hrs]"></td><td><input type="checkbox" name="immunization[OPV][1st]"></td><td><input type="checkbox" name="immunization[OPV][2nd]"></td><td><input type="checkbox" name="immunization[OPV][3rd]"></td></tr>
+                                                                                <tr><td>AMV</td><td><input type="checkbox" name="immunization[AMV][24hrs]"></td><td><input type="checkbox" name="immunization[AMV][1st]"></td><td><input type="checkbox" name="immunization[AMV][2nd]"></td><td><input type="checkbox" name="immunization[AMV][3rd]"></td></tr>
+                                                                                <tr><td>MMR</td><td><input type="checkbox" name="immunization[MMR][24hrs]"></td><td><input type="checkbox" name="immunization[MMR][1st]"></td><td><input type="checkbox" name="immunization[MMR][2nd]"></td><td><input type="checkbox" name="immunization[MMR][3rd]"></td></tr>
+                                                                                <tr><td>Pentavalent</td><td><input type="checkbox" name="immunization[Pentavalent][24hrs]"></td><td><input type="checkbox" name="immunization[Pentavalent][1st]"></td><td><input type="checkbox" name="immunization[Pentavalent][2nd]"></td><td><input type="checkbox" name="immunization[Pentavalent][3rd]"></td></tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="bg-white my-10">
+                                                                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                                                                        <i class="fas fa-notes-medical mr-2"></i>Assessment and Supplementation
+                                                                    </h3>
+                                                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                                        <div><label class="form-label-modal">Child Protected at Birth</label><input type="text" name="child_protected_at_birth" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">Date Assessed</label><input type="date" name="date_assessed" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">TT Status of mother</label><input type="text" name="tt_status_mother" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">Anemic children 2-59 months seen</label><input type="text" name="anemic_children_seen" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">Anemic children 2-59 months given iron</label><input type="text" name="anemic_children_iron" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">Birthwt</label><input type="text" name="birthwt" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">If low birthwt - 2-6 months seen</label><input type="text" name="low_birthwt_seen" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">2-6 months given iron</label><input type="text" name="low_birthwt_iron" class="form-input-modal"></div>
+                                                                        <div><label class="form-label-modal">Date iron started</label><input type="date" name="date_iron_started" class="form-input-modal"></div>
+                                                                        <div class="md:col-span-2"><label class="form-label-modal">Vit A given (1,2,3)</label>
+                                                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                                                <div><label>1:</label><input type="text" name="vit_a_1" class="form-input-modal"></div>
+                                                                                <div><label>2:</label><input type="text" name="vit_a_2" class="form-input-modal"></div>
+                                                                                <div><label>3:</label><input type="text" name="vit_a_3" class="form-input-modal"></div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="md:col-span-2"><label class="form-label-modal">Completed</label><input type="text" name="completed" class="form-input-modal"></div>
+                                                                    </div>
+                                                                </div>
+                                                                <!-- Add Result Section -->
+                                                                <div class="my-6">
+                                                                    <div class="flex items-center gap-2 mb-2">
+                                                                        <button type="button" class="btn-add-patient inline-flex items-center" onclick="addResultRow()">
+                                                                            Add Result
+                                                                            <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div id="resultsContainer">
+                                                                        <!-- Result rows will be appended here -->
+                                                                    </div>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                        <!-- Footer (Child Health Modal) -->
+<div class="sticky bottom-0 bg-white border-t border-blue-100 px-10 py-6 flex justify-end">
+    <button type="button" onclick="closeChildHealthModal()" class="px-6 py-4 rounded-full border border-[#2563EB] text-[#2563EB] hover:bg-gray-200 font-medium mr-3">Cancel</button>
+    <button type="button" onclick="submitChildHealthForm(event)" id="saveChildRecordBtn" class="px-8 py-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow">
+        <i class="fas fa-save mr-2"></i>Save Record
+    </button>
+</div>
+                                                    </div>
+                                                </div>
+
+                                                <script>
+                                                function openChildHealthModal() {
+                                                    document.getElementById('childHealthModal').style.display = 'flex';
+                                                    document.getElementById('healthRecordDropdown').classList.add('hidden');
+                                                }
+                                                function closeChildHealthModal() {
+                                                    document.getElementById('childHealthModal').style.display = 'none';
+                                                }
+
+                                                function showSuccessModal(message) {
+                                                    let modal = document.getElementById('successModal');
+                                                    let msg = document.getElementById('successModalMessage');
+                                                    if (!modal) {
+                                                        modal = document.createElement('div');
+                                                        modal.id = 'successModal';
+                                                        modal.className = 'fixed inset-0 bg-black/40 flex items-center justify-center z-[100]';
+                                                        modal.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+                                                            <div class='mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4'><i class='fas fa-check text-green-600 text-2xl'></i></div>
+                                                            <h3 class='text-xl font-semibold mb-2 text-green-700'>Success</h3>
+                                                            <div id='successModalMessage' class='mb-6 text-gray-700'>${message}</div>
+                                                            <button onclick='hideSuccessModal()' class='px-8 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition font-medium'>OK</button>
+                                                        </div>`;
+                                                        document.body.appendChild(modal);
+                                                    } else {
+                                                        msg.textContent = message;
+                                                        modal.style.display = 'flex';
+                                                    }
+                                                    modal.style.opacity = '0';
+                                                    setTimeout(() => { modal.style.opacity = '1'; modal.style.transition = 'opacity 0.3s'; }, 10);
+                                                }
+                                                function hideSuccessModal() {
+                                                    const modal = document.getElementById('successModal');
+                                                    if (modal) {
+                                                        modal.style.opacity = '0';
+                                                        setTimeout(() => { modal.style.display = 'none'; }, 300);
+                                                    }
+                                                }
+
+
+                                                document.getElementById('childHealthForm').addEventListener('submit', function(e) {
+                                                    e.preventDefault();
+                                                    const form = e.target;
+                                                    const formData = new FormData(form);
+                                                    let data = {};
+                                                    formData.forEach((value, key) => {
+                                                        data[key] = value;
+                                                    });
+                                                    // Collect immunizations from table
+                                                    let immunizations = [];
+                                                    document.querySelectorAll('#childHealthForm table tbody tr').forEach(row => {
+                                                        let cells = row.querySelectorAll('td');
+                                                        if (cells.length >= 5) {
+                                                            immunizations.push({
+                                                                type: cells[0].textContent,
+                                                                within_24hrs: cells[1].querySelector('input').checked ? 1 : 0,
+                                                                first: cells[2].querySelector('input').checked ? 1 : 0,
+                                                                second: cells[3].querySelector('input').checked ? 1 : 0,
+                                                                third: cells[4].querySelector('input').checked ? 1 : 0
+                                                            });
+                                                        }
+                                                    });
+                                                    data.immunizations = immunizations;
+                                                    // Collect results
+                                                    let results = [];
+                                                    document.querySelectorAll('#resultsContainer > div').forEach(row => {
+                                                        let inputs = row.querySelectorAll('input');
+                                                        if (inputs.length >= 7) {
+                                                            results.push({
+                                                                date: inputs[0].value,
+                                                                age: inputs[1].value,
+                                                                weight: inputs[2].value,
+                                                                temperature: inputs[3].value,
+                                                                height: inputs[4].value,
+                                                                findings: inputs[5].value,
+                                                                notes: inputs[6].value
+                                                            });
+                                                        }
+                                                    });
+                                                    data.results = results;
+                                                    fetch('api/save_child_health_record.php', {
+                                                        method: 'POST',
+                                                        body: JSON.stringify(data),
+                                                        headers: { 'Content-Type': 'application/json' }
+                                                    })
+                                                    .then(async res => {
+                                                        let resp;
+                                                        try {
+                                                            resp = await res.json();
+                                                        } catch {
+                                                            throw new Error('Invalid server response');
+                                                        }
+                                                        return resp;
+                                                    })
+                                                    .then(data => {
+                                                        if (data.success) {
+                                                            closeChildHealthModal();
+                                                            showSuccessModal(data.message || 'Record saved successfully!');
+                                                        } else {
+                                                            showSuccessModal(data.message || 'Failed to save record.');
+                                                        }
+                                                    })
+                                                    .catch(() => showSuccessModal('Network error. Please try again.'));
+                                                });
+
+
+                                                document.getElementById('presentPregnantForm').addEventListener('submit', function(e) {
+                                                    e.preventDefault();
+                                                    const form = e.target;
+                                                    const formData = new FormData(form);
+                                                    let data = {};
+                                                    formData.forEach((value, key) => {
+                                                        data[key] = value;
+                                                    });
+                                                    fetch('api/save_present_pregnant_record.php', {
+                                                        method: 'POST',
+                                                        body: JSON.stringify(data),
+                                                        headers: { 'Content-Type': 'application/json' }
+                                                    })
+                                                    .then(async res => {
+                                                        let resp;
+                                                        try {
+                                                            resp = await res.json();
+                                                        } catch {
+                                                            throw new Error('Invalid server response');
+                                                        }
+                                                        return resp;
+                                                    })
+                                                    .then(data => {
+                                                        if (data.success) {
+                                                            closePresentPregnantModal();
+                                                            showSuccessModal(data.message || 'Record saved successfully!');
+                                                        } else {
+                                                            showSuccessModal(data.message || 'Failed to save record.');
+                                                        }
+                                                    })
+                                                    .catch(() => showSuccessModal('Network error. Please try again.'));
+                                                });
+                                                </script>
+                        </div>
+                    </div>
+
+                        <script>
+                        // Dropdown toggle
+                        function toggleHealthRecordDropdown() {
+                            var dropdown = document.getElementById('healthRecordDropdown');
+                            dropdown.classList.toggle('hidden');
+                        }
+                        // Modal open/close
+                        function openPresentPregnantModal() {
+                            document.getElementById('presentPregnantModal').style.display = 'flex';
+                            document.getElementById('healthRecordDropdown').classList.add('hidden');
+                        }
+                        function closePresentPregnantModal() {
+                            document.getElementById('presentPregnantModal').style.display = 'none';
+                        }
+                        // Add Result Row
+                        function addResultRow() {
+                            var container = document.getElementById('resultsContainer');
+                            var idx = container.children.length;
+                            var row = document.createElement('div');
+                            row.className = 'grid grid-cols-1 md:grid-cols-6 gap-2 mb-2';
+                            row.innerHTML = `
+                                <input type="date" name="results[${idx}][date]" class="form-input-modal" placeholder="Date">
+                                <input type="text" name="results[${idx}][age]" class="form-input-modal" placeholder="Age">
+                                <input type="text" name="results[${idx}][weight]" class="form-input-modal" placeholder="Weight">
+                                <input type="text" name="results[${idx}][temperature]" class="form-input-modal" placeholder="Temperature">
+                                <input type="text" name="results[${idx}][height]" class="form-input-modal" placeholder="Height">
+                                <input type="text" name="results[${idx}][findings]" class="form-input-modal" placeholder="Findings">
+                                <input type="text" name="results[${idx}][notes]" class="form-input-modal md:col-span-2" placeholder="Notes">
+                                <button type="button" onclick="this.parentNode.remove()" class="text-red-500 ml-2">Remove</button>
+                            `;
+                            container.appendChild(row);
+                        }
+                        // Close dropdown if clicked outside
+                        document.addEventListener('click', function(event) {
+                            var dropdownBtn = document.getElementById('healthRecordDropdownBtn');
+                            var dropdown = document.getElementById('healthRecordDropdown');
+                            if (!dropdownBtn.contains(event.target) && !dropdown.contains(event.target)) {
+                                dropdown.classList.add('hidden');
+                            }
+                        });
+                        </script>
                     </button>
                 </div>
+                <a href="deleted_patients.php" class="btn-gray inline-flex items-center px-6">
+                    <i class="fas fa-archive mr-2"></i>View Archive
+                </a>
             </div>
 
             <!-- Patients Tab (Only Tab Now) -->
             <div id="patients-tab" class="tab-content p-6 active">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold text-secondary">Patient Records</h2>
-                    <div class="flex gap-4">
-                        <!-- Export Button with Dropdown -->
-                        <div class="export-btn-wrapper">
-                            <button onclick="toggleExportOptions()" class="btn-export inline-flex items-center">
-                                <i class="fas fa-download mr-2"></i>Export
-                            </button>
-                            <div id="exportOptions" class="export-options">
-                                <button type="button" onclick="exportAllRecords('excel')" class="export-option">
-                                    <i class="fas fa-file-excel mr-2 text-success"></i>Excel - All Records
-                                </button>
-                                <button type="button" onclick="exportAllRecords('pdf')" class="export-option">
-                                    <i class="fas fa-file-pdf mr-2 text-danger"></i>PDF - All Records
-                                </button>
-                                <button type="button" onclick="enableManualSelection()" class="export-option">
-                                    <i class="fas fa-user-check mr-2 text-primary"></i>Manual by Patient
-                                </button>
-                            </div>
-                        </div>
-                        <a href="deleted_patients.php" class="btn-gray inline-flex items-center">
-                            <i class="fas fa-archive mr-2"></i>View Archive
-                        </a>
-                    </div>
                 </div>
 
                 <?php if ($manualSelectMode): ?>
@@ -1680,33 +2650,35 @@ if (!empty($searchTerm)) {
                         <input type="hidden" name="manual_select" value="true">
                     <?php endif; ?>
 
-                    <div class="search-form-container">
+                    <div class="search-form-container flex flex-wrap items-end gap-5">
                         <!-- Search Term Field with icon inside input -->
-                        <div class="search-field-group flex-grow">
+                        <div class="search-field-group flex-grow min-w-[250px]">
                             <label for="search" class="block text-gray-700 mb-2 font-medium">
                                 Search Term
                             </label>
-                            <div class="relative">
-                                <i class="fa-solid fa-magnifying-glass absolute left-7 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none z-10"></i>
-                                <input type="text" id="search" name="search"
-                                    value="<?= htmlspecialchars($searchTerm) ?>"
-                                    placeholder="<?= $searchBy === 'unique_number' ? 'Enter Patients Name...' : 'Search patients by name...' ?>"
-                                    class="search-input w-full pl-11 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                        </div>
+                            <div class="flex gap-0">
+                                <div class="relative flex-grow">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-7 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none z-10"></i>
+                                    <input type="text" id="search" name="search"
+                                        value="<?= htmlspecialchars($searchTerm) ?>"
+                                        placeholder="<?= $searchBy === 'unique_number' ? 'Enter Patients Name...' : 'Search patients by name...' ?>"
+                                        class="search-input w-full pl-11 pr-4 py-2 rounded-l-lg border focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
 
-                        <!-- Search Buttons -->
-                        <div class="search-field-group flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
-                            <?php if (empty($searchTerm)): ?>
-                                <button type="submit" class="btn-primary min-w-[120px]">
-                                    <i class="fas fa-search mr-2"></i> Search
-                                </button>
-                            <?php else: ?>
-                                <a href="existing_info_patients.php<?= $manualSelectMode ? '?manual_select=true&tab=patients-tab' : '?tab=patients-tab' ?>"
-                                    class="btn-gray min-w-[120px] text-center">
-                                    <i class="fas fa-times mr-2"></i> Clear
-                                </a>
-                            <?php endif; ?>
+                                <!-- Search Button -->
+                                <div class="flex-shrink-0">
+                                    <?php if (empty($searchTerm)): ?>
+                                        <button type="submit" class="btn-primary inline-flex items-center px-6 rounded-r-lg rounded-l-none">
+                                            <i class="fas fa-search mr-2"></i> Search
+                                        </button>
+                                    <?php else: ?>
+                                        <a href="existing_info_patients.php<?= $manualSelectMode ? '?manual_select=true&tab=patients-tab' : '?tab=patients-tab' ?>"
+                                            class="btn-gray inline-flex items-center px-6 rounded-r-lg rounded-l-none">
+                                            <i class="fas fa-times mr-2"></i> Clear
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -1855,6 +2827,10 @@ if (!empty($searchTerm)) {
                                 </p>
                             </div>
                             <div class="flex items-center gap-4">
+                                <!-- Export Records Button -->
+                                <button type="button" onclick="openExportModal()" class="btn-export inline-flex items-center px-6" style="background-color: #10b981;">
+                                    <i class="fas fa-download mr-2"></i>Export Records
+                                </button>
                                 <!-- Patient Type Filter -->
                                 <form method="get" action="" class="flex items-center gap-2">
                                     <input type="hidden" name="tab" value="patients-tab">
@@ -1996,7 +2972,7 @@ if (!empty($searchTerm)) {
                                         </thead>
                                         <tbody>
                                             <?php foreach ($allPatients as $index => $patient): ?>
-                                                <tr>
+                                                <tr data-patient-id="<?= $patient['id'] ?>">
                                                     <td class="patient-id"><?= $offset + $index + 1 ?></td>
                                                     <td><?= htmlspecialchars($patient['full_name']) ?></td>
                                                     <td><?= !empty($patient['date_of_birth']) ? date('M d, Y', strtotime($patient['date_of_birth'])) : 'N/A' ?></td>
@@ -2066,20 +3042,27 @@ if (!empty($searchTerm)) {
     </div>
 
     <!-- Enhanced Wider Modal for Viewing Patient Info -->
-<div id="viewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" style="display: none;">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col border-2 border-primary">
-        <!-- Sticky Header -->
+
+<div id="viewModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal" style="display:none;">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
+        <!-- Header -->
         <div class="sticky top-0 z-20 bg-[#2563EB] px-10 py-6 flex items-center">
-            <h3 class="text-2xl font-medium flex justify-center text-center w-full items-center text-white">
-                <span class="text-white">Patient Health Information</span>
+            <h3 class="text-xl font-medium flex gap-3 text-center w-full items-center text-white">
+                <!-- Eye/View Icon for Patient Health Information Modal -->
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-2">
+                  <circle cx="18" cy="18" r="18" fill="#fff" fill-opacity="0.15"/>
+                  <path d="M18 11C12.5 11 8 18 8 18C8 18 12.5 25 18 25C23.5 25 28 18 28 18C28 18 23.5 11 18 11Z" stroke="#fff" stroke-width="2"/>
+                  <circle cx="18" cy="18" r="4" fill="#fff" fill-opacity="0.7" stroke="#2563EB" stroke-width="2"/>
+                </svg>
+                Patient Health Information
             </h3>
             <button onclick="closeViewModal()" class="modal-close-btn">
                 <i class="fas fa-times"></i>
             </button>
         </div>
 
-        <!-- Scrollable Content -->
-        <div class="px-16 bg-gray-50 flex-1 overflow-y-auto">
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto px-16">
             <div id="modalContent" class="min-h-[500px]">
                 <!-- Content will be loaded via AJAX -->
                 <div class="flex justify-center items-center py-20">
@@ -2093,7 +3076,7 @@ if (!empty($searchTerm)) {
         </div>
 
         <!-- Sticky Footer -->
-        <div class="p-8 border-t border-gray-200 bg-white rounded-b-2xl sticky bottom-0">
+        <div class="p-8 border-t border-gray-200 bg-white rounded-b-lg sticky bottom-0">
             <div class="flex flex-wrap items-center justify-between">
                 <div class="flex flex-col items-start">
                     <span class="flex items-center text-center gap-3 text-md text-gray-500 bg-gray-100 px-8 py-5 rounded-full">
@@ -2119,6 +3102,489 @@ if (!empty($searchTerm)) {
         </div>
     </div>
 </div>
+                                            <!-- Global Success Modal -->
+                                            <div id="successModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100]" style="display:none; opacity:0; transition:opacity 0.3s;">
+                                                <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+                                                    <div class='mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4'><i class='fas fa-check text-green-600 text-2xl'></i></div>
+                                                    <h3 class='text-xl font-semibold mb-2 text-green-700'>Success</h3>
+                                                    <div id='successModalMessage' class='mb-6 text-gray-700'>Record saved successfully!</div>
+                                                    <button onclick='hideSuccessModal()' class='px-8 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition font-medium'>OK</button>
+                                                </div>
+                                            </div>
+                        <div id="presentPregnantModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal" style="display:none;">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="sticky top-0 z-20 bg-[#2563EB] px-10 py-6 flex items-center">
+            <h3 class="text-xl font-medium flex gap-3 text-center w-full items-center text-white">
+                <i class="fas fa-female mr-2"></i>Present Pregnant Record
+            </h3>
+            <button onclick="closePresentPregnantModal()" class="modal-close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto px-16">
+            <form id="presentPregnantForm" method="POST">
+                <!-- Basic Information -->
+                <div class="bg-white my-10">
+                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                        <i class="fas fa-female mr-2"></i>Present Pregnant Record Details
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <input type="hidden" name="patient_id" value="">
+                        
+                        <!-- Required Fields -->
+                        <div>
+                            <label class="form-label-modal">Birth Plan <span class="text-red-500">*</span></label>
+                            <input type="text" name="birth_plan" class="form-input-modal" required>
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Nutrition/Breastfeeding <span class="text-red-500">*</span></label>
+                            <input type="text" name="nutrition_breastfeeding" class="form-input-modal" required>
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Family Planning <span class="text-red-500">*</span></label>
+                            <input type="text" name="family_planning" class="form-input-modal" required>
+                        </div>
+                        <div>
+                            <label class="form-label-modal">TT Vaccination <span class="text-red-500">*</span></label>
+                            <input type="text" name="tt_vaccination" class="form-input-modal" required>
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Iron & Folic Acid <span class="text-red-500">*</span></label>
+                            <input type="text" name="iron_folic" class="form-input-modal" required>
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Vitamin A <span class="text-red-500">*</span></label>
+                            <input type="text" name="vitamin_a" class="form-input-modal" required>
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Prenatal Schedule <span class="text-red-500">*</span></label>
+                            <input type="text" name="prenatal_schedule" class="form-input-modal" required>
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Visit Notes</label>
+                            <textarea name="visit_notes" class="form-input-modal" rows="3"></textarea>
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Referrals</label>
+                            <input type="text" name="referrals" class="form-input-modal">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add ALL other sections with proper form field names -->
+                <!-- Obstetric and Gynecologic History -->
+                <div class="bg-white my-10">
+                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                        <i class="fas fa-baby-carriage mr-2"></i>Obstetric and Gynecologic History
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="form-label-modal">Gravidity</label>
+                            <input type="number" name="gravidity" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Parity</label>
+                            <input type="number" name="parity" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Previous Pregnancy Outcomes</label>
+                            <input type="text" name="prev_outcomes" class="form-input-modal" placeholder="Miscarriages, stillbirths, etc.">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Menstrual History (LMP)</label>
+                            <input type="date" name="lmp" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Cycle Regularity</label>
+                            <input type="text" name="cycle_regularity" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Contraceptive History</label>
+                            <input type="text" name="contraceptive_history" class="form-input-modal">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medical and Family History -->
+                <div class="bg-white my-10">
+                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                        <i class="fas fa-notes-medical mr-2"></i>Medical and Family History
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="form-label-modal">Past Illnesses</label>
+                            <input type="text" name="past_illnesses" class="form-input-modal" placeholder="Hypertension, diabetes, etc.">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Allergies</label>
+                            <input type="text" name="allergies" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Family History</label>
+                            <input type="text" name="family_history" class="form-input-modal" placeholder="Hereditary diseases">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Pregnancy Information -->
+                <div class="bg-white my-10">
+                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                        <i class="fas fa-baby mr-2"></i>Current Pregnancy Information
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="form-label-modal">Estimated Date of Delivery (EDD)</label>
+                            <input type="date" name="edd" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Gestational Age at First Visit</label>
+                            <input type="text" name="gestational_age" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Pregnancy Risk Assessment</label>
+                            <input type="text" name="risk_assessment" class="form-input-modal" placeholder="High-risk/Normal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Danger Signs</label>
+                            <input type="text" name="danger_signs" class="form-input-modal" placeholder="Bleeding, headache, etc.">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Physical Examination Records -->
+                <div class="bg-white my-10">
+                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                        <i class="fas fa-stethoscope mr-2"></i>Physical Examination Records
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="form-label-modal">Blood Pressure</label>
+                            <input type="text" name="bp" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Heart Rate</label>
+                            <input type="text" name="hr" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Respiratory Rate</label>
+                            <input type="text" name="rr" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Temperature</label>
+                            <input type="text" name="temperature" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Weight</label>
+                            <input type="text" name="weight" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Height</label>
+                            <input type="text" name="height" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Fundal Height</label>
+                            <input type="text" name="fundal_height" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Fetal Heart Tones</label>
+                            <input type="text" name="fetal_heart_tones" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Edema</label>
+                            <input type="text" name="edema" class="form-input-modal" placeholder="Swelling in hands/feet">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Laboratory and Diagnostic Results -->
+                <div class="bg-white my-10">
+                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                        <i class="fas fa-vials mr-2"></i>Laboratory and Diagnostic Results
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="form-label-modal">Hemoglobin/Hematocrit</label>
+                            <input type="text" name="hemoglobin" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Urinalysis</label>
+                            <input type="text" name="urinalysis" class="form-input-modal" placeholder="Protein, sugar, infection">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Blood Typing & Rh Factor</label>
+                            <input type="text" name="blood_typing" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Syphilis Test (VDRL/RPR)</label>
+                            <input type="text" name="syphilis_test" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">HIV Test (with consent)</label>
+                            <input type="text" name="hiv_test" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Hepatitis B Screening</label>
+                            <input type="text" name="hepatitis_b" class="form-input-modal">
+                        </div>
+                        <div>
+                            <label class="form-label-modal">Fasting Blood Sugar</label>
+                            <input type="text" name="fbs" class="form-input-modal">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Preparedness -->
+                <div class="bg-white my-10">
+                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                        <i class="fas fa-chalkboard-teacher mr-2"></i>Emergency Preparedness
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="form-label-modal">Emergency Preparedness</label>
+                            <input type="text" name="emergency_prep" class="form-input-modal" placeholder="Referral hospital, transport plan">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Footer -->
+<div class="sticky bottom-0 bg-white border-t border-blue-100 px-10 py-6 flex justify-end">
+    <button type="button" onclick="closePresentPregnantModal()" class="px-6 py-4 rounded-full border border-[#2563EB] text-[#2563EB] hover:bg-gray-200 font-medium mr-3">Cancel</button>
+    <button type="button" onclick="submitPresentPregnantForm(event)" id="savePregnantRecordBtn" class="px-8 py-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow">
+        <i class="fas fa-save mr-2"></i>Save Record
+    </button>
+</div>
+    </div>
+</div>
+
+    <!-- Export Modal (Warm Blue & White) -->
+    <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-[#D4E3F7]">
+            <!-- Sticky Header - Warm Blue -->
+            <div class="sticky top-0 z-20 bg-gradient-to-r from-[#4A90E2] to-[#357ABD] px-10 py-8 flex items-center justify-between">
+                <h3 class="text-2xl font-bold flex items-center text-white gap-3">
+                    <i class="fas fa-download"></i>
+                    <span>Export Patient Records</span>
+                </h3>
+                <button onclick="closeExportModal()" class="text-white hover:text-gray-200 text-2xl transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content - White -->
+            <div class="px-8 bg-white flex-1 overflow-y-auto py-8">
+                <!-- Export All Records Section -->
+                <div class="mb-10">
+                    <h4 class="text-lg font-bold text-[#2E5C8A] mb-4 flex items-center gap-2">
+                        <i class="fas fa-layer-group"></i>
+                        Export All Patient Records
+                    </h4>
+                    <p class="text-[#666666] text-sm mb-6">Download all accessible patient records in your preferred format.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Excel Export Button -->
+                        <button onclick="exportAllRecords('excel')" class="p-5 rounded-xl border-2 border-[#E8F0FE] bg-white hover:bg-[#F8FBFF] hover:border-[#4A90E2] transition-all group cursor-pointer shadow-sm hover:shadow-md">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-lg bg-[#E8F0FE] flex items-center justify-center group-hover:bg-[#D4E3F7] transition">
+                                    <i class="fas fa-file-excel text-2xl text-[#4A90E2]"></i>
+                                </div>
+                                <div class="text-left">
+                                    <h5 class="font-bold text-[#2E5C8A]">Excel Format</h5>
+                                    <p class="text-xs text-[#888888]">.xlsx - Ready for analysis</p>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- PDF Export Button -->
+                        <button onclick="exportAllRecords('pdf')" class="p-5 rounded-xl border-2 border-[#E8F0FE] bg-white hover:bg-[#F8FBFF] hover:border-[#4A90E2] transition-all group cursor-pointer shadow-sm hover:shadow-md">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 rounded-lg bg-[#E8F0FE] flex items-center justify-center group-hover:bg-[#D4E3F7] transition">
+                                    <i class="fas fa-file-pdf text-2xl text-[#4A90E2]"></i>
+                                </div>
+                                <div class="text-left">
+                                    <h5 class="font-bold text-[#2E5C8A]">PDF Format</h5>
+                                    <p class="text-xs text-[#888888]">.pdf - Professional report</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-[#E8F0FE] my-8"></div>
+
+                <!-- Manual Selection Section -->
+                <div>
+                    <h4 class="text-lg font-bold text-[#2E5C8A] mb-4 flex items-center gap-2">
+                        <i class="fas fa-hand-pointer"></i>
+                        Select Specific Patients
+                    </h4>
+                    <p class="text-[#666666] text-sm mb-6">Choose individual patients to export. Ideal for targeted reports and focused data sharing.</p>
+                    
+                    <button onclick="openManualSelectionModal()" class="w-full p-6 rounded-xl border-2 border-[#D4E3F7] bg-[#F8FBFF] hover:bg-[#E8F0FE] hover:border-[#4A90E2] transition-all group cursor-pointer shadow-sm hover:shadow-md">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-users text-3xl text-[#4A90E2]"></i>
+                                <div class="text-left">
+                                    <h5 class="font-bold text-[#2E5C8A]">Choose Specific Patients</h5>
+                                    <p class="text-sm text-[#666666]">Select individual records for export</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-[#4A90E2] text-xl"></i>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Info Box -->
+                <div class="mt-8 p-5 bg-[#F8FBFF] border-l-4 border-[#4A90E2] rounded-lg">
+                    <p class="text-sm text-[#2E5C8A]">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        <strong>Tip:</strong> All exports include complete medical information. Use manual selection to reduce file size or share specific patient records.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Sticky Footer -->
+            <div class="bg-white border-t border-[#E8F0FE] px-8 py-4 sticky bottom-0 flex justify-end gap-3">
+                <button type="button" onclick="closeExportModal()" class="px-6 py-3 rounded-lg border-2 border-[#D4E3F7] text-[#2E5C8A] hover:bg-[#F8FBFF] transition font-medium">
+                    <i class="fas fa-times mr-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Selection Modal (Warm Blue & White) -->
+    <div id="manualSelectionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" style="display: none;">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col border border-[#D4E3F7]">
+            <!-- Sticky Header - Warm Blue -->
+            <div class="sticky top-0 z-20 bg-gradient-to-r from-[#4A90E2] to-[#357ABD] px-10 py-8 flex items-center justify-between">
+                <h3 class="text-2xl font-bold flex items-center text-white gap-3">
+                    <i class="fas fa-check-square"></i>
+                    <span>Select Patients to Export</span>
+                </h3>
+                <button onclick="closeManualSelectionModal()" class="text-white hover:text-gray-200 text-2xl transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content - White -->
+            <div class="px-10 bg-white flex-1 overflow-y-auto py-8">
+                <form id="manualExportForm" method="POST" action="">
+                    <!-- Selection Controls -->
+                    <div class="bg-[#F8FBFF] border-2 border-[#D4E3F7] rounded-xl p-6 mb-6">
+                        <div class="flex items-center justify-between flex-wrap gap-4">
+                            <div>
+                                <h4 class="font-bold text-[#2E5C8A] text-lg flex items-center gap-2">
+                                    <i class="fas fa-list-check"></i>
+                                    Patient Selection
+                                </h4>
+                                <p class="text-sm text-[#666666] mt-2">
+                                    <span class="font-medium">Selected:</span> 
+                                    <span id="selectedCount" class="font-bold text-[#4A90E2]">0</span> 
+                                    <span>patient(s)</span>
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <label class="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg hover:bg-[#E8F0FE] transition">
+                                    <input type="checkbox" id="selectAllPatients" class="patient-checkbox select-all-checkbox w-5 h-5 accent-[#4A90E2]" onchange="toggleAllPatients(this)">
+                                    <span class="font-medium text-[#2E5C8A]">Select All</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patients Table -->
+                    <div class="bg-white border-2 border-[#D4E3F7] rounded-xl overflow-hidden mb-6 shadow-sm">
+                        <div class="scrollable-table-container" style="max-height: 400px; border-radius: 10px;">
+                            <table class="patient-table w-full">
+                                <thead>
+                                    <tr class="bg-[#F8FBFF] border-b-2 border-[#D4E3F7] sticky top-0">
+                                        <th class="checkbox-column w-12 text-center py-3"><i class="fas fa-square text-[#4A90E2]"></i></th>
+                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Name</th>
+                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Age</th>
+                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Blood Type</th>
+                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Type</th>
+                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Last Check-up</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patientSelectionList">
+                                    <!-- Populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Export Data Preview -->
+                    <div class="p-6 bg-[#F8FBFF] border-2 border-[#D4E3F7] rounded-xl mb-6">
+                        <h5 class="text-sm font-bold text-[#2E5C8A] mb-4">
+                            <i class="fas fa-database mr-2 text-[#4A90E2]"></i>EXPORTED DATA INCLUDES:
+                        </h5>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <div class="text-xs text-[#2E5C8A]">
+                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Patient ID & Full Name
+                            </div>
+                            <div class="text-xs text-[#2E5C8A]">
+                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Age & Gender
+                            </div>
+                            <div class="text-xs text-[#2E5C8A]">
+                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Date of Birth
+                            </div>
+                            <div class="text-xs text-[#2E5C8A]">
+                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Contact & Address
+                            </div>
+                            <div class="text-xs text-[#2E5C8A]">
+                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Blood Type & Vitals
+                            </div>
+                            <div class="text-xs text-[#2E5C8A]">
+                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Height & Weight
+                            </div>
+                            <div class="text-xs text-[#2E5C8A]">
+                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Medical History
+                            </div>
+                            <div class="text-xs text-[#2E5C8A]">
+                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Civil Status & Occupation
+                            </div>
+                            <div class="text-xs text-[#2E5C8A]">
+                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Last Checkup Date
+                            </div>
+                        </div>
+                        <p class="text-xs text-[#2E5C8A] mt-4 pt-4 border-t border-[#D4E3F7]">
+                            <i class="fas fa-info-circle mr-2 text-[#4A90E2]"></i>
+                            <strong>Complete patient records</strong> will be exported with all available medical information.
+                        </p>
+                    </div>
+
+                    <!-- Important Notes -->
+                    <div class="p-5 bg-[#F0F8FF] border-l-4 border-[#4A90E2] rounded-lg mb-6">
+                        <p class="text-sm text-[#2E5C8A]">
+                            <i class="fas fa-info-circle mr-2 text-[#4A90E2]"></i>
+                            <strong>Note:</strong> Select at least one patient to proceed with export. Files will include complete health records.
+                        </p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Sticky Footer -->
+            <div class="bg-white border-t border-[#D4E3F7] px-10 py-5 sticky bottom-0 flex items-center justify-between shadow-lg">
+                <span class="text-sm text-[#2E5C8A] flex items-center gap-2 font-medium">
+                    <i class="fas fa-list text-[#4A90E2]"></i>
+                    <strong id="footerCount">0</strong> patient(s) selected
+                </span>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeManualSelectionModal()" class="px-6 py-3 rounded-lg border-2 border-[#D4E3F7] text-[#2E5C8A] hover:bg-[#F8FBFF] transition font-medium">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button type="button" onclick="confirmManualExport('excel')" class="px-6 py-3 rounded-lg bg-gradient-to-r from-[#4A90E2] to-[#357ABD] hover:from-[#357ABD] hover:to-[#2E5C8A] text-white transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg">
+                        <i class="fas fa-file-excel"></i>Export as Excel
+                    </button>
+                    <button type="button" onclick="confirmManualExport('pdf')" class="px-6 py-3 rounded-lg bg-gradient-to-r from-[#4A90E2] to-[#357ABD] hover:from-[#357ABD] hover:to-[#2E5C8A] text-white transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg">
+                        <i class="fas fa-file-pdf"></i>Export as PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Consultation Note Modal -->
     <div id="consultationNoteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" style="display: none;">
@@ -2145,26 +3611,22 @@ if (!empty($searchTerm)) {
                                 <label for="doctor_name" class="block text-gray-700 mb-2 font-medium">
                                     Doctor's Name <span class="text-red-500">*</span>
                                 </label>
-                                <div class="flex gap-2">
-                                    <div class="w-24 px-3 py-3 border border-[#85ccfb] rounded-lg bg-gray-50 flex items-center justify-center text-gray-500">
-                                        Dr.
-                                    </div>
-                                    <input type="text" id="doctor_name" name="doctor_name" 
-                                           placeholder="Enter doctor's full name"
-                                           class="flex-1 px-4 py-3 border border-[#85ccfb] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                                           required>
-                                </div>
-                                <p class="text-sm text-gray-500 mt-1">Format: Dr. [Full Name] (e.g., "Dr. Juan Dela Cruz")</p>
+                                <input type="text" id="doctor_name" name="doctor_name" 
+                                       placeholder="Enter doctor's full name"
+                                       class="w-full px-4 py-3 border border-[#85ccfb] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                       required>
+                                <p class="text-sm text-gray-500 mt-1">"Dr." will be added automatically.</p>
                             </div>
                             
                             <div>
                                 <label for="consultation_date" class="block text-gray-700 mb-2 font-medium">
                                     Consultation Date <span class="text-red-500">*</span>
                                 </label>
-                                <input type="date" id="consultation_date" name="consultation_date" 
-                                       value="<?= date('Y-m-d') ?>"
-                                       class="w-full px-4 py-3 border border-[#85ccfb] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                                       required>
+                                    <input type="date" id="consultation_date" name="consultation_date" 
+                                        value="<?= date('Y-m-d') ?>"
+                                        class="w-full px-4 py-3 border border-[#85ccfb] rounded-lg bg-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                        readonly aria-readonly="true"
+                                        required>
                             </div>
                             <div>
                                 <label for="next_consultation_date" class="block text-gray-700 mb-2 font-medium">
@@ -2755,14 +4217,33 @@ if (!empty($searchTerm)) {
         }
 
         // Export functionality
+        // Enhanced Export Modal Functions
+        function openExportModal() {
+            const modal = document.getElementById('exportModal');
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.style.transition = 'opacity 0.3s ease';
+            }, 10);
+        }
+
+        function closeExportModal() {
+            const modal = document.getElementById('exportModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
         function toggleExportOptions() {
             const exportOptions = document.getElementById('exportOptions');
             exportOptions.classList.toggle('show');
         }
 
         function exportAllRecords(format) {
-            const exportOptions = document.getElementById('exportOptions');
-            exportOptions.classList.remove('show');
+            closeExportModal();
 
             const urlParams = new URLSearchParams(window.location.search);
             const patientTypeSelect = document.querySelector('select[name="patient_type"]');
@@ -2783,10 +4264,11 @@ if (!empty($searchTerm)) {
                 'regular': 'Regular Patients'
             };
             const formatLabels = {
-                'excel': 'Excel',
-                'pdf': 'PDF'
+                'excel': 'Excel (.xlsx)',
+                'pdf': 'PDF Report'
             };
-            showNotification('info', `Exporting ${typeLabels[currentPatientType] || 'All Patients'} as ${formatLabels[format] || format}...`);
+            
+            showNotification('info', `Exporting ${typeLabels[currentPatientType] || 'All Patients'} as ${formatLabels[format] || format}...`, 5000);
 
             const exportWindow = window.open(url, '_blank');
 
@@ -2800,63 +4282,184 @@ if (!empty($searchTerm)) {
                 document.body.appendChild(form);
                 form.submit();
                 document.body.removeChild(form);
+            } else {
+                setTimeout(() => {
+                    showNotification('success', 'Export started! Your file will download shortly.', 3000);
+                }, 1000);
             }
         }
 
-        // Enable manual selection mode
-        function enableManualSelection() {
-            const exportOptions = document.getElementById('exportOptions');
-            exportOptions.classList.remove('show');
-
-            const urlParams = new URLSearchParams(window.location.search);
-            let url = 'existing_info_patients.php?tab=patients-tab&manual_select=true';
-
-            const patientType = urlParams.get('patient_type');
-            if (patientType) {
-                url += `&patient_type=${patientType}`;
+        // Open manual selection modal from export modal
+        function openManualSelectionModal() {
+            closeExportModal();
+            
+            const modal = document.getElementById('manualSelectionModal');
+            if (!modal) {
+                console.error('Manual selection modal not found');
+                return;
             }
+            
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
 
-            window.location.href = url;
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.style.transition = 'opacity 0.3s ease';
+                populatePatientSelectionList();
+            }, 10);
         }
 
-        // Disable manual selection mode
-        function disableManualSelection() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let url = 'existing_info_patients.php?tab=patients-tab';
-
-            const patientType = urlParams.get('patient_type');
-            if (patientType) {
-                url += `&patient_type=${patientType}`;
+        function closeManualSelectionModal() {
+            const modal = document.getElementById('manualSelectionModal');
+            if (modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
             }
-
-            window.location.href = url;
         }
 
-        // Toggle all checkboxes in manual selection
-        function toggleAllSelection(checkbox) {
-            const checkboxes = document.querySelectorAll('.patient-select');
-            checkboxes.forEach(cb => {
-                cb.checked = checkbox.checked;
+        // Populate patient list in manual selection modal
+        function populatePatientSelectionList() {
+            const tbody = document.getElementById('patientSelectionList');
+            if (!tbody) return;
+            
+            // Get all patient rows from the main table
+            const patientRows = document.querySelectorAll('table tbody tr[data-patient-id]');
+            tbody.innerHTML = '';
+
+            if (patientRows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-[#888888]"><i class="fas fa-inbox mr-2"></i>No patients available for export</td></tr>';
+                return;
+            }
+
+            patientRows.forEach((row) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 4) {
+                    // Get patient ID from data attribute (this is the actual database ID)
+                    const patientId = row.getAttribute('data-patient-id');
+                    
+                    const name = cells[1]?.textContent?.trim() || 'Unknown';
+                    const age = cells[3]?.textContent?.trim() || '-';
+                    const bloodType = cells[2]?.textContent?.trim() || '-';
+                    const type = cells[6]?.textContent?.trim() || '-';
+                    const lastCheckup = cells[2]?.textContent?.trim() || '-';
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b border-[#E8F0FE] hover:bg-[#F8FBFF] transition';
+                    tr.innerHTML = `
+                        <td class="checkbox-column px-4 py-3 text-center">
+                            <input type="checkbox" class="patient-select w-5 h-5 accent-[#4A90E2]" value="${patientId}" onchange="updateSelectedCount(); updateFooterCount()">
+                        </td>
+                        <td class="px-6 py-3 text-[#2E5C8A] font-medium">${name}</td>
+                        <td class="px-6 py-3 text-[#666666]">${age}</td>
+                        <td class="px-6 py-3 text-[#666666]">${bloodType}</td>
+                        <td class="px-6 py-3 text-[#666666]">${type}</td>
+                        <td class="px-6 py-3 text-[#888888] text-sm">${lastCheckup}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
             });
-            updateSelectedCount();
         }
 
-        // Toggle all patients for export
-        function toggleAllPatients(checkbox) {
-            const checkboxes = document.querySelectorAll('.patient-select');
-            checkboxes.forEach(cb => {
-                cb.checked = checkbox.checked;
-            });
-            updateSelectedCount();
-        }
-
-        // Update selected count display
+        // Update selected count in modal
         function updateSelectedCount() {
-            const checkboxes = document.querySelectorAll('.patient-select:checked');
+            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
             const countElement = document.getElementById('selectedCount');
             if (countElement) {
                 countElement.textContent = checkboxes.length;
             }
+            
+            // Update select all checkbox state
+            const selectAllCheckbox = document.getElementById('selectAllPatients');
+            const allCheckboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
+            if (selectAllCheckbox && allCheckboxes.length > 0) {
+                selectAllCheckbox.checked = checkboxes.length === allCheckboxes.length;
+                selectAllCheckbox.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
+            }
+        }
+
+        // Update footer count
+        function updateFooterCount() {
+            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
+            const footerCount = document.getElementById('footerCount');
+            if (footerCount) {
+                footerCount.textContent = checkboxes.length;
+            }
+        }
+
+        // Toggle all patients for export
+        function toggleAllPatients(checkbox) {
+            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+            updateSelectedCount();
+            updateFooterCount();
+        }
+
+        // Confirm manual export with selected patients
+        function confirmManualExport(format) {
+            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
+            if (checkboxes.length === 0) {
+                showNotification('warning', 'Please select at least one patient to export.');
+                return;
+            }
+
+            const patientIds = Array.from(checkboxes).map(cb => cb.value);
+            const patientCount = patientIds.length;
+            
+            const typeLabels = {
+                'excel': 'Excel',
+                'pdf': 'PDF'
+            };
+            const formatExtension = {
+                'excel': '.xlsx',
+                'pdf': '.pdf'
+            };
+
+            // Show processing notification
+            showNotification('info', `Exporting ${patientCount} patient(s) as ${typeLabels[format]}...`, 6000);
+
+            // Create form with all required data
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'existing_info_patients.php';
+            form.style.display = 'none';
+
+            // Add patient IDs
+            patientIds.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'selected_patients[]';
+                input.value = id;
+                form.appendChild(input);
+            });
+
+            // Add export type
+            if (format === 'excel') {
+                const exportInput = document.createElement('input');
+                exportInput.type = 'hidden';
+                exportInput.name = 'export_manual';
+                exportInput.value = '1';
+                form.appendChild(exportInput);
+            } else if (format === 'pdf') {
+                const exportInput = document.createElement('input');
+                exportInput.type = 'hidden';
+                exportInput.name = 'export_pdf';
+                exportInput.value = '1';
+                form.appendChild(exportInput);
+            }
+
+            // Submit form
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+
+            // Keep modal open; only close via explicit close button
+            setTimeout(() => {
+                showNotification('success', `Successfully exported ${patientCount} patient(s) as ${typeLabels[format]}!`, 3000);
+            }, 800);
         }
 
         // Close export dropdown when clicking outside
@@ -2870,10 +4473,34 @@ if (!empty($searchTerm)) {
             }
         });
 
+        // Keyboard shortcuts for modals
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const exportModal = document.getElementById('exportModal');
+                const manualSelectionModal = document.getElementById('manualSelectionModal');
+                
+                if (exportModal && exportModal.style.display === 'flex') {
+                    closeExportModal();
+                }
+                
+                // Manual selection modal should only close via its close buttons
+            }
+        });
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const exportModal = document.getElementById('exportModal');
+            const manualSelectionModal = document.getElementById('manualSelectionModal');
+            
+            if (exportModal && event.target === exportModal) {
+                closeExportModal();
+            }
+            
+            // Manual selection modal should only close via its close buttons
+        });
+
         // Initialize selected count on page load
         document.addEventListener('DOMContentLoaded', function () {
-            updateSelectedCount();
-            
             // Age calculation for Add Patient modal
             const dobInput = document.getElementById('modal_date_of_birth');
             const ageInput = document.getElementById('modal_age');
@@ -3162,33 +4789,51 @@ if (!empty($searchTerm)) {
             return null;
         }
 
-        function showNotification(type, message) {
+        function showNotification(type, message, duration = 5000) {
             const existingNotifications = document.querySelectorAll('.custom-notification');
             existingNotifications.forEach(notification => notification.remove());
 
             const notification = document.createElement('div');
             notification.className = `custom-notification fixed top-6 right-6 z-50 px-6 py-4 rounded-xl shadow-lg border-2 ${type === 'error' ? 'alert-error' :
                 type === 'success' ? 'alert-success' :
+                type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
                     'bg-blue-100 text-blue-800 border-blue-200'
                 }`;
 
             const icon = type === 'error' ? 'fa-exclamation-circle' :
-                type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+                type === 'success' ? 'fa-check-circle' :
+                type === 'warning' ? 'fa-exclamation-triangle' :
+                    'fa-info-circle';
 
             notification.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fas ${icon} mr-3 text-xl"></i>
+                <div class="flex items-center gap-2">
+                    <i class="fas ${icon} text-xl"></i>
                     <span class="font-semibold">${message}</span>
                 </div>
             `;
 
             document.body.appendChild(notification);
 
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    notification.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, duration);
+
+            // Allow manual dismissal by clicking
+            notification.style.cursor = 'pointer';
+            notification.addEventListener('click', () => {
+                clearTimeout(timeoutId);
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
-            }, 5000);
+            });
         }
 
         // Enhanced modal close on outside click
@@ -3196,6 +4841,7 @@ if (!empty($searchTerm)) {
             const viewModal = document.getElementById('viewModal');
             const addPatientModal = document.getElementById('addPatientModal');
             const consultationNoteModal = document.getElementById('consultationNoteModal');
+            const exportModal = document.getElementById('exportModal');
 
             if (event.target === viewModal) {
                 closeViewModal();
@@ -3206,6 +4852,9 @@ if (!empty($searchTerm)) {
             if (event.target === consultationNoteModal) {
                 closeConsultationNoteModal();
             }
+            if (event.target === exportModal) {
+                closeExportModal();
+            }
         };
 
         // Add keyboard support for modals
@@ -3214,6 +4863,7 @@ if (!empty($searchTerm)) {
                 closeViewModal();
                 closeAddPatientModal();
                 closeConsultationNoteModal();
+                closeExportModal();
             }
         });
 
@@ -3310,7 +4960,38 @@ if (!empty($searchTerm)) {
         function addConsultationNotesSection(patientId) {
             const healthInfoForm = document.getElementById('healthInfoForm');
             if (!healthInfoForm) return;
-            
+
+            // Try to get user_id from a hidden input or data attribute
+            let userId = null;
+            const userIdInput = healthInfoForm.querySelector('input[name="user_id"]');
+            if (userIdInput) {
+                userId = userIdInput.value;
+            } else if (healthInfoForm.dataset.userId) {
+                userId = healthInfoForm.dataset.userId;
+            }
+
+            // Build profile image URL if userId exists
+            let profileImgHtml = '';
+            if (userId && userId !== '0' && userId !== '') {
+                const allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
+                let foundImg = false;
+                for (let ext of allowedExts) {
+                    // Use cache-busting for live update
+                    let imgUrl = `/community-health-tracker/uploads/profiles/profile_${userId}.${ext}?cb=${Date.now()}`;
+                    let xhr = new XMLHttpRequest();
+                    xhr.open('HEAD', imgUrl, false);
+                    xhr.send();
+                    if (xhr.status === 200) {
+                        profileImgHtml = `<img src="${imgUrl}" alt="Profile" class="rounded-full border-2 border-blue-300 shadow w-24 h-24 object-cover mr-4" style="min-width:96px;min-height:96px;">`;
+                        foundImg = true;
+                        break;
+                    }
+                }
+                if (!foundImg) {
+                    profileImgHtml = `<div class="rounded-full bg-blue-200 border-2 border-blue-300 shadow w-24 h-24 flex items-center justify-center mr-4"><i class='fas fa-user text-5xl text-blue-500'></i></div>`;
+                }
+            }
+
             const notesSection = document.createElement('div');
             notesSection.className = 'bg-white rounded-xl border border-blue-200 shadow-sm mb-8 overflow-hidden';
             notesSection.innerHTML = `
@@ -3321,10 +5002,13 @@ if (!empty($searchTerm)) {
                             Consultation Notes History
                             <span id="notesCountBadge" class="bg-primary text-white text-sm px-3 py-1 rounded-full">0 notes</span>
                         </h3>
-                        <button onclick="openConsultationNoteModal()" 
-                                class="btn-add-note px-4 py-2 text-sm font-medium">
-                            <i class="fas fa-plus mr-2"></i>Add New Note
-                        </button>
+                        <div class="flex items-center gap-2">
+                            ${profileImgHtml}
+                            <button onclick="openConsultationNoteModal()" 
+                                    class="btn-add-note px-4 py-2 text-sm font-medium">
+                                <i class="fas fa-plus mr-2"></i>Add New Note
+                            </button>
+                        </div>
                     </div>
                     <p class="text-gray-600 mt-2 text-sm">View past consultations and add new notes for this patient.</p>
                 </div>
@@ -3339,7 +5023,7 @@ if (!empty($searchTerm)) {
                     </div>
                 </div>
             `;
-            
+
             healthInfoForm.parentNode.insertBefore(notesSection, healthInfoForm);
             loadConsultationNotesInline(patientId);
         }
@@ -3655,52 +5339,6 @@ if (!empty($searchTerm)) {
             closeCustomModal();
         }
 
-        // Manual Export confirmation
-        function confirmManualExport(format) {
-            const checkboxes = document.querySelectorAll('.patient-select:checked');
-            if (checkboxes.length === 0) {
-                showNotification('error', 'Please select at least one patient to export.');
-                return;
-            }
-
-            const selectedPatients = Array.from(checkboxes).map(cb => cb.value);
-            const form = document.getElementById('patientSelectionForm');
-            
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'selected_patients[]';
-            
-            if (format === 'excel') {
-                const exportInput = document.createElement('input');
-                exportInput.type = 'hidden';
-                exportInput.name = 'export_manual';
-                exportInput.value = '1';
-                form.appendChild(exportInput);
-                
-                selectedPatients.forEach(patientId => {
-                    const patientInput = hiddenInput.cloneNode();
-                    patientInput.value = patientId;
-                    form.appendChild(patientInput);
-                });
-                
-                form.submit();
-            } else if (format === 'pdf') {
-                const pdfInput = document.createElement('input');
-                pdfInput.type = 'hidden';
-                pdfInput.name = 'export_pdf';
-                pdfInput.value = '1';
-                form.appendChild(pdfInput);
-                
-                selectedPatients.forEach(patientId => {
-                    const patientInput = hiddenInput.cloneNode();
-                    patientInput.value = patientId;
-                    form.appendChild(patientInput);
-                });
-                
-                form.submit();
-            }
-        }
-
         // Get patient ID from the form
         function getPatientId() {
             const patientIdInput = document.querySelector('#modalContent input[name="patient_id"]');
@@ -3724,7 +5362,705 @@ if (!empty($searchTerm)) {
             if (noteButton) {
                 noteButton.addEventListener('click', handleNoteButtonClick);
             }
+            
+            // Setup real-time duplicate check for Add Patient modal
+            setupDuplicateCheckValidation();
+        });
+
+        /**
+         * Real-time validation for duplicate patient records in Add Patient modal
+         * Checks full name and date of birth against existing records
+         */
+        function setupDuplicateCheckValidation() {
+            const fullNameInput = document.getElementById('modal_full_name');
+            const dobInput = document.getElementById('modal_date_of_birth');
+            const patientForm = document.getElementById('patientForm');
+            
+            if (!fullNameInput || !dobInput || !patientForm) return;
+            
+            // Create container for duplicate warning message
+            const warningContainer = document.createElement('div');
+            warningContainer.id = 'duplicateWarningContainer';
+            warningContainer.style.display = 'none';
+            warningContainer.style.paddingTop = '20px';
+            warningContainer.style.marginBottom = '24px';
+            warningContainer.innerHTML = `
+                <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-exclamation-circle text-red-600 text-xl flex-shrink-0"></i>
+                        <h4 class="font-semibold text-red-700">⚠️ This patient already has a record in the system. You can view or update the existing record instead.</h4>
+                    </div>
+                    <button type="button" onclick="viewExistingPatientRecord()" 
+                            class="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap flex-shrink-0">
+                        <i class="fas fa-eye mr-2"></i>View Record
+                    </button>
+                </div>
+            `;
+            
+            // Insert warning container at the very beginning of the form (before Personal Information)
+            const firstChild = patientForm.firstChild;
+            patientForm.insertBefore(warningContainer, firstChild);
+            
+            // Event listeners for real-time validation
+            fullNameInput.addEventListener('blur', checkForDuplicate);
+            fullNameInput.addEventListener('input', checkForDuplicate);
+            dobInput.addEventListener('change', checkForDuplicate);
+            dobInput.addEventListener('blur', checkForDuplicate);
+        }
+
+        // Store the current duplicate patient ID for view action
+        let currentDuplicatePatientId = null;
+
+        /**
+         * Check if a patient record already exists
+         * Called in real-time as user types full name or selects date of birth
+         */
+        function checkForDuplicate() {
+            const fullNameInput = document.getElementById('modal_full_name');
+            const dobInput = document.getElementById('modal_date_of_birth');
+            const warningContainer = document.getElementById('duplicateWarningContainer');
+            
+            if (!fullNameInput || !dobInput || !warningContainer) return;
+            
+            const fullName = fullNameInput.value.trim();
+            const dateOfBirth = dobInput.value;
+            
+            // Clear if either field is empty
+            if (!fullName || !dateOfBirth) {
+                warningContainer.style.display = 'none';
+                clearFieldHighlight();
+                return;
+            }
+            
+            // Make AJAX request to check for duplicates
+            fetch(`../api/check_duplicate_patient.php?full_name=${encodeURIComponent(fullName)}&date_of_birth=${encodeURIComponent(dateOfBirth)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.exists && data.patient) {
+                        // Duplicate found - highlight fields and show warning
+                        showDuplicateWarning(data.patient);
+                        highlightDuplicateFields();
+                    } else {
+                        // No duplicate - clear highlight and warning
+                        warningContainer.style.display = 'none';
+                        clearFieldHighlight();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking for duplicate:', error);
+                    // Don't block form on error, just log it
+                });
+        }
+
+        /**
+         * Display the duplicate warning message with patient details
+         */
+        function showDuplicateWarning(patientData) {
+            const warningContainer = document.getElementById('duplicateWarningContainer');
+            
+            if (!warningContainer) return;
+            
+            // Store patient ID for view action
+            currentDuplicatePatientId = patientData.id;
+            
+            // Show the warning container (no patient details displayed)
+            warningContainer.style.display = 'block';
+            warningContainer.style.animation = 'slideDown 0.3s ease-out';
+            
+            // Disable all form fields
+            disableFormFields();
+        }
+
+        /**
+         * Disable all form fields in the Add Patient modal
+         */
+        function disableFormFields() {
+            const form = document.getElementById('patientForm');
+            if (!form) return;
+            
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.id !== 'modal_full_name' && input.id !== 'modal_date_of_birth') {
+                    input.disabled = true;
+                    input.style.opacity = '0.6';
+                    input.style.cursor = 'not-allowed';
+                    input.style.backgroundColor = '#f3f4f6';
+                }
+            });
+            
+            // Disable all buttons except View Record button and close button
+            const buttons = document.querySelectorAll('#addPatientModal button');
+            buttons.forEach(button => {
+                // Don't disable the close button, View Record button, or buttons with viewExistingPatientRecord onclick
+                if (!button.classList.contains('modal-close-btn') && !button.getAttribute('onclick')?.includes('viewExistingPatientRecord')) {
+                    button.disabled = true;
+                    button.style.opacity = '0.5';
+                    button.style.cursor = 'not-allowed';
+                    button.style.pointerEvents = 'none';
+                }
+            });
+        }
+
+        /**
+         * Enable all form fields in the Add Patient modal
+         */
+        function enableFormFields() {
+            const form = document.getElementById('patientForm');
+            if (!form) return;
+            
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.disabled = false;
+                input.style.opacity = '1';
+                input.style.cursor = 'auto';
+                input.style.backgroundColor = '';
+            });
+            
+            // Enable all buttons in the modal
+            const buttons = document.querySelectorAll('#addPatientModal button');
+            buttons.forEach(button => {
+                // Don't enable the close button, only action buttons
+                if (!button.classList.contains('modal-close-btn')) {
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                    button.style.cursor = 'pointer';
+                    button.style.pointerEvents = 'auto';
+                }
+            });
+        }
+
+        /**
+         * Highlight the duplicate fields with red border and background
+         */
+        function highlightDuplicateFields() {
+            const fullNameInput = document.getElementById('modal_full_name');
+            const dobInput = document.getElementById('modal_date_of_birth');
+            
+            if (fullNameInput) {
+                fullNameInput.style.borderColor = '#DC2626';
+                fullNameInput.style.borderWidth = '2px';
+                fullNameInput.style.backgroundColor = '#FEE2E2';
+                fullNameInput.classList.add('duplicate-field');
+            }
+            
+            if (dobInput) {
+                dobInput.style.borderColor = '#DC2626';
+                dobInput.style.borderWidth = '2px';
+                dobInput.style.backgroundColor = '#FEE2E2';
+                dobInput.classList.add('duplicate-field');
+            }
+        }
+
+        /**
+         * Clear the highlight from fields
+         */
+        function clearFieldHighlight() {
+            const fullNameInput = document.getElementById('modal_full_name');
+            const dobInput = document.getElementById('modal_date_of_birth');
+            
+            if (fullNameInput) {
+                fullNameInput.style.borderColor = '#85ccfb';
+                fullNameInput.style.backgroundColor = 'white';
+                fullNameInput.classList.remove('duplicate-field');
+            }
+            
+            if (dobInput) {
+                dobInput.style.borderColor = '#85ccfb';
+                dobInput.style.backgroundColor = 'white';
+                dobInput.classList.remove('duplicate-field');
+            }
+            
+            // Enable all form fields when no duplicate is found
+            enableFormFields();
+        }
+
+        /**
+         * Open the existing patient record in view modal
+         */
+        function viewExistingPatientRecord() {
+            if (currentDuplicatePatientId) {
+                closeAddPatientModal();
+                setTimeout(() => {
+                    openViewModal(currentDuplicatePatientId);
+                }, 300);
+            }
+        }
+
+        /**
+         * Utility function to escape HTML special characters
+         */
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Add CSS animation for sliding down the warning
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .duplicate-field {
+                transition: all 0.2s ease !important;
+            }
+
+            /* Custom Flatpickr Calendar Styles */
+            .flatpickr-calendar {
+                width: 380px !important;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.16) !important;
+                border-radius: 8px !important;
+            }
+
+            .flatpickr-calendar.open {
+                display: inline-block !important;
+                animation: slideInUp 0.3s ease;
+            }
+
+            @keyframes slideInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .flatpickr-months {
+                padding: 20px !important;
+            }
+
+            .flatpickr-month {
+                font-size: 16px !important;
+                font-weight: 600 !important;
+                color: #2c3e50 !important;
+            }
+
+            .flatpickr-prev-month,
+            .flatpickr-next-month {
+                height: 32px !important;
+                width: 32px !important;
+                line-height: 32px !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
+            }
+
+            .flatpickr-prev-month:hover,
+            .flatpickr-next-month:hover {
+                background-color: #e8f4f8 !important;
+                color: #3498db !important;
+            }
+
+            .flatpickr-weekdays {
+                padding: 10px 0 !important;
+                background-color: #f8fafc !important;
+                font-weight: 600 !important;
+                color: #374151 !important;
+                font-size: 13px !important;
+                text-transform: uppercase;
+            }
+
+            .flatpickr-days {
+                padding: 10px 0 !important;
+            }
+
+            .flatpickr-day {
+                height: 40px !important;
+                line-height: 40px !important;
+                font-size: 14px !important;
+                color: #4b5563 !important;
+                transition: all 0.2s ease !important;
+                margin: 2px !important;
+                border-radius: 6px !important;
+            }
+
+            .flatpickr-day:hover {
+                background-color: #e0f2fe !important;
+                color: #0369a1 !important;
+            }
+
+            .flatpickr-day.selected {
+                background-color: #3498db !important;
+                color: white !important;
+                border-radius: 6px !important;
+                font-weight: 600 !important;
+            }
+
+            .flatpickr-day.today {
+                background-color: #d1fae5 !important;
+                color: #065f46 !important;
+                border-radius: 6px !important;
+                font-weight: 600 !important;
+            }
+
+            .flatpickr-day.disabled {
+                color: #cbd5e1 !important;
+                cursor: not-allowed !important;
+            }
+
+            .flatpickr-time {
+                display: none !important;
+            }
+
+            .flatpickr-input {
+                font-size: 16px !important;
+                padding: 12px 16px !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        /**
+         * Initialize Flatpickr Date Picker for Date of Birth
+         */
+        function initializeDatePicker() {
+            // Initialize native date picker for modal
+            const dobInput = document.getElementById('modal_date_of_birth');
+            if (dobInput) {
+                // Clear any default value
+                dobInput.value = '';
+                
+                // Set up change event for age calculation and duplicate check
+                dobInput.addEventListener('change', function() {
+                    if (this.value) {
+                        const ageInput = document.getElementById('modal_age');
+                        calculateAge(this.value, ageInput);
+                        checkForDuplicate();
+                    }
+                });
+            }
+        }
+
+        // Initialize date picker when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDatePicker();
         });
     </script>
+
+    <script>
+        // Function to handle Child Health Record form submission
+function submitChildHealthForm(event) {
+    event.preventDefault();
+    
+    const form = document.getElementById('childHealthForm');
+    if (!form) {
+        showNotification('error', 'Child Health form not found.');
+        return;
+    }
+    
+    // Get the submit button
+    const submitBtn = document.getElementById('saveChildRecordBtn');
+    if (!submitBtn) {
+        showNotification('error', 'Save button not found.');
+        return;
+    }
+    
+    // Check required fields for Child Health form
+    const requiredFields = ['family_no', 'ufc_no', 'fullname', 'sex', 'dob'];
+    
+    let hasEmptyFields = false;
+    let emptyFieldNames = [];
+    
+    requiredFields.forEach(field => {
+        const fieldElement = form.querySelector(`[name="${field}"]`);
+        if (fieldElement && !fieldElement.value.trim()) {
+            hasEmptyFields = true;
+            emptyFieldNames.push(field.replace('_', ' '));
+            
+            // Highlight empty field
+            fieldElement.style.borderColor = '#DC2626';
+            fieldElement.style.borderWidth = '2px';
+        }
+    });
+    
+    if (hasEmptyFields) {
+        showNotification('error', `Please fill in required fields: ${emptyFieldNames.join(', ')}`);
+        return;
+    }
+    
+    // Create FormData
+    const formData = new FormData(form);
+    
+    // Show loading
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    submitBtn.disabled = true;
+    
+    // Submit via AJAX
+    fetch('save_child_health_record.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showSuccessModal(result.message || 'Child Health Record saved successfully!');
+            closeChildHealthModal();
+            
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showNotification('error', result.message || 'Failed to save record.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('error', 'Network error. Please try again.');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Function to handle Present Pregnant form submission
+function submitPresentPregnantForm(event) {
+    event.preventDefault();
+    
+    const form = document.getElementById('presentPregnantForm');
+    if (!form) {
+        console.error('Form not found');
+        showNotification('error', 'Form not found. Please refresh the page.');
+        return;
+    }
+    
+    // Get the submit button by ID
+    const submitBtn = document.getElementById('savePregnantRecordBtn');
+    if (!submitBtn) {
+        console.error('Submit button not found');
+        showNotification('error', 'Submit button not found. Please refresh the page.');
+        return;
+    }
+    
+    // Create FormData object
+    const formData = new FormData(form);
+    
+    // Add any missing required fields with default values if empty
+    const requiredFields = ['birth_plan', 'nutrition_breastfeeding', 'family_planning', 'tt_vaccination', 'iron_folic', 'vitamin_a', 'prenatal_schedule'];
+    
+    let hasEmptyFields = false;
+    let emptyFieldNames = [];
+    
+    // Check required fields
+    requiredFields.forEach(field => {
+        const fieldElement = form.querySelector(`[name="${field}"]`);
+        if (fieldElement && !fieldElement.value.trim()) {
+            hasEmptyFields = true;
+            emptyFieldNames.push(field.replace('_', ' '));
+            
+            // Highlight empty field
+            fieldElement.style.borderColor = '#DC2626';
+            fieldElement.style.borderWidth = '2px';
+            setTimeout(() => {
+                fieldElement.style.borderColor = '';
+                fieldElement.style.borderWidth = '';
+            }, 3000);
+        }
+    });
+    
+    if (hasEmptyFields) {
+        showNotification('error', `Please fill in required fields: ${emptyFieldNames.join(', ')}`);
+        
+        // Scroll to first empty field
+        const firstEmptyField = form.querySelector(`[name="${requiredFields.find(f => !form.querySelector(`[name="${f}"]`).value.trim())}"]`);
+        if (firstEmptyField) {
+            firstEmptyField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstEmptyField.focus();
+        }
+        return;
+    }
+    
+    // Debug: Log form data
+    console.log('Present Pregnant Form Data:');
+    for (let [key, value] of formData.entries()) {
+        console.log(key + ': ' + value);
+    }
+    
+    // Show loading
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    submitBtn.disabled = true;
+    
+    // Submit via AJAX
+    fetch('save_present_pregnant_record.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return response.json();
+    })
+    .then(result => {
+        console.log('Response result:', result);
+        
+        if (result.success) {
+            showSuccessModal(result.message || 'Present Pregnant Record saved successfully!');
+            closePresentPregnantModal();
+            
+            // Refresh the pregnant records table after 2 seconds
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showNotification('error', result.message || 'Failed to save record.');
+            
+            // If there's debug info in response, log it
+            if (result.debug) {
+                console.error('Debug info:', result.debug);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        showNotification('error', 'Network error: ' + error.message);
+        
+        // Try alternative method if fetch fails
+        console.log('Trying alternative submission method...');
+        submitFormAlternative(form);
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Alternative submission method (as regular form submission)
+function submitFormAlternative(form) {
+    // Create a hidden input to trigger the form submission
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'save_present_pregnant';
+    hiddenInput.value = '1';
+    form.appendChild(hiddenInput);
+    
+    // Submit the form normally
+    form.submit();
+}
+
+// Function to view Child Health Record details
+function viewChildHealthRecord(recordId) {
+    fetch(`view_child_health_record.php?id=${recordId}`)
+    .then(response => response.text())
+    .then(html => {
+        showCustomModal(html, 'Child Health Record Details');
+    })
+    .catch(error => {
+        showNotification('error', 'Unable to load record details.');
+    });
+}
+
+// Function to view Present Pregnant Record details
+function viewPregnantRecord(recordId) {
+    fetch(`view_pregnant_record.php?id=${recordId}`)
+    .then(response => response.text())
+    .then(html => {
+        showCustomModal(html, 'Present Pregnant Record Details');
+    })
+    .catch(error => {
+        showNotification('error', 'Unable to load record details.');
+    });
+}
+
+// Add event listeners when modals open
+document.getElementById('childHealthForm').addEventListener('submit', submitChildHealthForm);
+document.getElementById('presentPregnantForm').addEventListener('submit', submitPresentPregnantForm);
+    </script>
+
+    <script>
+        // Debug function to test the connection
+function testConnection() {
+    const testData = new FormData();
+    testData.append('test', 'connection_test');
+    testData.append('birth_plan', 'Test Birth Plan');
+    testData.append('nutrition_breastfeeding', 'Test Nutrition');
+    testData.append('family_planning', 'Test Planning');
+    testData.append('tt_vaccination', 'Test TT');
+    testData.append('iron_folic', 'Test Iron');
+    testData.append('vitamin_a', 'Test Vitamin A');
+    testData.append('prenatal_schedule', 'Test Schedule');
+    
+    fetch('save_present_pregnant_record.php', {
+        method: 'POST',
+        body: testData
+    })
+    .then(response => {
+        console.log('Test response status:', response.status);
+        return response.text();
+    })
+    .then(text => {
+        console.log('Test response text:', text);
+        alert('Test response: ' + text.substring(0, 200));
+    })
+    .catch(error => {
+        console.error('Test error:', error);
+        alert('Test failed: ' + error.message);
+    });
+}
+
+// You can call this function from browser console: testConnection()
+    </script>
+
+
+<script>
+    // Add event listeners when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove any existing form submit event listeners to prevent default submission
+    const childForm = document.getElementById('childHealthForm');
+    const pregnantForm = document.getElementById('presentPregnantForm');
+    
+    if (childForm) {
+        childForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            submitChildHealthForm(event);
+        });
+    }
+    
+    if (pregnantForm) {
+        pregnantForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            submitPresentPregnantForm(event);
+        });
+    }
+    
+    // Also add click event listeners to buttons (as backup)
+    const saveChildBtn = document.getElementById('saveChildRecordBtn');
+    const savePregnantBtn = document.getElementById('savePregnantRecordBtn');
+    
+    if (saveChildBtn) {
+        saveChildBtn.addEventListener('click', submitChildHealthForm);
+    }
+    
+    if (savePregnantBtn) {
+        savePregnantBtn.addEventListener('click', submitPresentPregnantForm);
+    }
+});
+</script>
 </body>
 </html>

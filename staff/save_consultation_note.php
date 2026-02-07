@@ -84,9 +84,15 @@ try {
         error_log("Found staff: " . print_r($staff, true));
     }
     
-    // Verify patient belongs to this staff member
-    $checkPatient = $pdo->prepare("SELECT id, full_name FROM sitio1_patients WHERE id = ? AND added_by = ?");
-    $checkPatient->execute([$patient_id, $staff_id]);
+    require_once __DIR__ . '/../includes/functions.php';
+    // Verify patient belongs to this staff member OR allow when sharing is enabled
+    if (staff_can_view_all()) {
+        $checkPatient = $pdo->prepare("SELECT id, full_name FROM sitio1_patients WHERE id = ?");
+        $checkPatient->execute([$patient_id]);
+    } else {
+        $checkPatient = $pdo->prepare("SELECT id, full_name FROM sitio1_patients WHERE id = ? AND added_by = ?");
+        $checkPatient->execute([$patient_id, $staff_id]);
+    }
     $patient = $checkPatient->fetch(PDO::FETCH_ASSOC);
     
     if (!$patient) {
@@ -115,12 +121,46 @@ try {
     if ($result) {
         $note_id = $pdo->lastInsertId();
         error_log("Successfully inserted note with ID: " . $note_id);
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Consultation note added successfully!',
-            'note_id' => $note_id
-        ]);
+
+        // Log action to file and try DB table for staff activity
+        try {
+            $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
+            // Create staff_activity_log table if necessary
+            $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                staff_id INT,
+                action_type VARCHAR(100),
+                related_id INT,
+                details JSON,
+                ip_address VARCHAR(45),
+                user_agent TEXT,
+                created_at DATETIME
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'add_consultation_note', ?, ?, ?, ?, NOW())");
+            $stmtLog->execute([$staff_id, $patient_id, json_encode(['full_name' => $staff_name, 'note_id' => $note_id, 'patient_id' => $patient_id]), $ip, $ua]);
+        } catch (Exception $e) {
+            error_log('Staff activity DB log error: ' . $e->getMessage());
+        }
+
+        try {
+            $log = [
+                'timestamp' => date('Y-m-d H:i:s'),
+                'type' => 'add_consultation_note',
+                'staff_id' => $staff_id,
+                'patient_id' => $patient_id,
+                'note_id' => $note_id,
+                'ip' => $ip ?? null,
+                'user_agent' => $ua ?? null,
+                'script' => (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ($_SERVER['SCRIPT_NAME'] ?? ''))
+            ];
+            @file_put_contents(__DIR__ . '/../logs/save_actions.log', json_encode($log) . PHP_EOL, FILE_APPEND | LOCK_EX);
+        } catch (Exception $e) {
+            error_log('Staff action file log error: ' . $e->getMessage());
+        }
     } else {
         throw new Exception('Insert failed without error');
     }

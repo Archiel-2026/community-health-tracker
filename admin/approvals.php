@@ -39,132 +39,75 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Approvals - Community Health Tracker</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/admin-styles.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .stats-card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            border: 1px solid #e5e7eb;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        }
-
+        * { font-family: 'Poppins', sans-serif !important; }
+        .stat-card { position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+        .stat-card-yellow::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .stat-card-green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+        .stat-card-red::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+        .stat-card-blue::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
         .user-card {
             background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
-            border: 1px solid #e5e7eb;
             margin-bottom: 16px;
         }
-
         .user-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-pending {
-            background-color: #fef3cd;
-            color: #856404;
-        }
-
-        .status-approved {
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .status-declined {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .filter-btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .filter-btn.active {
-            background-color: #3b82f6;
-            color: white;
-        }
-
-        .filter-btn:not(.active) {
-            background-color: #f3f4f6;
-            color: #4b5563;
-        }
-
-        .filter-btn:not(.active):hover {
-            background-color: #e5e7eb;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     
-    <div class="container mx-auto px-4 py-6">
-        <!-- Dashboard Header -->
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                User Approvals
-            </h1>
-            <a href="/community-health-tracker/admin/dashboard" class="text-blue-600 hover:underline flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+    <div class="container mx-auto px-4 py-8">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-title">
+                <div class="page-header-icon bg-blue-100 text-blue-600">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <h1>User Approvals</h1>
+                    <p>Review and approve user registrations</p>
+                </div>
+            </div>
+            <a href="/community-health-tracker/admin/dashboard.php" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
         
         <?php if (isset($_SESSION['error_message'])): ?>
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
                 <?= $_SESSION['error_message'] ?>
                 <?php unset($_SESSION['error_message']); ?>
             </div>
         <?php endif; ?>
         
         <?php if (isset($_SESSION['success_message'])): ?>
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
                 <?= $_SESSION['success_message'] ?>
                 <?php unset($_SESSION['success_message']); ?>
             </div>
         <?php endif; ?>
         
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <!-- Pending Approvals Card -->
-            <div class="stats-card">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center mr-4">
-                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-700">Pending Approvals</h3>
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="stat-card stat-card-yellow">
+                <div class="stat-card-icon bg-yellow-100">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
                 </div>
-                <p class="text-3xl font-bold text-yellow-600 mb-2">
+                <div class="stat-card-value text-yellow-600">
                     <?php 
                     try {
                         $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_users WHERE status = 'pending'");
@@ -173,19 +116,15 @@ try {
                         echo "0";
                     }
                     ?>
-                </p>
-                <p class="text-gray-500 text-sm mb-4">Awaiting approval</p>
+                </div>
+                <div class="stat-card-label">Pending Approvals</div>
             </div>
             
-            <!-- Approved Users Card -->
-            <div class="stats-card">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                        <i class="fas fa-user-check text-green-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-700">Approved Users</h3>
+            <div class="stat-card stat-card-green">
+                <div class="stat-card-icon bg-green-100">
+                    <i class="fas fa-user-check text-green-600 text-xl"></i>
                 </div>
-                <p class="text-3xl font-bold text-green-600 mb-2">
+                <div class="stat-card-value text-green-600">
                     <?php 
                     try {
                         $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_users WHERE status = 'approved'");
@@ -194,19 +133,15 @@ try {
                         echo "0";
                     }
                     ?>
-                </p>
-                <p class="text-gray-500 text-sm mb-4">Verified residents</p>
+                </div>
+                <div class="stat-card-label">Approved Users</div>
             </div>
             
-            <!-- Declined Users Card -->
-            <div class="stats-card">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4">
-                        <i class="fas fa-user-times text-red-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-700">Declined Users</h3>
+            <div class="stat-card stat-card-red">
+                <div class="stat-card-icon bg-red-100">
+                    <i class="fas fa-user-times text-red-600 text-xl"></i>
                 </div>
-                <p class="text-3xl font-bold text-red-600 mb-2">
+                <div class="stat-card-value text-red-600">
                     <?php 
                     try {
                         $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_users WHERE status = 'declined'");
@@ -215,19 +150,15 @@ try {
                         echo "0";
                     }
                     ?>
-                </p>
-                <p class="text-gray-500 text-sm mb-4">Not approved</p>
+                </div>
+                <div class="stat-card-label">Declined Users</div>
             </div>
             
-            <!-- Total Users Card -->
-            <div class="stats-card">
-                <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                        <i class="fas fa-users text-blue-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-700">Total Users</h3>
+            <div class="stat-card stat-card-blue">
+                <div class="stat-card-icon bg-blue-100">
+                    <i class="fas fa-users text-blue-600 text-xl"></i>
                 </div>
-                <p class="text-3xl font-bold text-blue-600 mb-2">
+                <div class="stat-card-value text-blue-600">
                     <?php 
                     try {
                         $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_users");
@@ -236,54 +167,52 @@ try {
                         echo "0";
                     }
                     ?>
-                </p>
-                <p class="text-gray-500 text-sm mb-4">All registered users</p>
+                </div>
+                <div class="stat-card-label">Total Users</div>
             </div>
         </div>
         
         <!-- Filter Section -->
-        <div class="stats-card mb-6">
-            <h2 class="text-xl font-semibold mb-4 flex items-center text-blue-600">
-                <i class="fas fa-filter text-blue-600 mr-2"></i> Filter Users
-            </h2>
-            <div class="flex space-x-4">
-                <a href="?filter=pending" class="filter-btn <?= $filter === 'pending' ? 'active' : '' ?>">
-                    <i class="fas fa-clock mr-2"></i> Pending Approval
+        <div class="main-container p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Filter Users</h2>
+            <div class="tabs-container">
+                <a href="?filter=pending" class="tab-btn <?= $filter === 'pending' ? 'active' : '' ?>">
+                    <i class="fas fa-clock mr-2"></i> Pending
                 </a>
-                <a href="?filter=approved" class="filter-btn <?= $filter === 'approved' ? 'active' : '' ?>">
-                    <i class="fas fa-user-check mr-2"></i> Approved Users
+                <a href="?filter=approved" class="tab-btn <?= $filter === 'approved' ? 'active' : '' ?>">
+                    <i class="fas fa-user-check mr-2"></i> Approved
                 </a>
-                <a href="?filter=declined" class="filter-btn <?= $filter === 'declined' ? 'active' : '' ?>">
-                    <i class="fas fa-user-times mr-2"></i> Declined Users
+                <a href="?filter=declined" class="tab-btn <?= $filter === 'declined' ? 'active' : '' ?>">
+                    <i class="fas fa-user-times mr-2"></i> Declined
                 </a>
-                <a href="?filter=all" class="filter-btn <?= $filter === 'all' ? 'active' : '' ?>">
-                    <i class="fas fa-users mr-2"></i> All Users
+                <a href="?filter=all" class="tab-btn <?= $filter === 'all' ? 'active' : '' ?>">
+                    <i class="fas fa-users mr-2"></i> All
                 </a>
             </div>
         </div>
         
         <!-- Users List -->
-        <div class="stats-card">
+        <div class="main-container p-6">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold flex items-center text-blue-600">
+                <h2 class="text-lg font-semibold text-gray-800">
                     <?php if ($filter === 'pending'): ?>
-                        <i class="fas fa-clock text-blue-600 mr-2"></i> Pending Approvals
+                        <i class="fas fa-clock text-yellow-500 mr-2"></i> Pending Approvals
                     <?php elseif ($filter === 'approved'): ?>
-                        <i class="fas fa-user-check text-blue-600 mr-2"></i> Approved Users
+                        <i class="fas fa-user-check text-green-500 mr-2"></i> Approved Users
                     <?php elseif ($filter === 'declined'): ?>
-                        <i class="fas fa-user-times text-blue-600 mr-2"></i> Declined Users
+                        <i class="fas fa-user-times text-red-500 mr-2"></i> Declined Users
                     <?php else: ?>
-                        <i class="fas fa-users text-blue-600 mr-2"></i> All Users
+                        <i class="fas fa-users text-blue-500 mr-2"></i> All Users
                     <?php endif; ?>
                 </h2>
-                <p class="text-gray-600"><?= count($users) ?> user(s) found</p>
+                <div class="badge badge-blue"><?= count($users) ?> user(s) found</div>
             </div>
             
             <?php if (empty($users)): ?>
-                <div class="text-center py-8">
-                    <i class="fas fa-users text-gray-300 text-5xl mb-4"></i>
-                    <h3 class="text-xl font-semibold text-gray-500 mb-2">No users found</h3>
-                    <p class="text-gray-500">There are no users matching your current filter.</p>
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>No users found</h3>
+                    <p>There are no users matching your current filter.</p>
                 </div>
             <?php else: ?>
                 <div class="space-y-4">
@@ -291,22 +220,26 @@ try {
                         <div class="user-card">
                             <div class="flex flex-col md:flex-row md:items-center justify-between">
                                 <div class="flex items-start mb-4 md:mb-0">
-                                    <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+                                    <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mr-4">
                                         <?php if (!empty($user['profile_image'])): ?>
                                             <img src="<?= htmlspecialchars($user['profile_image']) ?>" alt="Profile" class="w-12 h-12 rounded-full object-cover">
                                         <?php else: ?>
-                                            <i class="fas fa-user text-gray-500"></i>
+                                            <i class="fas fa-user text-gray-400"></i>
                                         <?php endif; ?>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-lg"><?= htmlspecialchars($user['full_name']) ?></h3>
-                                        <p class="text-gray-600"><?= htmlspecialchars($user['email']) ?></p>
+                                        <h3 class="font-semibold text-lg text-gray-800"><?= htmlspecialchars($user['full_name']) ?></h3>
+                                        <p class="text-gray-500"><?= htmlspecialchars($user['email']) ?></p>
                                         <div class="flex flex-wrap gap-2 mt-2">
-                                            <span class="status-badge status-<?= $user['status'] ?>">
-                                                <?= ucfirst($user['status']) ?>
-                                            </span>
+                                            <?php if ($user['status'] === 'pending'): ?>
+                                                <span class="badge badge-yellow">Pending</span>
+                                            <?php elseif ($user['status'] === 'approved'): ?>
+                                                <span class="badge badge-green">Approved</span>
+                                            <?php else: ?>
+                                                <span class="badge badge-red">Declined</span>
+                                            <?php endif; ?>
                                             <?php if ($user['id_verified']): ?>
-                                                <span class="status-badge" style="background-color: #d1f2eb; color: #0d9488;">
+                                                <span class="badge badge-cyan">
                                                     <i class="fas fa-id-card mr-1"></i> ID Verified
                                                 </span>
                                             <?php endif; ?>
@@ -334,30 +267,30 @@ try {
                             </div>
                             
                             <!-- User Details -->
-                            <div class="mt-4 pt-4 border-t border-gray-200">
+                            <div class="mt-4 pt-4" style="border-top: 1px solid #e5e7eb;">
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                     <div>
-                                        <p class="text-sm text-gray-500">Contact</p>
-                                        <p class="font-medium"><?= !empty($user['contact']) ? htmlspecialchars($user['contact']) : 'Not provided' ?></p>
+                                        <p class="text-xs text-gray-400 uppercase tracking-wide">Contact</p>
+                                        <p class="font-medium text-gray-700"><?= !empty($user['contact']) ? htmlspecialchars($user['contact']) : 'Not provided' ?></p>
                                     </div>
                                     <div>
-                                        <p class="text-sm text-gray-500">Address</p>
-                                        <p class="font-medium"><?= !empty($user['address']) ? htmlspecialchars($user['address']) : 'Not provided' ?></p>
+                                        <p class="text-xs text-gray-400 uppercase tracking-wide">Address</p>
+                                        <p class="font-medium text-gray-700"><?= !empty($user['address']) ? htmlspecialchars($user['address']) : 'Not provided' ?></p>
                                     </div>
                                     <div>
-                                        <p class="text-sm text-gray-500">Sitio</p>
-                                        <p class="font-medium"><?= !empty($user['sitio']) ? htmlspecialchars($user['sitio']) : 'Not provided' ?></p>
+                                        <p class="text-xs text-gray-400 uppercase tracking-wide">Sitio</p>
+                                        <p class="font-medium text-gray-700"><?= !empty($user['sitio']) ? htmlspecialchars($user['sitio']) : 'Not provided' ?></p>
                                     </div>
                                     <div>
-                                        <p class="text-sm text-gray-500">Verification Method</p>
-                                        <p class="font-medium"><?= str_replace('_', ' ', ucfirst($user['verification_method'])) ?></p>
+                                        <p class="text-xs text-gray-400 uppercase tracking-wide">Verification Method</p>
+                                        <p class="font-medium text-gray-700"><?= str_replace('_', ' ', ucfirst($user['verification_method'])) ?></p>
                                     </div>
                                 </div>
                                 
                                 <?php if (!empty($user['id_image_path'])): ?>
                                     <div class="mt-4">
-                                        <p class="text-sm text-gray-500 mb-2">ID Document</p>
-                                        <a href="<?= htmlspecialchars($user['id_image_path']) ?>" target="_blank" class="inline-flex items-center text-blue-600 hover:underline">
+                                        <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">ID Document</p>
+                                        <a href="<?= htmlspecialchars($user['id_image_path']) ?>" target="_blank" class="inline-flex items-center text-blue-600 hover:underline text-sm">
                                             <i class="fas fa-external-link-alt mr-1"></i> View ID Document
                                         </a>
                                     </div>
@@ -365,8 +298,8 @@ try {
                                 
                                 <?php if (!empty($user['verification_notes'])): ?>
                                     <div class="mt-4">
-                                        <p class="text-sm text-gray-500 mb-2">Verification Notes</p>
-                                        <p class="text-gray-700 bg-gray-50 p-3 rounded-md"><?= htmlspecialchars($user['verification_notes']) ?></p>
+                                        <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">Verification Notes</p>
+                                        <p class="text-gray-700 bg-gray-50 p-3 rounded-lg text-sm"><?= htmlspecialchars($user['verification_notes']) ?></p>
                                     </div>
                                 <?php endif; ?>
                             </div>

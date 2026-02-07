@@ -18,14 +18,28 @@ if ($patientId <= 0) {
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT p.*, 
+    require_once __DIR__ . '/../includes/functions.php';
+
+    // Allow other staff's patient records to be viewed when shared-mode is enabled
+    if (staff_can_view_all()) {
+        $stmt = $pdo->prepare("SELECT p.*, 
+                          COALESCE(e.gender, p.gender) as display_gender,
+                          u.unique_number, u.email as user_email, u.id as user_id
+                          FROM sitio1_patients p 
+                          LEFT JOIN sitio1_users u ON p.user_id = u.id
+                          LEFT JOIN existing_info_patients e ON p.id = e.patient_id
+                          WHERE p.id = ?");
+        $stmt->execute([$patientId]);
+    } else {
+        $stmt = $pdo->prepare("SELECT p.*, 
                           COALESCE(e.gender, p.gender) as display_gender,
                           u.unique_number, u.email as user_email, u.id as user_id
                           FROM sitio1_patients p 
                           LEFT JOIN sitio1_users u ON p.user_id = u.id
                           LEFT JOIN existing_info_patients e ON p.id = e.patient_id
                           WHERE p.id = ? AND p.added_by = ?");
-    $stmt->execute([$patientId, $_SESSION['user']['id']]);
+        $stmt->execute([$patientId, $_SESSION['user']['id']]);
+    }
     $patient = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$patient) {

@@ -186,4 +186,13 @@ function getUserIp() {
         return $_SERVER['REMOTE_ADDR'];
     }
 }
+
+/**
+ * Whether staff members should be able to view all patient history (shared across staff).
+ * Set to true to allow all staff to see the same history in dashboards and listings.
+ * Change to false to preserve per-staff isolation.
+ */
+function staff_can_view_all() {
+    return true; // Toggle here
+}
 ?>

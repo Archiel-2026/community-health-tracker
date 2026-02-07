@@ -22,8 +22,10 @@ $staffId = $_SESSION['user']['id'];
 
 try {
     // Get patient basic information
-    $stmt = $pdo->prepare("
-        SELECT 
+    require_once __DIR__ . '/../includes/functions.php';
+
+    if (staff_can_view_all()) {
+        $stmt = $pdo->prepare("SELECT 
             p.*,
             COALESCE(u.full_name, 'N/A') as registered_by_name,
             u.email as registered_email,
@@ -37,10 +39,28 @@ try {
             u.occupation as user_occupation
         FROM sitio1_patients p
         LEFT JOIN sitio1_users u ON p.user_id = u.id
-        WHERE p.id = ? AND p.added_by = ? AND p.deleted_at IS NULL
-    ");
-    $stmt->execute([$patientId, $staffId]);
-    $patient = $stmt->fetch(PDO::FETCH_ASSOC);
+        WHERE p.id = ? AND p.deleted_at IS NULL");
+        $stmt->execute([$patientId]);
+        $patient = $stmt->fetch(PDO::FETCH_ASSOC);
+    } else {
+        $stmt = $pdo->prepare("SELECT 
+            p.*,
+            COALESCE(u.full_name, 'N/A') as registered_by_name,
+            u.email as registered_email,
+            u.unique_number,
+            COALESCE(u.gender, p.gender) as user_gender,
+            u.date_of_birth as user_dob,
+            u.address as user_address,
+            u.contact as user_contact,
+            u.sitio as user_sitio,
+            u.civil_status as user_civil_status,
+            u.occupation as user_occupation
+        FROM sitio1_patients p
+        LEFT JOIN sitio1_users u ON p.user_id = u.id
+        WHERE p.id = ? AND p.added_by = ? AND p.deleted_at IS NULL");
+        $stmt->execute([$patientId, $staffId]);
+        $patient = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 
     if (!$patient) {
         die(json_encode(['error' => 'Patient not found or access denied']));
@@ -72,6 +92,7 @@ try {
 <!-- Patient Information Form -->
 <form id="healthInfoForm" method="POST" action="existing_info_patients.php" class="space-y-8">
     <input type="hidden" name="patient_id" value="<?= htmlspecialchars($patientId) ?>">
+    <input type="hidden" name="user_id" value="<?= htmlspecialchars($patientData['user_id'] ?? '0') ?>">
     <input type="hidden" name="save_health_info" value="1">
 
     <!-- Personal Information Section -->

@@ -129,152 +129,135 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Management - Community Health Tracker</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/admin-styles.css">
+    <style>
+        * { font-family: 'Poppins', sans-serif !important; }
+        .stat-card { position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+        .stat-card-blue::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .stat-card-green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+        .stat-card-purple::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+        .stat-card-cyan::before { background: linear-gradient(90deg, #06b6d4, #22d3ee); }
+        .stat-card-amber::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     
-    <div class="container mx-auto px-4 py-6">
-        <!-- Dashboard Header -->
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">
-                Patient Management
-            </h1>
-            <a href="/community-health-tracker/admin/dashboard.php" class="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition-colors flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+    <div class="container mx-auto px-4 py-8">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-title">
+                <div class="page-header-icon bg-purple-100 text-purple-600">
+                    <i class="fas fa-hospital-user"></i>
+                </div>
+                <div>
+                    <h1>Patient Management</h1>
+                    <p>View and manage all patient records</p>
+                </div>
+            </div>
+            <a href="/community-health-tracker/admin/dashboard.php" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
         
         <?php if (isset($_SESSION['error_message'])): ?>
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
                 <?= $_SESSION['error_message'] ?>
                 <?php unset($_SESSION['error_message']); ?>
             </div>
         <?php endif; ?>
         
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <!-- Total Patients Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                        <i class="fas fa-procedures text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Total Patients</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['total_patients'] ?></p>
-                    </div>
+        <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="stat-card stat-card-blue">
+                <div class="stat-card-icon bg-blue-100">
+                    <i class="fas fa-procedures text-blue-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-blue-600"><?= $stats['total_patients'] ?></div>
+                <div class="stat-card-label">Total Patients</div>
             </div>
             
-            <!-- Registered Users Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                        <i class="fas fa-user-check text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Registered Users</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['registered_users'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-green">
+                <div class="stat-card-icon bg-green-100">
+                    <i class="fas fa-user-check text-green-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-green-600"><?= $stats['registered_users'] ?></div>
+                <div class="stat-card-label">Registered Users</div>
             </div>
             
-            <!-- Regular Patients Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
-                        <i class="fas fa-user-injured text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Regular Patients</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['regular_patients'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-purple">
+                <div class="stat-card-icon bg-purple-100">
+                    <i class="fas fa-user-injured text-purple-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-purple-600"><?= $stats['regular_patients'] ?></div>
+                <div class="stat-card-label">Regular Patients</div>
             </div>
             
-            <!-- Recent Checkups Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-teal-100 text-teal-600 mr-4">
-                        <i class="fas fa-calendar-check text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Recent Checkups</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['recent_checkups'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-cyan">
+                <div class="stat-card-icon bg-cyan-100">
+                    <i class="fas fa-calendar-check text-cyan-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-cyan-600"><?= $stats['recent_checkups'] ?></div>
+                <div class="stat-card-label">Recent Checkups</div>
             </div>
             
-            <!-- Due for Checkup Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
-                        <i class="fas fa-clock text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Due for Checkup</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['no_checkup'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-amber">
+                <div class="stat-card-icon bg-amber-100">
+                    <i class="fas fa-clock text-amber-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-amber-600"><?= $stats['no_checkup'] ?></div>
+                <div class="stat-card-label">Due for Checkup</div>
             </div>
         </div>
         
         <!-- Search and Filter Section -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="main-container p-6 mb-6">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <h2 class="text-lg font-semibold text-gray-800">Filter Patients</h2>
                 
-                <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex flex-col sm:flex-row gap-4 flex-wrap">
                     <!-- Search Form -->
                     <form method="GET" class="flex">
                         <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" 
                                placeholder="Search patients..." 
-                               class="px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full">
+                               class="form-input rounded-r-none" style="border-radius: 8px 0 0 8px;">
                         <input type="hidden" name="type" value="<?= $patient_type ?>">
                         <input type="hidden" name="filter" value="<?= $filter ?>">
-                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 transition-colors">
+                        <button type="submit" class="btn btn-primary-solid" style="border-radius: 0 8px 8px 0;">
                             <i class="fas fa-search"></i>
                         </button>
                     </form>
                     
-                    <!-- Patient Type Filter -->
-                    <div class="flex space-x-2">
+                    <!-- Tabs -->
+                    <div class="tabs-container">
                         <a href="?type=all&filter=<?= $filter ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $patient_type === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            All Types
-                        </a>
+                           class="tab-btn <?= $patient_type === 'all' ? 'active' : '' ?>">All</a>
                         <a href="?type=registered&filter=<?= $filter ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $patient_type === 'registered' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Registered Users
-                        </a>
+                           class="tab-btn <?= $patient_type === 'registered' ? 'active' : '' ?>">Registered</a>
                         <a href="?type=regular&filter=<?= $filter ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $patient_type === 'regular' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Regular Patients
-                        </a>
+                           class="tab-btn <?= $patient_type === 'regular' ? 'active' : '' ?>">Regular</a>
                     </div>
                     
                     <!-- Checkup Filter -->
-                    <div class="flex space-x-2">
+                    <div class="tabs-container">
                         <a href="?type=<?= $patient_type ?>&filter=all<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            All
-                        </a>
+                           class="tab-btn <?= $filter === 'all' ? 'active' : '' ?>">All</a>
                         <a href="?type=<?= $patient_type ?>&filter=recent<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'recent' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Recent
-                        </a>
+                           class="tab-btn <?= $filter === 'recent' ? 'active' : '' ?>">Recent</a>
                         <a href="?type=<?= $patient_type ?>&filter=no_checkup<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'no_checkup' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Due
-                        </a>
+                           class="tab-btn <?= $filter === 'no_checkup' ? 'active' : '' ?>">Due</a>
                     </div>
                 </div>
             </div>
         </div>
         
         <!-- Patients List -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="main-container p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-lg font-semibold text-gray-800">
                     <?php 
@@ -293,34 +276,34 @@ try {
                     }
                     ?>
                 </h2>
-                <div class="text-gray-600">
+                <div class="badge badge-blue">
                     Showing <?= count($patients) ?> of <?= $total_records ?> patient(s)
                 </div>
             </div>
             
             <?php if (empty($patients)): ?>
-                <div class="text-center py-8">
-                    <i class="fas fa-procedures text-gray-300 text-4xl mb-3"></i>
-                    <h3 class="text-lg font-semibold text-gray-500 mb-2">No patients found</h3>
-                    <p class="text-gray-500">There are no patients matching your current filter.</p>
+                <div class="empty-state">
+                    <i class="fas fa-procedures"></i>
+                    <h3>No patients found</h3>
+                    <p>There are no patients matching your current filter.</p>
                 </div>
             <?php else: ?>
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="data-table">
                         <thead>
-                            <tr class="border-b border-gray-200">
-                                <th class="text-left py-3 px-4 text-gray-600">Patient Info</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Type</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Sitio</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Condition</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Last Checkup</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Status</th>
+                            <tr>
+                                <th>Patient Info</th>
+                                <th>Type</th>
+                                <th>Sitio</th>
+                                <th>Condition</th>
+                                <th>Last Checkup</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($patients as $patient): ?>
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="py-3 px-4">
+                                <tr>
+                                    <td>
                                         <div class="font-medium text-gray-800"><?= htmlspecialchars($patient['full_name']) ?></div>
                                         <div class="text-sm text-gray-500">
                                             <?= $patient['age'] ?? 'N/A' ?> • <?= ucfirst($patient['gender'] ?? 'Not specified') ?>
@@ -340,26 +323,26 @@ try {
                                             </div>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <?php if ($patient['patient_type'] === 'registered_user'): ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="badge badge-green">
                                                 <i class="fas fa-user-check mr-1"></i> Registered
                                             </span>
                                         <?php else: ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            <span class="badge badge-purple">
                                                 <i class="fas fa-user-injured mr-1"></i> Regular
                                             </span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="py-3 px-4 text-gray-700"><?= !empty($patient['sitio']) ? htmlspecialchars($patient['sitio']) : 'Not specified' ?></td>
-                                    <td class="py-3 px-4">
+                                    <td><?= !empty($patient['sitio']) ? htmlspecialchars($patient['sitio']) : 'Not specified' ?></td>
+                                    <td>
                                         <?php if (!empty($patient['disease'])): ?>
-                                            <span class="text-red-600 font-medium"><?= htmlspecialchars($patient['disease']) ?></span>
+                                            <span class="badge badge-red"><?= htmlspecialchars($patient['disease']) ?></span>
                                         <?php else: ?>
                                             <span class="text-gray-500">No condition</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <?php if ($patient['last_checkup']): ?>
                                             <div class="text-green-600 font-medium">
                                                 <?= date('M j, Y', strtotime($patient['last_checkup'])) ?>
@@ -368,17 +351,17 @@ try {
                                             <div class="text-yellow-600 font-medium">No checkup</div>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <?php if ($patient['last_checkup'] && strtotime($patient['last_checkup']) >= strtotime('-30 days')): ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="badge badge-green">
                                                 <i class="fas fa-check-circle mr-1"></i> Recent
                                             </span>
                                         <?php elseif (empty($patient['last_checkup'])): ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <span class="badge badge-yellow">
                                                 <i class="fas fa-clock mr-1"></i> Due
                                             </span>
                                         <?php else: ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <span class="badge badge-gray">
                                                 <i class="fas fa-calendar mr-1"></i> Scheduled
                                             </span>
                                         <?php endif; ?>

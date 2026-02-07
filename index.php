@@ -37,8 +37,10 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barangay Luz - Health Monitoring and Tracking</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
     
     <style>
         :root {
@@ -172,19 +174,68 @@ try {
         }
         
         .mobile-menu {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+            backdrop-filter: blur(15px);
+            z-index: 5000;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
         }
 
         .mobile-menu.show {
-            max-height: 500px;
-            transition: max-height 0.5s ease-in;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        
+        .mobile-nav-link {
+            font-size: 1.75rem;
+            font-weight: 600;
+            padding: 1.25rem 0;
+            color: #1a202c;
+            transition: all 0.3s ease;
+            position: relative;
+            letter-spacing: 0.025em;
+        }
+        
+        .mobile-nav-link:hover {
+            color: #4A90E2;
+            transform: scale(1.05);
+        }
+        
+        .mobile-nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0.5rem;
+            left: 50%;
+            transform: translateX(-50%) scaleX(0);
+            width: 60%;
+            height: 3px;
+            background: #4A90E2;
+            border-radius: 2px;
+            transition: transform 0.3s ease;
+        }
+        
+        .mobile-nav-link:hover::after {
+            transform: translateX(-50%) scaleX(1);
         }
 
         .touch-target {
             min-width: 44px;
             min-height: 44px;
+            z-index: 1001;
+            position: relative;
         }
 
         .circle-image {
@@ -224,18 +275,43 @@ try {
         /* Modal Styles */
         .modal-overlay {
             background: rgba(0, 0, 0, 0.5);
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.3s ease-in-out, backdrop-filter 0.3s ease-in-out;
+        }
+        
+        #loginModal:not(.hidden),
+        #announcementsModal:not(.hidden),
+        #learnMoreModal:not(.hidden) {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
 
         .modal-content {
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out;
+            transform: translateY(100%);
             opacity: 0;
         }
 
         .modal-content.open {
-            transform: scale(1);
+            transform: translateY(0);
             opacity: 1;
+        }
+        
+        @media (min-width: 640px) {
+            .modal-content {
+                transform: scale(0.95) translateY(0);
+            }
+            
+            .modal-content.open {
+                transform: scale(1) translateY(0);
+            }
         }
 
         .modal-close-btn {
@@ -453,15 +529,9 @@ try {
             box-shadow: 0 0 0 3px rgba(58, 123, 213, 0.1);
         }
         
-        /* Header mobile menu positioning */
+        /* Header mobile menu positioning - Removed absolute positioning for modal style */
         #mobile-menu {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 100%;
-            background: white;
-            border-top: 1px solid #e5e7eb;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            /* Handled by .mobile-menu class */
         }
     </style>
 </head>
@@ -524,22 +594,39 @@ try {
                 </div>
             </nav>
         </div>
-
-        <!-- Mobile menu content - only shows on mobile -->
-        <div id="mobile-menu" class="mobile-menu md:hidden bg-white border-t border-gray-200 shadow-lg">
-            <div class="px-4 pt-4 pb-6 space-y-2">
-                <a href="#home" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">Home</a>
-                <a href="#about" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">About</a>
-                <a href="#services" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">Services</a>
-                <a href="#contact" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">Contact</a>
-                <a href="#" onclick="openLoginModal(); toggleMobileMenu();"
-                    class="complete-btn bg-[#4A90E2] text-white px-5 py-3 rounded-full transition-all text-center mt-4 flex items-center justify-center gap-2 nav-link shadow-md hover:shadow-lg">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Login
-                </a>
-            </div>
-        </div>
     </header>
+
+    <!-- Mobile menu content - Full screen modal - OUTSIDE HEADER -->
+    <div id="mobile-menu" class="mobile-menu md:hidden">
+        <button class="absolute top-8 right-8 p-3 rounded-full bg-white/80 text-gray-700 hover:text-gray-900 hover:bg-white shadow-lg transition-all focus:outline-none z-10" onclick="toggleMobileMenu()">
+            <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+        
+        <div class="flex flex-col items-center justify-center space-y-8 w-full max-w-md px-8">
+            <div class="text-center mb-4">
+                <img src="./asssets/images/Luz.jpg" alt="Barangay Luz" class="w-20 h-20 rounded-full mx-auto mb-3 border-4 border-blue-500 shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-900">Barangay Luz</h2>
+                <p class="text-sm text-gray-600 mt-1">Health Monitoring</p>
+            </div>
+            
+            <nav class="flex flex-col items-center space-y-5 w-full">
+                <a href="#home" onclick="toggleMobileMenu()" class="mobile-nav-link w-full text-center">Home</a>
+                <a href="#about" onclick="toggleMobileMenu()" class="mobile-nav-link w-full text-center">About</a>
+                <a href="#services" onclick="toggleMobileMenu()" class="mobile-nav-link w-full text-center">Services</a>
+                <a href="#contact" onclick="toggleMobileMenu()" class="mobile-nav-link w-full text-center">Contact</a>
+            </nav>
+            
+            <div class="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent w-full my-4"></div>
+            
+            <a href="#" onclick="openLoginModal(); toggleMobileMenu();"
+                class="w-full bg-gradient-to-r from-[#4A90E2] to-[#357abd] text-white text-xl font-bold py-5 rounded-full shadow-xl hover:shadow-2xl hover:from-[#357abd] hover:to-[#2a6bc5] transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3">
+                <i class="fas fa-sign-in-alt text-lg"></i>
+                <span>Resident Login</span>
+            </a>
+        </div>
+    </div>
 
     <!-- Main Content - Starts right after header -->
     <main class="content-wrapper">
@@ -1023,8 +1110,8 @@ try {
     </main>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="fixed inset-0 hidden z-50 h-full w-full backdrop-blur-sm bg-black/30 flex justify-center items-center">
-        <div class="relative bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto modal-content login-modal-content">
+    <div id="loginModal" class="fixed inset-0 hidden z-[6000] h-full w-full backdrop-blur-md bg-black/50 flex justify-center items-end sm:items-center transition-all duration-300">
+        <div class="relative bg-white p-6 sm:p-8 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md h-auto sm:mx-4 max-h-[95vh] overflow-y-auto modal-content login-modal-content">
             <!-- Close Button -->
             <button onclick="closeLoginModal()"
                 class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
@@ -1254,30 +1341,71 @@ try {
     </div>
 
     <script>
-        // Mobile menu toggle
+        // Mobile menu toggle with smooth transitions
         function toggleMobileMenu() {
             const mobileMenu = document.getElementById('mobile-menu');
-            mobileMenu.classList.toggle('show');
+            const isShown = mobileMenu.classList.contains('show');
+            
+            if (!isShown) {
+                // Opening menu
+                mobileMenu.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+            } else {
+                // Closing menu
+                mobileMenu.classList.remove('show');
+                
+                // Only re-enable scrolling if no other modal is open
+                setTimeout(() => {
+                    const loginModal = document.getElementById('loginModal');
+                    const announcementsModal = document.getElementById('announcementsModal');
+                    const learnMoreModal = document.getElementById('learnMoreModal');
+                    
+                    const isAnyModalOpen = (loginModal && !loginModal.classList.contains('hidden')) || 
+                                           (announcementsModal && !announcementsModal.classList.contains('hidden')) ||
+                                           (learnMoreModal && !learnMoreModal.classList.contains('hidden'));
+                                           
+                    if (!isAnyModalOpen) {
+                        document.body.style.overflow = '';
+                        document.body.style.position = '';
+                        document.body.style.width = '';
+                    }
+                }, 300);
+            }
         }
 
-        // Modal functions
+        // Modal functions with improved UX
         function openLoginModal() {
             const modal = document.getElementById("loginModal");
             const modalContent = modal.querySelector('.modal-content');
             
+            // Close mobile menu if open
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenu && mobileMenu.classList.contains('show')) {
+                mobileMenu.classList.remove('show');
+            }
+            
             modal.classList.remove("hidden");
             modal.classList.add("flex");
             document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
             
             // Trigger animation
-            setTimeout(() => {
-                modalContent.classList.add('open');
-            }, 10);
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    modalContent.classList.add('open');
+                });
+            });
             
             // Set focus to username input for accessibility
             setTimeout(() => {
-                document.getElementById('login-username').focus();
-            }, 50);
+                const usernameInput = document.getElementById('login-username');
+                if (usernameInput) {
+                    usernameInput.focus();
+                }
+            }, 400);
         }
 
         function closeLoginModal() {
@@ -1290,7 +1418,9 @@ try {
             setTimeout(() => {
                 modal.classList.remove("flex");
                 modal.classList.add("hidden");
-                document.body.style.overflow = 'auto';
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
             }, 300);
         }
 

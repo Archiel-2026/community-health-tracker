@@ -16,8 +16,10 @@ if ($patientId <= 0) {
 }
 
 try {
+    require_once __DIR__ . '/../includes/functions.php';
+
     // Get patient basic information with user details AND health info
-    $stmt = $pdo->prepare("SELECT 
+    $query = "SELECT 
         p.*, 
         u.id as user_id,
         u.full_name as user_full_name,
@@ -42,14 +44,45 @@ try {
         COALESCE(p.contact, u.contact) as display_contact
     FROM sitio1_patients p 
     LEFT JOIN sitio1_users u ON p.user_id = u.id
-    WHERE p.id = ? AND p.added_by = ?");
-    
-    $stmt->execute([$patientId, $_SESSION['user']['id']]);
+    WHERE p.id = ?";
+
+    $params = [$patientId];
+    if (!staff_can_view_all()) {
+        $query .= " AND p.added_by = ?";
+        $params[] = $_SESSION['user']['id'];
+    }
+
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
     $patient = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$patient) {
         header('HTTP/1.0 404 Not Found');
         exit();
+    }
+    
+    // Log staff activity for printing patient record
+    try {
+        $staff_id = $_SESSION['user']['id'] ?? null;
+        $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        
+        $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            staff_id INT,
+            action_type VARCHAR(100),
+            related_id INT,
+            details JSON,
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            created_at DATETIME
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
+        $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'print_patient', ?, ?, ?, ?, NOW())");
+        $stmtLog->execute([$staff_id, $patientId, json_encode(['full_name' => $staff_name, 'patient_name' => $patient['display_full_name'] ?? $patient['full_name'], 'patient_id' => $patientId]), $ip, $ua]);
+    } catch (Exception $e) {
+        error_log('Staff activity log error (print_patient): ' . $e->getMessage());
     }
     
     // Get health information
@@ -164,7 +197,8 @@ ob_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Health Record - <?= htmlspecialchars($patient['display_full_name']) ?> - Barangay Luz Health Center</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

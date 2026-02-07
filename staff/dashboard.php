@@ -1,6 +1,25 @@
 <?php
 
+
 require_once __DIR__ . '/../includes/auth.php';
+// --- Auto-logout for staff after 1 hour of inactivity ---
+if (isStaff()) {
+    $now = time();
+    if (!isset($_SESSION['last_action'])) {
+        $_SESSION['last_action'] = $now;
+    } else {
+        $inactive = $now - $_SESSION['last_action'];
+        if ($inactive >= 3600) { // 1 hour = 3600 seconds
+            session_unset();
+            session_destroy();
+            header('Location: /community-health-tracker/auth/login.php');
+            exit();
+        } else {
+            $_SESSION['last_action'] = $now;
+        }
+    }
+}
+
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../vendor/autoload.php'; // For PHPMailer
 
@@ -385,30 +404,40 @@ $activeTab = $_GET['tab'] ?? 'analytics';
 // Get data for dashboard
 try {
     // Basic stats
-    $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_users WHERE role = 'patient'");
+    $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_patients WHERE deleted_at IS NULL");
     $stats['total_patients'] = $stmt->fetchColumn();
 
-    $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_users WHERE approved = FALSE AND (status IS NULL OR status != 'declined')");
-    $stats['unapproved_users'] = $stmt->fetchColumn();
+    $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_users WHERE role = 'patient' AND approved = TRUE");
+    $stats['resident_users'] = $stmt->fetchColumn();
     
     // Analytics data for charts
     $analytics = [];
     
-    // Total registered patients
-    $stmt = $pdo->query("SELECT COUNT(*) as total FROM sitio1_users WHERE role = 'patient'");
+    // Total patient records
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM sitio1_patients WHERE deleted_at IS NULL");
     $analytics['total_patients'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    // Health issues count and rate
+    $stmt = $pdo->query("SELECT COUNT(*) as total FROM sitio1_patients WHERE deleted_at IS NULL AND disease IS NOT NULL AND disease != ''");
+    $analytics['health_issues_count'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $analytics['health_issues_rate'] = $analytics['total_patients'] > 0 ?
+        round(($analytics['health_issues_count'] / $analytics['total_patients']) * 100) : 0;
+
+    // Top health issues
+    $stmt = $pdo->query("SELECT disease as label, COUNT(*) as count FROM sitio1_patients WHERE deleted_at IS NULL AND disease IS NOT NULL AND disease != '' GROUP BY disease ORDER BY count DESC LIMIT 6");
+    $analytics['top_diseases'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Approved patients
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM sitio1_users WHERE role = 'patient' AND approved = TRUE");
     $analytics['approved_patients'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Patient registration trend (last 6 months)
+    // Patient records trend (last 6 months)
     $stmt = $pdo->query("
         SELECT 
             DATE_FORMAT(created_at, '%Y-%m') as month,
             COUNT(*) as count
-        FROM sitio1_users 
-        WHERE role = 'patient' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        FROM sitio1_patients 
+        WHERE deleted_at IS NULL AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
         GROUP BY DATE_FORMAT(created_at, '%Y-%m')
         ORDER BY month
     ");
@@ -424,20 +453,16 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM sitio1_users WHERE role = 'patient' AND approved = FALSE AND (status IS NULL OR status != 'declined')");
     $analytics['pending_count'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Calculate approval rate
-    $analytics['approval_rate'] = $analytics['total_patients'] > 0 ? 
-        round(($analytics['approved_count'] / $analytics['total_patients']) * 100) : 0;
-    
-    // Get user distribution by gender
+    // Get patient distribution by gender
     $stmt = $pdo->query("
         SELECT gender, COUNT(*) as count 
-        FROM sitio1_users 
-        WHERE role = 'patient' AND gender IS NOT NULL AND gender != ''
+        FROM sitio1_patients 
+        WHERE deleted_at IS NULL AND gender IS NOT NULL AND gender != ''
         GROUP BY gender
     ");
     $analytics['gender_distribution'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Get user distribution by age group
+    // Get patient distribution by age group
     $stmt = $pdo->query("
         SELECT 
             CASE 
@@ -449,8 +474,8 @@ try {
                 ELSE 'Unknown'
             END as age_group,
             COUNT(*) as count
-        FROM sitio1_users 
-        WHERE role = 'patient'
+        FROM sitio1_patients 
+        WHERE deleted_at IS NULL
         GROUP BY age_group
         ORDER BY 
             CASE age_group
@@ -463,19 +488,78 @@ try {
             END
     ");
     $analytics['age_distribution'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Staff action metrics (connected to staff actions)
+    $staffId = $_SESSION['user']['id'] ?? null;
+    $analytics['staff_actions_30d'] = 0;
+    $analytics['patients_added_by_staff'] = 0;
+    $analytics['consultations_logged'] = 0;
+
+    if ($staffId) {
+        // Count consultations in the last 30 days
+        try {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM consultation_notes WHERE created_by = ? AND consultation_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+            $stmt->execute([$staffId]);
+            $analytics['staff_actions_30d'] = (int)$stmt->fetchColumn();
+        } catch (Exception $e) {
+            $analytics['staff_actions_30d'] = 0;
+        }
+
+        try {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_patients WHERE deleted_at IS NULL AND added_by = ?");
+            $stmt->execute([$staffId]);
+            $analytics['patients_added_by_staff'] = (int)$stmt->fetchColumn();
+        } catch (Exception $e) {
+            $analytics['patients_added_by_staff'] = 0;
+        }
+
+        try {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM consultation_notes WHERE created_by = ?");
+            $stmt->execute([$staffId]);
+            $analytics['consultations_logged'] = (int)$stmt->fetchColumn();
+        } catch (Exception $e) {
+            $analytics['consultations_logged'] = 0;
+        }
+    }
     
-    // Get unapproved users with pagination and automatically check ID type
-    $usersPerPage = 5;
+    // Get resident users with pagination, search and filter
+    $usersPerPage = 10;
     $currentPage = isset($_GET['user_page']) ? max(1, intval($_GET['user_page'])) : 1;
     $offset = ($currentPage - 1) * $usersPerPage;
     
-    // Get total count for pagination
-    $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_users WHERE approved = FALSE AND (status IS NULL OR status != 'declined')");
-    $totalUnapprovedUsers = $stmt->fetchColumn();
-    $totalPages = ceil($totalUnapprovedUsers / $usersPerPage);
+    // Get search and filter parameters
+    $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $sortOrder = isset($_GET['sort']) ? $_GET['sort'] : 'desc'; // 'asc' or 'desc'
     
-    // Get paginated unapproved users
-    $stmt = $pdo->prepare("
+    // Build query with search and filters
+    $whereConditions = ["role = 'patient'", "approved = TRUE"];
+    $params = [];
+    
+    if (!empty($searchQuery)) {
+        $whereConditions[] = "(full_name LIKE ? OR username LIKE ? OR email LIKE ? OR unique_number LIKE ?)";
+        $searchParam = "%" . $searchQuery . "%";
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+    }
+    
+    $whereClause = implode(' AND ', $whereConditions);
+    $orderBy = $sortOrder === 'asc' ? 'ASC' : 'DESC';
+    
+    // Get total count for pagination
+    $countSql = "SELECT COUNT(*) FROM sitio1_users WHERE " . $whereClause;
+    $countStmt = $pdo->prepare($countSql);
+    if (!empty($params)) {
+        $countStmt->execute($params);
+    } else {
+        $countStmt->execute();
+    }
+    $totalResidentUsers = $countStmt->fetchColumn();
+    $totalPages = ceil($totalResidentUsers / $usersPerPage);
+    
+    // Get paginated resident users
+    $sql = "
         SELECT *, 
                CASE 
                    WHEN id_image_path IS NOT NULL AND id_image_path != '' THEN 
@@ -487,17 +571,29 @@ try {
                    ELSE NULL 
                END as display_image_path
         FROM sitio1_users 
-        WHERE approved = FALSE AND (status IS NULL OR status != 'declined') 
-        ORDER BY created_at DESC
+        WHERE " . $whereClause . "
+        ORDER BY created_at " . $orderBy . "
         LIMIT ? OFFSET ?
-    ");
-    $stmt->bindValue(1, $usersPerPage, PDO::PARAM_INT);
-    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+    ";
+    $stmt = $pdo->prepare($sql);
+    
+    // Build execute parameters array
+    $executeParams = $params;
+    $executeParams[] = $usersPerPage;
+    $executeParams[] = $offset;
+    
+    // Bind all parameters as appropriate types
+    foreach ($params as $index => $param) {
+        $stmt->bindValue($index + 1, $param, PDO::PARAM_STR);
+    }
+    $stmt->bindValue(count($params) + 1, $usersPerPage, PDO::PARAM_INT);
+    $stmt->bindValue(count($params) + 2, $offset, PDO::PARAM_INT);
+    
     $stmt->execute();
-    $unapprovedUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $residentUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Automatically check ID type for each user
-    foreach ($unapprovedUsers as &$user) {
+    foreach ($residentUsers as &$user) {
         if (!empty($user['id_image_path'])) {
             $user['id_type'] = checkIdType($user['id_image_path']);
             $user['is_valid_id'] = isIdValidForVerification($user['id_type']);
@@ -519,6 +615,12 @@ try {
         'pending_declined_count' => 0,
         'pending_count' => 0,
         'approval_rate' => 0,
+        'health_issues_count' => 0,
+        'health_issues_rate' => 0,
+        'top_diseases' => [],
+        'staff_actions_30d' => 0,
+        'patients_added_by_staff' => 0,
+        'consultations_logged' => 0,
         'gender_distribution' => [],
         'age_distribution' => []
     ];
@@ -534,10 +636,12 @@ $recordsPerPage = 5;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Dashboard - Community Health Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
     <link rel="stylesheet" href="/asssets/css/normalize.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Enhanced Modal Styles */
         .modal-overlay {
@@ -644,6 +748,28 @@ $recordsPerPage = 5;
             font-weight: 700;
             padding: 0 0.6rem;
             margin-left: 0.5rem;
+        }
+
+        .stat-count {
+            width: 3.5rem;
+            height: 3.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem 0;
+            border-radius: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-card {
+            min-height: 7.5rem;
+        }
+
+        .stat-count-wrap {
+            padding-top: 10px;
+            padding-bottom: 10px;
         }
         
         /* Button styles */
@@ -972,7 +1098,7 @@ $recordsPerPage = 5;
         
         /* Chart responsive sizing */
         #patientRegistrationChart,
-        #approvalStatusChart,
+        #healthIssuesChart,
         #genderDistributionChart,
         #ageDistributionChart {
             display: block !important;
@@ -999,14 +1125,14 @@ $recordsPerPage = 5;
 <body class="bg-gray-100">
 
 <!-- AJAX Loader -->
-<div id="ajaxLoader" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+<div id="ajaxLoader" class="fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50" style="display: none;">
     <div class="bg-white p-6 rounded-lg shadow-xl">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <p class="text-gray-700">Loading analytics...</p>
     </div>
 </div>
 
-<div class="container mx-auto px-4 py-6">
+<div class="w-full px-4 py-6 lg:px-8">
     <!-- Dashboard Header -->
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold flex items-center">
@@ -1019,32 +1145,38 @@ $recordsPerPage = 5;
 
     <!-- Stats Cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6 mb-8">
-    <div class="bg-white p-6 rounded-lg shadow">
+    <div class="bg-white p-6 rounded-lg shadow stat-card">
         <div class="flex items-center">
             <i class="fas fa-user-injured text-2xl text-blue-600 mr-3"></i>
             <div>
                 <h3 class="text-lg font-semibold text-gray-700">Total Patients</h3>
-                <p class="text-3xl font-bold text-blue-600"><?= $stats['total_patients'] ?></p>
+                <div class="stat-count-wrap">
+                    <div class="stat-count text-blue-600 bg-blue-50"><?= $stats['total_patients'] ?></div>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="bg-white p-6 rounded-lg shadow">
+    <div class="bg-white p-6 rounded-lg shadow stat-card">
         <div class="flex items-center">
             <i class="fas fa-user-check text-2xl text-green-600 mr-3"></i>
             <div>
                 <h3 class="text-lg font-semibold text-gray-700">Resident Accounts</h3>
-                <p class="text-3xl font-bold text-green-600"><?= number_format($analytics['approved_count']) ?></p>
+                <div class="stat-count-wrap">
+                    <div class="stat-count text-green-600 bg-green-50"><?= number_format($analytics['approved_count']) ?></div>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="bg-white p-6 rounded-lg shadow">
+    <div class="bg-white p-6 rounded-lg shadow stat-card">
         <div class="flex items-center">
-            <i class="fas fa-chart-line text-2xl text-purple-600 mr-3"></i>
+            <i class="fas fa-clipboard-check text-2xl text-purple-600 mr-3"></i>
             <div>
-                <h3 class="text-lg font-semibold text-gray-700">Account Rate</h3>
-                <p class="text-3xl font-bold text-purple-600"><?= $analytics['approval_rate'] ?>%</p>
+                <h3 class="text-lg font-semibold text-gray-700">Staff Actions (30d)</h3>
+                <div class="stat-count-wrap">
+                    <div class="stat-count text-purple-600 bg-purple-50"><?= number_format($analytics['staff_actions_30d']) ?></div>
+                </div>
             </div>
         </div>
     </div>
@@ -1062,9 +1194,9 @@ $recordsPerPage = 5;
             
             <button class="nav-tab-button tab-account-management <?= $activeTab === 'account-management' ? 'active' : '' ?>" 
                     id="account-tab" data-tabs-target="#account-management" type="button" role="tab" aria-controls="account-management" aria-selected="<?= $activeTab === 'account-management' ? 'true' : 'false' ?>">
-                <i class="fas fa-user-check"></i>
-                Account Approvals
-                <span class="count-badge"><?= $stats['unapproved_users'] ?></span>
+                <i class="fas fa-users"></i>
+                Resident Accounts
+                <span class="count-badge"><?= $stats['resident_users'] ?></span>
             </button>
         </div>
     </div>
@@ -1090,36 +1222,38 @@ $recordsPerPage = 5;
                         <h3 class="text-lg font-semibold text-gray-700">Total Patients</h3>
                     </div>
                     <div class="analytics-value"><?= number_format($analytics['total_patients']) ?></div>
-                    <div class="analytics-label">Registered in the system</div>
+                    <div class="analytics-label">Based on patient records</div>
                     <div class="mt-4 pt-4 border-t border-gray-100">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">Approved Patients</span>
-                            <span class="text-sm font-semibold text-green-600"><?= number_format($analytics['approved_count']) ?></span>
+                            <span class="text-sm text-gray-500">With Health Issues</span>
+                            <span class="text-sm font-semibold text-red-600"><?= number_format($analytics['health_issues_count']) ?></span>
                         </div>
                         <div class="flex justify-between items-center mt-2">
-                            <span class="text-sm text-gray-500">Pending Approval</span>
-                            <span class="text-sm font-semibold text-yellow-600"><?= number_format($analytics['pending_count']) ?></span>
+                            <span class="text-sm text-gray-500">No Reported Issues</span>
+                            <span class="text-sm font-semibold text-green-600"><?= number_format(max(0, $analytics['total_patients'] - $analytics['health_issues_count'])) ?></span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="analytics-card">
                     <div class="flex items-center mb-3">
-                        <div class="p-2 bg-green-100 rounded-lg mr-3">
-                            <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                        <div class="p-2 bg-red-100 rounded-lg mr-3">
+                            <i class="fas fa-heartbeat text-red-600 text-xl"></i>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-700">Approval Rate</h3>
+                        <h3 class="text-lg font-semibold text-gray-700">Health Issues Rate</h3>
                     </div>
-                    <div class="analytics-value"><?= $analytics['approval_rate'] ?>%</div>
-                    <div class="analytics-label">Patient accounts approved</div>
+                    <div class="analytics-value"><?= $analytics['health_issues_rate'] ?>%</div>
+                    <div class="analytics-label">Patients with reported conditions</div>
                     <div class="mt-4 pt-4 border-t border-gray-100">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">Total Registered</span>
-                            <span class="text-sm font-semibold text-blue-600"><?= number_format($analytics['total_patients']) ?></span>
+                            <span class="text-sm text-gray-500">Total with Issues</span>
+                            <span class="text-sm font-semibold text-red-600"><?= number_format($analytics['health_issues_count']) ?></span>
                         </div>
                         <div class="flex justify-between items-center mt-2">
-                            <span class="text-sm text-gray-500">Approval Success</span>
-                            <span class="text-sm font-semibold text-green-600"><?= number_format($analytics['approved_count']) ?></span>
+                            <span class="text-sm text-gray-500">Top Issue</span>
+                            <span class="text-sm font-semibold text-gray-700">
+                                <?= !empty($analytics['top_diseases']) ? htmlspecialchars($analytics['top_diseases'][0]['label']) . ' (' . number_format($analytics['top_diseases'][0]['count']) . ')' : 'N/A' ?>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -1129,7 +1263,7 @@ $recordsPerPage = 5;
                         <div class="p-2 bg-purple-100 rounded-lg mr-3">
                             <i class="fas fa-user-plus text-purple-600 text-xl"></i>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-700">Monthly Registrations</h3>
+                        <h3 class="text-lg font-semibold text-gray-700">Monthly Patient Records</h3>
                     </div>
                     <div class="analytics-value">
                         <?php 
@@ -1141,7 +1275,7 @@ $recordsPerPage = 5;
                             echo number_format($lastMonthCount);
                         ?>
                     </div>
-                    <div class="analytics-label">New patients last month</div>
+                    <div class="analytics-label">New records last month</div>
                     <div class="mt-4 pt-4 border-t border-gray-100">
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-500">6-month avg</span>
@@ -1168,32 +1302,7 @@ $recordsPerPage = 5;
                     </div>
                 </div>
                 
-                <div class="analytics-card">
-                    <div class="flex items-center mb-3">
-                        <div class="p-2 bg-orange-100 rounded-lg mr-3">
-                            <i class="fas fa-chart-pie text-orange-600 text-xl"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700">Account Status</h3>
-                    </div>
-                    <div class="analytics-value">
-                        <?= number_format($analytics['pending_count']) ?>
-                    </div>
-                    <div class="analytics-label">Accounts pending review</div>
-                    <div class="mt-4 pt-4 border-t border-gray-100">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">Approved</span>
-                            <span class="text-sm font-semibold text-green-600">
-                                <?= number_format($analytics['approved_count']) ?>
-                            </span>
-                        </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <span class="text-sm text-gray-500">Declined/Pending</span>
-                            <span class="text-sm font-semibold text-red-600">
-                                <?= number_format($analytics['pending_declined_count']) ?>
-                            </span>
-                        </div>
-                    </div>
-                </div>
+                
             </div>
 
             <!-- Charts Grid -->
@@ -1202,21 +1311,21 @@ $recordsPerPage = 5;
                 <div class="chart-container">
                     <h3 class="chart-title">
                         <i class="fas fa-user-plus"></i>
-                        Patient Registration Trend
+                        Patient Records Trend
                     </h3>
                     <div class="chart-wrapper">
                         <canvas id="patientRegistrationChart" height="300"></canvas>
                     </div>
                 </div>
                 
-                <!-- Approval Status Chart -->
+                <!-- Health Issues Chart -->
                 <div class="chart-container">
                     <h3 class="chart-title">
-                        <i class="fas fa-chart-pie"></i>
-                        Account Approval Status
+                        <i class="fas fa-heartbeat"></i>
+                        Health Issues Breakdown
                     </h3>
                     <div class="chart-wrapper">
-                        <canvas id="approvalStatusChart" height="300"></canvas>
+                        <canvas id="healthIssuesChart" height="300"></canvas>
                     </div>
                 </div>
             </div>
@@ -1247,51 +1356,113 @@ $recordsPerPage = 5;
             </div>
         </div>
 
-        <!-- Account Management Section -->
+        <!-- Resident Accounts Section -->
         <div class="<?= $activeTab === 'account-management' ? '' : 'hidden' ?> p-4 bg-white rounded-lg border border-gray-200" id="account-management" role="tabpanel" aria-labelledby="account-tab">
-            <h2 class="text-xl font-semibold mb-4 text-blue-700">Patient Account Approvals</h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-blue-700">Resident Accounts</h2>
+                <div class="text-sm text-gray-600">
+                    Total: <span class="font-semibold"><?= $totalResidentUsers ?></span> residents
+                </div>
+            </div>
             
-            <?php if (empty($unapprovedUsers)): ?>
-                <div class="bg-blue-50 p-4 rounded-lg text-center">
-                    <p class="text-gray-600">No pending patient approvals.</p>
+            <!-- Search and Filter Section -->
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <form method="GET" action="" class="flex flex-wrap gap-4 items-end">
+                    <input type="hidden" name="tab" value="account-management">
+                    
+                    <!-- Search Bar -->
+                    <div class="flex-1 min-w-[250px]">
+                        <label for="search" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-search mr-1"></i> Search
+                        </label>
+                        <input type="text" 
+                               id="search" 
+                               name="search" 
+                               value="<?= htmlspecialchars($searchQuery) ?>"
+                               placeholder="Search by name, username, email, or patient ID..."
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <!-- Sort By Date -->
+                    <div class="w-48">
+                        <label for="sort" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-sort mr-1"></i> Sort by Date
+                        </label>
+                        <select id="sort" 
+                                name="sort" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="desc" <?= $sortOrder === 'desc' ? 'selected' : '' ?>>Newest First</option>
+                            <option value="asc" <?= $sortOrder === 'asc' ? 'selected' : '' ?>>Oldest First</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2">
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                            <i class="fas fa-filter mr-2"></i> Apply
+                        </button>
+                        <a href="?tab=account-management" class="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-medium">
+                            <i class="fas fa-redo mr-2"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <?php if (empty($residentUsers)): ?>
+                <div class="bg-blue-50 p-6 rounded-lg text-center border border-blue-200">
+                    <i class="fas fa-users text-blue-400 text-4xl mb-3"></i>
+                    <p class="text-gray-600 text-lg">
+                        <?php if (!empty($searchQuery)): ?>
+                            No residents found matching your search.
+                        <?php else: ?>
+                            No resident accounts found.
+                        <?php endif; ?>
+                    </p>
                 </div>
             <?php else: ?>
                 <div class="overflow-x-auto">
                     <table class="min-w-full bg-white">
                         <thead>
                             <tr>
-                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Username</th>
-                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Full Name</th>
-                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
-                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Date Registered</th>
-                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">ID Status</th>
-                                <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Actions</th>
+                                <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Patient ID</th>
+                                <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Full Name</th>
+                                <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Username</th>
+                                <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
+                                <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Registered Date</th>
+                                <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                <th class="py-3 px-4 border-b border-gray-200 bg-gray-50 text-center text-xs font-semibold text-gray-600 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($unapprovedUsers as $user): ?>
-                                <tr>
-                                    <td class="py-2 px-4 border-b border-gray-200"><?= htmlspecialchars($user['username']) ?></td>
-                                    <td class="py-2 px-4 border-b border-gray-200"><?= htmlspecialchars($user['full_name']) ?></td>
-                                    <td class="py-2 px-4 border-b border-gray-200"><?= htmlspecialchars($user['email'] ?? 'N/A') ?></td>
-                                    <td class="py-2 px-4 border-b border-gray-200"><?= date('M d, Y', strtotime($user['created_at'])) ?></td>
-                                    <td class="py-2 px-4 border-b border-gray-200">
-                                        <?php if (!empty($user['id_type'])): ?>
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                <?= $user['is_valid_id'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
-                                                <?= $user['is_valid_id'] ? 'Valid ID' : 'Invalid ID' ?>
-                                            </span>
-                                            <div class="text-xs text-gray-500 mt-1"><?= $user['id_type'] ?></div>
-                                        <?php else: ?>
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                No ID Uploaded
-                                            </span>
-                                        <?php endif; ?>
+                            <?php foreach ($residentUsers as $user): ?>
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="py-3 px-4 border-b border-gray-200">
+                                        <span class="font-mono text-sm font-semibold text-blue-600">
+                                            <?= htmlspecialchars($user['unique_number'] ?? 'N/A') ?>
+                                        </span>
                                     </td>
-                                    <td class="py-2 px-4 border-b border-gray-200">
-                                        <button onclick="openUserDetailsModal(<?= htmlspecialchars(json_encode($user)) ?>)" 
-                                                class="btn-view-details">
-                                            <i class="fas fa-eye mr-1"></i> View Details
+                                    <td class="py-3 px-4 border-b border-gray-200">
+                                        <div class="font-medium text-gray-900"><?= htmlspecialchars($user['full_name']) ?></div>
+                                    </td>
+                                    <td class="py-3 px-4 border-b border-gray-200">
+                                        <span class="text-gray-700"><?= htmlspecialchars($user['username']) ?></span>
+                                    </td>
+                                    <td class="py-3 px-4 border-b border-gray-200">
+                                        <span class="text-gray-600"><?= htmlspecialchars($user['email'] ?? 'N/A') ?></span>
+                                    </td>
+                                    <td class="py-3 px-4 border-b border-gray-200">
+                                        <span class="text-gray-600"><?= date('M d, Y', strtotime($user['created_at'])) ?></span>
+                                        <div class="text-xs text-gray-400"><?= date('h:i A', strtotime($user['created_at'])) ?></div>
+                                    </td>
+                                    <td class="py-3 px-4 border-b border-gray-200">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            <i class="fas fa-check-circle mr-1"></i> Active
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 border-b border-gray-200 text-center">
+                                        <button onclick="openResidentDetailsModal(<?= htmlspecialchars(json_encode($user)) ?>)" 
+                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
+                                            <i class="fas fa-eye mr-1"></i> View
                                         </button>
                                     </td>
                                 </tr>
@@ -1305,7 +1476,12 @@ $recordsPerPage = 5;
                     <div class="pagination mt-6">
                         <!-- Previous Button -->
                         <?php if ($currentPage > 1): ?>
-                            <a href="?tab=account-management&user_page=<?= $currentPage - 1 ?>" class="pagination-button">
+                            <?php 
+                                $prevUrl = "?tab=account-management&user_page=" . ($currentPage - 1);
+                                if (!empty($searchQuery)) $prevUrl .= "&search=" . urlencode($searchQuery);
+                                if (!empty($sortOrder)) $prevUrl .= "&sort=" . urlencode($sortOrder);
+                            ?>
+                            <a href="<?= $prevUrl ?>" class="pagination-button">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
                         <?php else: ?>
@@ -1316,16 +1492,26 @@ $recordsPerPage = 5;
 
                         <!-- Page Numbers -->
                         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <?php 
+                                $pageUrl = "?tab=account-management&user_page=" . $i;
+                                if (!empty($searchQuery)) $pageUrl .= "&search=" . urlencode($searchQuery);
+                                if (!empty($sortOrder)) $pageUrl .= "&sort=" . urlencode($sortOrder);
+                            ?>
                             <?php if ($i == $currentPage): ?>
                                 <span class="pagination-button active"><?= $i ?></span>
                             <?php else: ?>
-                                <a href="?tab=account-management&user_page=<?= $i ?>" class="pagination-button"><?= $i ?></a>
+                                <a href="<?= $pageUrl ?>" class="pagination-button"><?= $i ?></a>
                             <?php endif; ?>
                         <?php endfor; ?>
 
                         <!-- Next Button -->
                         <?php if ($currentPage < $totalPages): ?>
-                            <a href="?tab=account-management&user_page=<?= $currentPage + 1 ?>" class="pagination-button">
+                            <?php 
+                                $nextUrl = "?tab=account-management&user_page=" . ($currentPage + 1);
+                                if (!empty($searchQuery)) $nextUrl .= "&search=" . urlencode($searchQuery);
+                                if (!empty($sortOrder)) $nextUrl .= "&sort=" . urlencode($sortOrder);
+                            ?>
+                            <a href="<?= $nextUrl ?>" class="pagination-button">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                         <?php else: ?>
@@ -1375,6 +1561,77 @@ $recordsPerPage = 5;
                 <button type="button" onclick="closeErrorModal()" 
                         class="px-8 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium">
                     OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resident Details Modal (Read-Only) -->
+<div id="residentDetailsModal" class="modal-overlay hidden">
+    <div class="modal-container modal-desktop">
+        <div class="modal-header">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-user-circle mr-2 text-blue-600"></i>
+                    Resident Account Details
+                </h3>
+                <button type="button" onclick="closeResidentDetailsModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Account Status Banner -->
+            <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-600 text-2xl mr-3"></i>
+                        <div>
+                            <h4 class="text-lg font-semibold text-green-800">Active Resident Account</h4>
+                            <p class="text-sm text-green-700">Patient ID: <span class="font-mono font-bold" id="residentPatientId">N/A</span></p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-gray-500">Member Since</div>
+                        <div class="text-sm font-semibold text-gray-700" id="residentMemberSince">N/A</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="horizontal-user-details">
+                <!-- Personal Information -->
+                <div class="detail-section">
+                    <h4 class="text-lg font-semibold text-blue-700 border-b pb-3 mb-4">
+                        <i class="fas fa-user mr-2"></i> Personal Information
+                    </h4>
+                    <div class="user-details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Full Name:</span>
+                            <span class="detail-value font-semibold" id="residentFullName">N/A</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Username:</span>
+                            <span class="detail-value" id="residentUsername">N/A</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value" id="residentEmail">N/A</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Contact Number:</span>
+                            <span class="detail-value" id="residentContact">N/A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <div class="flex justify-end">
+                <button type="button" onclick="closeResidentDetailsModal()" class="px-6 py-3 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400 transition font-medium">
+                    <i class="fas fa-times mr-2"></i> Close
                 </button>
             </div>
         </div>
@@ -1911,6 +2168,28 @@ function closeUserDetailsModal() {
     closeModal('userDetailsModal');
 }
 
+// Resident Details Modal Functions (Read-Only)
+function openResidentDetailsModal(user) {
+    console.log('Resident data for modal:', user);
+    
+    // Set patient ID and member since (Account Status)
+    document.getElementById('residentPatientId').textContent = user.unique_number || 'N/A';
+    document.getElementById('residentMemberSince').textContent = user.created_at ? 
+        new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+    
+    // Set personal information
+    document.getElementById('residentFullName').textContent = user.full_name || 'N/A';
+    document.getElementById('residentUsername').textContent = user.username || 'N/A';
+    document.getElementById('residentEmail').textContent = user.email || 'N/A';
+    document.getElementById('residentContact').textContent = user.contact || 'N/A';
+    
+    openModal('residentDetailsModal');
+}
+
+function closeResidentDetailsModal() {
+    closeModal('residentDetailsModal');
+}
+
 // Approve Confirmation Modal functions
 function openApproveConfirmationModal() {
     document.getElementById('finalApproveUserId').value = currentUserDetailsId;
@@ -2011,7 +2290,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Close modal when clicking outside
 window.onclick = function(event) {
     const modals = ['userDetailsModal', 'approveConfirmationModal', 'declineModal', 'imageModal', 
-                    'successModal', 'errorModal'];
+                    'successModal', 'errorModal', 'residentDetailsModal'];
     
     modals.forEach(modalId => {
         const modal = document.getElementById(modalId);
@@ -2048,13 +2327,13 @@ function initializeCharts() {
     
     // Check if chart elements exist
     const patientRegistrationCanvas = document.getElementById('patientRegistrationChart');
-    const approvalStatusCanvas = document.getElementById('approvalStatusChart');
+    const healthIssuesCanvas = document.getElementById('healthIssuesChart');
     const genderDistributionCanvas = document.getElementById('genderDistributionChart');
     const ageDistributionCanvas = document.getElementById('ageDistributionChart');
     
     // Destroy existing charts if they exist
     Chart.getChart(patientRegistrationCanvas)?.destroy();
-    Chart.getChart(approvalStatusCanvas)?.destroy();
+    Chart.getChart(healthIssuesCanvas)?.destroy();
     Chart.getChart(genderDistributionCanvas)?.destroy();
     Chart.getChart(ageDistributionCanvas)?.destroy();
     
@@ -2073,7 +2352,7 @@ function initializeCharts() {
             data: {
                 labels: patientLabels,
                 datasets: [{
-                    label: 'New Patients',
+                    label: 'New Records',
                     data: patientValues,
                     borderColor: '#10B981',
                     backgroundColor: 'rgba(16, 185, 129, 0.05)',
@@ -2108,23 +2387,23 @@ function initializeCharts() {
         console.error('Error initializing patient registration chart:', error);
     }
     
-    // 2. Approval Status Chart
+    // 2. Health Issues Breakdown Chart
     try {
-        const approvalStatusCtx = approvalStatusCanvas.getContext('2d');
-        const approvedCount = <?= $analytics['approved_count'] ?>;
-        const pendingCount = <?= $analytics['pending_count'] ?>;
-        const declinedCount = <?= $analytics['pending_declined_count'] - $analytics['pending_count'] ?>;
-        
-        const approvalStatusChart = new Chart(approvalStatusCtx, {
+        const healthIssuesCtx = healthIssuesCanvas.getContext('2d');
+        const diseases = <?= json_encode($analytics['top_diseases']) ?>;
+        const diseaseLabels = diseases.length ? diseases.map(d => d.label) : ['No Data'];
+        const diseaseValues = diseases.length ? diseases.map(d => d.count) : [0];
+
+        const healthIssuesChart = new Chart(healthIssuesCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Approved', 'Pending', 'Declined'],
+                labels: diseaseLabels,
                 datasets: [{
-                    data: [approvedCount, pendingCount, declinedCount],
-                    backgroundColor: ['#10B981', '#FBBF24', '#EF4444'],
+                    data: diseaseValues,
+                    backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#06b6d4'],
                     borderWidth: 1,
                     borderColor: '#ffffff',
-                    hoverBackgroundColor: ['#059669', '#F59E0B', '#DC2626']
+                    hoverBackgroundColor: ['#dc2626', '#ea580c', '#d97706', '#65a30d', '#16a34a', '#0891b2']
                 }]
             },
             options: {
@@ -2145,9 +2424,9 @@ function initializeCharts() {
                 cutout: '60%'
             }
         });
-        console.log('Approval Status Chart initialized');
+        console.log('Health Issues Chart initialized');
     } catch (error) {
-        console.error('Error initializing approval status chart:', error);
+        console.error('Error initializing health issues chart:', error);
     }
     
     // 3. Gender Distribution Chart

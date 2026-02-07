@@ -202,7 +202,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $specialization = trim($_POST['specialization'] ?? '');
         $license_number = trim($_POST['license_number'] ?? '');
         
-        if (!empty($username) && !empty($password) && !empty($fullName)) {
+        // Default work days: Monday to Friday working, Saturday-Sunday off
+        $work_days = '1111100';
+        
+        if (!empty($username) && !empty($password) && !empty($fullName) && !empty($position)) {
             try {
                 // Check if username already exists
                 $stmt = $pdo->prepare("SELECT id FROM sitio1_staff WHERE username = ?");
@@ -215,9 +218,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("INSERT INTO sitio1_staff (username, password, full_name, position, specialization, license_number, created_by, status, is_active) 
-                                      VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 1)");
-                $stmt->execute([$username, $hashedPassword, $fullName, $position, $specialization, $license_number, $_SESSION['user_id']]);
+                $stmt = $pdo->prepare("INSERT INTO sitio1_staff (username, password, full_name, position, specialization, license_number, work_days, created_by, status, is_active) 
+                                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 1)");
+                $stmt->execute([$username, $hashedPassword, $fullName, $position, $specialization, $license_number, $work_days, $_SESSION['user_id']]);
                 
                 $_SESSION['message'] = 'Staff account created successfully! Password: ' . htmlspecialchars($password);
                 $_SESSION['message_type'] = 'success';
@@ -780,53 +783,71 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Management - Barangay Luz Health Center</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
     <style>
         :root {
-            --warm-blue: #3b82f6;
-            --warm-blue-light: #60a5fa;
-            --warm-blue-dark: #1d4ed8;
-            --warm-blue-bg: #f0f9ff;
-            --warm-blue-border: #bae6fd;
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+            --primary-dark: #1d4ed8;
+            --primary-bg: #f0f9ff;
+            --primary-border: #bae6fd;
+            --success: #10b981;
+            --success-light: #34d399;
+            --success-dark: #059669;
+            --warning: #f59e0b;
+            --warning-light: #fbbf24;
+            --danger: #ef4444;
+            --danger-light: #f87171;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
         }
         
         body {
             background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
+            line-height: 1.5;
         }
         
-        /* Header and Navigation */
+        /* Enhanced Header */
         .main-header {
-            background: linear-gradient(135deg, var(--warm-blue) 0%, var(--warm-blue-dark) 100%);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         
-        /* Card Design */
+        /* Consistent Card Design */
         .card {
             background: white;
-            border-radius: 12px;
-            border: 1px solid var(--warm-blue-border);
-            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.05);
+            border-radius: 16px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
         
         .card:hover {
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.08);
         }
         
         .card-header {
-            background: linear-gradient(135deg, var(--warm-blue-bg) 0%, #e0f2fe 100%);
-            border-bottom: 2px solid var(--warm-blue-border);
-            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-bg) 0%, #e0f2fe 100%);
+            border-bottom: 1px solid var(--primary-border);
+            padding: 1.5rem 2rem;
         }
         
-        /* Buttons */
+        /* Consistent Button Design */
         .btn {
-            padding: 0.625rem 1.25rem;
-            border-radius: 8px;
-            font-weight: 500;
+            padding: 0.625rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
             font-size: 0.875rem;
             transition: all 0.2s;
             border: none;
@@ -835,173 +856,206 @@ try {
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            min-height: 42px;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--warm-blue) 0%, var(--warm-blue-dark) 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
         }
         
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--warm-blue-dark) 0%, #1e40af 100%);
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #1e40af 100%);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
         }
         
         .btn-success {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
             color: white;
         }
         
-        .btn-success:hover {
-            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        .btn-success:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--success-dark) 0%, #047857 100%);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
         }
         
         .btn-warning {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
             color: white;
         }
         
-        .btn-warning:hover {
+        .btn-warning:hover:not(:disabled) {
             background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25);
         }
         
         .btn-danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
             color: white;
         }
         
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        .btn-danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1b 100%);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.25);
         }
         
-        /* Tabs */
+        .btn-outline {
+            background: white;
+            border: 2px solid var(--gray-300);
+            color: var(--gray-700);
+        }
+        
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Consistent Tabs */
         .tabs-container {
             background: white;
             border-radius: 12px;
-            padding: 0.5rem;
-            border: 1px solid var(--warm-blue-border);
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 2rem;
         }
         
         .tab-btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 500;
+            padding: 0.75rem 1.75rem;
+            border-radius: 10px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             border: 2px solid transparent;
             background: transparent;
+            color: var(--gray-600);
         }
         
         .tab-btn.active {
-            background: var(--warm-blue-bg);
-            color: var(--warm-blue);
-            border-color: var(--warm-blue);
-            font-weight: 600;
+            background: var(--primary-bg);
+            color: var(--primary);
+            border-color: var(--primary);
         }
         
         .tab-btn:hover:not(.active) {
-            background: #f8fafc;
+            background: var(--gray-50);
+            color: var(--gray-800);
         }
         
-        /* Form Elements */
+        /* Consistent Form Elements */
         .form-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
         }
         
         .form-label {
             display: block;
-            margin-bottom: 0.375rem;
-            font-weight: 500;
-            color: #374151;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--gray-800);
             font-size: 0.875rem;
         }
         
         .form-input {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 0.875rem;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--gray-300);
+            border-radius: 10px;
+            font-size: 0.9375rem;
             transition: all 0.3s;
             background: white;
+            color: var(--gray-800);
         }
         
         .form-input:focus {
             outline: none;
-            border-color: var(--warm-blue);
+            border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
+        .form-input:read-only {
+            background-color: var(--gray-50);
+            cursor: not-allowed;
+        }
+        
         /* Password Toggle */
+        .password-container {
+            position: relative;
+        }
+        
         .password-toggle {
             position: absolute;
-            right: 10px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
             cursor: pointer;
-            color: #6b7280;
-            padding: 5px;
+            color: var(--gray-500);
+            padding: 6px;
+            border-radius: 6px;
         }
         
         .password-toggle:hover {
-            color: #374151;
-        }
-        
-        .password-container {
-            position: relative;
+            background: var(--gray-100);
+            color: var(--gray-700);
         }
         
         .password-container .form-input {
-            padding-right: 40px;
+            padding-right: 46px;
         }
         
         /* Account Cards */
         .account-card {
             background: white;
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            border: 1px solid var(--gray-200);
             overflow: hidden;
             transition: all 0.3s;
+            padding: 1.5rem;
         }
         
         .account-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            border-color: var(--warm-blue-border);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-border);
         }
         
         /* Stats Cards */
         .stat-card {
             background: white;
-            border-radius: 10px;
-            padding: 1.25rem;
-            border: 1px solid var(--warm-blue-border);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-radius: 14px;
+            padding: 1.5rem;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
         
         .stat-card h3 {
-            color: #6b7280;
+            color: var(--gray-600);
             font-size: 0.875rem;
             font-weight: 500;
             margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         
         .stat-card .number {
-            font-size: 1.875rem;
+            font-size: 2rem;
             font-weight: 700;
-            color: var(--warm-blue);
+            color: var(--primary);
+            line-height: 1;
         }
         
-        /* Modal */
+        /* Consistent Modals */
         .modal {
             display: none;
             position: fixed;
@@ -1011,99 +1065,125 @@ try {
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
         }
         
         .modal.show {
             display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .modal-content {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 2rem;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
             overflow-y: auto;
-            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
-            border: 1px solid var(--warm-blue-border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--gray-200);
+            animation: modalSlideIn 0.3s ease-out;
         }
         
-        /* Badges */
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Consistent Badges */
         .badge {
-            padding: 0.25rem 0.75rem;
+            padding: 0.375rem 0.875rem;
             border-radius: 9999px;
             font-size: 0.75rem;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.375rem;
+            letter-spacing: 0.02em;
         }
         
         .badge-success {
             background: #d1fae5;
             color: #065f46;
+            border: 1px solid #a7f3d0;
         }
         
         .badge-warning {
             background: #fef3c7;
             color: #92400e;
+            border: 1px solid #fde68a;
         }
         
         .badge-error {
             background: #fee2e2;
             color: #991b1b;
+            border: 1px solid #fecaca;
         }
         
         .badge-info {
             background: #dbeafe;
             color: #1e40af;
+            border: 1px solid #bfdbfe;
         }
         
         /* Manual Linking Styles */
         .link-section {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f7fa 100%);
-            border: 2px solid #bae6fd;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            border: 1px solid #bae6fd;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
         }
         
         .link-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .link-grid {
+                grid-template-columns: 1fr;
+            }
         }
         
         .link-list {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            padding: 0.5rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 0.75rem;
+            background: white;
         }
         
         .link-item {
-            padding: 0.75rem;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-100);
             cursor: pointer;
             transition: all 0.2s;
+            border-radius: 8px;
         }
         
         .link-item:hover {
-            background: #f0f9ff;
+            background: var(--gray-50);
         }
         
         .link-item.selected {
-            background: #dbeafe;
-            border-left: 3px solid #3b82f6;
+            background: var(--primary-bg);
+            border-left: 3px solid var(--primary);
         }
         
-        /* Message Modal - TOP RIGHT */
+        /* Message Modal */
         .message-modal {
             position: fixed;
             top: 20px;
@@ -1111,7 +1191,7 @@ try {
             z-index: 9999;
             min-width: 300px;
             max-width: 500px;
-            height: 85px;
+            height: auto;
             transform: translateX(120%);
             transition: transform 0.3s ease-in-out;
             pointer-events: none;
@@ -1124,31 +1204,27 @@ try {
         
         .message-content {
             background: white;
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
             border: 2px solid transparent;
             animation: slideInRight 0.3s ease-out;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
         
         .message-content.success {
-            border-color: #10b981;
+            border-color: var(--success);
             background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
         }
         
         .message-content.error {
-            border-color: #ef4444;
+            border-color: var(--danger);
             background: linear-gradient(135deg, #fef2f2 0%, #fef2f2 100%);
         }
         
         .message-header {
             display: flex;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
         }
         
         .message-icon {
@@ -1158,61 +1234,46 @@ try {
         }
         
         .message-icon.success {
-            color: #10b981;
+            color: var(--success);
         }
         
         .message-icon.error {
-            color: #ef4444;
+            color: var(--danger);
         }
         
         .message-title {
-            font-weight: 600;
-            font-size: 0.95rem;
-            white-space: nowrap;
-        }
-        
-        .message-title.success {
-            color: #065f46;
-        }
-        
-        .message-title.error {
-            color: #991b1b;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--gray-900);
         }
         
         .message-body {
-            color: #4b5563;
-            font-size: 0.875rem;
-            line-height: 1.4;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            max-height: 2.8em;
+            color: var(--gray-700);
+            font-size: 0.9375rem;
+            line-height: 1.5;
         }
         
         .message-close {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 12px;
+            right: 12px;
             background: none;
             border: none;
-            color: #9ca3af;
+            color: var(--gray-400);
             cursor: pointer;
             font-size: 0.9rem;
-            padding: 0;
-            width: 20px;
-            height: 20px;
+            padding: 4px;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            z-index: 1;
+            border-radius: 6px;
         }
         
         .message-close:hover {
             background: rgba(0, 0, 0, 0.05);
-            color: #6b7280;
+            color: var(--gray-600);
         }
         
         @keyframes slideInRight {
@@ -1226,114 +1287,62 @@ try {
             }
         }
         
-        @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(120%);
-                opacity: 0;
-            }
-        }
-        
         /* Progress Bar */
         .message-progress {
-            height: 3px;
+            height: 4px;
             background: rgba(0, 0, 0, 0.1);
-            border-radius: 3px;
-            margin-top: 0.5rem;
+            border-radius: 2px;
+            margin-top: 0.75rem;
             overflow: hidden;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            border-bottom-left-radius: 10px;
-            border-bottom-right-radius: 10px;
+            position: relative;
         }
         
         .message-progress-bar {
             height: 100%;
             width: 100%;
-            border-radius: 3px;
-            transition: width 1s linear;
+            border-radius: 2px;
+            transition: width 3s linear;
         }
         
         .message-progress-bar.success {
-            background: #10b981;
+            background: var(--success);
         }
         
         .message-progress-bar.error {
-            background: #ef4444;
+            background: var(--danger);
         }
         
-        /* Dynamic width based on message length */
-        .message-modal.short { width: 300px; }
-        .message-modal.medium { width: 350px; }
-        .message-modal.long { width: 400px; }
-        .message-modal.extra-long { width: 450px; }
-        .message-modal.max { width: 500px; }
-        
-        /* Card Selection Styles */
+        /* Selection Styles */
         .resident-card.selected {
-            border-color: #3b82f6 !important;
-            background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            border-color: var(--primary) !important;
+            background: var(--primary-bg);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
             transform: translateY(-2px);
         }
         
         .patient-card.selected {
-            border-color: #10b981 !important;
-            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+            border-color: var(--success) !important;
+            background: #f0fdf4;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
             transform: translateY(-2px);
         }
         
-        /* Button Styles */
-        .btn-outline {
-            background: transparent;
-            border: 2px solid #d1d5db;
-            color: #4b5563;
+        /* Consistent Spacing */
+        .section-spacing {
+            margin-bottom: 2.5rem;
         }
         
-        .btn-outline:hover {
-            background: #f9fafb;
-            border-color: #9ca3af;
-        }
-        
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%);
-        }
-        
-        .btn-primary:disabled:hover {
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .btn-primary:not(:disabled):hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
-        }
-        
-        /* Animation for selection */
-        .resident-card, .patient-card {
-            transition: all 0.2s ease-in-out;
-        }
-        
-        .resident-card:hover:not(.selected) {
-            border-color: #93c5fd;
-            transform: translateY(-1px);
-        }
-        
-        .patient-card:hover:not(.selected) {
-            border-color: #6ee7b7;
-            transform: translateY(-1px);
+        .grid-spacing {
+            gap: 1.5rem;
         }
         
         /* Responsive Design */
         @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
             .grid-container {
                 grid-template-columns: 1fr;
             }
@@ -1358,22 +1367,112 @@ try {
                 max-width: none;
             }
             
-            .message-content {
-                padding: 0.875rem 1rem;
-            }
-            
-            .message-body {
-                -webkit-line-clamp: 2;
-                max-height: 2.8em;
-            }
-            
             .account-card {
-                padding: 0.75rem;
+                padding: 1.25rem;
             }
             
-            #selected-items-panel {
-                padding: 1rem;
+            .modal-content {
+                padding: 1.5rem;
             }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        /* Visual Hierarchy */
+        .page-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            line-height: 1.2;
+        }
+        
+        .page-subtitle {
+            font-size: 1rem;
+            color: var(--gray-600);
+            margin-top: 0.5rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+        }
+        
+        .subsection-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+        }
+        
+        /* Animation for section transitions */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Loading states */
+        .loading {
+            position: relative;
+            pointer-events: none;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Focus states for accessibility */
+        .focusable:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
         }
     </style>
 </head>
@@ -1381,922 +1480,949 @@ try {
     <?php require_once __DIR__ . '/../includes/header.php'; ?>
     
     <!-- Message Modal -->
-    <?php if (isset($_SESSION['message'])): ?>
-    <?php 
-        $message = $_SESSION['message'];
-        $messageType = $_SESSION['message_type'] ?? '';
-        
-        // Calculate message length for dynamic width
-        $msgLength = strlen($message);
-        if ($msgLength < 50) {
-            $widthClass = 'short';
-        } elseif ($msgLength < 80) {
-            $widthClass = 'medium';
-        } elseif ($msgLength < 120) {
-            $widthClass = 'long';
-        } elseif ($msgLength < 160) {
-            $widthClass = 'extra-long';
-        } else {
-            $widthClass = 'max';
-        }
-    ?>
-    <div id="messageModal" class="message-modal <?= $widthClass ?>">
-        <div class="message-content <?= $messageType === 'error' ? 'error' : 'success' ?>">
-            <button class="message-close" onclick="closeMessageModal()" aria-label="Close message">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="message-header">
-                <i class="message-icon <?= $messageType === 'error' ? 'error' : 'success' ?> fas <?= $messageType === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle' ?>"></i>
-                <span class="message-title <?= $messageType === 'error' ? 'error' : 'success' ?>">
-                    <?= $messageType === 'error' ? 'Error' : 'Success' ?>
-                </span>
-            </div>
-            <div class="message-body">
-                <?= htmlspecialchars($message) ?>
-            </div>
-            <div class="message-progress">
-                <div class="message-progress-bar <?= $messageType === 'error' ? 'error' : 'success' ?>" id="messageProgressBar"></div>
-            </div>
-        </div>
-    </div>
-    <?php 
-        // Store message in JavaScript variable before clearing
-        unset($_SESSION['message']);
-        unset($_SESSION['message_type']);
-    ?>
+    <?php if (isset($_SESSION['message']) && ($_SESSION['message_type'] ?? 'success') === 'success'): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            showMessageModal(<?= json_encode($_SESSION['message']) ?>, 'success');
+        });
+    </script>
+    <?php unset($_SESSION['message']); unset($_SESSION['message_type']); ?>
     <?php endif; ?>
     
     <main class="container mx-auto px-4 py-8 mt-16">
         <!-- Page Header -->
-        <div class="mb-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div class="section-spacing">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-800">Account Management</h1>
-                    <p class="text-gray-600 mt-2">Manage staff and resident accounts with patient record linking</p>
+                    <h1 class="page-title">Account Management</h1>
+                    <p class="page-subtitle">Manage staff and resident accounts with patient record linking</p>
                 </div>
-                <div class="flex gap-3">
-                    <span class="badge badge-info">
-                        <i class="fas fa-user-md"></i> Staff: <?= count($activeStaff) + count($inactiveStaff) ?>
-                    </span>
-                    <span class="badge badge-success">
-                        <i class="fas fa-users"></i> Residents: <?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?>
-                    </span>
+                <div class="flex flex-wrap gap-3">
+                    <div class="stat-card">
+                        <h3>Active Staff</h3>
+                        <div class="number"><?= count($activeStaff) ?></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Residents</h3>
+                        <div class="number"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></div>
+                    </div>
                     <?php if (count($unlinkedResidents) > 0): ?>
-                    <span class="badge badge-warning">
-                        <i class="fas fa-unlink"></i> Unlinked: <?= count($unlinkedResidents) ?>
-                    </span>
+                    <div class="stat-card">
+                        <h3>Unlinked</h3>
+                        <div class="number text-warning"><?= count($unlinkedResidents) ?></div>
+                    </div>
                     <?php endif; ?>
                 </div>
             </div>
-            
-            <!-- Stats Grid -->
-<div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-8">
-    <div class="stat-card">
-        <h3>Active Staff</h3>
-        <div class="number"><?= count($activeStaff) ?></div>
-        <p class="text-sm text-green-600 mt-2">
-            <i class="fas fa-check-circle"></i> Operational
-        </p>
-    </div>
-
-    <div class="stat-card">
-        <h3>Inactive Staff</h3>
-        <div class="number"><?= count($inactiveStaff) ?></div>
-        <p class="text-sm text-gray-500 mt-2">
-            <i class="fas fa-pause-circle"></i> Suspended
-        </p>
-    </div>
-
-    <div class="stat-card">
-        <h3>Unlinked Accounts</h3>
-        <div class="number"><?= count($unlinkedResidents) ?></div>
-        <p class="text-sm text-orange-600 mt-2">
-            <i class="fas fa-unlink"></i> Need patient record
-        </p>
-    </div>
-</div>
-
         </div>
 
         <!-- Main Tabs -->
-        <div class="tabs-container mb-8">
+        <div class="tabs-container">
             <div class="flex flex-wrap gap-2">
-                <button class="tab-btn active" onclick="showSection('staff')" id="staff-tab">
+                <button class="tab-btn active focusable" onclick="showSection('staff')" id="staff-tab" aria-selected="true" aria-controls="staff-section">
                     <i class="fas fa-user-md mr-2"></i> Staff Management
-                    <span class="badge badge-info"><?= count($activeStaff) + count($inactiveStaff) ?></span>
+                    <span class="badge badge-info ml-2"><?= count($activeStaff) + count($inactiveStaff) ?></span>
                 </button>
-                <button class="tab-btn" onclick="showSection('resident')" id="resident-tab">
+                <button class="tab-btn focusable" onclick="showSection('resident')" id="resident-tab" aria-selected="false" aria-controls="resident-section">
                     <i class="fas fa-users mr-2"></i> Resident Management
-                    <span class="badge badge-success"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></span>
+                    <span class="badge badge-success ml-2"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></span>
                 </button>
                 <?php if (count($unlinkedResidents) > 0 || count($unlinkedPatients) > 0): ?>
-                <button class="tab-btn" onclick="showSection('linking')" id="linking-tab">
+                <button class="tab-btn focusable" onclick="showSection('linking')" id="linking-tab" aria-selected="false" aria-controls="linking-section">
                     <i class="fas fa-link mr-2"></i> Manual Linking
-                    <span class="badge badge-warning"><?= count($unlinkedResidents) + count($unlinkedPatients) ?></span>
+                    <span class="badge badge-warning ml-2"><?= count($unlinkedResidents) + count($unlinkedPatients) ?></span>
                 </button>
                 <?php endif; ?>
             </div>
         </div>
 
         <!-- Staff Management Section -->
-        <section id="staff-section" class="fade-in space-y-10">
-    
-    <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="bg-gray-50/50 border-b border-gray-100 px-8 py-5">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-3">
-                <i class="fas fa-user-plus text-blue-600"></i>
-                Create New Staff Account
-            </h2>
-            <p class="text-gray-500 text-sm mt-1">Add healthcare staff members to the system</p>
-        </div>
-
-        <div class="p-8">
-            <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                <div class="form-group">
-                    <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Username <span class="text-rose-500">*</span></label>
-                    <input type="text" name="username" required 
-                           class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" 
-                           placeholder="Enter username">
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Password <span class="text-rose-500">*</span></label>
-                    <div class="password-container relative">
-                        <input type="password" name="password" required 
-                               id="staff-password"
-                               class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all pr-10" 
-                               placeholder="Enter password">
-                        <button type="button" class="password-toggle" onclick="togglePassword('staff-password')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-2">Password is visible to admin for reference</p>
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Full Name <span class="text-rose-500">*</span></label>
-                    <input type="text" name="full_name" required 
-                           class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" 
-                           placeholder="Enter full name">
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Position</label>
-                    <input type="text" name="position" 
-                           class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" 
-                           placeholder="e.g., Nurse, Doctor">
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Specialization</label>
-                    <input type="text" name="specialization" 
-                           class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" 
-                           placeholder="e.g., Pediatrics">
-                </div>
-                <div class="form-group">
-                    <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">License Number</label>
-                    <input type="text" name="license_number" 
-                           class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" 
-                           placeholder="Enter license number">
-                </div>
-
-                <div class="md:col-span-2 flex justify-center pt-4">
-                    <button type="submit" name="create_staff" class="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg shadow-blue-100 transition-all transform hover:scale-105 flex items-center gap-2">
-                        <i class="fas fa-user-plus"></i> Create Staff Account
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="flex justify-center">
-        <div class="inline-flex p-1.5 bg-gray-100 rounded-full gap-1">
-            <button class="px-8 py-3 rounded-full text-sm font-bold transition-all bg-white shadow-sm text-blue-600" onclick="showStaffTab('active')">
-                Active Staff (<?= count($activeStaff) ?>)
-            </button>
-            <button class="px-8 py-3 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-gray-900" onclick="showStaffTab('inactive')">
-                Inactive Staff (<?= count($inactiveStaff) ?>)
-            </button>
-        </div>
-    </div>
-
-    <div id="active-staff-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <?php if (empty($activeStaff)): ?>
-            <div class="col-span-full text-center py-16 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200">
-                <i class="fas fa-user-md text-5xl text-gray-300 mb-4"></i>
-                <h3 class="text-lg font-bold text-gray-900">No active staff accounts</h3>
-                <p class="text-gray-500">Create your first staff account above</p>
-            </div>
-        <?php else: ?>
-            <?php foreach ($activeStaff as $staff): ?>
-                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 hover:shadow-xl transition-all group">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="font-black text-gray-900 text-xl leading-tight"><?= htmlspecialchars($staff['full_name']) ?></h3>
-                            <p class="text-blue-500 font-bold text-sm">@<?= htmlspecialchars($staff['username']) ?></p>
-                        </div>
-                        <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase rounded-full tracking-widest">Active</span>
-                    </div>
-                    
-                    <div class="space-y-3 mb-8 border-t border-b border-gray-50 py-6">
-                        <?php if ($staff['position']): ?>
-                            <div class="flex items-center text-sm font-medium text-gray-600">
-                                <i class="fas fa-briefcase text-blue-400 mr-3 w-5"></i>
-                                <?= htmlspecialchars($staff['position']) ?>
-                            </div>
-                        <?php endif; ?>
-                        <?php if ($staff['specialization']): ?>
-                            <div class="flex items-center text-sm font-medium text-gray-600">
-                                <i class="fas fa-stethoscope text-emerald-400 mr-3 w-5"></i>
-                                <?= htmlspecialchars($staff['specialization']) ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="flex items-center text-sm font-medium text-gray-400">
-                            <i class="fas fa-calendar-alt mr-3 w-5"></i>
-                            Added <?= date('M j, Y', strtotime($staff['created_at'])) ?>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <button onclick="showChangeStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
-                                class="px-6 py-2.5 bg-blue-50 text-blue-700 font-bold rounded-full text-xs hover:bg-blue-600 hover:text-white transition-all">
-                            <i class="fas fa-key mr-2"></i> Change Password
-                        </button>
-                        <form method="POST" action="">
-                            <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
-                            <input type="hidden" name="action" value="deactivate">
-                            <button type="submit" name="toggle_staff_status" 
-                                    class="px-6 py-2.5 bg-amber-50 text-amber-700 font-bold rounded-full text-xs hover:bg-amber-500 hover:text-white transition-all"
-                                    onclick="return confirm('Deactivate this staff account?')">
-                                <i class="fas fa-pause mr-2"></i> Deactivate
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-
-    <div id="inactive-staff-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" style="display: none;">
-        <?php if (empty($inactiveStaff)): ?>
-            <div class="col-span-full text-center py-16 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200">
-                <i class="fas fa-user-slash text-5xl text-gray-300 mb-4"></i>
-                <h3 class="text-lg font-bold text-gray-900">No inactive staff accounts</h3>
-                <p class="text-gray-500">All staff accounts are currently active</p>
-            </div>
-        <?php else: ?>
-            <?php foreach ($inactiveStaff as $staff): ?>
-                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 group">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="font-black text-gray-900 text-xl leading-tight"><?= htmlspecialchars($staff['full_name']) ?></h3>
-                            <p class="text-gray-500 font-bold text-sm">@<?= htmlspecialchars($staff['username']) ?></p>
-                        </div>
-                        <span class="px-3 py-1 bg-rose-50 text-rose-600 text-[10px] font-black uppercase rounded-full tracking-widest">Inactive</span>
-                    </div>
-                    
-                    <div class="space-y-3 mb-8 border-t border-b border-gray-50 py-6">
-                        <?php if ($staff['position']): ?>
-                            <div class="flex items-center text-sm font-medium text-gray-500">
-                                <i class="fas fa-briefcase text-gray-400 mr-3 w-5"></i>
-                                <?= htmlspecialchars($staff['position']) ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="flex items-center text-sm font-medium text-gray-400">
-                            <i class="fas fa-calendar-alt mr-3 w-5"></i>
-                            Added <?= date('M j, Y', strtotime($staff['created_at'])) ?>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <button onclick="showChangeStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
-                                class="px-6 py-2.5 bg-blue-50 text-blue-700 font-bold rounded-full text-xs hover:bg-blue-600 hover:text-white transition-all">
-                            <i class="fas fa-key mr-2"></i> Change Password
-                        </button>
-                        <form method="POST" action="">
-                            <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
-                            <input type="hidden" name="action" value="activate">
-                            <button type="submit" name="toggle_staff_status" 
-                                    class="px-6 py-2.5 bg-emerald-100 text-emerald-700 font-bold rounded-full text-xs hover:bg-emerald-600 hover:text-white transition-all"
-                                    onclick="return confirm('Reactivate this account?')">
-                                <i class="fas fa-play mr-2"></i> Activate
-                            </button>
-                        </form>
-                        
-                        <button onclick="showDeleteModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
-                                class="px-6 py-2.5 bg-rose-50 text-rose-600 font-bold rounded-full text-xs hover:bg-rose-600 hover:text-white transition-all">
-                            <i class="fas fa-trash mr-2"></i> Delete
-                        </button>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-</section>
-
-        <!-- Resident Management Section -->
-        <section id="resident-section" class="fade-in space-y-10" style="display: none;">
-    
-    <div class="border-b border-gray-100 pb-6">
-        <h1 class="text-3xl font-black text-gray-900 tracking-tight">Resident Management</h1>
-        <p class="text-gray-500 mt-1">Create accounts and manage clinical linking.</p>
-    </div>
-
-    <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="bg-gray-50/50 border-b border-gray-100 px-8 py-5">
-            <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <i class="fas fa-user-plus text-emerald-600"></i>
-                Create New Resident Account
-            </h2>
-        </div>
-        
-        <div class="p-8">
-            <form method="POST" action="" id="resident-form" class="space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-                    <div class="form-group">
-                        <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Full Name <span class="text-rose-500">*</span></label>
-                        <input type="text" name="full_name" required class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all" placeholder="e.g. Juan Dela Cruz">
-                    </div>
-                    <div class="form-group">
-                        <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Email Address <span class="text-rose-500">*</span></label>
-                        <input type="email" name="email" required class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all" placeholder="juan@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Username</label>
-                        <input type="text" name="username" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all" placeholder="Leave blank for auto-gen">
-                    </div>
-                    <div class="form-group">
-                        <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Password <span class="text-rose-500">*</span></label>
-                        <div class="password-container relative">
-                            <input type="password" name="password" required 
-                                   id="resident-password"
-                                   class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white outline-none transition-all pr-10" 
-                                   placeholder="••••••••">
-                            <button type="button" class="password-toggle" onclick="togglePassword('resident-password')">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2">Password is visible to admin for reference</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="form-group">
-                        <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Phone</label>
-                        <input type="tel" name="phone" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all">
-                    </div>
-                    <div class="form-group">
-                        <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Date of Birth</label>
-                        <input type="date" name="date_of_birth" id="date-of-birth" onchange="calculateAge()" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all">
-                    </div>
-                    <div class="form-group">
-                        <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Gender</label>
-                        <select name="gender" id="gender" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all">
-                            <option value="">Select Gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Sitio</label>
-                    <select name="sitio" id="sitio" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all">
-                        <option value="">Select Sitio</option>
-                        <option value="Proper Luz">Proper Luz</option>
-                        <option value="Lower Luz">Lower Luz</option>
-                        <option value="Upper Luz">Upper Luz</option>
-                        <option value="Luz Proper">Luz Proper</option>
-                        <option value="Luz Heights">Luz Heights</option>
-                        <option value="Panganiban">Panganiban</option>
-                        <option value="Balagtas">Balagtas</option>
-                        <option value="Carbon">Carbon</option>
-                        <option value="Others">Others</option>
-                    </select>
-                </div>
-
-                <!-- Age display (hidden input for form) -->
-                <input type="hidden" name="age_display" id="age">
-
-                <!-- Information Note -->
-                <div class="mb-8 bg-blue-50 border border-blue-200 rounded-2xl p-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-info-circle text-blue-500 text-xl mr-3"></i>
-                        <div>
-                            <p class="font-medium text-blue-800">Important:</p>
-                            <p class="text-sm text-blue-600 mt-1">
-                                This account will be created without a patient record. 
-                                To link this account to a patient record, go to the 
-                                <span class="font-medium">"Manual Linking"</span> tab after creating the account.
-                                Patient records are added separately by admin staff.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center pt-4">
-                    <button type="submit" name="create_resident" class="px-10 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-full shadow-lg shadow-emerald-200 transition-all transform hover:scale-105 flex items-center gap-2">
-                        <i class="fas fa-plus-circle"></i> Create Resident Account
-                    </button>
-                    <p class="text-xs text-gray-400 mt-4 uppercase tracking-widest font-bold">Role: Resident • Status: Approved</p>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="flex justify-center">
-        <div class="inline-flex p-1.5 bg-gray-100 rounded-full gap-1">
-            <button class="px-8 py-3 rounded-full text-sm font-bold transition-all bg-white shadow-sm text-emerald-600" onclick="showResidentTab('pending')">
-                Pending (<?= count($pendingResidents) ?>)
-            </button>
-            <button class="px-8 py-3 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-gray-900" onclick="showResidentTab('approved')">
-                Approved (<?= count($approvedResidents) ?>)
-            </button>
-            <button class="px-8 py-3 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-gray-900" onclick="showResidentTab('declined')">
-                Declined (<?= count($declinedResidents) ?>)
-            </button>
-            <?php if (count($unlinkedResidents) > 0): ?>
-            <button class="px-8 py-3 rounded-full text-sm font-bold transition-all text-gray-500 hover:text-gray-900" onclick="showResidentTab('unlinked')">
-                Unlinked (<?= count($unlinkedResidents) ?>)
-            </button>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <!-- Pending Residents Tab -->
-    <div id="pending-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <?php if (empty($pendingResidents)): ?>
-            <div class="col-span-full text-center py-16 bg-yellow-50 rounded-[2rem] border-2 border-dashed border-yellow-200">
-                <i class="fas fa-clock text-5xl text-yellow-300 mb-4"></i>
-                <h3 class="text-lg font-bold text-gray-900">No pending resident accounts</h3>
-                <p class="text-gray-500">All applications have been processed</p>
-            </div>
-        <?php else: ?>
-            <?php foreach ($pendingResidents as $resident): ?>
-                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 hover:shadow-xl hover:shadow-gray-200/50 transition-all group">
-                    <div class="text-center mb-6">
-                        <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fas fa-user text-xl"></i>
-                        </div>
-                        <h3 class="font-black text-gray-900 text-xl leading-tight"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                        <p class="text-emerald-500 font-bold text-sm uppercase tracking-tighter">@<?= htmlspecialchars($resident['username']) ?></p>
-                    </div>
-                    
-                    <div class="space-y-3 mb-8 text-center border-t border-b border-gray-50 py-6">
-                        <p class="text-sm text-gray-500"><i class="fas fa-envelope mr-2 text-gray-300"></i><?= htmlspecialchars($resident['email']) ?></p>
-                        <p class="text-sm text-gray-500"><i class="fas fa-map-marker-alt mr-2 text-gray-300"></i><?= htmlspecialchars($resident['sitio'] ?: 'No Location') ?></p>
-                        <?php if ($resident['age'] > 0): ?>
-                            <p class="text-sm text-gray-500"><i class="fas fa-user mr-2 text-gray-300"></i>Age: <?= htmlspecialchars($resident['age']) ?></p>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <form method="POST" action="">
-                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                            <input type="hidden" name="action" value="approve">
-                            <button type="submit" name="toggle_resident_status" class="px-6 py-2.5 bg-emerald-100 text-emerald-700 font-bold rounded-full text-xs hover:bg-emerald-600 hover:text-white transition-all">
-                                <i class="fas fa-check mr-2"></i> Approve Account
-                            </button>
-                        </form>
-                        <form method="POST" action="">
-                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                            <input type="hidden" name="action" value="decline">
-                            <button type="submit" name="toggle_resident_status" class="px-6 py-2.5 bg-rose-50 text-rose-600 font-bold rounded-full text-xs hover:bg-rose-600 hover:text-white transition-all">
-                                <i class="fas fa-times mr-2"></i> Decline
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-
-    <!-- Approved Residents Tab -->
-    <div id="approved-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" style="display: none;">
-        <?php if (empty($approvedResidents)): ?>
-            <div class="col-span-full text-center py-16 bg-green-50 rounded-[2rem] border-2 border-dashed border-green-200">
-                <i class="fas fa-check-circle text-5xl text-green-300 mb-4"></i>
-                <h3 class="text-lg font-bold text-gray-900">No approved residents</h3>
-                <p class="text-gray-500">Approve some pending accounts to see them here</p>
-            </div>
-        <?php else: ?>
-            <?php foreach ($approvedResidents as $resident): ?>
-                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 hover:shadow-xl hover:shadow-gray-200/50 transition-all group">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="text-center flex-1">
-                            <h3 class="font-black text-gray-900 text-xl leading-tight"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                            <p class="text-emerald-500 font-bold text-sm uppercase tracking-tighter">@<?= htmlspecialchars($resident['username']) ?></p>
-                        </div>
-                        <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase rounded-full tracking-widest">Approved</span>
-                    </div>
-                    
-                    <?php 
-                    // Check if account has linked patient record
-                    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
-                    $stmt->execute([$resident['id']]);
-                    $hasPatientRecord = $stmt->fetch();
-                    ?>
-                    <?php if (!$hasPatientRecord): ?>
-                    <span class="inline-block px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase rounded-full tracking-widest mb-4">Unlinked</span>
-                    <?php else: ?>
-                    <span class="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-full tracking-widest mb-4">Linked</span>
-                    <?php endif; ?>
-                    
-                    <div class="space-y-3 mb-8 text-center border-t border-b border-gray-50 py-6">
-                        <p class="text-sm text-gray-500"><i class="fas fa-envelope mr-2 text-gray-300"></i><?= htmlspecialchars($resident['email']) ?></p>
-                        <?php if ($resident['contact']): ?>
-                        <p class="text-sm text-gray-500"><i class="fas fa-phone mr-2 text-gray-300"></i><?= htmlspecialchars($resident['contact']) ?></p>
-                        <?php endif; ?>
-                        <p class="text-sm text-gray-500"><i class="fas fa-id-card mr-2 text-gray-300"></i>ID: <?= htmlspecialchars($resident['unique_number']) ?></p>
-                    </div>
-
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <button onclick="showChangeResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
-                                class="px-6 py-2.5 bg-blue-50 text-blue-700 font-bold rounded-full text-xs hover:bg-blue-600 hover:text-white transition-all w-full">
-                            <i class="fas fa-key mr-2"></i> Change Password
-                        </button>
-                        <form method="POST" action="" class="w-full">
-                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                            <input type="hidden" name="action" value="suspend">
-                            <button type="submit" name="toggle_resident_status" 
-                                    class="px-6 py-2.5 bg-amber-50 text-amber-700 font-bold rounded-full text-xs hover:bg-amber-600 hover:text-white transition-all w-full"
-                                    onclick="return confirm('Suspend this account?')">
-                                <i class="fas fa-pause mr-2"></i> Suspend Account
-                            </button>
-                        </form>
-                        <?php if (!$hasPatientRecord): ?>
-                        <a href="?section=linking&focus_resident=<?= $resident['id'] ?>" 
-                           class="px-6 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-full text-xs hover:bg-indigo-600 hover:text-white transition-all w-full text-center">
-                            <i class="fas fa-link mr-2"></i> Link Patient Record
-                        </a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-
-    <!-- Declined Residents Tab -->
-    <div id="declined-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" style="display: none;">
-        <?php if (empty($declinedResidents)): ?>
-            <div class="col-span-full text-center py-16 bg-red-50 rounded-[2rem] border-2 border-dashed border-red-200">
-                <i class="fas fa-times-circle text-5xl text-red-300 mb-4"></i>
-                <h3 class="text-lg font-bold text-gray-900">No declined residents</h3>
-                <p class="text-gray-500">No resident applications have been declined</p>
-            </div>
-        <?php else: ?>
-            <?php foreach ($declinedResidents as $resident): ?>
-                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 hover:shadow-xl hover:shadow-gray-200/50 transition-all group">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="text-center flex-1">
-                            <h3 class="font-black text-gray-900 text-xl leading-tight"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                            <p class="text-gray-500 font-bold text-sm uppercase tracking-tighter">@<?= htmlspecialchars($resident['username']) ?></p>
-                        </div>
-                        <span class="px-3 py-1 bg-rose-50 text-rose-600 text-[10px] font-black uppercase rounded-full tracking-widest">Declined</span>
-                    </div>
-                    
-                    <div class="space-y-3 mb-8 text-center border-t border-b border-gray-50 py-6">
-                        <p class="text-sm text-gray-500"><i class="fas fa-envelope mr-2 text-gray-300"></i><?= htmlspecialchars($resident['email']) ?></p>
-                        <p class="text-sm text-gray-500"><i class="fas fa-calendar-times mr-2 text-gray-300"></i>Declined: <?= date('M j, Y', strtotime($resident['updated_at'])) ?></p>
-                    </div>
-
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <button onclick="showChangeResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
-                                class="px-6 py-2.5 bg-blue-50 text-blue-700 font-bold rounded-full text-xs hover:bg-blue-600 hover:text-white transition-all w-full">
-                            <i class="fas fa-key mr-2"></i> Change Password
-                        </button>
-                        <form method="POST" action="" class="w-full">
-                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                            <input type="hidden" name="action" value="approve">
-                            <button type="submit" name="toggle_resident_status" 
-                                    class="px-6 py-2.5 bg-emerald-100 text-emerald-700 font-bold rounded-full text-xs hover:bg-emerald-600 hover:text-white transition-all w-full"
-                                    onclick="return confirm('Approve this declined account?')">
-                                <i class="fas fa-check mr-2"></i> Approve Account
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-
-    <!-- Unlinked Residents Tab -->
-    <div id="unlinked-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" style="display: none;">
-        <?php if (empty($unlinkedResidents)): ?>
-            <div class="col-span-full text-center py-16 bg-orange-50 rounded-[2rem] border-2 border-dashed border-orange-200">
-                <i class="fas fa-unlink text-5xl text-orange-300 mb-4"></i>
-                <h3 class="text-lg font-bold text-gray-900">All accounts are linked!</h3>
-                <p class="text-gray-500">All resident accounts have patient records linked</p>
-            </div>
-        <?php else: ?>
-            <?php foreach ($unlinkedResidents as $resident): ?>
-                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 hover:shadow-xl hover:shadow-gray-200/50 transition-all group">
-                    <div class="text-center mb-6">
-                        <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                            <i class="fas fa-user text-xl"></i>
-                        </div>
-                        <h3 class="font-black text-gray-900 text-xl leading-tight"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                        <p class="text-amber-500 font-bold text-sm uppercase tracking-tighter">@<?= htmlspecialchars($resident['username']) ?></p>
-                    </div>
-                    
-                    <div class="space-y-3 mb-8 text-center border-t border-b border-gray-50 py-6">
-                        <p class="text-sm text-gray-500"><i class="fas fa-envelope mr-2 text-gray-300"></i><?= htmlspecialchars($resident['email']) ?></p>
-                        <?php if ($resident['age'] > 0): ?>
-                        <p class="text-sm text-gray-500"><i class="fas fa-user mr-2 text-gray-300"></i>Age: <?= htmlspecialchars($resident['age']) ?></p>
-                        <?php endif; ?>
-                        <?php if ($resident['sitio']): ?>
-                        <p class="text-sm text-gray-500"><i class="fas fa-map-marker-alt mr-2 text-gray-300"></i><?= htmlspecialchars($resident['sitio']) ?></p>
-                        <?php endif; ?>
-                        <p class="text-sm text-gray-500"><i class="fas fa-calendar-plus mr-2 text-gray-300"></i>Created: <?= date('M j, Y', strtotime($resident['created_at'])) ?></p>
-                    </div>
-
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <button onclick="showChangeResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
-                                class="px-6 py-2.5 bg-blue-50 text-blue-700 font-bold rounded-full text-xs hover:bg-blue-600 hover:text-white transition-all">
-                            <i class="fas fa-key mr-2"></i> Change Password
-                        </button>
-                        <a href="?section=linking&focus_resident=<?= $resident['id'] ?>" 
-                           class="px-6 py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-full text-xs hover:bg-indigo-600 hover:text-white transition-all">
-                            <i class="fas fa-link mr-2"></i> Link Patient Record
-                        </a>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-</section>
-
-        <!-- Manual Linking Section -->
-<section id="linking-section" class="fade-in" style="display: none;">
-    <div class="card mb-8">
-        <div class="card-header">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-3">
-                <i class="fas fa-link text-purple-600"></i>
-                Manual Account-Patient Linking
-            </h2>
-            <p class="text-gray-600 text-sm mt-2">Link resident accounts to existing patient records</p>
-        </div>
-        
-        <div class="p-6">
-            <?php if (count($unlinkedResidents) === 0 && count($unlinkedPatients) === 0): ?>
-                <div class="text-center py-12 bg-green-50 rounded-2xl">
-                    <i class="fas fa-check-circle text-5xl text-green-300 mb-4"></i>
-                    <h3 class="text-lg font-medium text-gray-900">All accounts are properly linked!</h3>
-                    <p class="mt-1 text-sm text-gray-500">No manual linking needed at this time.</p>
-                </div>
-            <?php else: ?>
-                <!-- Link Section -->
-                <div class="mb-8">
-                    <h3 class="font-bold text-gray-800 mb-6 flex items-center gap-3">
-                        <i class="fas fa-handshake text-blue-600 text-lg"></i> 
-                        <span class="text-lg">Link Accounts to Patient Records</span>
-                    </h3>
-                    
-                    <!-- Grid Layout for Horizontal Cards -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                        <!-- Unlinked Residents Column -->
-                        <div>
-                            <div class="flex items-center justify-between mb-4">
-                                <h4 class="font-semibold text-gray-700 text-base">
-                                    <i class="fas fa-user-circle text-blue-500 mr-2"></i>
-                                    Unlinked Resident Accounts
-                                </h4>
-                                <span class="badge badge-info rounded-full px-3 py-1">
-                                    <?= count($unlinkedResidents) ?>
-                                </span>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="resident-grid">
-                                <?php foreach ($unlinkedResidents as $resident): ?>
-                                    <div class="account-card rounded-2xl border-2 border-gray-200 hover:border-blue-300 transition-all duration-200 cursor-pointer p-4 resident-card"
-                                         data-resident-id="<?= $resident['id'] ?>"
-                                         onclick="selectResidentCard(this, <?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', '<?= htmlspecialchars($resident['email']) ?>', '<?= htmlspecialchars($resident['sitio'] ?? '') ?>', <?= $resident['age'] ?? 0 ?>)">
-                                        <div class="flex items-start gap-3">
-                                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                                <i class="fas fa-user text-blue-500"></i>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="font-semibold text-gray-800 truncate"><?= htmlspecialchars($resident['full_name']) ?></div>
-                                                <div class="text-xs text-gray-500 truncate mt-1">
-                                                    <?= htmlspecialchars($resident['email']) ?>
-                                                </div>
-                                                <div class="flex items-center gap-2 mt-2">
-                                                    <?php if ($resident['sitio']): ?>
-                                                        <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
-                                                            <i class="fas fa-map-marker-alt text-xs"></i>
-                                                            <?= htmlspecialchars($resident['sitio']) ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <?php if ($resident['age'] > 0): ?>
-                                                        <span class="text-xs text-gray-600">• Age: <?= htmlspecialchars($resident['age']) ?></span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                        
-                        <!-- Unlinked Patients Column -->
-                        <div>
-                            <div class="flex items-center justify-between mb-4">
-                                <h4 class="font-semibold text-gray-700 text-base">
-                                    <i class="fas fa-file-medical text-green-500 mr-2"></i>
-                                    Unlinked Patient Records
-                                </h4>
-                                <span class="badge badge-success rounded-full px-3 py-1">
-                                    <?= count($unlinkedPatients) ?>
-                                </span>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="patient-grid">
-                                <?php foreach ($unlinkedPatients as $patient): ?>
-                                    <div class="account-card rounded-2xl border-2 border-gray-200 hover:border-green-300 transition-all duration-200 cursor-pointer p-4 patient-card"
-                                         data-patient-id="<?= $patient['id'] ?>"
-                                         onclick="selectPatientCard(this, <?= $patient['id'] ?>, '<?= htmlspecialchars($patient['full_name']) ?>', <?= $patient['age'] ?? 0 ?>, '<?= htmlspecialchars($patient['gender'] ?? '') ?>', '<?= htmlspecialchars($patient['sitio'] ?? '') ?>')">
-                                        <div class="flex items-start gap-3">
-                                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                                                <i class="fas fa-file-medical text-green-500"></i>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="font-semibold text-gray-800 truncate"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                                <div class="flex flex-wrap gap-2 mt-2">
-                                                    <?php if ($patient['age']): ?>
-                                                        <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
-                                                            <i class="fas fa-birthday-cake text-xs"></i>
-                                                            <?= htmlspecialchars($patient['age']) ?> yrs
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <?php if ($patient['gender']): ?>
-                                                        <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
-                                                            <i class="fas fa-venus-mars text-xs"></i>
-                                                            <?= htmlspecialchars($patient['gender']) ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <?php if ($patient['sitio']): ?>
-                                                        <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
-                                                            <i class="fas fa-map-marker-alt text-xs"></i>
-                                                            <?= htmlspecialchars($patient['sitio']) ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Selected Items Panel -->
-                    <div class="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-2xl p-5 mb-6 shadow-sm" id="selected-items-panel" style="display: none;">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                                    <i class="fas fa-handshake text-blue-600 text-lg"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-gray-800 text-lg">Ready to Link</h4>
-                                    <p class="text-sm text-gray-600">Selected items for linking</p>
-                                </div>
-                            </div>
-                            <button type="button" 
-                                    class="btn btn-warning rounded-full px-4 py-2 text-sm hover:scale-105 transition-transform"
-                                    onclick="clearLinkingSelection()"
-                                    aria-label="Clear selection">
-                                <i class="fas fa-times mr-2"></i> Clear Selection
-                            </button>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Selected Resident Card -->
-                            <div class="bg-white rounded-xl border-2 border-blue-200 p-4" id="selected-resident-card">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                        <i class="fas fa-user text-blue-500"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <h5 class="font-semibold text-gray-700 text-sm">Selected Resident</h5>
-                                        <div class="text-gray-800 font-medium text-base" id="selected-resident-name">No resident selected</div>
-                                    </div>
-                                    <div class="badge badge-info rounded-full px-3 py-1 text-xs">
-                                        Account
-                                    </div>
-                                </div>
-                                <div class="text-xs text-gray-500" id="selected-resident-details">
-                                    Select a resident account from the left panel
-                                </div>
-                            </div>
-                            
-                            <!-- Selected Patient Card -->
-                            <div class="bg-white rounded-xl border-2 border-green-200 p-4" id="selected-patient-card">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                                        <i class="fas fa-file-medical text-green-500"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <h5 class="font-semibold text-gray-700 text-sm">Selected Patient Record</h5>
-                                        <div class="text-gray-800 font-medium text-base" id="selected-patient-name">No patient selected</div>
-                                    </div>
-                                    <div class="badge badge-success rounded-full px-3 py-1 text-xs">
-                                        Record
-                                    </div>
-                                </div>
-                                <div class="text-xs text-gray-500" id="selected-patient-details">
-                                    Select a patient record from the right panel
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <button type="button" 
-                                class="btn btn-primary rounded-full px-8 py-4 text-base font-medium transition-all duration-200 flex items-center justify-center gap-3 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
-                                id="link-action-button" 
-                                onclick="performLinking()" 
-                                disabled>
-                            <i class="fas fa-link text-lg"></i>
-                            <span id="link-button-text" class="text-lg">Select Both Items</span>
-                        </button>
-                        
-                        <button type="button" 
-                                class="btn btn-outline rounded-full px-6 py-3 text-sm font-medium border-2 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 w-full sm:w-auto"
-                                onclick="clearLinkingSelection()">
-                            <i class="fas fa-redo mr-2"></i> Reset Selection
-                        </button>
-                    </div>
-                    
-                    <input type="hidden" id="selected-resident-id" value="0">
-                    <input type="hidden" id="selected-patient-id" value="0">
+        <section id="staff-section" class="fade-in section-spacing" aria-labelledby="staff-tab">
+            <!-- Create Staff Form -->
+            <div class="card mb-10">
+                <div class="card-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-user-plus mr-3 text-primary"></i>
+                        Create New Staff Account
+                    </h2>
+                    <p class="text-gray-600 mt-1">Add healthcare staff members to the system</p>
                 </div>
                 
-                <!-- Information Section -->
-                <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-5 mt-8">
-                    <div class="flex items-start gap-4">
-                        <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-info-circle text-yellow-500 text-lg"></i>
+                <div class="p-6">
+                    <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">Username <span class="text-red-500">*</span></label>
+                            <input type="text" name="username" required class="form-input" placeholder="Enter username">
                         </div>
-                        <div>
-                            <h4 class="font-bold text-yellow-800 mb-2">How This Works:</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div class="flex items-start gap-2">
-                                    <i class="fas fa-1 text-yellow-600 mt-1"></i>
-                                    <p class="text-sm text-yellow-700">Create resident accounts (no patient records initially)</p>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Password <span class="text-red-500">*</span></label>
+                            <div class="password-container">
+                                <input type="password" name="password" required id="staff-password" class="form-input" placeholder="Enter password">
+                                <button type="button" class="password-toggle" onclick="togglePassword('staff-password')" aria-label="Show password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">Password will be visible for reference</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Full Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="full_name" required class="form-input" placeholder="Enter full name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Position <span class="text-red-500">*</span></label>
+                            <select name="position" required class="form-input">
+                                <option value="">Select Position</option>
+                                <option value="BHW">Barangay Health Worker (BHW)</option>
+                                <option value="Nurse">Nurse</option>
+                                <option value="Midwife">Midwife</option>
+                                <option value="Doctor">Doctor</option>
+                                <option value="Medical Technologist">Medical Technologist</option>
+                                <option value="Administrative Staff">Administrative Staff</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Specialization</label>
+                            <input type="text" name="specialization" class="form-input" placeholder="e.g., Pediatrics, OB-GYN, General Medicine">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">License Number</label>
+                            <input type="text" name="license_number" class="form-input" placeholder="Enter license number (if applicable)">
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <button type="submit" name="create_staff" class="btn btn-primary px-8 py-3">
+                                <i class="fas fa-user-plus mr-2"></i> Create Staff Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Staff Account Management -->
+            <div class="mb-6">
+                <div class="tabs-container inline-flex">
+                    <button class="tab-btn active" onclick="showStaffTab('active')">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Active Staff (<?= count($activeStaff) ?>)
+                    </button>
+                    <button class="tab-btn" onclick="showStaffTab('inactive')">
+                        <i class="fas fa-pause-circle mr-2"></i>
+                        Inactive Staff (<?= count($inactiveStaff) ?>)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Active Staff Tab -->
+            <div id="active-staff-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing">
+                <?php if (empty($activeStaff)): ?>
+                    <div class="col-span-full text-center py-12">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                            <i class="fas fa-user-md text-2xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No active staff accounts</h3>
+                        <p class="text-gray-500">Create your first staff account above</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($activeStaff as $staff): ?>
+                        <div class="account-card">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($staff['full_name']) ?></h3>
+                                    <p class="text-primary text-sm font-medium">@<?= htmlspecialchars($staff['username']) ?></p>
                                 </div>
-                                <div class="flex items-start gap-2">
-                                    <i class="fas fa-2 text-yellow-600 mt-1"></i>
-                                    <p class="text-sm text-yellow-700">Add patient records separately through patient management</p>
+                                <span class="badge badge-success">Active</span>
+                            </div>
+                            
+                            <div class="space-y-3 mb-6">
+                                <?php if ($staff['position']): ?>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-briefcase text-gray-400 mr-3 w-5"></i>
+                                        <?= htmlspecialchars($staff['position']) ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if ($staff['specialization']): ?>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-stethoscope text-gray-400 mr-3 w-5"></i>
+                                        <?= htmlspecialchars($staff['specialization']) ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if ($staff['license_number']): ?>
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-id-card text-gray-400 mr-3 w-5"></i>
+                                        <?= htmlspecialchars($staff['license_number']) ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="flex items-center text-sm text-gray-400">
+                                    <i class="fas fa-calendar-alt mr-3 w-5"></i>
+                                    Added <?= date('M j, Y', strtotime($staff['created_at'])) ?>
                                 </div>
-                                <div class="flex items-start gap-2">
-                                    <i class="fas fa-3 text-yellow-600 mt-1"></i>
-                                    <p class="text-sm text-yellow-700">Link accounts to records here (one account = one record)</p>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="showChangeStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
+                                        class="btn btn-outline flex-1 min-w-[120px]">
+                                    <i class="fas fa-key mr-2"></i> Change Password
+                                </button>
+                                
+                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                    <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
+                                    <input type="hidden" name="action" value="deactivate">
+                                    <button type="submit" name="toggle_staff_status" 
+                                            class="btn btn-warning w-full"
+                                            onclick="return confirm('Deactivate this staff account?')">
+                                        <i class="fas fa-pause mr-2"></i> Deactivate
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Inactive Staff Tab -->
+            <div id="inactive-staff-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing" style="display: none;">
+                <?php if (empty($inactiveStaff)): ?>
+                    <div class="col-span-full text-center py-12">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                            <i class="fas fa-user-slash text-2xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No inactive staff accounts</h3>
+                        <p class="text-gray-500">All staff accounts are currently active</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($inactiveStaff as $staff): ?>
+                        <div class="account-card">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($staff['full_name']) ?></h3>
+                                    <p class="text-gray-500 text-sm font-medium">@<?= htmlspecialchars($staff['username']) ?></p>
                                 </div>
-                                <div class="flex items-start gap-2">
-                                    <i class="fas fa-4 text-yellow-600 mt-1"></i>
-                                    <p class="text-sm text-yellow-700">Residents can view medical history after linking</p>
+                                <span class="badge badge-error">Inactive</span>
+                            </div>
+                            
+                            <div class="space-y-3 mb-6">
+                                <?php if ($staff['position']): ?>
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-briefcase text-gray-400 mr-3 w-5"></i>
+                                        <?= htmlspecialchars($staff['position']) ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="flex items-center text-sm text-gray-400">
+                                    <i class="fas fa-calendar-alt mr-3 w-5"></i>
+                                    Added <?= date('M j, Y', strtotime($staff['created_at'])) ?>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="showChangeStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
+                                        class="btn btn-outline flex-1 min-w-[120px]">
+                                    <i class="fas fa-key mr-2"></i> Change Password
+                                </button>
+                                
+                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                    <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
+                                    <input type="hidden" name="action" value="activate">
+                                    <button type="submit" name="toggle_staff_status" 
+                                            class="btn btn-success w-full"
+                                            onclick="return confirm('Reactivate this account?')">
+                                        <i class="fas fa-play mr-2"></i> Activate
+                                    </button>
+                                </form>
+                                
+                                <button onclick="showDeleteModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
+                                        class="btn btn-danger flex-1 min-w-[120px]">
+                                    <i class="fas fa-trash mr-2"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Resident Management Section -->
+        <section id="resident-section" class="fade-in section-spacing" style="display: none;" aria-labelledby="resident-tab">
+            <!-- Create Resident Form -->
+            <div class="card mb-10">
+                <div class="card-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-user-plus mr-3 text-success"></i>
+                        Create New Resident Account
+                    </h2>
+                    <p class="text-gray-600 mt-1">Create resident accounts for patient record linking</p>
+                </div>
+                
+                <div class="p-6">
+                    <form method="POST" action="" id="resident-form" class="space-y-8">
+                        <!-- Basic Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-group">
+                                <label class="form-label">Full Name <span class="text-red-500">*</span></label>
+                                <input type="text" name="full_name" required class="form-input" placeholder="e.g. Juan Dela Cruz">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Email Address <span class="text-red-500">*</span></label>
+                                <input type="email" name="email" required class="form-input" placeholder="juan@example.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" class="form-input" placeholder="Leave blank for auto-generation">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Password <span class="text-red-500">*</span></label>
+                                <div class="password-container">
+                                    <input type="password" name="password" required id="resident-password" class="form-input" placeholder="••••••••">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('resident-password')" aria-label="Show password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-2">Password will be visible for reference</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" name="phone" class="form-input" placeholder="+63 912 345 6789">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" name="date_of_birth" id="date-of-birth" onchange="calculateAge()" class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Gender</label>
+                                <select name="gender" id="gender" class="form-input">
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Sitio -->
+                        <div class="form-group">
+                            <label class="form-label">Sitio</label>
+                            <select name="sitio" id="sitio" class="form-input">
+                                <option value="">Select Sitio</option>
+                                <option value="Proper Luz">Proper Luz</option>
+                                <option value="Lower Luz">Lower Luz</option>
+                                <option value="Upper Luz">Upper Luz</option>
+                                <option value="Luz Proper">Luz Proper</option>
+                                <option value="Luz Heights">Luz Heights</option>
+                                <option value="Panganiban">Panganiban</option>
+                                <option value="Balagtas">Balagtas</option>
+                                <option value="Carbon">Carbon</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Age Display -->
+                        <div id="age-display" class="hidden">
+                            <div class="inline-flex items-center px-3 py-1 bg-gray-100 rounded-full">
+                                <span class="text-sm font-medium text-gray-700">Age: <span id="calculated-age">0</span> years</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Information Note -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex">
+                                <i class="fas fa-info-circle text-blue-500 text-lg mt-0.5 mr-3"></i>
+                                <div>
+                                    <p class="font-medium text-blue-800 mb-1">Important Information</p>
+                                    <p class="text-sm text-blue-600">
+                                        This account will be created without a patient record. 
+                                        To link this account to a patient record, go to the 
+                                        <span class="font-semibold">"Manual Linking"</span> tab after creating the account.
+                                        Patient records are added separately by admin staff.
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="pt-4 border-t border-gray-200">
+                            <button type="submit" name="create_resident" class="btn btn-success px-8 py-3">
+                                <i class="fas fa-plus-circle mr-2"></i> Create Resident Account
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</section>
+            </div>
+            
+            <!-- Resident Account Management -->
+            <div class="mb-6">
+                <div class="tabs-container inline-flex flex-wrap">
+                    <button class="tab-btn active" onclick="showResidentTab('pending')">
+                        <i class="fas fa-clock mr-2"></i>
+                        Pending (<?= count($pendingResidents) ?>)
+                    </button>
+                    <button class="tab-btn" onclick="showResidentTab('approved')">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Approved (<?= count($approvedResidents) ?>)
+                    </button>
+                    <button class="tab-btn" onclick="showResidentTab('declined')">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        Declined (<?= count($declinedResidents) ?>)
+                    </button>
+                    <?php if (count($unlinkedResidents) > 0): ?>
+                    <button class="tab-btn" onclick="showResidentTab('unlinked')">
+                        <i class="fas fa-unlink mr-2"></i>
+                        Unlinked (<?= count($unlinkedResidents) ?>)
+                    </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <!-- Pending Residents Tab -->
+            <div id="pending-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing">
+                <?php if (empty($pendingResidents)): ?>
+                    <div class="col-span-full text-center py-12">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-yellow-50 rounded-full mb-4">
+                            <i class="fas fa-clock text-2xl text-yellow-400"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No pending resident accounts</h3>
+                        <p class="text-gray-500">All applications have been processed</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($pendingResidents as $resident): ?>
+                        <div class="account-card">
+                            <div class="text-center mb-6">
+                                <div class="w-16 h-16 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-user text-xl"></i>
+                                </div>
+                                <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                <p class="text-gray-500 text-sm font-medium">@<?= htmlspecialchars($resident['username']) ?></p>
+                            </div>
+                            
+                            <div class="space-y-3 mb-6">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-envelope text-gray-400 mr-3 w-5"></i>
+                                    <?= htmlspecialchars($resident['email']) ?>
+                                </div>
+                                
+                                <?php if ($resident['sitio']): ?>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-map-marker-alt text-gray-400 mr-3 w-5"></i>
+                                        <?= htmlspecialchars($resident['sitio']) ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if ($resident['age'] > 0): ?>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-user text-gray-400 mr-3 w-5"></i>
+                                        Age: <?= htmlspecialchars($resident['age']) ?> years
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="flex items-center text-sm text-gray-400">
+                                    <i class="fas fa-calendar-plus text-gray-400 mr-3 w-5"></i>
+                                    Applied <?= date('M j, Y', strtotime($resident['created_at'])) ?>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2">
+                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                    <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" name="toggle_resident_status" class="btn btn-success w-full">
+                                        <i class="fas fa-check mr-2"></i> Approve
+                                    </button>
+                                </form>
+                                
+                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                    <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                    <input type="hidden" name="action" value="decline">
+                                    <button type="submit" name="toggle_resident_status" class="btn btn-danger w-full">
+                                        <i class="fas fa-times mr-2"></i> Decline
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Approved Residents Tab -->
+            <div id="approved-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing" style="display: none;">
+                <?php if (empty($approvedResidents)): ?>
+                    <div class="col-span-full text-center py-12">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
+                            <i class="fas fa-check-circle text-2xl text-green-400"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No approved residents</h3>
+                        <p class="text-gray-500">Approve some pending accounts to see them here</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($approvedResidents as $resident): ?>
+                        <div class="account-card">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                    <p class="text-success text-sm font-medium">@<?= htmlspecialchars($resident['username']) ?></p>
+                                </div>
+                                <span class="badge badge-success">Approved</span>
+                            </div>
+                            
+                            <?php 
+                            // Check if account has linked patient record
+                            $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
+                            $stmt->execute([$resident['id']]);
+                            $hasPatientRecord = $stmt->fetch();
+                            ?>
+                            
+                            <?php if (!$hasPatientRecord): ?>
+                            <span class="badge badge-warning mb-4">Unlinked Account</span>
+                            <?php else: ?>
+                            <span class="badge badge-info mb-4">Linked Account</span>
+                            <?php endif; ?>
+                            
+                            <div class="space-y-3 mb-6">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-envelope text-gray-400 mr-3 w-5"></i>
+                                    <?= htmlspecialchars($resident['email']) ?>
+                                </div>
+                                
+                                <?php if ($resident['contact']): ?>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-phone text-gray-400 mr-3 w-5"></i>
+                                        <?= htmlspecialchars($resident['contact']) ?>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i class="fas fa-id-card text-gray-400 mr-3 w-5"></i>
+                                    ID: <?= htmlspecialchars($resident['unique_number']) ?>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="showChangeResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
+                                        class="btn btn-outline flex-1 min-w-[120px]">
+                                    <i class="fas fa-key mr-2"></i> Change Password
+                                </button>
+                                
+                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                    <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                    <input type="hidden" name="action" value="suspend">
+                                    <button type="submit" name="toggle_resident_status" 
+                                            class="btn btn-warning w-full"
+                                            onclick="return confirm('Suspend this account?')">
+                                        <i class="fas fa-pause mr-2"></i> Suspend
+                                    </button>
+                                </form>
+                                
+                                <?php if (!$hasPatientRecord): ?>
+                                <a href="?section=linking&focus_resident=<?= $resident['id'] ?>" 
+                                   class="btn btn-outline flex-1 min-w-[120px] text-center">
+                                    <i class="fas fa-link mr-2"></i> Link Record
+                                </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Declined Residents Tab -->
+            <div id="declined-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing" style="display: none;">
+                <?php if (empty($declinedResidents)): ?>
+                    <div class="col-span-full text-center py-12">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-red-50 rounded-full mb-4">
+                            <i class="fas fa-times-circle text-2xl text-red-400"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No declined residents</h3>
+                        <p class="text-gray-500">No resident applications have been declined</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($declinedResidents as $resident): ?>
+                        <div class="account-card">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                    <p class="text-gray-500 text-sm font-medium">@<?= htmlspecialchars($resident['username']) ?></p>
+                                </div>
+                                <span class="badge badge-error">Declined</span>
+                            </div>
+                            
+                            <div class="space-y-3 mb-6">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-envelope text-gray-400 mr-3 w-5"></i>
+                                    <?= htmlspecialchars($resident['email']) ?>
+                                </div>
+                                
+                                <div class="flex items-center text-sm text-gray-400">
+                                    <i class="fas fa-calendar-times text-gray-400 mr-3 w-5"></i>
+                                    Declined <?= date('M j, Y', strtotime($resident['updated_at'])) ?>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="showChangeResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
+                                        class="btn btn-outline flex-1 min-w-[120px]">
+                                    <i class="fas fa-key mr-2"></i> Change Password
+                                </button>
+                                
+                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                    <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" name="toggle_resident_status" 
+                                            class="btn btn-success w-full"
+                                            onclick="return confirm('Approve this declined account?')">
+                                        <i class="fas fa-check mr-2"></i> Approve
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Unlinked Residents Tab -->
+            <div id="unlinked-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing" style="display: none;">
+                <?php if (empty($unlinkedResidents)): ?>
+                    <div class="col-span-full text-center py-12">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-orange-50 rounded-full mb-4">
+                            <i class="fas fa-unlink text-2xl text-orange-400"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">All accounts are linked!</h3>
+                        <p class="text-gray-500">All resident accounts have patient records linked</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($unlinkedResidents as $resident): ?>
+                        <div class="account-card">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                    <p class="text-warning text-sm font-medium">@<?= htmlspecialchars($resident['username']) ?></p>
+                                </div>
+                                <span class="badge badge-warning">Unlinked</span>
+                            </div>
+                            
+                            <div class="space-y-3 mb-6">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-envelope text-gray-400 mr-3 w-5"></i>
+                                    <?= htmlspecialchars($resident['email']) ?>
+                                </div>
+                                
+                                <?php if ($resident['age'] > 0): ?>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-user text-gray-400 mr-3 w-5"></i>
+                                        Age: <?= htmlspecialchars($resident['age']) ?> years
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <?php if ($resident['sitio']): ?>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-map-marker-alt text-gray-400 mr-3 w-5"></i>
+                                        <?= htmlspecialchars($resident['sitio']) ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="showChangeResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
+                                        class="btn btn-outline flex-1 min-w-[120px]">
+                                    <i class="fas fa-key mr-2"></i> Change Password
+                                </button>
+                                
+                                <a href="?section=linking&focus_resident=<?= $resident['id'] ?>" 
+                                   class="btn btn-primary flex-1 min-w-[120px] text-center">
+                                    <i class="fas fa-link mr-2"></i> Link Record
+                                </a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Manual Linking Section -->
+        <section id="linking-section" class="fade-in" style="display: none;" aria-labelledby="linking-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-link mr-3 text-purple-600"></i>
+                        Manual Account-Patient Linking
+                    </h2>
+                    <p class="text-gray-600 mt-1">Link resident accounts to existing patient records</p>
+                </div>
+                
+                <div class="p-6">
+                    <?php if (count($unlinkedResidents) === 0 && count($unlinkedPatients) === 0): ?>
+                        <div class="text-center py-12">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
+                                <i class="fas fa-check-circle text-2xl text-green-400"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">All accounts are properly linked!</h3>
+                            <p class="text-gray-500">No manual linking needed at this time.</p>
+                        </div>
+                    <?php else: ?>
+                        <!-- Link Section -->
+                        <div class="mb-8">
+                            <h3 class="subsection-title mb-6">
+                                <i class="fas fa-handshake text-blue-600 mr-2"></i>
+                                Link Accounts to Patient Records
+                            </h3>
+                            
+                            <!-- Grid Layout -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                                <!-- Unlinked Residents Column -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="font-semibold text-gray-700 text-base">
+                                            <i class="fas fa-user-circle text-blue-500 mr-2"></i>
+                                            Unlinked Resident Accounts
+                                            <span class="badge badge-info ml-2"><?= count($unlinkedResidents) ?></span>
+                                        </h4>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="resident-grid">
+                                        <?php foreach ($unlinkedResidents as $resident): ?>
+                                            <div class="account-card resident-card cursor-pointer"
+                                                 data-resident-id="<?= $resident['id'] ?>"
+                                                 onclick="selectResidentCard(this, <?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', '<?= htmlspecialchars($resident['email']) ?>', '<?= htmlspecialchars($resident['sitio'] ?? '') ?>', <?= $resident['age'] ?? 0 ?>)">
+                                                <div class="flex items-start gap-3">
+                                                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                                                        <i class="fas fa-user text-blue-500"></i>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="font-semibold text-gray-800 truncate"><?= htmlspecialchars($resident['full_name']) ?></div>
+                                                        <div class="text-xs text-gray-500 truncate mt-1">
+                                                            <?= htmlspecialchars($resident['email']) ?>
+                                                        </div>
+                                                        <div class="flex items-center gap-2 mt-2">
+                                                            <?php if ($resident['sitio']): ?>
+                                                                <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
+                                                                    <i class="fas fa-map-marker-alt text-xs"></i>
+                                                                    <?= htmlspecialchars($resident['sitio']) ?>
+                                                                </span>
+                                                            <?php endif; ?>
+                                                            <?php if ($resident['age'] > 0): ?>
+                                                                <span class="text-xs text-gray-600">Age: <?= htmlspecialchars($resident['age']) ?></span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                
+                                <!-- Unlinked Patients Column -->
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h4 class="font-semibold text-gray-700 text-base">
+                                            <i class="fas fa-file-medical text-green-500 mr-2"></i>
+                                            Unlinked Patient Records
+                                            <span class="badge badge-success ml-2"><?= count($unlinkedPatients) ?></span>
+                                        </h4>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="patient-grid">
+                                        <?php foreach ($unlinkedPatients as $patient): ?>
+                                            <div class="account-card patient-card cursor-pointer"
+                                                 data-patient-id="<?= $patient['id'] ?>"
+                                                 onclick="selectPatientCard(this, <?= $patient['id'] ?>, '<?= htmlspecialchars($patient['full_name']) ?>', <?= $patient['age'] ?? 0 ?>, '<?= htmlspecialchars($patient['gender'] ?? '') ?>', '<?= htmlspecialchars($patient['sitio'] ?? '') ?>')">
+                                                <div class="flex items-start gap-3">
+                                                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                                                        <i class="fas fa-file-medical text-green-500"></i>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="font-semibold text-gray-800 truncate"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                                        <div class="flex flex-wrap gap-2 mt-2">
+                                                            <?php if ($patient['age']): ?>
+                                                                <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
+                                                                    <i class="fas fa-birthday-cake text-xs"></i>
+                                                                    <?= htmlspecialchars($patient['age']) ?> yrs
+                                                                </span>
+                                                            <?php endif; ?>
+                                                            <?php if ($patient['gender']): ?>
+                                                                <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
+                                                                    <i class="fas fa-venus-mars text-xs"></i>
+                                                                    <?= htmlspecialchars($patient['gender']) ?>
+                                                                </span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Selected Items Panel -->
+                            <div class="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-lg p-6 mb-6 shadow-sm" id="selected-items-panel" style="display: none;">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                                            <i class="fas fa-handshake text-blue-600 text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-800 text-lg">Ready to Link</h4>
+                                            <p class="text-sm text-gray-600">Selected items for linking</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" 
+                                            class="btn btn-outline"
+                                            onclick="clearLinkingSelection()">
+                                        <i class="fas fa-times mr-2"></i> Clear Selection
+                                    </button>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Selected Resident Card -->
+                                    <div class="bg-white rounded-xl border-2 border-blue-200 p-4" id="selected-resident-card">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-500"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h5 class="font-semibold text-gray-700 text-sm">Selected Resident</h5>
+                                                <div class="text-gray-800 font-medium text-base" id="selected-resident-name">No resident selected</div>
+                                            </div>
+                                            <div class="badge badge-info">
+                                                Account
+                                            </div>
+                                        </div>
+                                        <div class="text-xs text-gray-500" id="selected-resident-details">
+                                            Select a resident account from the left panel
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Selected Patient Card -->
+                                    <div class="bg-white rounded-xl border-2 border-green-200 p-4" id="selected-patient-card">
+                                        <div class="flex items-center gap-3 mb-3">
+                                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                                                <i class="fas fa-file-medical text-green-500"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <h5 class="font-semibold text-gray-700 text-sm">Selected Patient Record</h5>
+                                                <div class="text-gray-800 font-medium text-base" id="selected-patient-name">No patient selected</div>
+                                            </div>
+                                            <div class="badge badge-success">
+                                                Record
+                                            </div>
+                                        </div>
+                                        <div class="text-xs text-gray-500" id="selected-patient-details">
+                                            Select a patient record from the right panel
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 pt-6 border-t border-gray-200">
+                                    <button type="button" 
+                                            class="btn btn-primary w-full md:w-auto"
+                                            id="link-action-button" 
+                                            onclick="performLinking()" 
+                                            disabled>
+                                        <i class="fas fa-link mr-2"></i>
+                                        <span id="link-button-text">Select Both Items</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <input type="hidden" id="selected-resident-id" value="0">
+                            <input type="hidden" id="selected-patient-id" value="0">
+                        </div>
+                        
+                        <!-- Information Section -->
+                        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-5">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-info-circle text-yellow-500 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-yellow-800 mb-3">How This Works:</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="flex items-start gap-2">
+                                            <div class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm font-bold mt-0.5">
+                                                1
+                                            </div>
+                                            <p class="text-sm text-yellow-700">Create resident accounts (no patient records initially)</p>
+                                        </div>
+                                        <div class="flex items-start gap-2">
+                                            <div class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm font-bold mt-0.5">
+                                                2
+                                            </div>
+                                            <p class="text-sm text-yellow-700">Add patient records separately through patient management</p>
+                                        </div>
+                                        <div class="flex items-start gap-2">
+                                            <div class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm font-bold mt-0.5">
+                                                3
+                                            </div>
+                                            <p class="text-sm text-yellow-700">Link accounts to records here (one account = one record)</p>
+                                        </div>
+                                        <div class="flex items-start gap-2">
+                                            <div class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm font-bold mt-0.5">
+                                                4
+                                            </div>
+                                            <p class="text-sm text-yellow-700">Residents can view medical history after linking</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="modal">
         <div class="modal-content">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
-                <i class="fas fa-exclamation-triangle text-red-500"></i>
-                Delete Staff Account
-            </h3>
-            
-            <p class="text-gray-600 mb-6" id="delete-message"></p>
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Delete Staff Account</h3>
+                    <p class="text-gray-600 text-sm mt-1" id="delete-message"></p>
+                </div>
+            </div>
             
             <form method="POST" action="" id="delete-form">
                 <input type="hidden" name="staff_id" id="delete-staff-id">
                 
                 <div class="mb-6">
-                    <label class="block font-medium text-gray-700 mb-3">Handle Dependent Records:</label>
+                    <label class="block font-semibold text-gray-700 mb-3">Handle Dependent Records:</label>
                     
                     <div class="space-y-3">
-                        <label class="flex items-center p-3 border rounded-lg hover:bg-blue-50 cursor-pointer">
-                            <input type="radio" name="delete_action" value="reassign" checked class="mr-3">
-                            <div>
-                                <span class="font-medium">Reassign to another staff</span>
+                        <label class="flex items-start p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors">
+                            <input type="radio" name="delete_action" value="reassign" checked class="mt-1 mr-3">
+                            <div class="flex-1">
+                                <span class="font-medium text-gray-700">Reassign to another staff</span>
                                 <select name="reassign_to" class="form-input mt-2" required>
                                     <option value="">Select staff member</option>
                                     <?php foreach ($allStaff as $staff): ?>
-                                        <option value="<?= $staff['id'] ?>"><?= htmlspecialchars($staff['full_name']) ?></option>
+                                        <?php if ($staff['id'] != $_SESSION['user_id']): ?>
+                                            <option value="<?= $staff['id'] ?>"><?= htmlspecialchars($staff['full_name']) ?> (@<?= htmlspecialchars($staff['username']) ?>)</option>
+                                        <?php endif; ?>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                         </label>
                         
-                        <label class="flex items-center p-3 border rounded-lg hover:bg-red-50 cursor-pointer">
-                            <input type="radio" name="delete_action" value="delete" class="mr-3">
-                            <div>
+                        <label class="flex items-start p-3 border rounded-lg hover:bg-red-50 cursor-pointer transition-colors">
+                            <input type="radio" name="delete_action" value="delete" class="mt-1 mr-3">
+                            <div class="flex-1">
                                 <span class="font-medium text-red-600">Delete all associated records</span>
                                 <p class="text-sm text-red-500 mt-1">Warning: This action cannot be undone</p>
                             </div>
@@ -2305,7 +2431,7 @@ try {
                 </div>
                 
                 <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeDeleteModal()" class="btn btn-warning">
+                    <button type="button" onclick="closeDeleteModal()" class="btn btn-outline">
                         <i class="fas fa-times mr-2"></i> Cancel
                     </button>
                     <button type="submit" name="hard_delete" class="btn btn-danger">
@@ -2318,68 +2444,100 @@ try {
 
     <!-- Change Staff Password Modal -->
     <div id="changeStaffPasswordModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
-                <i class="fas fa-key text-blue-500"></i>
-                Change Staff Password
-            </h3>
+        <div class="modal-content max-w-md">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-key text-blue-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Change Staff Password</h3>
+                        <p class="text-gray-600 text-sm mt-1">Update staff member's password securely</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeChangeStaffPasswordModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
             
-            <form method="POST" action="" id="change-staff-password-form">
+            <form method="POST" action="" id="change-staff-password-form" onsubmit="return validateStaffPasswordForm()">
                 <input type="hidden" name="staff_id" id="change-staff-id">
                 
-                <div class="form-group mb-6">
-                    <label class="form-label">Staff Name</label>
-                    <input type="text" id="change-staff-name" class="form-input bg-gray-50" readonly>
+                <!-- Staff Info Display -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-user-md text-blue-600"></i>
+                        <div>
+                            <p class="text-xs text-blue-600 font-semibold uppercase tracking-wide">Staff Member</p>
+                            <p class="text-lg font-bold text-gray-800" id="change-staff-name"></p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="form-group mb-6">
-                    <label class="form-label">Current Password <span class="text-red-500">*</span></label>
-                    <div class="password-container relative">
+                <!-- Current Password -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-lock mr-2 text-gray-400"></i>
+                        Current Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="password-container">
                         <input type="password" name="current_password" required 
                                id="staff-current-password"
-                               class="form-input pr-10" 
+                               class="form-input" 
                                placeholder="Enter current password"
-                               aria-label="Current password">
+                               oninput="checkPasswordMatch('staff')">
                         <button type="button" class="password-toggle" onclick="togglePassword('staff-current-password')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 
-                <div class="form-group mb-6">
-                    <label class="form-label">New Password <span class="text-red-500">*</span></label>
-                    <div class="password-container relative">
+                <!-- New Password -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-key mr-2 text-gray-400"></i>
+                        New Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="password-container">
                         <input type="password" name="new_password" required 
                                id="staff-new-password"
-                               class="form-input pr-10" 
+                               class="form-input" 
                                placeholder="Enter new password"
-                               aria-label="New password">
+                               minlength="6"
+                               oninput="checkPasswordMatch('staff')">
                         <button type="button" class="password-toggle" onclick="togglePassword('staff-new-password')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 
+                <!-- Confirm Password -->
                 <div class="form-group mb-8">
-                    <label class="form-label">Confirm New Password <span class="text-red-500">*</span></label>
-                    <div class="password-container relative">
+                    <label class="form-label">
+                        <i class="fas fa-check-double mr-2 text-gray-400"></i>
+                        Confirm New Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="password-container">
                         <input type="password" name="confirm_password" required 
                                id="staff-confirm-password"
-                               class="form-input pr-10" 
+                               class="form-input" 
                                placeholder="Confirm new password"
-                               aria-label="Confirm password">
+                               minlength="6"
+                               oninput="checkPasswordMatch('staff')">
                         <button type="button" class="password-toggle" onclick="togglePassword('staff-confirm-password')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
+                    <div id="staff-password-match-message" class="text-sm mt-2 hidden"></div>
                 </div>
                 
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeChangeStaffPasswordModal()" class="btn btn-warning">
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeChangeStaffPasswordModal()" class="btn btn-outline flex-1">
                         <i class="fas fa-times mr-2"></i> Cancel
                     </button>
-                    <button type="submit" name="change_staff_password" class="btn btn-success">
-                        <i class="fas fa-save mr-2"></i> Change Password
+                    <button type="submit" name="change_staff_password" class="btn btn-primary flex-1">
+                        <i class="fas fa-save mr-2"></i> Update Password
                     </button>
                 </div>
             </form>
@@ -2388,68 +2546,100 @@ try {
 
     <!-- Change Resident Password Modal -->
     <div id="changeResidentPasswordModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
-                <i class="fas fa-key text-blue-500"></i>
-                Change Resident Password
-            </h3>
+        <div class="modal-content max-w-md">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-key text-green-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Change Resident Password</h3>
+                        <p class="text-gray-600 text-sm mt-1">Update resident account password securely</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeChangeResidentPasswordModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
             
-            <form method="POST" action="" id="change-resident-password-form">
+            <form method="POST" action="" id="change-resident-password-form" onsubmit="return validateResidentPasswordForm()">
                 <input type="hidden" name="resident_id" id="change-resident-id">
                 
-                <div class="form-group mb-6">
-                    <label class="form-label">Resident Name</label>
-                    <input type="text" id="change-resident-name" class="form-input bg-gray-50" readonly>
+                <!-- Resident Info Display -->
+                <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-user text-green-600"></i>
+                        <div>
+                            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide">Resident</p>
+                            <p class="text-lg font-bold text-gray-800" id="change-resident-name"></p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="form-group mb-6">
-                    <label class="form-label">Current Password <span class="text-red-500">*</span></label>
-                    <div class="password-container relative">
+                <!-- Current Password -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-lock mr-2 text-gray-400"></i>
+                        Current Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="password-container">
                         <input type="password" name="current_password" required 
                                id="resident-current-password"
-                               class="form-input pr-10" 
+                               class="form-input" 
                                placeholder="Enter current password"
-                               aria-label="Current password">
+                               oninput="checkPasswordMatch('resident')">
                         <button type="button" class="password-toggle" onclick="togglePassword('resident-current-password')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 
-                <div class="form-group mb-6">
-                    <label class="form-label">New Password <span class="text-red-500">*</span></label>
-                    <div class="password-container relative">
+                <!-- New Password -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-key mr-2 text-gray-400"></i>
+                        New Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="password-container">
                         <input type="password" name="new_password" required 
                                id="resident-new-password"
-                               class="form-input pr-10" 
+                               class="form-input" 
                                placeholder="Enter new password"
-                               aria-label="New password">
+                               minlength="6"
+                               oninput="checkPasswordMatch('resident')">
                         <button type="button" class="password-toggle" onclick="togglePassword('resident-new-password')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 
+                <!-- Confirm Password -->
                 <div class="form-group mb-8">
-                    <label class="form-label">Confirm New Password <span class="text-red-500">*</span></label>
-                    <div class="password-container relative">
+                    <label class="form-label">
+                        <i class="fas fa-check-double mr-2 text-gray-400"></i>
+                        Confirm New Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="password-container">
                         <input type="password" name="confirm_password" required 
                                id="resident-confirm-password"
-                               class="form-input pr-10" 
+                               class="form-input" 
                                placeholder="Confirm new password"
-                               aria-label="Confirm password">
+                               minlength="6"
+                               oninput="checkPasswordMatch('resident')">
                         <button type="button" class="password-toggle" onclick="togglePassword('resident-confirm-password')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
+                    <div id="resident-password-match-message" class="text-sm mt-2 hidden"></div>
                 </div>
                 
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeChangeResidentPasswordModal()" class="btn btn-warning">
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeChangeResidentPasswordModal()" class="btn btn-outline flex-1">
                         <i class="fas fa-times mr-2"></i> Cancel
                     </button>
-                    <button type="submit" name="change_resident_password" class="btn btn-success">
-                        <i class="fas fa-save mr-2"></i> Change Password
+                    <button type="submit" name="change_resident_password" class="btn btn-success flex-1">
+                        <i class="fas fa-save mr-2"></i> Update Password
                     </button>
                 </div>
             </form>
@@ -2458,28 +2648,43 @@ try {
 
     <!-- Reset Password Modal (Admin Reset - No Current Password) -->
     <div id="resetPasswordModal" class="modal">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
-                <i class="fas fa-key text-blue-500"></i>
-                Reset Resident Password
-            </h3>
+        <div class="modal-content max-w-md">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-key text-red-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">Reset Resident Password</h3>
+                        <p class="text-gray-600 text-sm mt-1">Admin password reset (no current password required)</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeResetModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
             
             <form method="POST" action="" id="reset-password-form">
                 <input type="hidden" name="resident_id" id="reset-resident-id">
                 
-                <div class="form-group mb-6">
-                    <label class="form-label">Resident Name</label>
-                    <input type="text" id="reset-resident-name" class="form-input bg-gray-50" readonly>
+                <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-user text-red-600"></i>
+                        <div>
+                            <p class="text-xs text-red-600 font-semibold uppercase tracking-wide">Resident</p>
+                            <p class="text-lg font-bold text-gray-800" id="reset-resident-name"></p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="form-group mb-6">
+                <div class="form-group">
                     <label class="form-label">New Password <span class="text-red-500">*</span></label>
-                    <div class="password-container relative">
+                    <div class="password-container">
                         <input type="password" name="new_password" required 
                                id="reset-new-password"
-                               class="form-input pr-10" 
+                               class="form-input" 
                                placeholder="Enter new password"
-                               aria-label="New password">
+                               minlength="6">
                         <button type="button" class="password-toggle" onclick="togglePassword('reset-new-password')">
                             <i class="fas fa-eye"></i>
                         </button>
@@ -2488,24 +2693,24 @@ try {
                 
                 <div class="form-group mb-8">
                     <label class="form-label">Confirm Password <span class="text-red-500">*</span></label>
-                    <div class="password-container relative">
+                    <div class="password-container">
                         <input type="password" name="confirm_password" required 
                                id="reset-confirm-password"
-                               class="form-input pr-10" 
+                               class="form-input" 
                                placeholder="Confirm new password"
-                               aria-label="Confirm password">
+                               minlength="6">
                         <button type="button" class="password-toggle" onclick="togglePassword('reset-confirm-password')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeResetModal()" class="btn btn-warning">
+                <div class="flex gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeResetModal()" class="btn btn-outline flex-1">
                         <i class="fas fa-times mr-2"></i> Cancel
                     </button>
-                    <button type="submit" name="reset_resident_password" class="btn btn-success">
-                        <i class="fas fa-save mr-2"></i> Reset Password
+                    <button type="submit" name="reset_resident_password" class="btn btn-danger flex-1">
+                        <i class="fas fa-redo mr-2"></i> Reset Password
                     </button>
                 </div>
             </form>
@@ -2520,32 +2725,149 @@ try {
         // ===== PASSWORD TOGGLE FUNCTION =====
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
-            const toggleButton = input.nextElementSibling;
+            const toggleButton = input.parentElement.querySelector('.password-toggle');
             
             if (input.type === 'password') {
                 input.type = 'text';
                 toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                toggleButton.setAttribute('aria-label', 'Hide password');
             } else {
                 input.type = 'password';
                 toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
+                toggleButton.setAttribute('aria-label', 'Show password');
             }
         }
         
-        // Initialize password toggles on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Make staff password visible by default
-            const staffPassword = document.getElementById('staff-password');
-            if (staffPassword) {
-                staffPassword.type = 'text';
+        // ===== PASSWORD VALIDATION FUNCTIONS =====
+        function validateStaffPasswordForm() {
+            const currentPassword = document.getElementById('staff-current-password').value;
+            const newPassword = document.getElementById('staff-new-password').value;
+            const confirmPassword = document.getElementById('staff-confirm-password').value;
+            
+            // Validate all fields filled
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showMessageModal('All password fields are required.', 'error');
+                return false;
             }
             
-            // Make resident password visible by default
-            const residentPassword = document.getElementById('resident-password');
-            if (residentPassword) {
-                residentPassword.type = 'text';
+            // Validate minimum length
+            if (newPassword.length < 6) {
+                showMessageModal('New password must be at least 6 characters long.', 'error');
+                return false;
             }
-        });
-
+            
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showMessageModal('New passwords do not match. Please try again.', 'error');
+                return false;
+            }
+            
+            // Validate new password is different from current
+            if (currentPassword === newPassword) {
+                showMessageModal('New password must be different from current password.', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function validateResidentPasswordForm() {
+            const currentPassword = document.getElementById('resident-current-password').value;
+            const newPassword = document.getElementById('resident-new-password').value;
+            const confirmPassword = document.getElementById('resident-confirm-password').value;
+            
+            // Validate all fields filled
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showMessageModal('All password fields are required.', 'error');
+                return false;
+            }
+            
+            // Validate minimum length
+            if (newPassword.length < 6) {
+                showMessageModal('New password must be at least 6 characters long.', 'error');
+                return false;
+            }
+            
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showMessageModal('New passwords do not match. Please try again.', 'error');
+                return false;
+            }
+            
+            // Validate new password is different from current
+            if (currentPassword === newPassword) {
+                showMessageModal('New password must be different from current password.', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // ===== REAL-TIME PASSWORD MATCH VALIDATION =====
+        function checkPasswordMatch(type) {
+            const newPasswordId = type === 'staff' ? 'staff-new-password' : 'resident-new-password';
+            const confirmPasswordId = type === 'staff' ? 'staff-confirm-password' : 'resident-confirm-password';
+            const messageId = type === 'staff' ? 'staff-password-match-message' : 'resident-password-match-message';
+            
+            const newPassword = document.getElementById(newPasswordId).value;
+            const confirmPassword = document.getElementById(confirmPasswordId).value;
+            const message = document.getElementById(messageId);
+            
+            if (confirmPassword.length === 0) {
+                message.classList.add('hidden');
+                return;
+            }
+            
+            message.classList.remove('hidden');
+            
+            if (newPassword === confirmPassword) {
+                message.className = 'text-sm mt-2 text-green-600 flex items-center gap-2';
+                message.innerHTML = '<i class="fas fa-check-circle"></i> Passwords match!';
+            } else {
+                message.className = 'text-sm mt-2 text-red-600 flex items-center gap-2';
+                message.innerHTML = '<i class="fas fa-exclamation-circle"></i> Passwords do not match';
+            }
+        }
+        
+        // ===== AGE CALCULATION =====
+        function calculateAge() {
+            const dobInput = document.getElementById('date-of-birth');
+            const ageDisplay = document.getElementById('age-display');
+            const calculatedAge = document.getElementById('calculated-age');
+            
+            if (!dobInput.value) {
+                ageDisplay.classList.add('hidden');
+                return;
+            }
+            
+            const dob = new Date(dobInput.value);
+            const today = new Date();
+            
+            if (dob > today) {
+                showMessageModal('Date of birth cannot be in the future', 'error');
+                dobInput.value = '';
+                ageDisplay.classList.add('hidden');
+                return;
+            }
+            
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            
+            if (age < 0 || age > 120) {
+                showMessageModal('Please enter a valid date of birth (age 0-120)', 'error');
+                dobInput.value = '';
+                ageDisplay.classList.add('hidden');
+                return;
+            }
+            
+            calculatedAge.textContent = age;
+            ageDisplay.classList.remove('hidden');
+        }
+        
         // ===== MESSAGE MODAL =====
         function showMessageModal(message, type = 'success') {
             const modal = document.getElementById('messageModal');
@@ -2564,7 +2886,7 @@ try {
             
             content.className = 'message-content ' + type;
             icon.className = 'message-icon ' + type + ' fas ' + (type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle');
-            title.className = 'message-title ' + type;
+            title.className = 'message-title';
             title.textContent = type === 'error' ? 'Error' : 'Success';
             body.textContent = message;
             
@@ -2584,17 +2906,17 @@ try {
                 progressBar.style.width = '100%';
                 progressBar.style.transition = 'none';
                 void progressBar.offsetWidth; // Trigger reflow
-                progressBar.style.transition = 'width 1s linear';
+                progressBar.style.transition = 'width 3s linear';
                 progressBar.style.width = '0%';
             }
             
             // Show modal
             modal.classList.add('show');
             
-            // Auto-hide after 1 second
+            // Auto-hide after 3 seconds
             setTimeout(() => {
                 closeMessageModal();
-            }, 1000);
+            }, 3000);
         }
         
         function createMessageModal(message, type) {
@@ -2620,7 +2942,7 @@ try {
                     </button>
                     <div class="message-header">
                         <i class="message-icon ${type} fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
-                        <span class="message-title ${type}">
+                        <span class="message-title">
                             ${type === 'error' ? 'Error' : 'Success'}
                         </span>
                     </div>
@@ -2641,7 +2963,7 @@ try {
                 progressBar.style.width = '100%';
                 progressBar.style.transition = 'none';
                 void progressBar.offsetWidth; // Trigger reflow
-                progressBar.style.transition = 'width 1s linear';
+                progressBar.style.transition = 'width 3s linear';
                 progressBar.style.width = '0%';
             }
             
@@ -2650,10 +2972,10 @@ try {
                 modal.classList.add('show');
             }, 10);
             
-            // Auto-hide after 1 second
+            // Auto-hide after 3 seconds
             setTimeout(() => {
                 closeMessageModal();
-            }, 1000);
+            }, 3000);
         }
         
         function closeMessageModal() {
@@ -2669,15 +2991,6 @@ try {
             }
         }
         
-        // Show message on page load if there's a message in session
-        <?php if (isset($message)): ?>
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                showMessageModal("<?= addslashes($message) ?>", "<?= $messageType ?>");
-            }, 300);
-        });
-        <?php endif; ?>
-        
         // ===== TAB MANAGEMENT =====
         function showSection(section) {
             // Hide all sections
@@ -2688,6 +3001,7 @@ try {
             // Remove active class from all main tabs
             document.querySelectorAll('.tabs-container .tab-btn').forEach(btn => {
                 btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
             });
             
             // Show selected section
@@ -2695,6 +3009,7 @@ try {
             
             // Add active class to clicked tab
             event.currentTarget.classList.add('active');
+            event.currentTarget.setAttribute('aria-selected', 'true');
             
             // If switching to linking tab, check if we need to focus on a specific resident
             if (section === 'linking' && window.location.search.includes('focus_resident=')) {
@@ -2750,95 +3065,86 @@ try {
             event.target.classList.add('active');
         }
         
-        // ===== AGE CALCULATION =====
-        function calculateAge() {
-            const dobInput = document.getElementById('date-of-birth');
-            const ageInput = document.getElementById('age');
-            
-            if (!dobInput.value) {
-                ageInput.value = '';
-                return;
-            }
-            
-            const dob = new Date(dobInput.value);
-            const today = new Date();
-            
-            if (dob > today) {
-                showMessageModal('Date of birth cannot be in the future', 'error');
-                dobInput.value = '';
-                ageInput.value = '';
-                return;
-            }
-            
-            let age = today.getFullYear() - dob.getFullYear();
-            const monthDiff = today.getMonth() - dob.getMonth();
-            
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-                age--;
-            }
-            
-            if (age < 0 || age > 120) {
-                showMessageModal('Please enter a valid date of birth (age 0-120)', 'error');
-                dobInput.value = '';
-                ageInput.value = '';
-                return;
-            }
-            
-            ageInput.value = age;
-        }
-        
         // ===== MODAL FUNCTIONS =====
         function showDeleteModal(staffId, staffName) {
-            document.getElementById('delete-staff-id').value = staffId;
-            document.getElementById('delete-message').textContent = 
-                `Are you sure you want to delete ${staffName}? This action will affect associated records.`;
-            document.getElementById('deleteModal').classList.add('show');
+            const modal = document.getElementById('deleteModal');
+            if (modal) {
+                document.getElementById('delete-staff-id').value = staffId;
+                document.getElementById('delete-message').textContent = 
+                    `Are you sure you want to delete "${staffName}"? This action will affect associated records.`;
+                modal.classList.add('show');
+            }
         }
         
         function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.remove('show');
-            document.getElementById('delete-form').reset();
+            const modal = document.getElementById('deleteModal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.getElementById('delete-form').reset();
+            }
         }
         
         function showChangeStaffPasswordModal(staffId, staffName) {
-            document.getElementById('change-staff-id').value = staffId;
-            document.getElementById('change-staff-name').value = staffName;
-            document.getElementById('changeStaffPasswordModal').classList.add('show');
+            const modal = document.getElementById('changeStaffPasswordModal');
+            if (modal) {
+                document.getElementById('change-staff-id').value = staffId;
+                document.getElementById('change-staff-name').textContent = staffName;
+                modal.classList.add('show');
+            }
         }
         
         function closeChangeStaffPasswordModal() {
-            document.getElementById('changeStaffPasswordModal').classList.remove('show');
-            document.getElementById('change-staff-password-form').reset();
+            const modal = document.getElementById('changeStaffPasswordModal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.getElementById('change-staff-password-form').reset();
+                const message = document.getElementById('staff-password-match-message');
+                if (message) message.classList.add('hidden');
+            }
         }
         
         function showChangeResidentPasswordModal(residentId, residentName) {
-            document.getElementById('change-resident-id').value = residentId;
-            document.getElementById('change-resident-name').value = residentName;
-            document.getElementById('changeResidentPasswordModal').classList.add('show');
+            const modal = document.getElementById('changeResidentPasswordModal');
+            if (modal) {
+                document.getElementById('change-resident-id').value = residentId;
+                document.getElementById('change-resident-name').textContent = residentName;
+                modal.classList.add('show');
+            }
         }
         
         function closeChangeResidentPasswordModal() {
-            document.getElementById('changeResidentPasswordModal').classList.remove('show');
-            document.getElementById('change-resident-password-form').reset();
+            const modal = document.getElementById('changeResidentPasswordModal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.getElementById('change-resident-password-form').reset();
+                const message = document.getElementById('resident-password-match-message');
+                if (message) message.classList.add('hidden');
+            }
         }
         
         function showResetPasswordModal(residentId, residentName) {
-            document.getElementById('reset-resident-id').value = residentId;
-            document.getElementById('reset-resident-name').value = residentName;
-            document.getElementById('resetPasswordModal').classList.add('show');
+            const modal = document.getElementById('resetPasswordModal');
+            if (modal) {
+                document.getElementById('reset-resident-id').value = residentId;
+                document.getElementById('reset-resident-name').textContent = residentName;
+                modal.classList.add('show');
+            }
         }
         
         function closeResetModal() {
-            document.getElementById('resetPasswordModal').classList.remove('show');
-            document.getElementById('reset-password-form').reset();
+            const modal = document.getElementById('resetPasswordModal');
+            if (modal) {
+                modal.classList.remove('show');
+                document.getElementById('reset-password-form').reset();
+            }
         }
         
         // Close modals on outside click
         window.onclick = function(event) {
             const modals = [
-                'deleteModal', 
-                'changeStaffPasswordModal', 
-                'changeResidentPasswordModal', 
+                'deleteModal',
+                'changeStaffPasswordModal',
+                'changeResidentPasswordModal',
                 'resetPasswordModal'
             ];
             
@@ -2914,13 +3220,9 @@ try {
             if (selectedResidentId > 0 && selectedPatientId > 0) {
                 linkButton.disabled = false;
                 linkButtonText.textContent = 'Link Accounts Now';
-                linkButton.classList.remove('opacity-60');
-                linkButton.classList.add('shadow-lg', 'hover:shadow-xl');
             } else {
                 linkButton.disabled = true;
                 linkButtonText.textContent = 'Select Both Items';
-                linkButton.classList.add('opacity-60');
-                linkButton.classList.remove('shadow-lg', 'hover:shadow-xl');
             }
         }
         
@@ -2995,6 +3297,39 @@ try {
                     document.getElementById('resident-tab').classList.remove('active');
                     linkingTab.classList.add('active');
                 }
+            }
+            
+            // Make passwords visible by default for better UX
+            setTimeout(() => {
+                const staffPassword = document.getElementById('staff-password');
+                if (staffPassword) {
+                    staffPassword.type = 'text';
+                    const toggleBtn = staffPassword.parentElement.querySelector('.password-toggle');
+                    if (toggleBtn) {
+                        toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                    }
+                }
+                
+                const residentPassword = document.getElementById('resident-password');
+                if (residentPassword) {
+                    residentPassword.type = 'text';
+                    const toggleBtn = residentPassword.parentElement.querySelector('.password-toggle');
+                    if (toggleBtn) {
+                        toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                    }
+                }
+            }, 100);
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key closes modals
+            if (e.key === 'Escape') {
+                closeDeleteModal();
+                closeChangeStaffPasswordModal();
+                closeChangeResidentPasswordModal();
+                closeResetModal();
+                closeMessageModal();
             }
         });
     </script>

@@ -26,10 +26,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     try {
-        // Check if patient exists and belongs to the current user
-        $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
-        $stmt->execute([$patient_id, $_SESSION['user']['id']]);
-        $patient = $stmt->fetch();
+        // Check if patient exists. Allow access to other staff's patient records when shared-mode is enabled.
+        if (function_exists('staff_can_view_all') && staff_can_view_all()) {
+            $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ?");
+            $stmt->execute([$patient_id]);
+            $patient = $stmt->fetch();
+        } else {
+            $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
+            $stmt->execute([$patient_id, $_SESSION['user']['id']]);
+            $patient = $stmt->fetch();
+        }
         
         if (!$patient) {
             echo json_encode(['success' => false, 'message' => 'Patient not found']);

@@ -1,0 +1,20 @@
+/* 
+  Font Awesome 5 local copy
+  
+  This file should be populated with Font Awesome CSS for offline support.
+  
+  To download Font Awesome locally:
+  1. Visit: https://fontawesome.com/download
+  2. Download the free version
+  3. Copy the CSS file content here
+  4. Copy fonts to asssets/fonts/
+  
+  Then add to your HTML:
+  <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+  
+  For now, using Font Awesome CDN fallback.
+  Once you have the local files, replace this with the actual Font Awesome CSS.
+*/
+
+/* Temporary CDN fallback - will be replaced with local files */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');

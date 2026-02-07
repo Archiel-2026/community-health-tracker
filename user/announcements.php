@@ -8,6 +8,9 @@ if (!isUser()) {
     exit();
 }
 
+// Check if user has profile image, if not redirect to upload profile page
+redirectIfUserMissingProfile();
+
 global $pdo;
 
 $userId = $_SESSION['user']['id'];
@@ -62,6 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['respond_to_announceme
 
 // Get announcements targeted to this user
 $announcements = [];
+$labResults = [];
+$basicAnnouncements = [];
 
 try {
     $stmt = $pdo->prepare("
@@ -78,6 +83,15 @@ try {
     ");
     $stmt->execute([$userId, $userId]);
     $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Separate announcements by category
+    foreach ($announcements as $announcement) {
+        if (isset($announcement['announcement_type']) && $announcement['announcement_type'] === 'lab_result') {
+            $labResults[] = $announcement;
+        } else {
+            $basicAnnouncements[] = $announcement;
+        }
+    }
 } catch (PDOException $e) {
     $error = 'Error fetching announcements: ' . $e->getMessage();
 }
@@ -93,6 +107,16 @@ $dismissedCount = count(array_filter($announcements, function($a) {
     return $a['user_status'] === 'dismissed';
 }));
 $pendingCount = count($announcements) - $respondedCount;
+
+// Separate counts for lab results and basic announcements
+$labResultsCount = count($labResults);
+$labResultsPending = count(array_filter($labResults, function($a) {
+    return empty($a['user_status']);
+}));
+$basicAnnouncementsCount = count($basicAnnouncements);
+$basicAnnouncementsPending = count(array_filter($basicAnnouncements, function($a) {
+    return empty($a['user_status']);
+}));
 ?>
 
 <!DOCTYPE html>
@@ -101,388 +125,416 @@ $pendingCount = count($announcements) - $respondedCount;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barangay Luz - Community Announcements</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
     <style>
-        /* Color Variables */
-        :root {
-            --primary-blue: #0073D3;
-            --secondary-blue: #4A90E2;
-            --light-blue: #E8F2FF;
-            --dark-blue: #1B4F8C;
-            --success-green: #10B981;
-            --warning-yellow: #F59E0B;
-            --danger-red: #EF4444;
-            --info-teal: #06B6D4;
-            --gray-50: #F9FAFB;
-            --gray-100: #F3F4F6;
-            --gray-200: #E5E7EB;
-            --gray-300: #D1D5DB;
-            --gray-400: #9CA3AF;
-            --gray-500: #6B7280;
-            --gray-600: #4B5563;
-            --gray-700: #374151;
-            --gray-800: #1F2937;
-            --gray-900: #111827;
+        * {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
+
+        .icon-xs { font-size: 0.75rem; }
+        .icon-sm { font-size: 0.875rem; }
+        .icon-base { font-size: 1rem; }
+        .icon-lg { font-size: 1.125rem; }
+        .icon-xl { font-size: 1.25rem; }
+        .icon-2xl { font-size: 1.5rem; }
+        .icon-3xl { font-size: 1.875rem; }
+        .icon-4xl { font-size: 2.25rem; }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--gray-50);
-            color: var(--gray-800);
+            background: #f3f4f6;
+            color: #1a202c;
         }
 
-        /* Layout Container */
-        .main-container {
-            max-width: 1400px;
-            margin: 0 auto;
+        /* Typography - Match dashboard style */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 600;
+            color: #1f2937;
+            letter-spacing: -0.025em;
         }
 
-        /* Card Design */
-        .card {
+        p, span, a {
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        /* Fix header text color overwrites */
+        nav.text-white, 
+        nav.text-white a, 
+        nav.text-white span, 
+        nav.text-white p, 
+        nav.text-white i {
+            color: #ffffff !important;
+        }
+
+        /* Ensure good contrast for all text */
+        .text-gray-600 {
+            color: #4b5563 !important;
+        }
+
+        .text-gray-700 {
+            color: #374151 !important;
+        }
+
+        .text-gray-900 {
+            color: #111827 !important;
+        }
+
+        .text-label {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        /* Card Shadows - Match dashboard style */
+        .card-shadow {
             background: white;
             border-radius: 12px;
-            border: 1px solid var(--gray-200);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
         }
 
-        .card-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--gray-200);
-            background: var(--gray-50);
+        .card-shadow:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
 
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        /* Button Styles */
-        .btn {
+        /* Tab Styling - Original pill-style buttons */
+        .tab-header {
+            position: relative;
+            padding: 0.875rem 1.75rem;
+            background: linear-gradient(135deg, #e8f0fe 0%, #f0f4f8 100%);
+            border: none;
+            border-radius: 8px;
+            color: #6b7280;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            letter-spacing: 0.3px;
+            min-height: 44px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tab-header.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white !important;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .tab-header:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .tab-header.active:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .tab-header span {
+            color: inherit;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Tab Navigation - Prevent horizontal scrolling */
+        .tab-nav-container {
+            display: flex;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #f3f4f6;
+            background: white;
+            overflow: hidden;
+            padding: 0.75rem 1rem;
             gap: 0.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .tab-nav-container {
+                padding: 0.75rem 1.5rem;
+                gap: 0.75rem;
+            }
+        }
+
+        /* Tab Content - Allow scrolling only for content */
+        .tab-content-wrapper {
+            padding: 1.5rem;
+            background: white;
+            overflow-y: auto;
+            max-height: calc(100vh - 400px);
+        }
+
+        @media (max-width: 640px) {
+            .tab-content-wrapper {
+                padding: 1rem;
+                max-height: calc(100vh - 350px);
+            }
+        }
+
+        /* Page Title & Header */
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            font-size: 0.95rem;
+            color: #6b7280;
             font-weight: 500;
-            font-size: 0.875rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
         }
 
-        .btn-primary {
-            background: var(--primary-blue);
-            color: white;
-            border-color: var(--primary-blue);
-        }
-
-        .btn-primary:hover {
-            background: var(--dark-blue);
-            border-color: var(--dark-blue);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--gray-700);
-            border-color: var(--gray-300);
-        }
-
-        .btn-secondary:hover {
-            background: var(--gray-50);
-            border-color: var(--gray-400);
-            transform: translateY(-1px);
-        }
-
-        .btn-success {
-            background: var(--success-green);
-            color: white;
-            border-color: var(--success-green);
-        }
-
-        .btn-success:hover {
-            background: #059669;
-            border-color: #059669;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-outline-success {
-            background: white;
-            color: var(--success-green);
-            border-color: var(--success-green);
-        }
-
-        .btn-outline-success:hover {
-            background: #D1FAE5;
-        }
-
-        .btn-outline-secondary {
-            background: white;
-            color: var(--gray-600);
-            border-color: var(--gray-300);
-        }
-
-        .btn-outline-secondary:hover {
-            background: var(--gray-50);
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.75rem;
-        }
-
-        /* Stats Cards - Consistent with staff page */
+        /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
         }
 
         .stat-card {
             background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: 8px;
-            padding: 1.25rem;
-            text-align: center;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-weight: 700;
-            color: var(--primary-blue);
-            margin-bottom: 0.25rem;
+            color: #111827;
         }
 
         .stat-label {
-            font-size: 0.875rem;
-            color: var(--gray-500);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #6b7280;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
         }
 
-        /* Announcement Item - Updated with consistent styling */
+        .stat-pending {
+            font-size: 0.875rem;
+            opacity: 0.3;
+            font-weight: 600;
+        }
+
+        /* Announcement Items - Match health records style */
         .announcement-item {
             background: white;
             border-radius: 10px;
-            border: 1px solid var(--gray-200);
-            padding: 1.25rem;
-            margin-bottom: 1rem;
+            border: 1px solid #e5e7eb;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
             transition: all 0.2s;
+        }
+        
+        /* Lab Result Highlighting */
+        .announcement-item.lab-result-highlight {
+            background: linear-gradient(to right, #F0FDF4, #FFFFFF);
+            border: 2px solid #10B981;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+        }
+        
+        .announcement-item.lab-result-highlight:hover {
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .announcement-item {
+                padding: 1.25rem;
+                margin-bottom: 1rem;
+            }
         }
 
         .announcement-item:hover {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
+            border-color: #d1d5db;
         }
 
         .announcement-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
+            gap: 1rem;
         }
 
         .announcement-title {
             font-weight: 600;
-            color: var(--gray-800);
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
+            color: #111827;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
         }
 
         .announcement-meta {
-            font-size: 0.75rem;
-            color: var(--gray-500);
+            font-size: 0.8125rem;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .announcement-actions {
+        .announcement-meta span {
             display: flex;
+            align-items: center;
             gap: 0.5rem;
         }
 
-        .announcement-content {
-            color: var(--gray-600);
-            font-size: 0.875rem;
-            line-height: 1.5;
-            margin-bottom: 1rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .announcement-footer {
+        .announcement-badges {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 0.75rem;
-            border-top: 1px solid var(--gray-100);
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
         }
 
-        /* Priority Badge - Consistent with staff page */
-        .priority-badge {
+        /* Badge Styling */
+        .badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .priority-high {
-            background: #FEE2E2;
-            color: #DC2626;
-            border: 1px solid #FECACA;
-        }
-
-        .priority-medium {
-            background: #FEF3C7;
-            color: #D97706;
-            border: 1px solid #FDE68A;
-        }
-
-        .priority-normal {
-            background: var(--light-blue);
-            color: var(--primary-blue);
-            border: 1px solid #BFDBFE;
-        }
-
-        /* Status Badge - Consistent with staff page */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
+            gap: 0.5rem;
+            padding: 0.5rem 0.875rem;
+            border-radius: 12px;
+            font-size: 0.8125rem;
+            font-weight: 600;
             border: 1px solid;
         }
 
-        .status-accepted {
+        .badge-high {
+            background: #FEE2E2;
+            color: #991B1B;
+            border-color: #FECACA;
+        }
+
+        .badge-medium {
+            background: #FEF3C7;
+            color: #92400E;
+            border-color: #FDE68A;
+        }
+
+        .badge-normal {
+            background: #DBEAFE;
+            color: #0C4A6E;
+            border-color: #BAE6FD;
+        }
+
+        .badge-lab-result {
+            background: #DBEAFE;
+            color: #0369A1;
+            border-color: #7DD3FC;
+        }
+
+        .badge-simple {
+            background: #F0F9FF;
+            color: #0284C7;
+            border-color: #BFDBFE;
+        }
+
+        .badge-accepted {
             background: #D1FAE5;
-            color: #059669;
+            color: #065F46;
             border-color: #A7F3D0;
         }
 
-        .status-dismissed {
+        .badge-dismissed {
             background: #F3F4F6;
             color: #374151;
             border-color: #E5E7EB;
         }
 
-        /* Response Section - Updated styling */
-        .response-section {
-            background: var(--gray-50);
-            border-radius: 8px;
-            padding: 1.25rem;
-            margin-top: 1rem;
-        }
-
-        .response-title {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--gray-700);
-            margin-bottom: 1rem;
-        }
-
-        .response-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .btn-response {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            border: 1px solid;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-accept {
-            background: white;
-            color: var(--success-green);
-            border-color: var(--success-green);
-        }
-
-        .btn-accept:hover {
-            background: #D1FAE5;
-            transform: translateY(-1px);
-        }
-
-        .btn-dismiss {
-            background: white;
-            color: var(--gray-600);
-            border-color: var(--gray-300);
-        }
-
-        .btn-dismiss:hover {
-            background: var(--gray-100);
-            transform: translateY(-1px);
-        }
-
-        .response-status {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem;
-            border-radius: 8px;
-            background: white;
-            border: 1px solid var(--gray-200);
-        }
-
-        /* Response Stats - Consistent with staff page */
-        .response-stats {
-            display: flex;
-            gap: 1.5rem;
-        }
-
-        .response-stat {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .response-icon {
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-        }
-
-        .accepted-icon {
-            background: #D1FAE5;
-            color: #059669;
-        }
-
-        .pending-icon {
+        .badge-pending {
             background: #FEF3C7;
-            color: #D97706;
+            color: #92400E;
+            border-color: #FDE68A;
         }
 
-        .dismissed-icon {
-            background: #FEE2E2;
-            color: #DC2626;
+        /* Announcement Content */
+        .announcement-content {
+            color: #4b5563;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         /* Image Preview */
         .image-preview {
             border-radius: 8px;
             overflow: hidden;
-            border: 1px solid var(--gray-200);
+            border: 1px solid #e5e7eb;
             margin-bottom: 1rem;
             max-height: 200px;
             cursor: pointer;
@@ -499,23 +551,75 @@ $pendingCount = count($announcements) - $respondedCount;
             transform: scale(1.05);
         }
 
-        .btn-view-image {
-            background: white;
-            color: var(--primary-blue);
-            border: 1px solid var(--primary-blue);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
+        /* Action Buttons */
+        .announcement-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 44px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-response {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            border: 1px solid;
             cursor: pointer;
             transition: all 0.2s;
+            font-size: 0.95rem;
         }
 
-        .btn-view-image:hover {
-            background: var(--light-blue);
-            transform: translateY(-1px);
+        .btn-accept {
+            background: white;
+            color: #10B981;
+            border-color: #10B981;
         }
 
-        /* Modal - Consistent with staff page */
+        .btn-accept:hover {
+            background: #D1FAE5;
+            transform: translateY(-2px);
+        }
+
+        .btn-dismiss {
+            background: white;
+            color: #6b7280;
+            border-color: #e5e7eb;
+        }
+
+        .btn-dismiss:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+        }
+
+        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -559,172 +663,447 @@ $pendingCount = count($announcements) - $respondedCount;
         }
 
         .modal-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--gray-200);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: white;
         }
 
         .modal-title {
             font-size: 1.25rem;
             font-weight: 600;
-            color: var(--gray-800);
+            color: #111827;
         }
 
         .modal-close {
             background: none;
             border: none;
-            font-size: 1.5rem;
-            color: var(--gray-500);
+            font-size: 1.25rem;
+            color: #6b7280;
             cursor: pointer;
-            padding: 0.25rem;
+            padding: 0.5rem;
             line-height: 1;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            flex-shrink: 0;
         }
 
         .modal-close:hover {
-            color: var(--gray-700);
+            background: #f3f4f6;
+            color: #111827;
+            transform: rotate(90deg);
+        }
+
+        .modal-close:active {
+            transform: scale(0.95);
         }
 
         .modal-body {
-            padding: 1.5rem;
-        }
-
-        .modal-footer {
-            padding: 1.5rem;
-            border-top: 1px solid var(--gray-200);
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
+            padding: 2rem;
         }
 
         /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: #9ca3af;
         }
 
-        .empty-icon {
-            font-size: 3rem;
-            color: var(--gray-300);
-            margin-bottom: 1rem;
-        }
-
-        .empty-title {
-            font-size: 1.125rem;
+        .empty-state-title {
+            font-size: 1.25rem;
             font-weight: 600;
-            color: var(--gray-700);
-            margin-bottom: 0.5rem;
+            color: #111827;
+            margin-bottom: 12px;
         }
 
-        .empty-description {
-            color: var(--gray-500);
-            font-size: 0.875rem;
+        .empty-state-text {
+            font-size: 1rem;
+            color: #6b7280;
+            line-height: 1.6;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
-        /* Utility Classes */
-        .whitespace-pre-line {
-            white-space: pre-line;
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+        /* Mobile Responsive */
+        @media (max-width: 640px) {
+            .page-title {
+                font-size: 1.5rem !important;
+            }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
+            .stat-value {
+                font-size: 1.5rem !important;
+            }
+
+            .tab-header {
+                padding: 0.65rem 0.85rem !important;
+                font-size: 0.8125rem !important;
+                font-weight: 700 !important;
+                min-height: 40px !important;
+                flex: 1 1 auto;
+            }
+
             .announcement-header {
                 flex-direction: column;
-                gap: 0.75rem;
+                align-items: flex-start;
             }
-            
+
             .announcement-actions {
                 width: 100%;
-                justify-content: flex-start;
             }
-            
-            .response-buttons {
-                flex-direction: column;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .response-stats {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 1rem;
-            }
-        }
 
-        @media (max-width: 640px) {
+            .btn-response {
+                flex-direction: column;
+                min-height: auto;
+            }
+
             .modal {
                 width: 95%;
                 margin: 0.5rem;
             }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
+            .modal-header {
+                padding: 1.25rem 1.5rem;
+            }
+
+            .modal-body {
+                padding: 1.5rem;
             }
         }
+
+        @media (min-width: 641px) and (max-width: 1023px) {
+            .page-title {
+                font-size: 1.75rem !important;
+            }
+
+            .stat-value {
+                font-size: 2.25rem !important;
+            }
+
+            .tab-header {
+                padding: 0.75rem 1.5rem !important;
+                font-size: 0.95rem !important;
+                font-weight: 700 !important;
+                min-height: 44px !important;
+            }
+        }
+        .stats-grid {
+                grid-template-columns: 1fr;
+            }
     </style>
+
+            
+     
 </head>
-<body class="min-h-screen">
-    <div class="main-container px-4 py-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <div class="flex flex-col gap-4">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Community Announcements</h1>
-                    <p class="text-gray-600 mt-1">Stay updated with important barangay health information</p>
+<body class="min-h-screen bg-gray-100">
+    <div class="px-4 py-6 -mt-24">
+        <?php if ($error): ?>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center mt-6">
+                <div class="w-8 h-8 bg-red-200 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-exclamation-circle text-red-600"></i>
                 </div>
-                
-                <!-- Stats Cards - Consistent with staff page -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-bullhorn text-blue-600"></i>
+                <span><?php echo htmlspecialchars($error); ?></span>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ($success): ?>
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
+                <div class="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-check-circle text-green-600"></i>
+                </div>
+                <span><?php echo htmlspecialchars($success); ?></span>
+            </div>
+        <?php endif; ?>
+
+        <!-- Main Content Tabs -->
+        <div class="card-shadow overflow-hidden mb-10 mt-6">
+            <!-- Tab Navigation -->
+            <div class="tab-nav-container">
+                <button class="tab-header active" data-tab="announcements">
+                    <span>Announcements</span>
+                </button>
+                <button class="tab-header" data-tab="stats">
+                    <span>Response Stats</span>
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content-wrapper custom-scrollbar">
+                <!-- Announcements Tab -->
+                <div id="announcements" class="tab-content active">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid mb-6">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #DBEAFE; color: #0369A1;">
+                                <i class="fas fa-bullhorn icon-lg"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value"><?= count($announcements) ?></div>
+                                <div class="stat-label">Total</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #D1FAE5; color: #10B981;">
+                                <i class="fas fa-flask icon-lg"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">
+                                    <?= $labResultsCount ?> <span class="stat-pending">(<?= $labResultsPending ?> pending)</span>
+                                </div>
+                                <div class="stat-label">Lab Results</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #FEF3C7; color: #D97706;">
+                                <i class="fas fa-bullhorn icon-lg"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value">
+                                    <?= $basicAnnouncementsCount ?> <span class="stat-pending">(<?= $basicAnnouncementsPending ?> pending)</span>
+                                </div>
+                                <div class="stat-label">Announcements</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #F3F4F6; color: #6b7280;">
+                                <i class="fas fa-clock icon-lg"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value"><?= $pendingCount ?></div>
+                                <div class="stat-label">All Pending</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lab Results Section -->
+                    <?php if (!empty($labResults)): ?>
+                        <div class="mb-8">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-xl font-bold text-green-700 flex items-center gap-2">
+                                    <i class="fas fa-flask text-green-500"></i>
+                                    Laboratory Results
+                                    <span class="text-base font-normal text-gray-500">(<?= count($labResults) ?>)</span>
+                                </h3>
+                            </div>
+                            <?php foreach ($labResults as $announcement): ?>
+                                <div class="announcement-item card-shadow" style="border-left: 6px solid #10B981; background: linear-gradient(90deg,#F0FDF4 60%,#fff 100%);">
+                                    <div class="announcement-header">
+                                        <div class="flex-1">
+                                            <h3 class="announcement-title text-green-700"><?= htmlspecialchars($announcement['title']) ?></h3>
+                                            <div class="announcement-meta">
+                                                <span><i class="fas fa-user"></i> <?= htmlspecialchars($announcement['staff_name'] ?? 'Medical Staff') ?></span>
+                                                <span class="mx-2">•</span>
+                                                <span><i class="fas fa-calendar"></i> <?= date('M d, Y', strtotime($announcement['post_date'])) ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="announcement-actions">
+                                            <button onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)" class="btn-primary" style="background: #10B981;">
+                                                <i class="fas fa-eye icon-sm"></i> View Result
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="announcement-badges mb-2">
+                                        <span class="badge badge-lab-result"><i class="fas fa-flask"></i> Lab Result</span>
+                                        <span class="badge badge-<?= $announcement['priority'] ?>"><i class="fas fa-flag"></i> <?= ucfirst($announcement['priority']) ?></span>
+                                        <?php if ($announcement['user_status']): ?>
+                                            <span class="badge badge-<?= $announcement['user_status'] ?>">
+                                                <i class="fas fa-<?= $announcement['user_status'] === 'accepted' ? 'check' : 'times' ?>"></i>
+                                                <?= ucfirst($announcement['user_status']) ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge badge-pending"><i class="fas fa-clock"></i> Pending</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="announcement-content mb-2">
+                                        <?= htmlspecialchars($announcement['message']) ?>
+                                    </div>
+                                    <?php if ($announcement['image_path']): ?>
+                                        <div class="image-preview mb-2">
+                                            <img src="<?= htmlspecialchars($announcement['image_path']) ?>" alt="Lab Result Image" onclick="openImageModal('<?= htmlspecialchars($announcement['image_path']) ?>')">
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($announcement['expiry_date']): ?>
+                                        <div class="mb-2 text-green-700 text-sm flex items-center gap-2">
+                                            <i class="fas fa-clock"></i> Expires: <?= date('M d, Y', strtotime($announcement['expiry_date'])) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="mt-2">
+                                        <!-- Response Section -->
+                                        <?php if ($announcement['user_status']): ?>
+                                            <div class="flex items-center gap-2 p-2 rounded bg-green-50 border border-green-200">
+                                                <i class="fas fa-<?= $announcement['user_status'] === 'accepted' ? 'check-circle text-green-500' : 'times-circle text-gray-500' ?>"></i>
+                                                <span class="font-semibold text-green-700">Response Recorded: <?= ucfirst($announcement['user_status']) ?></span>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="flex gap-2">
+                                                <form method="POST" action="" class="flex-1">
+                                                    <input type="hidden" name="announcement_id" value="<?= $announcement['id'] ?>">
+                                                    <button type="submit" name="respond_to_announcement" value="accepted" class="btn-response btn-accept w-full"><i class="fas fa-check-circle"></i> Accept</button>
+                                                </form>
+                                                <form method="POST" action="" class="flex-1">
+                                                    <input type="hidden" name="announcement_id" value="<?= $announcement['id'] ?>">
+                                                    <button type="submit" name="respond_to_announcement" value="dismissed" class="btn-response btn-dismiss w-full"><i class="fas fa-times-circle"></i> Dismiss</button>
+                                                </form>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Basic Announcements Section -->
+                    <?php if (!empty($basicAnnouncements)): ?>
+                        <div class="mb-8">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-xl font-bold text-blue-700 flex items-center gap-2">
+                                    <i class="fas fa-bullhorn text-blue-500"></i>
+                                    General Announcements
+                                    <span class="text-base font-normal text-gray-500">(<?= count($basicAnnouncements) ?>)</span>
+                                </h3>
+                            </div>
+                            <?php foreach ($basicAnnouncements as $announcement): ?>
+                                <div class="announcement-item card-shadow" style="border-left: 6px solid #2563eb; background: linear-gradient(90deg,#DBEAFE 60%,#fff 100%);">
+                                    <div class="announcement-header">
+                                        <div class="flex-1">
+                                            <h3 class="announcement-title text-blue-700"><?= htmlspecialchars($announcement['title']) ?></h3>
+                                            <div class="announcement-meta">
+                                                <span><i class="fas fa-user"></i> <?= htmlspecialchars($announcement['staff_name'] ?? 'Community Staff') ?></span>
+                                                <span class="mx-2">•</span>
+                                                <span><i class="fas fa-calendar"></i> <?= date('M d, Y', strtotime($announcement['post_date'])) ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="announcement-actions">
+                                            <button onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)" class="btn-primary" style="background: #2563eb;">
+                                                <i class="fas fa-eye icon-sm"></i> View
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="announcement-badges mb-2">
+                                        <span class="badge badge-simple"><i class="fas fa-bullhorn"></i> Announcement</span>
+                                        <span class="badge badge-<?= $announcement['priority'] ?>"><i class="fas fa-flag"></i> <?= ucfirst($announcement['priority']) ?></span>
+                                        <?php if ($announcement['user_status']): ?>
+                                            <span class="badge badge-<?= $announcement['user_status'] ?>">
+                                                <i class="fas fa-<?= $announcement['user_status'] === 'accepted' ? 'check-circle' : 'times-circle' ?>"></i>
+                                                <?= ucfirst($announcement['user_status']) ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge badge-pending"><i class="fas fa-clock"></i> Pending</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="announcement-content mb-2">
+                                        <?= htmlspecialchars($announcement['message']) ?>
+                                    </div>
+                                    <?php if ($announcement['image_path']): ?>
+                                        <div class="image-preview mb-2">
+                                            <img src="<?= htmlspecialchars($announcement['image_path']) ?>" alt="Announcement Image" onclick="openImageModal('<?= htmlspecialchars($announcement['image_path']) ?>')">
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($announcement['expiry_date']): ?>
+                                        <div class="mb-2 text-blue-700 text-sm flex items-center gap-2">
+                                            <i class="fas fa-clock"></i> Expires: <?= date('M d, Y', strtotime($announcement['expiry_date'])) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="mt-2">
+                                        <!-- Response Section -->
+                                        <?php if ($announcement['user_status']): ?>
+                                            <div class="flex items-center gap-2 p-2 rounded bg-blue-50 border border-blue-200">
+                                                <i class="fas fa-<?= $announcement['user_status'] === 'accepted' ? 'check-circle text-green-500' : 'times-circle text-gray-500' ?>"></i>
+                                                <span class="font-semibold text-blue-700">Response Recorded: <?= ucfirst($announcement['user_status']) ?></span>
+                                            </div>
+                                        <?php else: ?>
+                                            <div class="flex gap-2">
+                                                <form method="POST" action="" class="flex-1">
+                                                    <input type="hidden" name="announcement_id" value="<?= $announcement['id'] ?>">
+                                                    <button type="submit" name="respond_to_announcement" value="accepted" class="btn-response btn-accept w-full"><i class="fas fa-check-circle"></i> Accept</button>
+                                                </form>
+                                                <form method="POST" action="" class="flex-1">
+                                                    <input type="hidden" name="announcement_id" value="<?= $announcement['id'] ?>">
+                                                    <button type="submit" name="respond_to_announcement" value="dismissed" class="btn-response btn-dismiss w-full"><i class="fas fa-times-circle"></i> Dismiss</button>
+                                                </form>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- No Announcements Message -->
+                    <?php if (empty($labResults) && empty($basicAnnouncements)): ?>
+                        <div class="text-center py-10 sm:py-20">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-bullhorn icon-3xl"></i>
+                            </div>
+                            <h3 class="empty-state-title">No Announcements</h3>
+                            <p class="empty-state-text">There are currently no active announcements. Check back later for updates.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Stats Tab -->
+                <div id="stats" class="tab-content">
+                    <div class="stats-grid mb-8">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #DBEAFE; color: #0369A1;">
+                                <i class="fas fa-bullhorn icon-lg"></i>
                             </div>
                             <div>
                                 <div class="stat-value"><?= count($announcements) ?></div>
                                 <div class="stat-label">Total Announcements</div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-check-circle text-green-600"></i>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #D1FAE5; color: #10B981;">
+                                <i class="fas fa-check-circle icon-lg"></i>
                             </div>
                             <div>
                                 <div class="stat-value"><?= $acceptedCount ?></div>
                                 <div class="stat-label">Accepted</div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-clock text-yellow-600"></i>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #FEF3C7; color: #D97706;">
+                                <i class="fas fa-clock icon-lg"></i>
                             </div>
                             <div>
                                 <div class="stat-value"><?= $pendingCount ?></div>
                                 <div class="stat-label">Pending Response</div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-times-circle text-gray-600"></i>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #F3F4F6; color: #6b7280;">
+                                <i class="fas fa-times-circle icon-lg"></i>
                             </div>
                             <div>
                                 <div class="stat-value"><?= $dismissedCount ?></div>
@@ -732,219 +1111,32 @@ $pendingCount = count($announcements) - $respondedCount;
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Messages -->
-        <?php if ($error): ?>
-            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
-                <i class="fas fa-exclamation-circle text-red-500"></i>
-                <span class="text-red-700"><?= htmlspecialchars($error) ?></span>
-            </div>
-        <?php endif; ?>
-        
-        <?php if ($success): ?>
-            <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
-                <i class="fas fa-check-circle text-green-500"></i>
-                <span class="text-green-700"><?= htmlspecialchars($success) ?></span>
-            </div>
-        <?php endif; ?>
-
-        <!-- Announcements List -->
-        <div class="space-y-4">
-            <?php if (empty($announcements)): ?>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="empty-state">
-                            <div class="empty-icon">
-                                <i class="fas fa-bullhorn"></i>
-                            </div>
-                            <h3 class="empty-title">No Announcements Available</h3>
-                            <p class="empty-description">There are currently no active announcements. Check back later for updates.</p>
-                        </div>
-                    </div>
-                </div>
-            <?php else: ?>
-                <?php foreach ($announcements as $announcement): ?>
-                    <div class="announcement-item">
-                        <!-- Header -->
-                        <div class="announcement-header">
-                            <div class="flex-1">
-                                <h3 class="announcement-title"><?= htmlspecialchars($announcement['title']) ?></h3>
-                                <div class="announcement-meta">
-                                    <span class="flex items-center gap-1">
-                                        <i class="fas fa-user"></i>
-                                        <?= htmlspecialchars($announcement['staff_name'] ?? 'Community Staff') ?>
-                                    </span>
-                                    <span class="mx-2">•</span>
-                                    <span class="flex items-center gap-1">
-                                        <i class="fas fa-calendar"></i>
-                                        <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="announcement-actions">
-                                <button onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
-                                        class="btn btn-secondary btn-sm"
-                                        title="View Details">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Priority and Status Badges -->
-                        <div class="flex flex-wrap gap-2 mb-3">
-                            <span class="priority-badge priority-<?= $announcement['priority'] ?>">
-                                <i class="fas fa-flag text-xs"></i>
-                                <?= ucfirst($announcement['priority']) ?> Priority
-                            </span>
-                            
-                            <?php if ($announcement['user_status']): ?>
-                                <span class="status-badge status-<?= $announcement['user_status'] ?>">
-                                    <?php if ($announcement['user_status'] === 'accepted'): ?>
-                                        <i class="fas fa-check text-xs"></i>
-                                    <?php else: ?>
-                                        <i class="fas fa-times text-xs"></i>
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Your Responded Announcements</h3>
+                        <div class="space-y-4">
+                        <?php foreach ($announcements as $a): if (!empty($a['user_status'])): ?>
+                            <div class="card-shadow p-4 rounded flex flex-col gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-base text-gray-900"><?= htmlspecialchars($a['title']) ?></span>
+                                    <?php if ($a['user_status'] === 'accepted'): ?>
+                                        <span class="badge badge-accepted"><i class="fas fa-check-circle"></i> Accepted</span>
+                                    <?php elseif ($a['user_status'] === 'dismissed'): ?>
+                                        <span class="badge badge-dismissed"><i class="fas fa-times-circle"></i> Dismissed</span>
                                     <?php endif; ?>
-                                    <?= ucfirst($announcement['user_status']) ?>
-                                </span>
-                            <?php else: ?>
-                                <span class="status-badge" style="background: #FEF3C7; color: #D97706; border-color: #FDE68A;">
-                                    <i class="fas fa-clock text-xs"></i>
-                                    Pending Response
-                                </span>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Image Preview -->
-                        <?php if ($announcement['image_path']): ?>
-                            <div class="mb-3">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-sm font-medium text-gray-700">Attached Image</span>
-                                    <button onclick="openImageModal('<?= htmlspecialchars($announcement['image_path']) ?>')" 
-                                            class="btn-view-image">
-                                        <i class="fas fa-expand mr-1"></i> View Full
-                                    </button>
                                 </div>
-                                <div class="image-preview">
-                                    <img src="<?= htmlspecialchars($announcement['image_path']) ?>" 
-                                         alt="Announcement Image"
-                                         onclick="openImageModal('<?= htmlspecialchars($announcement['image_path']) ?>')">
+                                <div class="text-sm text-gray-500 flex items-center gap-2">
+                                    <i class="fas fa-calendar"></i> <?= date('M d, Y', strtotime($a['post_date'])) ?>
                                 </div>
+                                <div class="text-sm text-gray-700"><?= htmlspecialchars($a['message']) ?></div>
                             </div>
+                        <?php endif; endforeach; ?>
+                        <?php if ($acceptedCount + $dismissedCount === 0): ?>
+                            <div class="text-center py-8 text-gray-500">No responded announcements yet.</div>
                         <?php endif; ?>
-
-                        <!-- Content Preview -->
-                        <div class="announcement-content line-clamp-2">
-                            <?= htmlspecialchars($announcement['message']) ?>
-                        </div>
-
-                        <!-- Expiry Date -->
-                        <?php if ($announcement['expiry_date']): ?>
-                            <div class="mb-3">
-                                <span class="text-sm text-blue-600 flex items-center gap-1">
-                                    <i class="fas fa-clock"></i>
-                                    Expires: <?= date('M d, Y', strtotime($announcement['expiry_date'])) ?>
-                                </span>
-                            </div>
-                        <?php endif; ?>
-
-                        <!-- Footer -->
-                        <div class="announcement-footer">
-                            <div>
-                                <?php if (strlen($announcement['message']) > 100): ?>
-                                    <button onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
-                                            class="text-blue-600 hover:text-blue-800 font-medium text-sm inline-flex items-center gap-1">
-                                        Read full message
-                                        <i class="fas fa-arrow-right text-xs"></i>
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <div class="response-stats">
-                                <?php if ($announcement['response_date']): ?>
-                                    <div class="response-stat">
-                                        <div class="response-icon <?= $announcement['user_status'] === 'accepted' ? 'accepted-icon' : 'dismissed-icon' ?>">
-                                            <i class="fas fa-<?= $announcement['user_status'] === 'accepted' ? 'check' : 'times' ?>"></i>
-                                        </div>
-                                        <span class="text-gray-600">Responded</span>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <!-- Response Section -->
-                        <div class="response-section">
-                            <?php if ($announcement['user_status'] === 'accepted'): ?>
-                                <div class="response-status">
-                                    <div class="response-icon accepted-icon">
-                                        <i class="fas fa-check"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="font-medium text-gray-800">You accepted this announcement</p>
-                                        <?php if ($announcement['response_date']): ?>
-                                            <p class="text-sm text-gray-500 mt-1">
-                                                Responded on <?= date('M d, Y \a\t h:i A', strtotime($announcement['response_date'])) ?>
-                                            </p>
-                                        <?php endif; ?>
-                                    </div>
-                                    <form method="POST" action="">
-                                        <input type="hidden" name="announcement_id" value="<?= $announcement['id'] ?>">
-                                        <button type="submit" name="respond_to_announcement" value="dismissed" 
-                                                class="btn btn-outline-secondary btn-sm">
-                                            <i class="fas fa-times mr-1"></i> Dismiss
-                                        </button>
-                                    </form>
-                                </div>
-                            <?php elseif ($announcement['user_status'] === 'dismissed'): ?>
-                                <div class="response-status">
-                                    <div class="response-icon dismissed-icon">
-                                        <i class="fas fa-times"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="font-medium text-gray-800">You dismissed this announcement</p>
-                                        <?php if ($announcement['response_date']): ?>
-                                            <p class="text-sm text-gray-500 mt-1">
-                                                Responded on <?= date('M d, Y \a\t h:i A', strtotime($announcement['response_date'])) ?>
-                                            </p>
-                                        <?php endif; ?>
-                                    </div>
-                                    <form method="POST" action="">
-                                        <input type="hidden" name="announcement_id" value="<?= $announcement['id'] ?>">
-                                        <button type="submit" name="respond_to_announcement" value="accepted" 
-                                                class="btn btn-outline-success btn-sm">
-                                            <i class="fas fa-check mr-1"></i> Accept
-                                        </button>
-                                    </form>
-                                </div>
-                            <?php else: ?>
-                                <div class="space-y-3">
-                                    <p class="response-title">Please respond to this announcement:</p>
-                                    <div class="response-buttons">
-                                        <form method="POST" action="" class="flex-1">
-                                            <input type="hidden" name="announcement_id" value="<?= $announcement['id'] ?>">
-                                            <button type="submit" name="respond_to_announcement" value="accepted" 
-                                                    class="btn-response btn-accept">
-                                                <i class="fas fa-check-circle"></i>
-                                                Accept Announcement
-                                            </button>
-                                        </form>
-                                        <form method="POST" action="" class="flex-1">
-                                            <input type="hidden" name="announcement_id" value="<?= $announcement['id'] ?>">
-                                            <button type="submit" name="respond_to_announcement" value="dismissed" 
-                                                    class="btn-response btn-dismiss">
-                                                <i class="fas fa-times-circle"></i>
-                                                Dismiss Announcement
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -953,15 +1145,12 @@ $pendingCount = count($announcements) - $respondedCount;
         <div class="modal">
             <div class="modal-header">
                 <h2 class="modal-title">Announcement Details</h2>
-                <button class="modal-close" onclick="closeViewModal()">&times;</button>
+                <button class="modal-close" onclick="closeViewModal()" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body">
                 <div id="modalContent"></div>
-            </div>
-            <div class="modal-footer">
-                <button onclick="closeViewModal()" class="btn btn-secondary">
-                    Close
-                </button>
             </div>
         </div>
     </div>
@@ -970,19 +1159,13 @@ $pendingCount = count($announcements) - $respondedCount;
     <div id="imageModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
-                <h2 class="modal-title">Announcement Image</h2>
-                <button class="modal-close" onclick="closeImageModal()">&times;</button>
+                <h2 class="modal-title">Image</h2>
+                <button class="modal-close" onclick="closeImageModal()" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="modal-body">
                 <img id="modalImage" src="" alt="Announcement Image" class="w-full h-auto rounded-lg">
-            </div>
-            <div class="modal-footer">
-                <button id="downloadImage" class="btn btn-primary">
-                    <i class="fas fa-download mr-2"></i> Download Image
-                </button>
-                <button onclick="closeImageModal()" class="btn btn-secondary">
-                    Close
-                </button>
             </div>
         </div>
     </div>
@@ -1002,154 +1185,82 @@ $pendingCount = count($announcements) - $respondedCount;
             });
             
             let content = `
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="text-xl font-semibold text-gray-800">${announcement.title || 'No Title'}</h3>
-                            <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                                <span class="flex items-center gap-1">
-                                    <i class="fas fa-user"></i>
-                                    ${announcement.staff_name || 'Community Staff'}
-                                </span>
-                                <span class="flex items-center gap-1">
-                                    <i class="fas fa-calendar"></i>
-                                    ${postDate}
-                                </span>
-                            </div>
+                <div style="space-y: 1.5rem;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 0.5rem;">${announcement.title || 'Announcement'}</h3>
+                        <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.875rem; color: #6b7280;">
+                            <span><i class="fas fa-user icon-sm"></i> ${announcement.staff_name || 'Community Staff'}</span>
+                            <span><i class="fas fa-calendar icon-sm"></i> ${postDate}</span>
                         </div>
-                        <span class="priority-badge priority-${announcement.priority || 'normal'}">
-                            <i class="fas fa-flag text-xs"></i>
-                            ${announcement.priority ? announcement.priority.charAt(0).toUpperCase() + announcement.priority.slice(1) : 'Normal'} Priority
-                        </span>
                     </div>
                     
                     ${announcement.expiry_date ? `
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-clock text-blue-500"></i>
+                        <div style="background: #DBEAFE; padding: 1rem; border-radius: 8px; border: 1px solid #BAE6FD; margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <i class="fas fa-clock" style="color: #0369A1;"></i>
                                 <div>
-                                    <p class="font-medium text-blue-800">Expiration Date</p>
-                                    <p class="text-sm text-blue-600">
-                                        ${new Date(announcement.expiry_date).toLocaleDateString('en-US', { 
-                                            year: 'numeric', 
-                                            month: 'long', 
-                                            day: 'numeric'
-                                        })}
-                                    </p>
+                                    <p style="font-weight: 600; color: #0C4A6E; margin: 0;">Expires: ${new Date(announcement.expiry_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric'})}</p>
                                 </div>
                             </div>
                         </div>
                     ` : ''}
                     
                     ${announcement.image_path ? `
-                        <div>
-                            <h4 class="font-medium text-gray-800 mb-2">Attached Image</h4>
-                            <div class="border border-gray-200 rounded-lg overflow-hidden">
-                                <img src="${announcement.image_path}" 
-                                     alt="Announcement Image" 
-                                     class="w-full h-auto max-h-[300px] object-contain">
-                            </div>
+                        <div style="margin-bottom: 1rem;">
+                            <img src="${announcement.image_path}" 
+                                 alt="Announcement Image" 
+                                 style="width: 100%; height: auto; max-height: 300px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; cursor: pointer;"
+                                 onclick="openImageModal('${announcement.image_path}')">
                         </div>
                     ` : ''}
                     
-                    <div>
-                        <h4 class="font-medium text-gray-800 mb-2">Message Content</h4>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <p class="text-gray-700 whitespace-pre-line">${announcement.message || 'No message provided'}</p>
-                        </div>
+                    <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; border: 1px solid #e5e7eb; line-height: 1.6; color: #374151; white-space: pre-line;">
+                        ${announcement.message || 'No message provided'}
                     </div>
-                    
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-medium text-gray-800 mb-3">Your Response</h4>
             `;
             
             if (announcement.user_status === 'accepted') {
-                const responseDate = announcement.response_date ? new Date(announcement.response_date).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }) : '';
-                
                 content += `
-                    <div class="flex items-center gap-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-check text-green-600 text-xl"></i>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #D1FAE5; border-radius: 8px; border: 1px solid #A7F3D0; margin-top: 1rem;">
+                        <i class="fas fa-check-circle" style="color: #059669; font-size: 1.25rem;"></i>
+                        <div>
+                            <p style="font-weight: 600; color: #065F46; margin: 0;">Accepted</p>
                         </div>
-                        <div class="flex-1">
-                            <p class="font-semibold text-green-800">You accepted this announcement</p>
-                            ${responseDate ? `<p class="text-sm text-green-600 mt-1">Responded on ${responseDate}</p>` : ''}
-                        </div>
-                        <form method="POST" action="">
-                            <input type="hidden" name="announcement_id" value="${announcement.id}">
-                            <button type="submit" name="respond_to_announcement" value="dismissed" 
-                                    class="btn btn-outline-secondary">
-                                <i class="fas fa-times mr-2"></i> Dismiss
-                            </button>
-                        </form>
                     </div>
                 `;
             } else if (announcement.user_status === 'dismissed') {
-                const responseDate = announcement.response_date ? new Date(announcement.response_date).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }) : '';
-                
                 content += `
-                    <div class="flex items-center gap-3 p-4 bg-gray-100 rounded-lg border border-gray-200">
-                        <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                            <i class="fas fa-times text-gray-600 text-xl"></i>
+                    <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #F3F4F6; border-radius: 8px; border: 1px solid #E5E7EB; margin-top: 1rem;">
+                        <i class="fas fa-times-circle" style="color: #6b7280; font-size: 1.25rem;"></i>
+                        <div>
+                            <p style="font-weight: 600; color: #374151; margin: 0;">Dismissed</p>
                         </div>
-                        <div class="flex-1">
-                            <p class="font-semibold text-gray-800">You dismissed this announcement</p>
-                            ${responseDate ? `<p class="text-sm text-gray-600 mt-1">Responded on ${responseDate}</p>` : ''}
-                        </div>
-                        <form method="POST" action="">
-                            <input type="hidden" name="announcement_id" value="${announcement.id}">
-                            <button type="submit" name="respond_to_announcement" value="accepted" 
-                                    class="btn btn-outline-success">
-                                <i class="fas fa-check mr-2"></i> Accept
-                            </button>
-                        </form>
                     </div>
                 `;
             } else {
                 content += `
-                    <div class="flex items-center gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-exclamation text-yellow-600 text-xl"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-semibold text-yellow-800">No response recorded</p>
-                            <p class="text-sm text-yellow-600 mt-1">Please respond using the buttons below.</p>
-                        </div>
-                    </div>
-                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <form method="POST" action="" class="w-full">
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                        <form method="POST" action="" style="flex: 1;">
                             <input type="hidden" name="announcement_id" value="${announcement.id}">
                             <button type="submit" name="respond_to_announcement" value="accepted" 
-                                    class="btn btn-success w-full">
-                                <i class="fas fa-check-circle mr-2"></i>
-                                Accept Announcement
+                                    class="btn-response btn-accept" style="width: 100%;">
+                                <i class="fas fa-check-circle"></i>
+                                Accept
                             </button>
                         </form>
-                        <form method="POST" action="" class="w-full">
+                        <form method="POST" action="" style="flex: 1;">
                             <input type="hidden" name="announcement_id" value="${announcement.id}">
                             <button type="submit" name="respond_to_announcement" value="dismissed" 
-                                    class="btn btn-outline-secondary w-full">
-                                <i class="fas fa-times-circle mr-2"></i>
-                                Dismiss Announcement
+                                    class="btn-response btn-dismiss" style="width: 100%;">
+                                <i class="fas fa-times-circle"></i>
+                                Dismiss
                             </button>
                         </form>
                     </div>
                 `;
             }
             
-            content += `</div></div>`;
+            content += `</div>`;
             
             modalContent.innerHTML = content;
             modal.classList.add('active');
@@ -1225,6 +1336,25 @@ $pendingCount = count($announcements) - $respondedCount;
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
                 }, index * 100);
+            });
+
+            // Tab switching functionality
+            document.querySelectorAll('.tab-header').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all buttons and contents
+                    document.querySelectorAll('.tab-header').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked button and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(tabName).classList.add('active');
+                });
             });
         });
     </script>

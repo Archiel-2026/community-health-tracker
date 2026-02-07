@@ -7,6 +7,63 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $role = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : '';
+$userId = isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : null;
+$fullName = isset($_SESSION['user']['full_name']) ? $_SESSION['user']['full_name'] : '';
+$username = isset($_SESSION['user']['username']) ? $_SESSION['user']['username'] : '';
+
+// Log logout to DB and file
+try {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    // Ensure user_activity_log exists
+    $pdo->exec("CREATE TABLE IF NOT EXISTS user_activity_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        action_type VARCHAR(50),
+        action_timestamp DATETIME,
+        ip_address VARCHAR(45),
+        user_agent TEXT
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    if ($userId) {
+        $stmt = $pdo->prepare("INSERT INTO user_activity_log (user_id, action_type, action_timestamp, ip_address, user_agent) VALUES (?, 'logout', NOW(), ?, ?)");
+        $stmt->execute([$userId, $ip, $ua]);
+
+        // Also log staff logout to staff_activity_log for accountability
+        if ($role === 'staff') {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                staff_id INT,
+                action_type VARCHAR(100),
+                related_id INT,
+                details JSON,
+                ip_address VARCHAR(45),
+                user_agent TEXT,
+                created_at DATETIME
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            $stmtStaffLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'staff_logout', NULL, ?, ?, ?, NOW())");
+            $stmtStaffLog->execute([$userId, json_encode(['full_name' => $fullName, 'username' => $username]), $ip, $ua]);
+        }
+    }
+} catch (Exception $e) {
+    error_log('Logout logging error: ' . $e->getMessage());
+}
+
+try {
+    $log = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'type' => 'logout',
+        'user_id' => $userId,
+        'role' => $role,
+        'ip' => $ip ?? null,
+        'user_agent' => $ua ?? null,
+        'script' => (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ($_SERVER['SCRIPT_NAME'] ?? ''))
+    ];
+    @file_put_contents(__DIR__ . '/../logs/save_actions.log', json_encode($log) . PHP_EOL, FILE_APPEND | LOCK_EX);
+} catch (Exception $e) {
+    error_log('Logout file log error: ' . $e->getMessage());
+}
 
 // Store the role before clearing session
 $redirectRole = $role;
@@ -37,7 +94,8 @@ echo <<<HTML
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logging Out</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
 </head>
 <body>
     <div class="fixed inset-0 flex items-center justify-center">

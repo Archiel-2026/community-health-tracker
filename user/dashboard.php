@@ -1,6 +1,26 @@
 <?php
 // user/dashboard.php
+
 require_once __DIR__ . '/../includes/auth.php';
+// --- Auto-logout for resident users after 1 hour of inactivity ---
+if (isUser()) {
+    $now = time();
+    if (!isset($_SESSION['last_action'])) {
+        $_SESSION['last_action'] = $now;
+    } else {
+        $inactive = $now - $_SESSION['last_action'];
+        if ($inactive >= 3600) { // 1 hour = 3600 seconds
+            // Destroy session and redirect to resident landing page
+            session_unset();
+            session_destroy();
+            header('Location: /community-health-tracker/index.php');
+            exit();
+        } else {
+            $_SESSION['last_action'] = $now;
+        }
+    }
+}
+
 require_once __DIR__ . '/../includes/header.php';
 
 redirectIfNotLoggedIn();
@@ -8,6 +28,9 @@ if (!isUser()) {
     header('Location: /community-health-tracker/');
     exit();
 }
+
+// Check if user has profile image, if not redirect to upload profile page
+redirectIfUserMissingProfile();
 
 global $pdo;
 
@@ -19,7 +42,7 @@ $activeTab = $_GET['tab'] ?? 'analytics';
 
 // Get user data
 try {
-    $stmt = $pdo->prepare("SELECT * FROM sitio1_users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, username, password, email, full_name, gender, age, date_of_birth, address, sitio, contact, civil_status, occupation, approved, approved_by, unique_number, created_at, last_login, status, role, profile_image FROM sitio1_users WHERE id = ?");
     $stmt->execute([$userId]);
     $userData = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -35,6 +58,7 @@ $analytics = [
     'health_issues' => 0,
     'announcements' => 0,
     'consultations' => 0,
+    'lab_results' => 0, // Add lab_results to analytics
     'resolved_issues' => 0,
     'pending_issues' => 0
 ];
@@ -42,12 +66,14 @@ $analytics = [
 $healthIssuesData = [];
 $activityLog = [];
 $announcementStats = ['accepted' => 0, 'dismissed' => 0, 'pending' => 0];
+$labResultCount = 0;
 
 // Initialize chartData with defaults BEFORE the if block
 $chartData = [
     ['category' => 'Health Records', 'count' => 0, 'color' => '#ef4444', 'icon' => 'fas fa-heartbeat'],
     ['category' => 'Announcements', 'count' => 0, 'color' => '#3b82f6', 'icon' => 'fas fa-bullhorn'],
-    ['category' => 'Consultations', 'count' => 0, 'color' => '#10b981', 'icon' => 'fas fa-file-medical-alt']
+    ['category' => 'Consultations', 'count' => 0, 'color' => '#10b981', 'icon' => 'fas fa-file-medical-alt'],
+    ['category' => 'Lab Results', 'count' => 0, 'color' => '#a78bfa', 'icon' => 'fas fa-vial']
 ];
 
 if ($userData) {
@@ -72,9 +98,9 @@ if ($userData) {
 
         // 2. Get Announcements Count (from announcements and user_announcements tables)
         try {
-            // First, get all announcements targeted to this user
+            // First, get all announcements targeted to this user with full details, sorted by latest first
             $stmt = $pdo->prepare("
-                SELECT a.id 
+                SELECT a.*, ua.status as user_status, s.full_name as staff_name
                 FROM sitio1_announcements a
                 LEFT JOIN user_announcements ua ON a.id = ua.announcement_id AND ua.user_id = ?
                 LEFT JOIN sitio1_staff s ON a.staff_id = s.id
@@ -82,6 +108,7 @@ if ($userData) {
                 AND (a.audience_type = 'public' OR a.id IN (
                     SELECT announcement_id FROM announcement_targets WHERE user_id = ?
                 ))
+                ORDER BY a.post_date DESC
             ");
             $stmt->execute([$userId, $userId]);
             $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -252,16 +279,76 @@ if ($userData) {
             ];
         }
 
+        // 5. Get Consultation Notes (Doctor's Notes) - matching health_records.php
+        $consultationNotes = [];
+        try {
+            // Get all patients linked to this user
+            $stmt = $pdo->prepare("SELECT id, full_name FROM sitio1_patients WHERE user_id = ? AND deleted_at IS NULL");
+            $stmt->execute([$userId]);
+            $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($patients)) {
+                $patientIds = array_column($patients, 'id');
+                $placeholders = str_repeat('?,', count($patientIds) - 1) . '?';
+                $stmt = $pdo->prepare("
+                    SELECT 
+                        cn.*,
+                        cn.doctor_name as doctor_name
+                    FROM consultation_notes cn
+                    WHERE cn.patient_id IN ($placeholders)
+                    ORDER BY cn.consultation_date DESC
+                ");
+                $stmt->execute($patientIds);
+                $consultationNotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Add patient name to each note
+                foreach ($consultationNotes as &$note) {
+                    foreach ($patients as $patient) {
+                        if ($patient['id'] == $note['patient_id']) {
+                            $note['patient_name'] = $patient['full_name'];
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // Silently fail
+        }
+
         // Update chartData with actual values
         $chartData = [
             ['category' => 'Health Records', 'count' => $analytics['health_issues'], 'color' => '#ef4444', 'icon' => 'fas fa-heartbeat'],
             ['category' => 'Announcements', 'count' => $analytics['announcements'], 'color' => '#3b82f6', 'icon' => 'fas fa-bullhorn'],
-            ['category' => 'Consultations', 'count' => $analytics['consultations'], 'color' => '#10b981', 'icon' => 'fas fa-file-medical-alt']
+            ['category' => 'Consultations', 'count' => $analytics['consultations'], 'color' => '#10b981', 'icon' => 'fas fa-file-medical-alt'],
+            ['category' => 'Lab Results', 'count' => $analytics['lab_results'], 'color' => '#a78bfa', 'icon' => 'fas fa-vial']
         ];
 
     } catch (PDOException $e) {
         $error = 'Error fetching analytics data: ' . $e->getMessage();
     }
+}
+
+// Get lab result announcements for the user using a direct query (handles public and specific)
+$labResults = [];
+try {
+    $stmt = $pdo->prepare("
+        SELECT a.*
+        FROM sitio1_announcements a
+        WHERE a.status = 'active'
+        AND a.announcement_type = 'lab_result'
+        AND (
+            a.audience_type = 'public'
+            OR a.id IN (SELECT announcement_id FROM announcement_targets WHERE user_id = ?)
+        )
+        ORDER BY a.post_date DESC
+    ");
+    $stmt->execute([$userId]);
+    $labResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $labResultsCount = count($labResults);
+    $analytics['lab_results'] = $labResultsCount;
+} catch (PDOException $e) {
+    $labResultsCount = 0;
+    $analytics['lab_results'] = 0;
 }
 
 // Helper function to calculate time ago
@@ -288,18 +375,11 @@ function getTimeAgo($datetime)
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Dashboard - Community Health Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/asssets/css/normalize.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -356,12 +436,20 @@ function getTimeAgo($datetime)
             /* ✅ always fluid */
         }
 
-        /* Optional: tighter padding on small screens */
-        @media (max-width: 640px) {
-
+        /* Mobile optimized */
+        @media (max-width: 768px) {
             .chart-container,
             .chart-container-two {
                 padding: 16px;
+                border-radius: 8px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .chart-container,
+            .chart-container-two {
+                padding: 12px;
+                border-radius: 8px;
             }
         }
 
@@ -550,10 +638,53 @@ function getTimeAgo($datetime)
             justify-content: center;
             margin-right: 16px;
         }
-    </style>
-</head>
 
-<body class="bg-gray-100">
+        /* Personal Information Styles */
+        .personal-info-item {
+            padding: 12px;
+            border-radius: 8px;
+            background: #f9fafb;
+            transition: all 0.2s ease;
+        }
+
+        .personal-info-item:hover {
+            background: #f3f4f6;
+        }
+
+        /* Doctor's Notes Styles */
+        .doctor-note-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .doctor-note-item:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Modal Info Item Styles */
+        .modal-info-item {
+            padding: 16px;
+            border-radius: 12px;
+            background: #f9fafb;
+            transition: all 0.2s ease;
+            border: 1px solid #e5e7eb;
+        }
+
+        .modal-info-item:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+        }
+
+        .ml-13 {
+            margin-left: 3.25rem;
+        }
+    </style>
+<div class="bg-gray-100">
     <div class=" px-4 py-6 -mt-24">
         <!-- Dashboard Header -->
         <!-- <div class="flex justify-between items-center mb-8">
@@ -666,193 +797,182 @@ function getTimeAgo($datetime)
                         </div> -->
                     </div>
 
-                    <!-- Health Issues Card -->
+                    <!-- Lab Results Card -->
                     <div class="stats-card">
                         <div class="flex items-center mt-4">
-                            <div class="stats-icon-container bg-violet-200">
-                                <svg width="66" height="66" viewBox="0 0 66 66" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M0 4C0 1.79086 1.79086 0 4 0H62C64.2091 0 66 1.79086 66 4V62C66 64.2091 64.2091 66 62 66H4C1.79086 66 0 64.2091 0 62V4Z"
-                                        fill-opacity="0.3" />
-                                    <path
-                                        d="M26.125 27.5C26.125 27.1353 26.2699 26.7856 26.5277 26.5277C26.7856 26.2699 27.1353 26.125 27.5 26.125H38.5C38.8647 26.125 39.2144 26.2699 39.4723 26.5277C39.7301 26.7856 39.875 27.1353 39.875 27.5C39.875 27.8647 39.7301 28.2144 39.4723 28.4723C39.2144 28.7301 38.8647 28.875 38.5 28.875H27.5C27.1353 28.875 26.7856 28.7301 26.5277 28.4723C26.2699 28.2144 26.125 27.8647 26.125 27.5ZM27.5 34.375H38.5C38.8647 34.375 39.2144 34.2301 39.4723 33.9723C39.7301 33.7144 39.875 33.3647 39.875 33C39.875 32.6353 39.7301 32.2856 39.4723 32.0277C39.2144 31.7699 38.8647 31.625 38.5 31.625H27.5C27.1353 31.625 26.7856 31.7699 26.5277 32.0277C26.2699 32.2856 26.125 32.6353 26.125 33C26.125 33.3647 26.2699 33.7144 26.5277 33.9723C26.7856 34.2301 27.1353 34.375 27.5 34.375ZM33 37.125H27.5C27.1353 37.125 26.7856 37.2699 26.5277 37.5277C26.2699 37.7856 26.125 38.1353 26.125 38.5C26.125 38.8647 26.2699 39.2144 26.5277 39.4723C26.7856 39.7301 27.1353 39.875 27.5 39.875H33C33.3647 39.875 33.7144 39.7301 33.9723 39.4723C34.2301 39.2144 34.375 38.8647 34.375 38.5C34.375 38.1353 34.2301 37.7856 33.9723 37.5277C33.7144 37.2699 33.3647 37.125 33 37.125ZM49.5 19.25V37.9311C49.5012 38.2924 49.4305 38.6503 49.2921 38.984C49.1537 39.3177 48.9504 39.6206 48.6939 39.875L39.875 48.6939C39.6206 48.9504 39.3177 49.1537 38.984 49.2921C38.6503 49.4305 38.2924 49.5012 37.9311 49.5H19.25C18.5207 49.5 17.8212 49.2103 17.3055 48.6945C16.7897 48.1788 16.5 47.4793 16.5 46.75V19.25C16.5 18.5207 16.7897 17.8212 17.3055 17.3055C17.8212 16.7897 18.5207 16.5 19.25 16.5H46.75C47.4793 16.5 48.1788 16.7897 48.6945 17.3055C49.2103 17.8212 49.5 18.5207 49.5 19.25ZM19.25 46.75H37.125V38.5C37.125 38.1353 37.2699 37.7856 37.5277 37.5277C37.7856 37.2699 38.1353 37.125 38.5 37.125H46.75V19.25H19.25V46.75ZM39.875 39.875V44.8078L44.8061 39.875H39.875Z"
-                                        fill="#9333EA" />
-                                </svg>
+                            <div class="stats-icon-container bg-purple-100">
+                                <i class="fas fa-vial text-purple-600 text-2xl"></i>
                             </div>
                             <div>
-                                <h3 class="text-2xl font-semibold text-gray-700">Health Records</h3>
-                                <p class="text-3xl font-bold text-[#9333EA]"><?= $analytics['health_issues'] ?></p>
-                                <p class="text-sm text-gray-500 mt-1">Linked patient records</p>
+                                <h3 class="text-2xl font-semibold text-gray-700">Lab Result</h3>
+                                <p class="text-3xl font-bold text-purple-600">
+                                    <?= isset($labResultsCount) ? $labResultsCount : 0 ?>
+                                </p>
+                                <p class="text-sm text-gray-500 mt-1">Available results</p>
+                                <!-- Lab Result count is now always based on announcements for this user -->
                             </div>
                         </div>
-                        <!-- <div class="mt-4">
-                            <a href="profile.php" class="text-sm text-red-600 font-medium hover:text-red-800 flex items-center">
-                                <i class="fas fa-external-link-alt mr-2 bold-icon"></i>
-                                View health records
-                            </a>
-                        </div> -->
                     </div>
+
+                    
                 </div>
 
                 <!-- Charts and Activity Log Section -->
-                <div class="flex flex-col lg:flex-row gap-6">
-                    <!-- LEFT: 40% -->
-                    <div class="chart-container lg:flex-[0_0_40%]">
-                        <div class="flex items-center mb-4">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                <i class="fas fa-chart-pie text-blue-600 text-lg bold-icon"></i>
+                <div class="flex flex-col md:flex-row gap-4 md:gap-6">
+                    <!-- LEFT: 40% - Recent Consultations -->
+                    <div class="chart-container w-full md:flex-[0_0_40%]">
+                        <div class="flex items-center justify-between mb-3 md:mb-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-file-medical-alt text-green-600 text-base md:text-lg"></i>
+                                </div>
+                                <h3 class="text-lg md:text-xl font-600 text-gray-800">
+                                    Recent Consultations
+                                </h3>
                             </div>
-                            <h3 class="text-lg font-semibold text-gray-800">
-                                Health Overview Distribution
-                            </h3>
+                            <a href="health_records.php" class="text-sm font-medium text-blue-600 hover:text-blue-800">View All</a>
                         </div>
 
-                        <div class="flex flex-col md:flex-row">
-                            <div class="h-64 w-full md:w-1/2">
-                                <canvas id="overviewChart"></canvas>
+                        <div class="space-y-4 h-auto">
+                            <?php if (empty($consultationNotes)): ?>
+                                <div class="text-center py-8">
+                                    <i class="fas fa-file-medical-alt text-4xl text-gray-300"></i>
+                                    <p class="mt-2 text-gray-500">No consultation notes found.</p>
+                                </div>
+                            <?php else: ?>
+                                <?php 
+                                $recentNotes = array_slice($consultationNotes, 0, 4);
+                                foreach ($recentNotes as $note): ?>
+                                    <div class="doctor-note-item p-4">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <p class="font-semibold text-gray-800"><?= htmlspecialchars($note['patient_name']) ?></p>
+                                                <p class="text-sm text-gray-600"><?= htmlspecialchars($note['doctor_name']) ?></p>
+                                            </div>
+                                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full"><?= date('M d, Y', strtotime($note['consultation_date'])) ?></span>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: 60% - Announcements and Lab Results -->
+                    <div class="chart-container-two w-full md:flex-[0_0_58.5%] py-4 md:py-6">
+                        <!-- Lab Results Section (if any) -->
+                        <?php if (!empty($labAnnouncements)): ?>
+                        <div class="mb-6">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-flask text-green-600 text-lg md:text-xl"></i>
+                                    </div>
+                                    <h3 class="text-lg md:text-xl font-600 text-gray-800">
+                                        Laboratory Results
+                                    </h3>
+                                </div>
+                                <a href="announcements.php" class="text-sm font-medium text-green-600 hover:text-green-800">View All</a>
                             </div>
 
-                            <div class="mt-4 md:mt-0 md:border-l border-gray-200 md:pl-4 md:ml-4 w-full md:w-1/2">
-                                <?php foreach ($chartData as $item): ?>
-                                    <div class="chart-legend-item">
-                                        <div class="chart-legend-icon" style="background-color: <?= $item['color'] ?>20;">
-                                            <i class="<?= $item['icon'] ?>"
-                                                style="color: <?= $item['color'] ?>; font-weight: 900;"></i>
-                                        </div>
-                                        <div class="flex-1">
-                                            <span class="text-sm font-medium text-gray-700">
-                                                <?= $item['category'] ?>
+                            <div class="activity-log-container custom-scrollbar h-auto space-y-3 mb-6">
+                                <?php 
+                                $recentLabResults = array_slice($labAnnouncements, 0, 2);
+                                foreach ($recentLabResults as $labResult): 
+                                ?>
+                                    <div class="border-2 border-green-200 bg-green-50 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                        <div class="flex items-start justify-between mb-2">
+                                            <div class="flex items-center gap-2">
+                                                <i class="fas fa-flask text-green-600"></i>
+                                                <h4 class="font-semibold text-gray-800 text-sm"><?= htmlspecialchars($labResult['title']) ?></h4>
+                                            </div>
+                                            <span class="text-xs px-2 py-1 rounded-full <?= 
+                                                $labResult['priority'] === 'high' ? 'bg-red-100 text-red-800' : 
+                                                ($labResult['priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') 
+                                            ?>">
+                                                <?= ucfirst($labResult['priority']) ?>
                                             </span>
+                                        </div>
+                                        <p class="text-xs text-green-700 mb-2">
+                                            <i class="fas fa-user-md"></i> <?= htmlspecialchars($labResult['staff_name'] ?? 'Medical Staff') ?> • 
+                                            <i class="fas fa-calendar"></i> <?= date('M d, Y', strtotime($labResult['post_date'])) ?>
+                                        </p>
+                                        <p class="text-sm text-gray-700 mb-3"><?= substr(htmlspecialchars($labResult['message']), 0, 80) ?>...</p>
+                                        <div class="flex gap-2 text-xs">
+                                            <span class="px-2 py-1 rounded bg-green-200 text-green-800 font-semibold">
+                                                <i class="fas fa-flask"></i> Laboratory Result
+                                            </span>
+                                            <?php if ($labResult['user_status']): ?>
+                                                <span class="px-2 py-1 rounded bg-<?= $labResult['user_status'] === 'accepted' ? 'green' : 'gray' ?>-100 text-<?= $labResult['user_status'] === 'accepted' ? 'green' : 'gray' ?>-800">
+                                                    <i class="fas fa-<?= $labResult['user_status'] === 'accepted' ? 'check-circle' : 'times-circle' ?>"></i> <?= ucfirst($labResult['user_status']) ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
+                                                    <i class="fas fa-clock"></i> Pending Response
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
                         </div>
-                    </div>
+                        <?php endif; ?>
 
-                    <!-- RIGHT: 60% -->
-                    <div class="chart-container-two lg:flex-[0_0_58.5%]">
-                        <div class="flex items-center mb-4">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                                <i class="fas fa-history text-purple-600 text-lg bold-icon"></i>
+                        <!-- General Announcements Section -->
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4 md:mb-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-bullhorn text-blue-600 text-lg md:text-xl"></i>
+                                </div>
+                                <h3 class="text-lg md:text-xl font-600 text-gray-800">
+                                    General Announcements
+                                </h3>
                             </div>
-                            <h3 class="text-lg font-semibold text-gray-800">
-                                Recent Activity Log
-                            </h3>
+                            <a href="announcements.php" class="text-sm font-medium text-blue-600 hover:text-blue-800">View All</a>
                         </div>
 
-                        <div class="activity-log-container custom-scrollbar"> <?php if (!empty($activityLog)): ?>
-                                <div class="space-y-2"> <?php foreach ($activityLog as $activity): ?>
-                                        <div class="activity-log-item <?= $activity['action_type'] ?>">
-                                            <div class="activity-icon <?= $activity['action_type'] ?>">
-                                                <?php if ($activity['action_type'] == 'login'): ?> <i
-                                                        class="fas fa-sign-in-alt text-green-600 text-lg bold-icon"></i>
-                                                <?php else: ?> <i
-                                                        class="fas fa-sign-out-alt text-red-600 text-lg bold-icon"></i>
-                                                <?php endif; ?> </div>
-                                            <div class="activity-content">
-                                                <div class="activity-header">
-                                                    <div>
-                                                        <div class="activity-title">
-                                                            <?php if ($activity['action_type'] == 'login'): ?> <span
-                                                                    class="text-green-600">Account Login</span> <?php else: ?> <span
-                                                                    class="text-red-600">Account Logout</span> <?php endif; ?>
-                                                        </div>
-                                                        <p class="text-xs text-gray-500 mt-1">
-                                                            <?= $activity['formatted_date'] ?> </p>
-                                                    </div> <span class="activity-time"> <?= $activity['formatted_time'] ?>
-                                                    </span>
-                                                </div>
-                                                <div class="activity-details">
-                                                    <div class="activity-detail"> <i
-                                                            class="fas fa-clock text-gray-400 bold-icon"></i>
-                                                        <span><?= $activity['time_ago'] ?></span> </div>
-                                                    <div class="activity-detail"> <i
-                                                            class="fas fa-network-wired text-gray-400 bold-icon"></i>
-                                                        <span><?= htmlspecialchars($activity['ip_address'] ?? 'N/A') ?></span>
-                                                    </div>
-                                                    <div class="activity-detail"> <?php if ($activity['device'] == 'Mobile'): ?>
-                                                            <i class="fas fa-mobile-alt text-gray-400 bold-icon"></i> <?php else: ?>
-                                                            <i class="fas fa-desktop text-gray-400 bold-icon"></i> <?php endif; ?>
-                                                        <span><?= $activity['browser'] ?> • <?= $activity['device'] ?></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div> <?php endforeach; ?>
-                                </div> <?php else: ?>
+                        <div id="announcementsContainer" class="activity-log-container custom-scrollbar h-auto space-y-3">
+                            <?php 
+                            // Filter out lab results from general announcements
+                            $generalAnnouncements = array_filter($announcements ?? [], function($ann) {
+                                return !isset($ann['announcement_category']) || $ann['announcement_category'] !== 'lab_result';
+                            });
+                            $recentAnnouncements = array_slice($generalAnnouncements, 0, 3);
+                            if (empty($recentAnnouncements)): 
+                            ?>
                                 <div class="text-center py-8">
-                                    <div
-                                        class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <i class="fas fa-history text-2xl text-gray-300 bold-icon"></i> </div>
-                                    <p class="text-gray-500">No recent activity found</p>
-                                    <p class="text-sm text-gray-400 mt-1">Your login/logout activities will appear here</p>
-                                </div> <?php endif; ?>
-                        </div>
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <div class="flex justify-between text-sm text-gray-600"> <span class="flex items-center">
-                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div> Login Activities
-                                </span> <span class="flex items-center">
-                                    <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div> Logout Activities
-                                </span> </div>
-                        </div>
-                    </div>
-
-
-
-                    <!-- Announcement Response Stats -->
-                    <!-- <div class="chart-container">
-                    <div class="flex items-center mb-4">
-                        <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
-                            <i class="fas fa-bell text-yellow-600 text-lg bold-icon"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-800">Announcement Response Statistics</h3>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div
-                            class="bg-green-50 border border-green-200 rounded-xl p-5 hover:shadow-md transition-shadow">
-                            <div class="flex items-center">
-                                <div class="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mr-4">
-                                    <i class="fas fa-check text-green-600 text-2xl bold-icon"></i>
+                                    <i class="fas fa-bullhorn text-4xl text-gray-300 mb-2"></i>
+                                    <p class="text-gray-500">No announcements yet.</p>
                                 </div>
-                                <div>
-                                    <p class="text-3xl font-bold text-green-800"><?= $announcementStats['accepted'] ?>
-                                    </p>
-                                    <p class="text-sm text-green-600 font-medium">Accepted</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div
-                            class="bg-yellow-50 border border-yellow-200 rounded-xl p-5 hover:shadow-md transition-shadow">
-                            <div class="flex items-center">
-                                <div class="w-16 h-16 bg-yellow-100 rounded-xl flex items-center justify-center mr-4">
-                                    <i class="fas fa-clock text-yellow-600 text-2xl bold-icon"></i>
-                                </div>
-                                <div>
-                                    <p class="text-3xl font-bold text-yellow-800"><?= $announcementStats['pending'] ?>
-                                    </p>
-                                    <p class="text-sm text-yellow-600 font-medium">Pending Response</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div
-                            class="bg-gray-100 border border-gray-300 rounded-xl p-5 hover:shadow-md transition-shadow">
-                            <div class="flex items-center">
-                                <div class="w-16 h-16 bg-gray-200 rounded-xl flex items-center justify-center mr-4">
-                                    <i class="fas fa-times text-gray-600 text-2xl bold-icon"></i>
-                                </div>
-                                <div>
-                                    <p class="text-3xl font-bold text-gray-800"><?= $announcementStats['dismissed'] ?>
-                                    </p>
-                                    <p class="text-sm text-gray-600 font-medium">Dismissed</p>
-                                </div>
-                            </div>
+                            <?php else: ?>
+                                <?php foreach ($recentAnnouncements as $announcement): ?>
+                                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                        <div class="flex items-start justify-between mb-2">
+                                            <h4 class="font-semibold text-gray-800 text-sm"><?= htmlspecialchars($announcement['title']) ?></h4>
+                                            <span class="text-xs px-2 py-1 rounded-full <?= 
+                                                $announcement['priority'] === 'high' ? 'bg-red-100 text-red-800' : 
+                                                ($announcement['priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800') 
+                                            ?>">
+                                                <?= ucfirst($announcement['priority']) ?>
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-gray-600 mb-2"><?= htmlspecialchars($announcement['staff_name'] ?? 'Community Staff') ?> • <?= date('M d, Y', strtotime($announcement['post_date'])) ?></p>
+                                        <p class="text-sm text-gray-700 mb-3"><?= substr(htmlspecialchars($announcement['message']), 0, 80) ?>...</p>
+                                        <div class="flex gap-2 text-xs">
+                                            <?php if ($announcement['user_status']): ?>
+                                                <span class="px-2 py-1 rounded bg-<?= $announcement['user_status'] === 'accepted' ? 'green' : 'gray' ?>-100 text-<?= $announcement['user_status'] === 'accepted' ? 'green' : 'gray' ?>-800">
+                                                    <i class="fas fa-<?= $announcement['user_status'] === 'accepted' ? 'check-circle' : 'times-circle' ?>"></i> <?= ucfirst($announcement['user_status']) ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
+                                                    <i class="fas fa-clock"></i> Pending Response
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
-                </div> -->
                 </div>
             </div>
         </div>
@@ -926,55 +1046,17 @@ function getTimeAgo($datetime)
     </div> -->
 
         <script>
-            // Initialize Charts
-            document.addEventListener('DOMContentLoaded', function () {
-                // Overview Donut Chart
-                const chartData = <?= json_encode($chartData) ?>;
-
-                const overviewCtx = document.getElementById('overviewChart').getContext('2d');
-                const overviewChart = new Chart(overviewCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: chartData.map(item => item.category),
-                        datasets: [{
-                            data: chartData.map(item => item.count),
-                            backgroundColor: chartData.map(item => item.color),
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (context) {
-                                        return `${context.label}: ${context.raw}`;
-                                    }
-                                }
-                            }
-                        },
-                        cutout: '70%'
-                    }
-                });
-
-                // Add animation to activity log items
-                const activityItems = document.querySelectorAll('.activity-log-item');
-                activityItems.forEach((item, index) => {
-                    item.style.opacity = '0';
-                    item.style.transform = 'translateX(-10px)';
-
-                    setTimeout(() => {
-                        item.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                        item.style.opacity = '1';
-                        item.style.transform = 'translateX(0)';
-                    }, index * 100);
-                });
-            });
+            
+            // Personal Information Modal functions
+            function openPersonalInfoModal() {
+                document.getElementById('personalInfoModal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closePersonalInfoModal() {
+                document.getElementById('personalInfoModal').classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
 
             // Help modal functions
             function openHelpModal() {
@@ -990,8 +1072,12 @@ function getTimeAgo($datetime)
             // Close modal when clicking outside
             window.onclick = function (event) {
                 const helpModal = document.getElementById('helpModal');
+                const personalInfoModal = document.getElementById('personalInfoModal');
                 if (event.target === helpModal) {
                     closeHelpModal();
+                }
+                if (event.target === personalInfoModal) {
+                    closePersonalInfoModal();
                 }
             }
 
@@ -999,9 +1085,206 @@ function getTimeAgo($datetime)
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     closeHelpModal();
+                    closePersonalInfoModal();
                 }
             });
         </script>
-</body>
-
-</html>
+        
+        <!-- Personal Information Modal -->
+        <div id="personalInfoModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+            <div class="relative top-8 mx-auto p-0 border w-full max-w-3xl shadow-2xl rounded-2xl bg-white overflow-hidden mb-8">
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-4">
+                                <i class="fas fa-id-card text-white text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white mb-1">Personal Information</h3>
+                                <p class="text-blue-100 text-sm">Complete profile details</p>
+                            </div>
+                        </div>
+                        <button onclick="closePersonalInfoModal()" class="text-white hover:text-blue-200 transition-colors">
+                            <i class="fas fa-times text-2xl bold-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="px-8 py-6">
+                    <!-- Profile Image Section -->
+                    <div class="flex justify-center mb-6">
+                        <?php if (!empty($userData['profile_image'])): ?>
+                            <img src="/community-health-tracker/<?= htmlspecialchars($userData['profile_image']) ?>" 
+                                 alt="Profile" 
+                                 class="w-32 h-32 rounded-full object-cover border-4 border-blue-200 shadow-lg">
+                        <?php else: ?>
+                            <div class="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center border-4 border-blue-200 shadow-lg">
+                                <i class="fas fa-user text-6xl text-blue-400"></i>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <!-- Information Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Full Name -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-user text-blue-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Full Name</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['full_name'] ?? 'N/A') ?></p>
+                        </div>
+                        
+                        <!-- Username -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-user-tag text-purple-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Username</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['username'] ?? 'N/A') ?></p>
+                        </div>
+                        
+                        <!-- Email -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-envelope text-red-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Email Address</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['email'] ?? 'N/A') ?></p>
+                        </div>
+                        
+                        <!-- Contact -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-phone text-green-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Contact Number</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['contact'] ?? 'N/A') ?></p>
+                        </div>
+                        
+                        <!-- Date of Birth -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-birthday-cake text-yellow-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Date of Birth</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= $userData['date_of_birth'] ? date('F d, Y', strtotime($userData['date_of_birth'])) : 'N/A' ?></p>
+                        </div>
+                        
+                        <!-- Age -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-calendar text-indigo-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Age</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= $userData['age'] ?? 'N/A' ?></p>
+                        </div>
+                        
+                        <!-- Gender -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-venus-mars text-pink-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Gender</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= ucfirst($userData['gender'] ?? 'N/A') ?></p>
+                        </div>
+                        
+                        <!-- Civil Status -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-heart text-rose-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Civil Status</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['civil_status'] ?? 'N/A') ?></p>
+                        </div>
+                        
+                        <!-- Sitio -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-map-marker-alt text-teal-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Sitio</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['sitio'] ?? 'N/A') ?></p>
+                        </div>
+                        
+                        <!-- Occupation -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-briefcase text-orange-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Occupation</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['occupation'] ?? 'N/A') ?></p>
+                        </div>
+                        
+                        <!-- Address (Full Width) -->
+                        <?php if (!empty($userData['address'])): ?>
+                        <div class="modal-info-item md:col-span-2">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-home text-cyan-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Address</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['address']) ?></p>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <!-- Unique Number -->
+                        <?php if (!empty($userData['unique_number'])): ?>
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-hashtag text-gray-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Unique ID</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['unique_number']) ?></p>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <!-- Member Since -->
+                        <div class="modal-info-item">
+                            <div class="flex items-center mb-2">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-clock text-blue-600"></i>
+                                </div>
+                                <span class="text-sm font-medium text-gray-600">Member Since</span>
+                            </div>
+                            <p class="text-base font-semibold text-gray-800 ml-13"><?= date('F d, Y', strtotime($userData['created_at'])) ?></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="px-8 py-6 bg-gray-50 border-t border-gray-200 flex justify-end">
+                    <button onclick="closePersonalInfoModal()" 
+                            class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+                        <i class="fas fa-check"></i>
+                        <span>Close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+</div>

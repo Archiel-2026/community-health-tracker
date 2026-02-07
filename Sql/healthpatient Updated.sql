@@ -249,6 +249,7 @@ CREATE TABLE `sitio1_announcements` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `status` enum('active','archived','expired') DEFAULT 'active',
   `audience_type` enum('public','specific','landing_page') NOT NULL DEFAULT 'public',
+  `announcement_category` enum('basic','lab_result') NOT NULL DEFAULT 'basic',
   `image_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -256,8 +257,8 @@ CREATE TABLE `sitio1_announcements` (
 -- Dumping data for table `sitio1_announcements`
 --
 
-INSERT INTO `sitio1_announcements` (`id`, `staff_id`, `title`, `message`, `priority`, `expiry_date`, `post_date`, `updated_at`, `status`, `audience_type`, `image_path`) VALUES
-(55, 1, 'Hello', 'asdasfdasdasdasd', 'normal', '2026-01-24', '2026-01-23 11:36:08', NULL, 'archived', 'specific', '/community-health-tracker/uploads/announcements/69735d28f204f.jpg'),
+INSERT INTO `sitio1_announcements` (`id`, `staff_id`, `title`, `message`, `priority`, `expiry_date`, `post_date`, `updated_at`, `status`, `audience_type`, `announcement_category`, `image_path`) VALUES
+(55, 1, 'Hello', 'asdasfdasdasdasd', 'normal', '2026-01-24', '2026-01-23 11:36:08', NULL, 'archived', 'specific', 'basic', '/community-health-tracker/uploads/announcements/69735d28f204f.jpg'),
 (56, 1, 'Hello', 'asdasfdasdasdasd', 'normal', '2026-01-24', '2026-01-23 11:42:00', NULL, 'archived', 'specific', '/community-health-tracker/uploads/announcements/69735e88db18e.jpg'),
 (57, 1, 'Hello', 'asdasfdasdasdasd', 'normal', '2026-01-24', '2026-01-23 12:33:32', NULL, 'archived', 'specific', '/community-health-tracker/uploads/announcements/69736a9c05915.jpg'),
 (58, 1, 'Hello sir Russel Evan Loki', 'Hello sir', 'normal', '2026-01-26', '2026-01-25 09:31:03', NULL, 'active', 'specific', NULL),

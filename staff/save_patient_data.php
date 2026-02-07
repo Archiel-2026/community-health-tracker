@@ -17,17 +17,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_health_info'])) 
         // Start transaction
         $pdo->beginTransaction();
         
-        // Check if patient exists and get user_id and full_name
-        $stmt = $pdo->prepare("SELECT p.*, 
-            COALESCE(p.full_name, u.full_name) as display_full_name,
-            COALESCE(p.date_of_birth, u.date_of_birth) as display_date_of_birth,
-            COALESCE(p.age, u.age) as display_age,
-            COALESCE(p.gender, u.gender) as display_gender,
-            u.full_name as user_full_name
-            FROM sitio1_patients p 
-            LEFT JOIN sitio1_users u ON p.user_id = u.id
-            WHERE p.id = ? AND p.added_by = ?");
-        $stmt->execute([$patientId, $_SESSION['user']['id']]);
+        require_once __DIR__ . '/../includes/functions.php';
+
+        // Check if patient exists and get user_id and full_name (respect shared-mode)
+        if (staff_can_view_all()) {
+            $stmt = $pdo->prepare("SELECT p.*, 
+                COALESCE(p.full_name, u.full_name) as display_full_name,
+                COALESCE(p.date_of_birth, u.date_of_birth) as display_date_of_birth,
+                COALESCE(p.age, u.age) as display_age,
+                COALESCE(p.gender, u.gender) as display_gender,
+                u.full_name as user_full_name
+                FROM sitio1_patients p 
+                LEFT JOIN sitio1_users u ON p.user_id = u.id
+                WHERE p.id = ?");
+            $stmt->execute([$patientId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT p.*, 
+                COALESCE(p.full_name, u.full_name) as display_full_name,
+                COALESCE(p.date_of_birth, u.date_of_birth) as display_date_of_birth,
+                COALESCE(p.age, u.age) as display_age,
+                COALESCE(p.gender, u.gender) as display_gender,
+                u.full_name as user_full_name
+                FROM sitio1_patients p 
+                LEFT JOIN sitio1_users u ON p.user_id = u.id
+                WHERE p.id = ? AND p.added_by = ?");
+            $stmt->execute([$patientId, $_SESSION['user']['id']]);
+        }
         $patient = $stmt->fetch();
         
         if (!$patient) {
@@ -39,42 +54,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_health_info'])) 
         // Update patient basic information in sitio1_patients
         if ($isRegisteredUser) {
             // For registered users, only update specific fields that aren't pulled from user table
-            $stmt = $pdo->prepare("UPDATE sitio1_patients SET 
-                last_checkup = ?
-                WHERE id = ? AND added_by = ?");
-            $stmt->execute([
-                !empty($_POST['last_checkup']) ? $_POST['last_checkup'] : null,
-                $patientId,
-                $_SESSION['user']['id']
-            ]);
+            if (staff_can_view_all()) {
+                $stmt = $pdo->prepare("UPDATE sitio1_patients SET 
+                    last_checkup = ?
+                    WHERE id = ?");
+                $stmt->execute([
+                    !empty($_POST['last_checkup']) ? $_POST['last_checkup'] : null,
+                    $patientId
+                ]);
+            } else {
+                $stmt = $pdo->prepare("UPDATE sitio1_patients SET 
+                    last_checkup = ?
+                    WHERE id = ? AND added_by = ?");
+                $stmt->execute([
+                    !empty($_POST['last_checkup']) ? $_POST['last_checkup'] : null,
+                    $patientId,
+                    $_SESSION['user']['id']
+                ]);
+            }
         } else {
             // For non-registered users, update all personal information including date_of_birth
-            $stmt = $pdo->prepare("UPDATE sitio1_patients SET 
-                full_name = ?, 
-                date_of_birth = ?,
-                age = ?, 
-                gender = ?, 
-                civil_status = ?, 
-                occupation = ?, 
-                address = ?, 
-                sitio = ?, 
-                contact = ?, 
-                last_checkup = ?
-                WHERE id = ? AND added_by = ?");
-            $stmt->execute([
-                $_POST['full_name'] ?? '',
-                !empty($_POST['date_of_birth']) ? $_POST['date_of_birth'] : null,
-                !empty($_POST['age']) ? intval($_POST['age']) : null,
-                $_POST['gender'] ?? '',
-                $_POST['civil_status'] ?? null,
-                $_POST['occupation'] ?? null,
-                $_POST['address'] ?? '',
-                $_POST['sitio'] ?? null,
-                $_POST['contact'] ?? '',
-                !empty($_POST['last_checkup']) ? $_POST['last_checkup'] : null,
-                $patientId,
-                $_SESSION['user']['id']
-            ]);
+            if (staff_can_view_all()) {
+                $stmt = $pdo->prepare("UPDATE sitio1_patients SET 
+                    full_name = ?, 
+                    date_of_birth = ?,
+                    age = ?, 
+                    gender = ?, 
+                    civil_status = ?, 
+                    occupation = ?, 
+                    address = ?, 
+                    sitio = ?, 
+                    contact = ?, 
+                    last_checkup = ?
+                    WHERE id = ?");
+                $stmt->execute([
+                    $_POST['full_name'] ?? '',
+                    !empty($_POST['date_of_birth']) ? $_POST['date_of_birth'] : null,
+                    !empty($_POST['age']) ? intval($_POST['age']) : null,
+                    $_POST['gender'] ?? '',
+                    $_POST['civil_status'] ?? null,
+                    $_POST['occupation'] ?? null,
+                    $_POST['address'] ?? '',
+                    $_POST['sitio'] ?? null,
+                    $_POST['contact'] ?? '',
+                    !empty($_POST['last_checkup']) ? $_POST['last_checkup'] : null,
+                    $patientId
+                ]);
+            } else {
+                $stmt = $pdo->prepare("UPDATE sitio1_patients SET 
+                    full_name = ?, 
+                    date_of_birth = ?,
+                    age = ?, 
+                    gender = ?, 
+                    civil_status = ?, 
+                    occupation = ?, 
+                    address = ?, 
+                    sitio = ?, 
+                    contact = ?, 
+                    last_checkup = ?
+                    WHERE id = ? AND added_by = ?");
+                $stmt->execute([
+                    $_POST['full_name'] ?? '',
+                    !empty($_POST['date_of_birth']) ? $_POST['date_of_birth'] : null,
+                    !empty($_POST['age']) ? intval($_POST['age']) : null,
+                    $_POST['gender'] ?? '',
+                    $_POST['civil_status'] ?? null,
+                    $_POST['occupation'] ?? null,
+                    $_POST['address'] ?? '',
+                    $_POST['sitio'] ?? null,
+                    $_POST['contact'] ?? '',
+                    !empty($_POST['last_checkup']) ? $_POST['last_checkup'] : null,
+                    $patientId,
+                    $_SESSION['user']['id']
+                ]);
+            }
         }
         
         // Prepare health information data for existing_info_patients
@@ -160,6 +213,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_health_info'])) 
         
         $pdo->commit();
         
+        // Log patient update to file and DB
+        try {
+            $staff_id = $_SESSION['user']['id'] ?? null;
+            $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+
+            // Create staff_activity_log table if necessary
+            $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                staff_id INT,
+                action_type VARCHAR(100),
+                related_id INT,
+                details JSON,
+                ip_address VARCHAR(45),
+                user_agent TEXT,
+                created_at DATETIME
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'update_patient', ?, ?, ?, ?, NOW())");
+            $stmtLog->execute([$staff_id, $patientId, json_encode(['full_name' => $staff_name, 'patient_name' => $patient['display_full_name'] ?? 'Unknown', 'patient_id' => $patientId, 'fields' => $healthData]), $ip, $ua]);
+        } catch (Exception $e) {
+            error_log('Staff patient save DB log error: ' . $e->getMessage());
+        }
+
+        try {
+            $log = [
+                'timestamp' => date('Y-m-d H:i:s'),
+                'type' => 'update_patient',
+                'staff_id' => $_SESSION['user']['id'] ?? null,
+                'patient_id' => $patientId,
+                'details' => ['height' => $height, 'weight' => $weight, 'blood_type' => $healthData['blood_type']],
+                'ip' => $ip ?? null,
+                'user_agent' => $ua ?? null,
+                'script' => (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ($_SERVER['SCRIPT_NAME'] ?? ''))
+            ];
+            @file_put_contents(__DIR__ . '/../logs/save_actions.log', json_encode($log) . PHP_EOL, FILE_APPEND | LOCK_EX);
+        } catch (Exception $e) {
+            error_log('Staff patient save file log error: ' . $e->getMessage());
+        }
+
         $response['success'] = true;
         $response['message'] = 'Patient information saved successfully!';
         

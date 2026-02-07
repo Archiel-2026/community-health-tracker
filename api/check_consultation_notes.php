@@ -24,9 +24,15 @@ try {
     $patient_id = intval($_GET['patient_id']);
     $user_id = $_SESSION['user']['id'];
     
-    // Verify patient belongs to current user
-    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
-    $stmt->execute([$patient_id, $user_id]);
+    require_once __DIR__ . '/../includes/functions.php';
+    // Verify patient belongs to current user (or allow when sharing is enabled)
+    if (staff_can_view_all()) {
+        $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ?");
+        $stmt->execute([$patient_id]);
+    } else {
+        $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
+        $stmt->execute([$patient_id, $user_id]);
+    }
     
     if (!$stmt->fetch()) {
         echo json_encode(['hasNotes' => false, 'noteCount' => 0]);

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/db.php';
 
 header('Content-Type: application/json');
@@ -26,17 +27,21 @@ if (empty($fullName) || empty($dateOfBirth)) {
 
 try {
     // Check if patient already exists
+    // Only restrict by added_by when staff are not allowed to view all records
     $query = "SELECT id FROM sitio1_patients 
               WHERE LOWER(TRIM(full_name)) = LOWER(TRIM(:full_name)) 
               AND date_of_birth = :date_of_birth 
-              AND added_by = :added_by 
               AND deleted_at IS NULL";
     
     $params = [
         ':full_name' => $fullName,
-        ':date_of_birth' => $dateOfBirth,
-        ':added_by' => $_SESSION['user']['id']
+        ':date_of_birth' => $dateOfBirth
     ];
+
+    if (!staff_can_view_all()) {
+        $query .= " AND added_by = :added_by";
+        $params[':added_by'] = $_SESSION['user']['id'];
+    }
     
     // If editing, exclude the current patient
     if ($action === 'edit' && $patientId) {

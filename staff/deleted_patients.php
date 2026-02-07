@@ -20,135 +20,263 @@ if (isset($_GET['restore_patient'])) {
         $pdo->beginTransaction();
 
         // Get archived patient data including ALL medical info
-        $stmt = $pdo->prepare("
-            SELECT 
-                dp.*,
-                eip.gender as health_gender,
-                eip.height,
-                eip.weight,
-                eip.temperature,
-                eip.blood_pressure,
-                eip.blood_type,
-                eip.allergies,
-                eip.medical_history,
-                eip.current_medications,
-                eip.family_history,
-                eip.immunization_record,
-                eip.chronic_conditions,
-                eip.updated_at as health_updated
+        require_once __DIR__ . '/../includes/functions.php';
+        
+        // First try to find in deleted_patients table (hard delete)
+        $query = "
+            SELECT dp.*
             FROM deleted_patients dp
-            LEFT JOIN existing_info_patients eip ON dp.original_id = eip.patient_id
-            WHERE dp.original_id = ? AND dp.deleted_by = ?
-        ");
-        $stmt->execute([$patientId, $_SESSION['user']['id']]);
+            WHERE dp.original_id = ?
+        ";
+        
+        $params = [$patientId];
+        
+        // If staff cannot view all, only allow restoring their own deleted patients
+        if (!staff_can_view_all()) {
+            $query .= " AND dp.deleted_by = ?";
+            $params[] = $_SESSION['user']['id'];
+        }
+        
+        $stmt = $pdo->prepare($query);
+        $stmt->execute($params);
         $archivedPatient = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // If not found in deleted_patients, try soft-deleted in sitio1_patients
+        if (!$archivedPatient) {
+            $query = "
+                SELECT p.*, ei.height, ei.weight, ei.temperature, ei.blood_pressure,
+                       ei.blood_type, ei.allergies, ei.medical_history, ei.current_medications,
+                       ei.family_history, ei.immunization_record, ei.chronic_conditions
+                FROM sitio1_patients p
+                LEFT JOIN existing_info_patients ei ON p.id = ei.patient_id
+                WHERE p.id = ? AND p.deleted_at IS NOT NULL
+            ";
+            
+            $params = [$patientId];
+            
+            // If staff cannot view all, only allow restoring their own deleted patients
+            if (!staff_can_view_all()) {
+                $query .= " AND p.added_by = ?";
+                $params[] = $_SESSION['user']['id'];
+            }
+            
+            $stmt = $pdo->prepare($query);
+            $stmt->execute($params);
+            $archivedPatient = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
 
         if ($archivedPatient) {
-            // Check if patient already exists in main table
-            $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
-            $stmt->execute([$patientId, $_SESSION['user']['id']]);
+            // Check if patient already exists in main table (respect shared-mode)
+            if (staff_can_view_all()) {
+                $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND deleted_at IS NULL");
+                $stmt->execute([$patientId]);
+            } else {
+                $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ? AND deleted_at IS NULL");
+                $stmt->execute([$patientId, $_SESSION['user']['id']]);
+            }
             $existingPatient = $stmt->fetch();
 
             if ($existingPatient) {
                 $error = 'This patient already exists in the active records!';
             } else {
-                // Get column information from sitio1_patients table
-                $stmt = $pdo->prepare("SHOW COLUMNS FROM sitio1_patients");
-                $stmt->execute();
-                $mainTableColumns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                // Check if this is from soft-deleted records or hard-deleted archive
+                $isFromSoftDelete = !empty($archivedPatient['created_at']) && empty($archivedPatient['deleted_by']);
+                
+                if ($isFromSoftDelete) {
+                    // This is a soft-deleted record - just clear the deleted_at flag
+                    $stmt = $pdo->prepare("UPDATE sitio1_patients SET deleted_at = NULL, restored_at = NOW() WHERE id = ?");
+                    $stmt->execute([$patientId]);
+                } else {
+                    // This is a hard-deleted record in deleted_patients table
+                    // Get column information from sitio1_patients table
+                    $stmt = $pdo->prepare("SHOW COLUMNS FROM sitio1_patients");
+                    $stmt->execute();
+                    $mainTableColumns = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-                // Prepare data for restoration
-                $columns = [];
-                $placeholders = [];
-                $values = [];
+                    // Check if a soft-deleted record with this ID already exists
+                    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ?");
+                    $stmt->execute([$patientId]);
+                    $existingSoftDeleted = $stmt->fetch();
 
-                // Map archived data to main table columns
-                foreach ($archivedPatient as $column => $value) {
-                    // Skip columns that don't exist in sitio1_patients
-                    if (!in_array($column, $mainTableColumns)) {
-                        continue;
+                    if ($existingSoftDeleted) {
+                        // Update the soft-deleted record instead of inserting
+                        $updateColumns = [];
+                        $updateValues = [];
+                        foreach ($archivedPatient as $column => $value) {
+                            if (!in_array($column, $mainTableColumns)) continue;
+                            if (in_array($column, ['deleted_by', 'deleted_at', 'id', 'created_at', 'restored_at'])) continue;
+                            if ($column === 'original_id') continue;
+                            $updateColumns[] = "$column = ?";
+                            $updateValues[] = $value;
+                        }
+                        $updateColumns[] = "restored_at = ?";
+                        $updateValues[] = date('Y-m-d H:i:s');
+                        $updateColumns[] = "deleted_at = NULL";
+                        $updateQuery = "UPDATE sitio1_patients SET ".implode(", ", $updateColumns)." WHERE id = ?";
+                        $updateValues[] = $patientId;
+                        $stmt = $pdo->prepare($updateQuery);
+                        $stmt->execute($updateValues);
+                    } else {
+                        // Prepare data for restoration
+                        $columns = [];
+                        $placeholders = [];
+                        $values = [];
+                        $addedColumns = [];
+                        // Ensure all required columns are present
+                        $requiredColumns = ['id', 'full_name', 'date_of_birth', 'age', 'gender', 'address', 'contact', 'added_by', 'created_at'];
+                        $deletedAtAdded = false;
+                        foreach ($mainTableColumns as $col) {
+                            if (in_array($col, $addedColumns)) continue;
+                            if ($col === 'id') {
+                                $columns[] = 'id';
+                                $placeholders[] = '?';
+                                $values[] = $archivedPatient['original_id'] ?? $patientId;
+                                $addedColumns[] = 'id';
+                                continue;
+                            }
+                            if ($col === 'deleted_at') {
+                                // Always set deleted_at to NULL for restoration
+                                $columns[] = 'deleted_at';
+                                $placeholders[] = '?';
+                                $values[] = null;
+                                $deletedAtAdded = true;
+                                $addedColumns[] = 'deleted_at';
+                                continue;
+                            }
+                            if (isset($archivedPatient[$col]) && !in_array($col, $addedColumns)) {
+                                $columns[] = $col;
+                                $placeholders[] = '?';
+                                $values[] = $archivedPatient[$col];
+                                $addedColumns[] = $col;
+                            } elseif (in_array($col, $requiredColumns) && !in_array($col, $addedColumns)) {
+                                // Set default for required columns if missing
+                                $columns[] = $col;
+                                $placeholders[] = '?';
+                                $values[] = ($col === 'created_at') ? date('Y-m-d H:i:s') : '';
+                                $addedColumns[] = $col;
+                            }
+                        }
+                        // Add restored timestamp
+                        if (!in_array('restored_at', $addedColumns)) {
+                            $columns[] = 'restored_at';
+                            $placeholders[] = '?';
+                            $values[] = date('Y-m-d H:i:s');
+                        }
+                        $insertQuery = "INSERT INTO sitio1_patients (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $placeholders) . ")";
+                        $stmt = $pdo->prepare($insertQuery);
+                        $stmt->execute($values);
                     }
-
-                    // Skip metadata columns from deleted_patients
-                    if (in_array($column, ['deleted_by', 'deleted_at', 'id', 'created_at'])) {
-                        continue;
+                    // Check if patient was actually restored
+                    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ?");
+                    $stmt->execute([$patientId]);
+                    $restoredPatientRow = $stmt->fetch();
+                    if (!$restoredPatientRow) {
+                        throw new Exception('Failed to restore patient to sitio1_patients. Cannot proceed with medical info restoration.');
                     }
-
-                    // Map original_id back to id
-                    if ($column === 'original_id') {
-                        $columns[] = 'id';
-                        $placeholders[] = "?";
-                        $values[] = $value;
-                        continue;
-                    }
-
-                    $columns[] = $column;
-                    $placeholders[] = "?";
-                    $values[] = $value;
                 }
 
-                // Add restored timestamp
-                $columns[] = 'restored_at';
-                $placeholders[] = "NOW()";
-
-                $insertQuery = "INSERT INTO sitio1_patients (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $placeholders) . ")";
-
-                // Restore to main patients table with original ID
-                $stmt = $pdo->prepare($insertQuery);
-                $stmt->execute($values);
+                $restorationSuccess = true;
+                $restorationDetails = [
+                    'patient_id' => $patientId,
+                    'patient_name' => $archivedPatient['full_name'],
+                    'restore_time' => date('Y-m-d H:i:s'),
+                    'restored_by' => $_SESSION['user']['full_name'],
+                    'restore_type' => $isFromSoftDelete ? 'soft_delete' : 'hard_delete'
+                ];
 
                 // IMPORTANT: Consultation notes are automatically preserved because:
                 // 1. They were never deleted when patient was archived
                 // 2. They remain linked by patient_id
                 // 3. When patient is restored with same ID, notes are automatically accessible again
 
-                // Restore medical info if it exists
-                if (!empty($archivedPatient['health_gender'])) {
-                    $stmt = $pdo->prepare("INSERT INTO existing_info_patients 
-                        (patient_id, gender, height, weight, temperature, blood_pressure, 
-                         blood_type, allergies, medical_history, current_medications, 
-                         family_history, immunization_record, chronic_conditions, updated_at) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
-                        ON DUPLICATE KEY UPDATE 
-                            gender = VALUES(gender),
-                            height = VALUES(height),
-                            weight = VALUES(weight),
-                            temperature = VALUES(temperature),
-                            blood_pressure = VALUES(blood_pressure),
-                            blood_type = VALUES(blood_type),
-                            allergies = VALUES(allergies),
-                            medical_history = VALUES(medical_history),
-                            current_medications = VALUES(current_medications),
-                            family_history = VALUES(family_history),
-                            immunization_record = VALUES(immunization_record),
-                            chronic_conditions = VALUES(chronic_conditions),
-                            updated_at = VALUES(updated_at)");
+                // Restore medical info if it exists in archive (only for hard-deleted records)
+                if (!$isFromSoftDelete) {
+                    $medicalFields = ['gender', 'height', 'weight', 'temperature', 'blood_pressure', 'blood_type', 'allergies', 'medical_history', 'current_medications', 'family_history', 'immunization_record', 'chronic_conditions'];
+                    $hasMedicalData = false;
+                    
+                    foreach ($medicalFields as $field) {
+                        if (!empty($archivedPatient[$field])) {
+                            $hasMedicalData = true;
+                            break;
+                        }
+                    }
+                    
+                    if ($hasMedicalData) {
+                        $stmt = $pdo->prepare("INSERT INTO existing_info_patients 
+                            (patient_id, gender, height, weight, temperature, blood_pressure, 
+                             blood_type, allergies, medical_history, current_medications, 
+                             family_history, immunization_record, chronic_conditions) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+                            ON DUPLICATE KEY UPDATE 
+                                gender = VALUES(gender),
+                                height = VALUES(height),
+                                weight = VALUES(weight),
+                                temperature = VALUES(temperature),
+                                blood_pressure = VALUES(blood_pressure),
+                                blood_type = VALUES(blood_type),
+                                allergies = VALUES(allergies),
+                                medical_history = VALUES(medical_history),
+                                current_medications = VALUES(current_medications),
+                                family_history = VALUES(family_history),
+                                immunization_record = VALUES(immunization_record),
+                                chronic_conditions = VALUES(chronic_conditions)");
 
-                    $stmt->execute([
-                        $patientId,
-                        $archivedPatient['health_gender'],
-                        $archivedPatient['height'] ?? null,
-                        $archivedPatient['weight'] ?? null,
-                        $archivedPatient['temperature'] ?? null,
-                        $archivedPatient['blood_pressure'] ?? null,
-                        $archivedPatient['blood_type'] ?? null,
-                        $archivedPatient['allergies'] ?? null,
-                        $archivedPatient['medical_history'] ?? null,
-                        $archivedPatient['current_medications'] ?? null,
-                        $archivedPatient['family_history'] ?? null,
-                        $archivedPatient['immunization_record'] ?? null,
-                        $archivedPatient['chronic_conditions'] ?? null,
-                        $archivedPatient['health_updated'] ?? date('Y-m-d H:i:s')
-                    ]);
+                        $stmt->execute([
+                            $patientId,
+                            $archivedPatient['gender'] ?? null,
+                            $archivedPatient['height'] ?? null,
+                            $archivedPatient['weight'] ?? null,
+                            $archivedPatient['temperature'] ?? null,
+                            $archivedPatient['blood_pressure'] ?? null,
+                            $archivedPatient['blood_type'] ?? null,
+                            $archivedPatient['allergies'] ?? null,
+                            $archivedPatient['medical_history'] ?? null,
+                            $archivedPatient['current_medications'] ?? null,
+                            $archivedPatient['family_history'] ?? null,
+                            $archivedPatient['immunization_record'] ?? null,
+                            $archivedPatient['chronic_conditions'] ?? null
+                        ]);
+
+                        $restorationDetails['medical_info_restored'] = true;
+                    } else {
+                        $restorationDetails['medical_info_restored'] = false;
+                    }
+
+                    // Delete from archive
+                    $stmt = $pdo->prepare("DELETE FROM deleted_patients WHERE original_id = ?");
+                    $stmt->execute([$patientId]);
                 }
 
-                // Delete from archive
-                $stmt = $pdo->prepare("DELETE FROM deleted_patients WHERE original_id = ?");
-                $stmt->execute([$patientId]);
+                // Verify restoration was successful
+                if (staff_can_view_all()) {
+                    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND deleted_at IS NULL");
+                    $stmt->execute([$patientId]);
+                } else {
+                    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ? AND deleted_at IS NULL");
+                    $stmt->execute([$patientId, $_SESSION['user']['id']]);
+                }
+                $restoredCheck = $stmt->fetch();
+
+                if (!$restoredCheck) {
+                    throw new Exception('Restoration verification failed - patient not found in active records');
+                }
 
                 $pdo->commit();
 
-                $_SESSION['success_message'] = 'Patient record restored successfully! All data including consultation notes has been recovered.';
+                // Log restoration activity
+                try {
+                    $staff_id = $_SESSION['user']['id'] ?? null;
+                    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+                    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                    
+                    $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'restore_patient', ?, ?, ?, ?, NOW())");
+                    $stmtLog->execute([$staff_id, $patientId, json_encode($restorationDetails), $ip, $ua]);
+                } catch (Exception $e) {
+                    error_log('Staff activity log error (restore_patient): ' . $e->getMessage());
+                }
+
+                $_SESSION['success_message'] = 'Patient record "' . $archivedPatient['full_name'] . '" restored successfully! All personal details, medical information, and consultation notes have been recovered.';
+                $_SESSION['restore_details'] = $restorationDetails;
                 header('Location: deleted_patients.php');
                 exit();
             }
@@ -158,24 +286,89 @@ if (isset($_GET['restore_patient'])) {
     } catch (PDOException $e) {
         $pdo->rollBack();
         $error = 'Error restoring patient record: ' . $e->getMessage();
+        error_log('Restoration Error: ' . $e->getMessage());
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $error = 'Restoration failed: ' . $e->getMessage();
+        error_log('Restoration Exception: ' . $e->getMessage());
     }
 }
 
 // REMOVED: Permanent deletion functionality
 
-// Get all deleted patients with user information
+// Get all deleted patients with user information (both hard-deleted and soft-deleted)
 try {
-    $stmt = $pdo->prepare("SELECT d.*, 
-                          u.unique_number, u.email as user_email,
+    require_once __DIR__ . '/../includes/functions.php';
+
+    $params = [];
+    $whereClause1 = "1=1";
+    $whereClause2 = "p.deleted_at IS NOT NULL";
+    
+    if (!staff_can_view_all()) {
+        $whereClause1 = "d.deleted_by = ?";
+        $whereClause2 = "p.added_by = ?";
+        $params[] = $_SESSION['user']['id'];
+        $params[] = $_SESSION['user']['id'];
+    }
+
+    // Query for hard-deleted records from deleted_patients table
+    $hardDeleteQuery = "SELECT 
+                          'hard_delete' as delete_type,
+                          d.original_id,
+                          d.full_name,
+                          d.date_of_birth,
+                          d.age,
+                          d.gender,
+                          d.address,
+                          d.contact,
+                          d.last_checkup,
+                          d.added_by,
+                          d.user_id,
+                          d.deleted_by,
+                          d.deleted_at as archived_date,
+                          NULL as sitio,
+                          NULL as civil_status,
+                          NULL as occupation,
+                          NULL as unique_number,
+                          NULL as user_email,
                           CASE WHEN d.user_id IS NOT NULL THEN 1 ELSE 0 END as is_registered_user
-                          FROM deleted_patients d
-                          LEFT JOIN sitio1_users u ON d.user_id = u.id
-                          WHERE d.deleted_by = ? 
-                          ORDER BY d.deleted_at DESC");
-    $stmt->execute([$_SESSION['user']['id']]);
+                      FROM deleted_patients d
+                      WHERE $whereClause1";
+    
+    // Query for soft-deleted records from sitio1_patients table
+    $softDeleteQuery = "SELECT 
+                          'soft_delete' as delete_type,
+                          p.id as original_id,
+                          p.full_name,
+                          p.date_of_birth,
+                          p.age,
+                          p.gender,
+                          p.address,
+                          p.contact,
+                          p.last_checkup,
+                          p.added_by,
+                          p.user_id,
+                          p.added_by as deleted_by,
+                          p.deleted_at as archived_date,
+                          p.sitio,
+                          p.civil_status,
+                          p.occupation,
+                          u.unique_number,
+                          u.email as user_email,
+                          CASE WHEN p.user_id IS NOT NULL THEN 1 ELSE 0 END as is_registered_user
+                      FROM sitio1_patients p
+                      LEFT JOIN sitio1_users u ON p.user_id = u.id
+                      WHERE $whereClause2";
+    
+    // Combine both queries
+    $combinedQuery = "($hardDeleteQuery) UNION ALL ($softDeleteQuery) ORDER BY archived_date DESC";
+    
+    $stmt = $pdo->prepare($combinedQuery);
+    $stmt->execute($params);
     $deletedPatients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $error = "Error fetching deleted patients: " . $e->getMessage();
+    error_log("Deleted patients query error: " . $e->getMessage());
 }
 ?>
 
@@ -185,8 +378,10 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deleted Patients Archive - Barangay Luz Health Center</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
     <script>
         tailwind.config = {
             theme: {
@@ -401,14 +596,14 @@ try {
                                     </td>
                                     <td><?= htmlspecialchars($patient['contact'] ?? 'N/A') ?></td>
                                     <td>
-                                        <?= date('M j, Y', strtotime($patient['deleted_at'])) ?>
+                                        <?= date('M j, Y', strtotime($patient['archived_date'])) ?>
                                         <div class="text-sm text-gray-500">
-                                            <?= date('g:i A', strtotime($patient['deleted_at'])) ?>
+                                            <?= date('g:i A', strtotime($patient['archived_date'])) ?>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="flex">
-                                            <a href="?restore_patient=<?= $patient['id'] ?>" 
+                                            <a href="?restore_patient=<?= $patient['original_id'] ?>" 
                                                class="btn-restore" 
                                                onclick="return confirm('Are you sure you want to restore this patient record?')">
                                                 <i class="fas fa-undo mr-1"></i>Restore
