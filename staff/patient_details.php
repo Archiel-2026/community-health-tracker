@@ -16,9 +16,15 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 // Fetch patient details
 try {
-    // Get main patient info
-    $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ? AND added_by = ?");
-    $stmt->execute([$id, $_SESSION['user']['id']]);
+    require_once __DIR__ . '/../includes/functions.php';
+    // Get main patient info, allow cross-staff when enabled
+    if (staff_can_view_all()) {
+        $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ?");
+        $stmt->execute([$id]);
+    } else {
+        $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ? AND added_by = ?");
+        $stmt->execute([$id, $_SESSION['user']['id']]);
+    }
     $patient = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$patient) {

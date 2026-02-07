@@ -14,9 +14,15 @@ if (!isset($_GET['patient_id'])) {
 $patientId = $_GET['patient_id'];
 
 try {
-    // Verify patient belongs to staff
-    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
-    $stmt->execute([$patientId, $_SESSION['user']['id']]);
+    require_once __DIR__ . '/../includes/functions.php';
+    // Verify patient belongs to staff (or allow if sharing enabled)
+    if (staff_can_view_all()) {
+        $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ?");
+        $stmt->execute([$patientId]);
+    } else {
+        $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
+        $stmt->execute([$patientId, $_SESSION['user']['id']]);
+    }
     
     if (!$stmt->fetch()) {
         echo json_encode(['success' => false, 'error' => 'Access denied']);

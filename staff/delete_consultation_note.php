@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db_connect.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 redirectIfNotLoggedIn();
 if (!isStaff()) {
@@ -14,14 +15,24 @@ if (isset($_GET['note_id'])) {
         $note_id = $_GET['note_id'];
         $user_id = $_SESSION['user']['id'] ?? null;
         
-        // Verify the note belongs to a patient of this staff
-        $stmt = $pdo->prepare("
-            SELECT cn.id 
-            FROM consultation_notes cn
-            INNER JOIN sitio1_patients p ON cn.patient_id = p.id
-            WHERE cn.id = ? AND p.added_by = ?
-        ");
-        $stmt->execute([$note_id, $user_id]);
+        // Verify the note belongs to a patient of this staff (or allow if sharing enabled)
+        if (staff_can_view_all()) {
+            $stmt = $pdo->prepare("
+                SELECT cn.id 
+                FROM consultation_notes cn
+                INNER JOIN sitio1_patients p ON cn.patient_id = p.id
+                WHERE cn.id = ?
+            ");
+            $stmt->execute([$note_id]);
+        } else {
+            $stmt = $pdo->prepare("
+                SELECT cn.id 
+                FROM consultation_notes cn
+                INNER JOIN sitio1_patients p ON cn.patient_id = p.id
+                WHERE cn.id = ? AND p.added_by = ?
+            ");
+            $stmt->execute([$note_id, $user_id]);
+        }
         
         if ($stmt->fetch()) {
             // Delete the note

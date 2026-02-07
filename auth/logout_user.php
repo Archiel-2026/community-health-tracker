@@ -7,6 +7,44 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $role = isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : '';
+$userId = isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : null;
+
+// Log logout to DB and file
+try {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    // Ensure user_activity_log exists
+    $pdo->exec("CREATE TABLE IF NOT EXISTS user_activity_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT,
+        action_type VARCHAR(50),
+        action_timestamp DATETIME,
+        ip_address VARCHAR(45),
+        user_agent TEXT
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    if ($userId) {
+        $stmt = $pdo->prepare("INSERT INTO user_activity_log (user_id, action_type, action_timestamp, ip_address, user_agent) VALUES (?, 'logout', NOW(), ?, ?)");
+        $stmt->execute([$userId, $ip, $ua]);
+    }
+} catch (Exception $e) {
+    error_log('Logout logging error: ' . $e->getMessage());
+}
+
+try {
+    $log = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'type' => 'logout',
+        'user_id' => $userId,
+        'role' => $role,
+        'ip' => $ip ?? null,
+        'user_agent' => $ua ?? null,
+        'script' => (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ($_SERVER['SCRIPT_NAME'] ?? ''))
+    ];
+    @file_put_contents(__DIR__ . '/../logs/save_actions.log', json_encode($log) . PHP_EOL, FILE_APPEND | LOCK_EX);
+} catch (Exception $e) {
+    error_log('Logout file log error: ' . $e->getMessage());
+}
 
 // Store the role before clearing session
 $redirectRole = $role;
@@ -37,7 +75,8 @@ echo <<<HTML
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logging Out</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
 </head>
 <body class="bg-gray-100">
     <div class="fixed inset-0 flex items-center justify-center">

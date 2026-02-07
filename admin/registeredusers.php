@@ -124,160 +124,139 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management - Community Health Tracker</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/admin-styles.css">
+    <style>
+        * { font-family: 'Poppins', sans-serif !important; }
+        .stat-card { position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+        .stat-card-blue::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .stat-card-yellow::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .stat-card-green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+        .stat-card-red::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+        .stat-card-cyan::before { background: linear-gradient(90deg, #06b6d4, #22d3ee); }
+    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     
-    <div class="container mx-auto px-4 py-6">
-        <!-- Dashboard Header -->
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">
-                User Management
-            </h1>
-            <a href="/community-health-tracker/admin/dashboard.php" class="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition-colors flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+    <div class="container mx-auto px-4 py-8">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-title">
+                <div class="page-header-icon bg-blue-100 text-blue-600">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <h1>User Management</h1>
+                    <p>View and manage all registered users</p>
+                </div>
+            </div>
+            <a href="/community-health-tracker/admin/dashboard.php" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
         
         <?php if (isset($_SESSION['error_message'])): ?>
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
                 <?= $_SESSION['error_message'] ?>
                 <?php unset($_SESSION['error_message']); ?>
             </div>
         <?php endif; ?>
         
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <!-- Total Users Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                        <i class="fas fa-users text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Total Users</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['total_users'] ?></p>
-                    </div>
+        <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="stat-card stat-card-blue">
+                <div class="stat-card-icon bg-blue-100">
+                    <i class="fas fa-users text-blue-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-blue-600"><?= $stats['total_users'] ?></div>
+                <div class="stat-card-label">Total Users</div>
             </div>
             
-            <!-- Pending Users Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
-                        <i class="fas fa-clock text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Pending Approval</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['pending_users'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-yellow">
+                <div class="stat-card-icon bg-yellow-100">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-yellow-600"><?= $stats['pending_users'] ?></div>
+                <div class="stat-card-label">Pending Approval</div>
             </div>
             
-            <!-- Approved Users Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                        <i class="fas fa-user-check text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Approved Users</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['approved_users'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-green">
+                <div class="stat-card-icon bg-green-100">
+                    <i class="fas fa-user-check text-green-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-green-600"><?= $stats['approved_users'] ?></div>
+                <div class="stat-card-label">Approved Users</div>
             </div>
             
-            <!-- Declined Users Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-red-100 text-red-600 mr-4">
-                        <i class="fas fa-user-times text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Declined Users</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['declined_users'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-red">
+                <div class="stat-card-icon bg-red-100">
+                    <i class="fas fa-user-times text-red-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-red-600"><?= $stats['declined_users'] ?></div>
+                <div class="stat-card-label">Declined Users</div>
             </div>
             
-            <!-- Verified Users Card -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-teal-100 text-teal-600 mr-4">
-                        <i class="fas fa-id-card text-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">ID Verified</p>
-                        <p class="text-2xl font-bold text-gray-800"><?= $stats['verified_users'] ?></p>
-                    </div>
+            <div class="stat-card stat-card-cyan">
+                <div class="stat-card-icon bg-cyan-100">
+                    <i class="fas fa-id-card text-cyan-600 text-xl"></i>
                 </div>
+                <div class="stat-card-value text-cyan-600"><?= $stats['verified_users'] ?></div>
+                <div class="stat-card-label">ID Verified</div>
             </div>
         </div>
         
         <!-- Search and Filter Section -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="main-container p-6 mb-6">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <h2 class="text-lg font-semibold text-gray-800">Filter Users</h2>
                 
-                <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex flex-col sm:flex-row gap-4 flex-wrap">
                     <!-- Search Form -->
                     <form method="GET" class="flex">
                         <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" 
                                placeholder="Search users..." 
-                               class="px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full">
+                               class="form-input rounded-r-none" style="border-radius: 8px 0 0 8px;">
                         <input type="hidden" name="filter" value="<?= $filter ?>">
                         <input type="hidden" name="role" value="<?= $role_filter ?>">
-                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 transition-colors">
+                        <button type="submit" class="btn btn-primary-solid" style="border-radius: 0 8px 8px 0;">
                             <i class="fas fa-search"></i>
                         </button>
                     </form>
                     
                     <!-- Status Filter -->
-                    <div class="flex space-x-2">
+                    <div class="tabs-container">
                         <a href="?filter=all&role=<?= $role_filter ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            All Status
-                        </a>
+                           class="tab-btn <?= $filter === 'all' ? 'active' : '' ?>">All</a>
                         <a href="?filter=pending&role=<?= $role_filter ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Pending
-                        </a>
+                           class="tab-btn <?= $filter === 'pending' ? 'active' : '' ?>">Pending</a>
                         <a href="?filter=approved&role=<?= $role_filter ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'approved' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Approved
-                        </a>
+                           class="tab-btn <?= $filter === 'approved' ? 'active' : '' ?>">Approved</a>
                         <a href="?filter=declined&role=<?= $role_filter ?><?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $filter === 'declined' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Declined
-                        </a>
+                           class="tab-btn <?= $filter === 'declined' ? 'active' : '' ?>">Declined</a>
                     </div>
                     
                     <!-- Role Filter -->
-                    <div class="flex space-x-2">
+                    <div class="tabs-container">
                         <a href="?filter=<?= $filter ?>&role=all<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $role_filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            All Roles
-                        </a>
+                           class="tab-btn <?= $role_filter === 'all' ? 'active' : '' ?>">All</a>
                         <a href="?filter=<?= $filter ?>&role=patient<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $role_filter === 'patient' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Patients
-                        </a>
+                           class="tab-btn <?= $role_filter === 'patient' ? 'active' : '' ?>">Patients</a>
                         <a href="?filter=<?= $filter ?>&role=staff<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $role_filter === 'staff' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Staff
-                        </a>
+                           class="tab-btn <?= $role_filter === 'staff' ? 'active' : '' ?>">Staff</a>
                         <a href="?filter=<?= $filter ?>&role=admin<?= !empty($search) ? '&search=' . urlencode($search) : '' ?>" 
-                           class="px-4 py-2 rounded-full <?= $role_filter === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?>">
-                            Admin
-                        </a>
+                           class="tab-btn <?= $role_filter === 'admin' ? 'active' : '' ?>">Admin</a>
                     </div>
                 </div>
             </div>
         </div>
         
         <!-- Users List -->
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="main-container p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-lg font-semibold text-gray-800">
                     <?php 
@@ -300,34 +279,34 @@ try {
                     }
                     ?>
                 </h2>
-                <div class="text-gray-600">
+                <div class="badge badge-blue">
                     Showing <?= count($users) ?> of <?= $total_records ?> user(s)
                 </div>
             </div>
             
             <?php if (empty($users)): ?>
-                <div class="text-center py-8">
-                    <i class="fas fa-users text-gray-300 text-4xl mb-3"></i>
-                    <h3 class="text-lg font-semibold text-gray-500 mb-2">No users found</h3>
-                    <p class="text-gray-500">There are no users matching your current filter.</p>
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>No users found</h3>
+                    <p>There are no users matching your current filter.</p>
                 </div>
             <?php else: ?>
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="data-table">
                         <thead>
-                            <tr class="border-b border-gray-200">
-                                <th class="text-left py-3 px-4 text-gray-600">User Info</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Role</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Contact & Address</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Verification</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Status</th>
-                                <th class="text-left py-3 px-4 text-gray-600">Registered</th>
+                            <tr>
+                                <th>User Info</th>
+                                <th>Role</th>
+                                <th>Contact & Address</th>
+                                <th>Verification</th>
+                                <th>Status</th>
+                                <th>Registered</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($users as $user): ?>
-                                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                    <td class="py-3 px-4">
+                                <tr>
+                                    <td>
                                         <div class="font-medium text-gray-800"><?= htmlspecialchars($user['full_name']) ?></div>
                                         <div class="text-sm text-gray-500">@<?= htmlspecialchars($user['username']) ?></div>
                                         <div class="text-sm text-gray-500"><?= htmlspecialchars($user['email']) ?></div>
@@ -335,17 +314,17 @@ try {
                                             <?= $user['age'] ?? 'N/A' ?> • <?= ucfirst($user['gender'] ?? 'Not specified') ?>
                                         </div>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <?php if ($user['role'] === 'admin'): ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span class="badge badge-red">
                                                 <i class="fas fa-shield-alt mr-1"></i> Admin
                                             </span>
                                         <?php elseif ($user['role'] === 'staff'): ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            <span class="badge badge-purple">
                                                 <i class="fas fa-user-md mr-1"></i> Staff
                                             </span>
                                         <?php else: ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <span class="badge badge-blue">
                                                 <i class="fas fa-user mr-1"></i> Patient
                                             </span>
                                         <?php endif; ?>
@@ -356,7 +335,7 @@ try {
                                             </div>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <div class="text-sm text-gray-700">
                                             <?= !empty($user['contact']) ? htmlspecialchars($user['contact']) : 'No contact' ?>
                                         </div>
@@ -368,14 +347,14 @@ try {
                                             <?= !empty($user['occupation']) ? htmlspecialchars($user['occupation']) : 'N/A' ?>
                                         </div>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <div class="space-y-1">
                                             <?php if ($user['id_verified']): ?>
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <span class="badge badge-green">
                                                     <i class="fas fa-id-card mr-1"></i> ID Verified
                                                 </span>
                                             <?php else: ?>
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <span class="badge badge-yellow">
                                                     <i class="fas fa-id-card mr-1"></i> Not Verified
                                                 </span>
                                             <?php endif; ?>
@@ -392,9 +371,9 @@ try {
                                             <?php endif; ?>
                                         </div>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <?php if ($user['status'] === 'approved'): ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="badge badge-green">
                                                 <i class="fas fa-check-circle mr-1"></i> Approved
                                             </span>
                                             <?php if ($user['verified_at']): ?>
@@ -403,11 +382,11 @@ try {
                                                 </div>
                                             <?php endif; ?>
                                         <?php elseif ($user['status'] === 'pending'): ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <span class="badge badge-yellow">
                                                 <i class="fas fa-clock mr-1"></i> Pending
                                             </span>
                                         <?php else: ?>
-                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span class="badge badge-red">
                                                 <i class="fas fa-times-circle mr-1"></i> Declined
                                             </span>
                                         <?php endif; ?>
@@ -418,7 +397,7 @@ try {
                                             </div>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="py-3 px-4">
+                                    <td>
                                         <div class="text-sm text-gray-700">
                                             <?= date('M j, Y', strtotime($user['created_at'])) ?>
                                         </div>

@@ -1,7 +1,10 @@
 <?php
+// Clean output buffer to prevent TCPDF errors
+ob_start();
+
 session_start();
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/header.php';
+// DO NOT include header.php - it outputs HTML which breaks PDF generation
 
 redirectIfNotLoggedIn();
 if (!isStaff()) {
@@ -16,8 +19,32 @@ if (!isset($_SESSION['pdf_export_data']) || empty($_SESSION['pdf_export_data']))
 
 $patients = $_SESSION['pdf_export_data'];
 
+// Log staff activity for bulk PDF export
+try {
+    $staff_id = $_SESSION['user']['id'] ?? null;
+    $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    
+    $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        staff_id INT,
+        action_type VARCHAR(100),
+        related_id INT,
+        details JSON,
+        ip_address VARCHAR(45),
+        user_agent TEXT,
+        created_at DATETIME
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    
+    $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'export_bulk_pdf', NULL, ?, ?, ?, NOW())");
+    $stmtLog->execute([$staff_id, json_encode(['full_name' => $staff_name, 'record_count' => count($patients), 'export_type' => 'bulk_patient_records']), $ip, $ua]);
+} catch (Exception $e) {
+    error_log('Staff activity log error (export_bulk_pdf): ' . $e->getMessage());
+}
+
 // Include TCPDF library
-require_once __DIR__ . '/../vendor/tcpdf/tcpdf.php';
+require_once __DIR__ . '/../vendor/tecnickcom/tcpdf/tcpdf.php';
 
 // Create new PDF document
 $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
@@ -253,6 +280,9 @@ $pdf->SetTextColor(100, 100, 100);
 $pdf->MultiCell(0, 5, 'CONFIDENTIALITY NOTICE: This document contains confidential patient health information. Unauthorized disclosure, copying, or distribution is prohibited.', 0, 'C');
 $pdf->MultiCell(0, 5, '© ' . date('Y') . ' Barangay Luz Health Center. All rights reserved.', 0, 'C');
 
+// Clean any output before sending PDF
+ob_end_clean();
+
 // Output PDF
 $pdf->Output('Barangay_Luz_Patient_Records_' . date('Y-m-d_His') . '.pdf', 'D');
 
@@ -268,4 +298,3 @@ function calculateBMI($height, $weight) {
     }
     return 'N/A';
 }
-?>

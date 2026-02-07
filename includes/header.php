@@ -27,7 +27,9 @@ if (isset($_SESSION['user']['id'])) {
     foreach ($allowed_extensions as $ext) {
         $potential_file = $profile_dir . 'profile_' . $user_id . '.' . $ext;
         if (file_exists($potential_file)) {
-            $profile_picture = '/community-health-tracker/uploads/profiles/profile_' . $user_id . '.' . $ext;
+            // Add cache-buster based on file modification time to prevent stale image caching
+            $file_mtime = filemtime($potential_file);
+            $profile_picture = '/community-health-tracker/uploads/profiles/profile_' . $user_id . '.' . $ext . '?v=' . $file_mtime;
             break;
         }
     }
@@ -41,10 +43,12 @@ if (isset($_SESSION['user']['id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barangay Luz Health Monitoring and Tracking</title>
     <link rel="icon" type="image/png" href="../asssets/images/Luz.jpg">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/community-health-tracker/assets/css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <script src="/community-health-tracker/assets/js/scripts.js" defer></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/style.css">
+    <script src="/community-health-tracker/asssets/js/script.js" defer></script>
 </head>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
@@ -107,6 +111,8 @@ body,
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
 }
 
 .nav-tab {
@@ -116,11 +122,13 @@ body,
     border-radius: 0.75rem;
     font-weight: 600;
     z-index: 1;
+    color: white !important;
 }
 
 .nav-tab.active {
     background: rgba(255, 255, 255, 0.2);
     transform: translateY(-1px);
+    color: white !important;
 }
 
 /* .nav-tab.active::after {
@@ -181,6 +189,14 @@ body,
 
 .admin-time-container {
     background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Add padding to nav containers */
+.staff-nav-container,
+.admin-nav-container,
+.user-nav-container {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
 }
 
 /* NEW: Horizontal time display styles */
@@ -345,16 +361,19 @@ body,
     border-left: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+
 .profile-avatar {
     background-color: #d1d5db;
-    height: 32px;
-    width: 32px;
+    height: 56px;
+    width: 56px;
     border-radius: 50%;
     background-size: cover;
     background-position: center;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
+    border: 3px solid #4A90E2; /* Smooth blue border */
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.10);
 }
 
 .profile-avatar:hover {
@@ -430,7 +449,7 @@ body,
 /* Profile Picture Upload Modal */
 .profile-modal-content {
     background: white;
-    border-radius: 0.75rem;
+    border-radius: 20px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
@@ -439,46 +458,64 @@ body,
     height: 150px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid #3C96E1;
-    margin: 0 auto;
+    border: 3px solid rgba(74, 144, 226, 0.2);
+    margin: 0 auto 1.5rem;
+    display: block;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
 }
 
 .profile-upload-btn {
-    background: #3C96E1;
+    background: rgba(74, 144, 226, 0.85);
     color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    padding: 0.9rem 1.5rem;
+    border-radius: 30px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
     border: none;
     cursor: pointer;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.6rem;
+    flex: 1;
+    white-space: nowrap;
 }
 
 .profile-upload-btn:hover {
-    background: #2B7CC9;
+    background: rgba(74, 144, 226, 0.95);
     transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
 }
 
 .profile-remove-btn {
-    background: #ef4444;
+    background: rgba(74, 144, 226, 0.85);
     color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    padding: 0.9rem 1.5rem;
+    border-radius: 30px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
     border: none;
     cursor: pointer;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.6rem;
+    flex: 1;
+    white-space: nowrap;
 }
 
 .profile-remove-btn:hover {
-    background: #dc2626;
+    background: rgba(74, 144, 226, 0.95);
     transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+}
+
+.profile-remove-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Logout Modal Styles */
@@ -542,14 +579,15 @@ body,
     box-shadow: none !important;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-
+/* Responsive adjustments - Desktop and larger tablets */
+@media (min-width: 1025px) {
     .staff-nav-container,
     .user-nav-container,
     .admin-nav-container {
-        flex-direction: column;
-        gap: 0.5rem;
+        flex-direction: row;
+        gap: 0;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .nav-tab {
@@ -566,27 +604,14 @@ body,
         transform: translateY(-1px);
     }
 
-    .nav-tab.active::after {
-        content: '';
-        position: absolute;
-        bottom: -6px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60%;
-        height: 2px;
-        background: white;
-        border-radius: 2px;
-    }
-
     .nav-tab:hover:not(.active) {
         background: rgba(255, 255, 255, 0.1);
     }
 
-    /* CLEAN: Simple Logout Button - UPDATED FOR FULL ROUND */
     .logout-btn {
-        background: #2B7CC9;
+        background: #ef4444;
         padding: 0.75rem 1.5rem;
-        border-radius: 9999px !important; /* Full round radius */
+        border-radius: 9999px !important;
         font-weight: 600;
         transition: all 0.3s ease;
         display: flex;
@@ -599,19 +624,19 @@ body,
     }
 
     .logout-btn:hover {
-        background: #3C96E1;
+        background: #dc2626;
         transform: translateY(-1px);
-        color: white;
     }
 
-    /* NEW: Improved time display containers - Horizontal layout */
     .time-display-container {
-        margin-left: 0;
-        align-self: flex-end;
+        margin-left: auto;
+        align-self: auto;
+        display: flex !important;
     }
 
     .nav-tab-container {
-        justify-content: center;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
     }
 
     .search-input {
@@ -619,9 +644,37 @@ body,
     }
 }
 
+/* Tablet view (768px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .staff-nav-container,
+    .user-nav-container,
+    .admin-nav-container {
+        flex-direction: row;
+        gap: 0;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .time-display-container {
+        display: flex !important;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    .nav-tab-container {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .search-input {
+        width: 180px;
+    }
+}
+
 @media (max-width: 768px) {
     .time-display-container {
-        padding: 0.5rem 1rem;
+        display: none;
     }
 
     .date-display-horizontal {
@@ -638,8 +691,7 @@ body,
     }
 
     .logout-btn {
-        padding: 0.6rem 1.2rem;
-        font-size: 0.9rem;
+        display: none !important;
     }
 
     .time-zone {
@@ -669,8 +721,8 @@ body,
     }
 
     .profile-avatar {
-        height: 28px;
-        width: 28px;
+        height: 40px;
+        width: 40px;
     }
 }
 
@@ -724,14 +776,86 @@ body,
         display: none;
     }
 }
+
+@media (min-width: 769px) {
+    .time-display-container {
+        display: flex !important;
+    }
+
+    .nav-tab-container {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+    }
+
+    .profile-section {
+        display: flex !important;
+    }
+
+    .logout-btn {
+        display: flex !important;
+    }
+
+    .profile-avatar {
+        height: 56px;
+        width: 56px;
+    }
+
+    .user-nav-section {
+        display: flex !important;
+        align-items: center;
+        gap: 1.25rem;
+        flex-wrap: nowrap;
+    }
+}
+
+@media (min-width: 1025px) {
+    .desktop-nav-content {
+        display: block !important;
+    }
+}
+
+/* Small Mobile Adjustments (iPhone 5/SE etc) */
+@media (max-width: 400px) {
+    .main-title {
+        font-size: 0.9rem !important;
+        white-space: normal;
+        line-height: 1.2;
+    }
+    
+    .barangay-text {
+        font-size: 0.7rem !important;
+    }
+
+    .logo-image {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    .nav-tab {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .nav-connection {
+        flex: 1 1 auto;
+        display: flex;
+        justify-content: center;
+    }
+
+    .nav-connection .nav-tab {
+        width: 100%;
+        text-align: center;
+        white-space: nowrap;
+    }
+}
 </style>
 
-<body class="bg-[#F8F8F]">
+<body class="bg-[#F8F8F8]">
     <?php if (isLoggedIn()): ?>
         <?php if (isAdmin()): ?>
             <!-- Admin Header - Updated to match user/staff design -->
             <nav class="bg-[#3C96E1] text-white shadow-lg sticky top-0 z-50">
-                <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
                         <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
@@ -743,14 +867,14 @@ body,
                         </div>
                     </div>
 
-                    <div class="flex items-center space-x-4">
-                        <!-- Search Bar -->
-                        <div class="search-container">
+                    <div class="flex items-center space-x-4 md:space-x-10">
+                        <!-- Search Bar - Hidden on mobile -->
+                        <div class="search-container hidden md:block">
                             
                         </div>
                         
-                        <!-- Profile Section -->
-                        <div class="profile-section">
+                        <!-- Profile Section - Hidden on mobile -->
+                        <div class="profile-section hidden md:flex gap-4">
                             <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
                                  style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
                                  onclick="openProfileModal('admin')">
@@ -764,32 +888,37 @@ body,
                             </div>
                         </div>
                         
-                        <!-- Enhanced Logout Button - UPDATED FOR FULL ROUND -->
-                        <button type="button" onclick="showLogoutModal('admin')" class="logout-btn">
+                        <!-- Enhanced Logout Button - Hidden on mobile -->
+                        <button type="button" onclick="showLogoutModal('admin')" class="logout-btn hidden md:block">
                             <span>Logout</span>
+                        </button>
+
+                        <!-- Hamburger Menu Button - Visible only on mobile -->
+                        <button type="button" onclick="toggleAdminMenu()" class="md:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
+                            <i class="fas fa-bars text-2xl"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="bg-[#2B7CC9] py-3">
-                    <div class="container mx-auto px-4 flex items-center justify-between admin-nav-container">
-                        <div class="nav-tab-container">
+                <div class="bg-[#2B7CC9] py-2 md:py-3">
+                    <div class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 admin-nav-container">
+                        <div class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
                                 <a href="../admin/dashboard.php"
-                                    class="nav-tab <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
                                     Dashboard
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="../admin/manage_accounts.php"
-                                    class="nav-tab <?= ($current_page == 'manage_accounts.php') ? 'active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'manage_accounts.php') ? 'active' : '' ?>">
                                     Manage Accounts
                                 </a>
                             </div>
                         </div>
 
                         <!-- Date and Time Display - Horizontal layout on the right side -->
-                        <div class="time-display-container admin-time-container">
+                        <div class="time-display-container admin-time-container w-full md:w-auto">
                             <div class="time-display-horizontal">
                                 <div class="date-display-horizontal">
                                     <i class="fas fa-calendar-day mr-2"></i>
@@ -815,7 +944,7 @@ body,
         <?php elseif (isStaff()): ?>
             <!-- Staff Header -->
             <nav class="bg-[#3C96E1] text-white shadow-lg sticky top-0 z-50">
-                <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
                         <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
@@ -827,8 +956,8 @@ body,
                         </div>
                     </div>
 
-                    <div class="flex items-center space-x-10">
-                        <div class="flex items-center space-x-5">
+                    <div class="flex items-center space-x-4 md:space-x-10">
+                        <div class="hidden md:flex items-center gap-4 user-nav-section">
                             <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
                                  style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
                                  onclick="openProfileModal('staff')">
@@ -838,37 +967,42 @@ body,
                             </div>
                             <span class="font-medium">Welcome, <?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>
-                        <button type="button" onclick="showLogoutModal('staff')" class="logout-btn bg-white text-[#3C96E1] hover:bg-[#2B7CC9] hover:text-white">
+                        <button type="button" onclick="showLogoutModal('staff')" class="logout-btn hidden md:block bg-white text-[#3C96E1] hover:bg-[#2B7CC9] hover:text-white">
                             <span>Logout</span>
+                        </button>
+
+                        <!-- Hamburger Menu Button - Visible only on mobile -->
+                        <button type="button" onclick="toggleStaffMenu()" class="md:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
+                            <i class="fas fa-bars text-2xl"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="bg-[#2B7CC9] py-3">
-                    <div class="container mx-auto px-4 flex items-center justify-between staff-nav-container">
-                        <div class="nav-tab-container">
+                <div class="bg-[#2B7CC9] py-2 md:py-3">
+                    <div class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 staff-nav-container">
+                        <div class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
                                 <a href="/community-health-tracker/staff/dashboard.php"
-                                    class="nav-tab <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
                                     Dashboard
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="/community-health-tracker/staff/existing_info_patients.php"
-                                    class="nav-tab <?= ($current_page == 'existing_info_patients.php') ? 'active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'existing_info_patients.php') ? 'active' : '' ?>">
                                     Medical Records
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="/community-health-tracker/staff/announcements.php"
-                                    class="nav-tab <?= ($current_page == 'announcements.php') ? 'active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'announcements.php') ? 'active' : '' ?>">
                                     Announcements
                                 </a>
                             </div>
                         </div>
 
                         <!-- Date and Time Display - Horizontal layout on the right side -->
-                        <div class="time-display-container staff-time-container">
+                        <div class="time-display-container staff-time-container w-full md:w-auto">
                             <div class="time-display-horizontal">
                                 <div class="date-display-horizontal">
                                     <i class="fas fa-calendar-day mr-2"></i>
@@ -894,7 +1028,7 @@ body,
         <?php elseif (isUser()): ?>
             <!-- User Header -->
             <nav class="bg-[#3C96E1] text-white shadow-lg sticky top-0 z-50">
-                <div class=" px-16 py-8 flex justify-between items-center">
+                <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
                         <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
@@ -906,8 +1040,8 @@ body,
                         </div>
                     </div>
 
-                    <!-- NAV CONTENT -->
-                    <div>
+                    <!-- Desktop Nav Content - Hidden on mobile and tablet -->
+                    <div class="hidden lg:block desktop-nav-content">
                         <ul class="flex flex-row space-x-12 font-light">
                             <li class="hover:text-[#F0F0F0] cursor-pointer">Terms & Conditions</li>
                             <li class="hover:text-[#F0F0F0] cursor-pointer">Contact Us</li>
@@ -915,8 +1049,8 @@ body,
                         </ul>
                     </div>
 
-                    <div class="flex items-center space-x-10">
-                        <div class="flex items-center space-x-5">
+                    <div class="flex items-center space-x-4 md:space-x-10">
+                        <div class="hidden md:flex items-center gap-4 user-nav-section">
                             <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
                                  style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
                                  onclick="openProfileModal('user')">
@@ -926,38 +1060,43 @@ body,
                             </div>
                             <span class="font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>
-                        <!-- Enhanced Logout Button - UPDATED FOR FULL ROUND -->
-                        <button type="button" onclick="showLogoutModal('user')" class="logout-btn  text-[#FFFFFF] hover:bg-[#2B7CC9] hover:text-white">
+                        <!-- Enhanced Logout Button - Hidden on mobile -->
+                        <button type="button" onclick="showLogoutModal('user')" class="logout-btn hidden md:block text-[#FFFFFF] hover:bg-[#2B7CC9] hover:text-white">
                             <span>Signout</span>
+                        </button>
+
+                        <!-- Hamburger Menu Button - Visible on mobile and tablet -->
+                        <button type="button" onclick="toggleUserMenu()" class="lg:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
+                            <i class="fas fa-bars text-2xl"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="bg-[#2B7CC9] py-3">
-                    <div class=" px-16 flex items-center justify-between">
-                        <div class="nav-tab-container">
+                <div class="bg-[#2B7CC9] py-2 md:py-3">
+                    <div class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 user-nav-container">
+                        <div class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
                                 <a href="dashboard.php"
-                                    class="nav-tab <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
                                     Dashboard
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="health_records.php"
-                                    class="nav-tab <?= ($current_page == 'health_records.php') ? 'active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'health_records.php') ? 'active' : '' ?>">
                                     My Record
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="announcements.php"
-                                    class="nav-tab <?= ($current_page == 'announcements.php') ? 'active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'announcements.php') ? 'active' : '' ?>">
                                     Announcements
                                 </a>
                             </div>
                         </div>
 
                         <!-- Date and Time Display - Horizontal layout on the right side -->
-                        <div class="time-display-container user-time-container">
+                        <div class="time-display-container user-time-container w-full md:w-auto">
                             <div class="time-display-horizontal">
                                 <div class="date-display-horizontal">
                                     <i class="fas fa-calendar-day mr-2"></i>
@@ -979,6 +1118,151 @@ body,
                     </div>
                 </div>
             </nav>
+
+            <!-- User Mobile Menu Modal -->
+            <div id="userMobileMenu" class="fixed inset-0 hidden z-[60] h-full w-full bg-white flex-col items-center justify-center">
+                <div class="relative w-full h-full p-8 flex flex-col items-center justify-center modal-content user-mobile-menu-content">
+                    <!-- Close Button -->
+                    <button onclick="closeUserMenu()"
+                        class="modal-close-btn absolute top-6 right-6 text-black hover:text-gray-600 z-10 transition-transform transform hover:rotate-90">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <!-- Logo Section -->
+                    <div class="flex flex-col items-center mb-8">
+                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" 
+                             class="w-24 h-24 mb-4 object-cover">
+                        <div class="text-center">
+                            <h2 class="text-lg font-bold text-gray-900">Barangay Luz</h2>
+                            <p class="text-sm font-medium text-gray-900 mt-1">Resident Consultation Portal</p>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="w-full max-w-xs h-px bg-gray-200 mb-8"></div>
+
+                    <!-- Mobile Menu Items - Centered with pill buttons -->
+                    <div class="flex flex-col items-center space-y-6 mb-12 w-full max-w-xs">
+                        <button class="w-full py-3 bg-[#CFE2F3] text-[#3C96E1] rounded-full hover:bg-blue-200 transition font-medium text-sm border-none shadow-sm">
+                            Terms & Conditions
+                        </button>
+                        <button class="w-full py-3 bg-[#CFE2F3] text-[#3C96E1] rounded-full hover:bg-blue-200 transition font-medium text-sm border-none shadow-sm">
+                            Contact Us
+                        </button>
+                        <button class="w-full py-3 bg-[#CFE2F3] text-[#3C96E1] rounded-full hover:bg-blue-200 transition font-medium text-sm border-none shadow-sm">
+                            Frequently Asked Questions
+                        </button>
+                    </div>
+
+                    <!-- Logout Button -->
+                    <div class="flex justify-center w-full max-w-xs">
+                        <button type="button" onclick="showLogoutModal('user'); closeUserMenu();" class="w-48 py-3 bg-[#E03E3E] text-white rounded-full hover:bg-red-700 transition font-medium shadow-md">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Mobile Menu Modal -->
+            <div id="adminMobileMenu" class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-start pt-8">
+                <div class="relative bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-4 modal-content admin-mobile-menu-content">
+                    <!-- Close Button -->
+                    <button onclick="closeAdminMenu()"
+                        class="modal-close-btn absolute top-4 right-4 text-gray-600 hover:text-gray-800 z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <!-- Logo Section -->
+                    <div class="flex justify-center mb-6">
+                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" 
+                             class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
+                    </div>
+
+                    <!-- Branding -->
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Barangay Luz</h2>
+                        <p class="text-sm text-gray-600 mt-1">Health Center Admin Panel</p>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="w-full h-px bg-gray-200 mb-6"></div>
+
+                    <!-- Admin Profile Section -->
+                    <div class="text-center mb-6 pb-6 border-b border-gray-200">
+                        <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?> mx-auto mb-3"
+                             style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>; width: 60px; height: 60px;"
+                             onclick="openProfileModal('admin'); closeAdminMenu();">
+                            <?php if (!$profile_picture): ?>
+                                <i class="fas fa-user-circle text-3xl text-gray-400 absolute inset-0 flex items-center justify-center"></i>
+                            <?php endif; ?>
+                        </div>
+                        <p class="text-gray-800 font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></p>
+                        <p class="text-xs text-gray-500">Super Admin</p>
+                    </div>
+
+                    <!-- Logout Button -->
+                    <div class="flex justify-center">
+                        <button type="button" onclick="showLogoutModal('admin'); closeAdminMenu();" class="px-8 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Mobile Menu Modal -->
+            <div id="staffMobileMenu" class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-start pt-8">
+                <div class="relative bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-4 modal-content staff-mobile-menu-content">
+                    <!-- Close Button -->
+                    <button onclick="closeStaffMenu()"
+                        class="modal-close-btn absolute top-4 right-4 text-gray-600 hover:text-gray-800 z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <!-- Logo Section -->
+                    <div class="flex justify-center mb-6">
+                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" 
+                             class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
+                    </div>
+
+                    <!-- Branding -->
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Barangay Luz</h2>
+                        <p class="text-sm text-gray-600 mt-1">Health Center Staff Panel</p>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="w-full h-px bg-gray-200 mb-6"></div>
+
+                    <!-- Staff Profile Section -->
+                    <div class="text-center mb-6 pb-6 border-b border-gray-200">
+                        <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?> mx-auto mb-3"
+                             style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>; width: 60px; height: 60px;"
+                             onclick="openProfileModal('staff'); closeStaffMenu();">
+                            <?php if (!$profile_picture): ?>
+                                <i class="fas fa-user-circle text-3xl text-white absolute inset-0 flex items-center justify-center"></i>
+                            <?php endif; ?>
+                        </div>
+                        <p class="text-gray-800 font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></p>
+                        <p class="text-xs text-gray-500">Health Staff</p>
+                    </div>
+
+                    <!-- Logout Button -->
+                    <div class="flex justify-center">
+                        <button type="button" onclick="showLogoutModal('staff'); closeStaffMenu();" class="px-8 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
         <?php endif; ?>
     <?php else: ?>
         <!-- Public Header (Not logged in) -->
@@ -1073,7 +1357,7 @@ body,
             </script>
 
             <!-- Login Modal Only -->
-            <div id="loginModal" class="fixed inset-0 hidden z-50 h-full w-full backdrop-blur-sm bg-black/30 flex justify-center items-center">
+            <div id="loginModal" class="fixed inset-0 hidden z-50 h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
                 <div class="relative bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto modal-content">
                     <!-- Close Button -->
                     <button onclick="closeModal()"
@@ -1151,7 +1435,7 @@ body,
         <?php endif; ?>
 
         <!-- Profile Picture Upload Modal -->
-        <div id="profileModal" class="fixed inset-0 hidden z-[70] h-full w-full backdrop-blur-sm bg-black/30 flex justify-center items-center">
+        <div id="profileModal" class="fixed inset-0 hidden z-[70] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
             <div class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md mx-auto modal-content profile-modal-content">
                 <!-- Close Button -->
                 <button onclick="closeProfileModal()"
@@ -1164,8 +1448,8 @@ body,
 
                 <!-- Modal Title -->
                 <div class="text-center mb-6">
-                    <h3 class="text-xl font-bold text-gray-800">Profile Picture</h3>
-                    <p class="text-gray-600 mt-2">Upload or change your profile picture</p>
+                    <h3 class="text-2xl font-bold text-gray-800">Profile Picture</h3>
+                    <p class="text-gray-500 mt-2 text-sm">Upload or change your profile picture</p>
                 </div>
 
                 <!-- Current Profile Picture Preview -->
@@ -1191,15 +1475,15 @@ body,
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex gap-3 mt-6">
+                    <div class="flex gap-3 mt-6" style="gap: 5px;">
                         <button type="button" onclick="removeProfilePicture()" 
-                            class="profile-remove-btn flex-1 <?php echo !$profile_picture ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                            class="profile-remove-btn <?php echo !$profile_picture ? 'opacity-50 cursor-not-allowed' : '' ?>"
                             <?php echo !$profile_picture ? 'disabled' : '' ?>>
                             <i class="fas fa-trash-alt"></i>
                             Remove
                         </button>
-                        <button type="submit" class="profile-upload-btn flex-1">
-                            <i class="fas fa-upload"></i>
+                        <button type="submit" class="profile-upload-btn">
+                            <i class="fas fa-cloud-upload-alt"></i>
                             Upload
                         </button>
                     </div>
@@ -1214,7 +1498,7 @@ body,
         </div>
 
         <!-- Logout Confirmation Modal -->
-        <div id="logoutModal" class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 flex justify-center items-center">
+        <div id="logoutModal" class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
             <div class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md mx-auto modal-content logout-modal-content">
                 <!-- Close Button -->
                 <button onclick="closeLogoutModal()"
@@ -1273,9 +1557,18 @@ body,
                 const modal = document.getElementById("profileModal");
                 const modalContent = modal.querySelector('.modal-content');
                 const userTypeInput = document.getElementById('profileUserType');
+                const profilePreview = document.getElementById('profilePreview');
                 
                 // Set user type for form submission
                 userTypeInput.value = userType;
+                
+                // Refresh the profile preview image with cache-buster to ensure fresh display
+                const currentSrc = profilePreview.src;
+                if (currentSrc && !currentSrc.includes('data:image/svg')) {
+                    // Add timestamp to force refresh from server
+                    const baseSrc = currentSrc.split('?')[0];
+                    profilePreview.src = baseSrc + '?t=' + Date.now();
+                }
                 
                 modal.classList.remove("hidden");
                 modal.classList.add("flex");
@@ -1352,6 +1645,171 @@ body,
                     modal.classList.add("hidden");
                 }, 300);
             }
+
+            // Function to toggle user mobile menu
+            function toggleUserMenu() {
+                const modal = document.getElementById("userMobileMenu");
+                if (modal && modal.classList.contains("hidden")) {
+                    openUserMenu();
+                } else {
+                    closeUserMenu();
+                }
+            }
+
+            // Function to open user mobile menu
+            function openUserMenu() {
+                const modal = document.getElementById("userMobileMenu");
+                if (modal) {
+                    const modalContent = modal.querySelector('.modal-content');
+                    modal.classList.remove("hidden");
+                    modal.classList.add("flex");
+                    if (modalContent) {
+                        setTimeout(() => {
+                            modalContent.classList.add('open');
+                        }, 10);
+                    }
+                }
+            }
+
+            // Function to close user mobile menu
+            function closeUserMenu() {
+                const modal = document.getElementById("userMobileMenu");
+                if (modal) {
+                    const modalContent = modal.querySelector('.modal-content');
+                    if (modalContent) {
+                        modalContent.classList.remove('open');
+                        setTimeout(() => {
+                            modal.classList.add("hidden");
+                            modal.classList.remove("flex");
+                        }, 300);
+                    } else {
+                        modal.classList.add("hidden");
+                        modal.classList.remove("flex");
+                    }
+                }
+            }
+
+            // Function to toggle admin mobile menu
+            function toggleAdminMenu() {
+                const modal = document.getElementById("adminMobileMenu");
+                if (modal && modal.classList.contains("hidden")) {
+                    openAdminMenu();
+                } else {
+                    closeAdminMenu();
+                }
+            }
+
+            // Function to open admin mobile menu
+            function openAdminMenu() {
+                const modal = document.getElementById("adminMobileMenu");
+                if (modal) {
+                    const modalContent = modal.querySelector('.modal-content');
+                    modal.classList.remove("hidden");
+                    modal.classList.add("flex");
+                    if (modalContent) {
+                        setTimeout(() => {
+                            modalContent.classList.add('open');
+                        }, 10);
+                    }
+                }
+            }
+
+            // Function to close admin mobile menu
+            function closeAdminMenu() {
+                const modal = document.getElementById("adminMobileMenu");
+                if (modal) {
+                    const modalContent = modal.querySelector('.modal-content');
+                    if (modalContent) {
+                        modalContent.classList.remove('open');
+                        setTimeout(() => {
+                            modal.classList.add("hidden");
+                            modal.classList.remove("flex");
+                        }, 300);
+                    } else {
+                        modal.classList.add("hidden");
+                        modal.classList.remove("flex");
+                    }
+                }
+            }
+
+            // Function to toggle staff mobile menu
+            function toggleStaffMenu() {
+                const modal = document.getElementById("staffMobileMenu");
+                if (modal && modal.classList.contains("hidden")) {
+                    openStaffMenu();
+                } else {
+                    closeStaffMenu();
+                }
+            }
+
+            // Function to open staff mobile menu
+            function openStaffMenu() {
+                const modal = document.getElementById("staffMobileMenu");
+                if (modal) {
+                    const modalContent = modal.querySelector('.modal-content');
+                    modal.classList.remove("hidden");
+                    modal.classList.add("flex");
+                    if (modalContent) {
+                        setTimeout(() => {
+                            modalContent.classList.add('open');
+                        }, 10);
+                    }
+                }
+            }
+
+            // Function to close staff mobile menu
+            function closeStaffMenu() {
+                const modal = document.getElementById("staffMobileMenu");
+                if (modal) {
+                    const modalContent = modal.querySelector('.modal-content');
+                    if (modalContent) {
+                        modalContent.classList.remove('open');
+                        setTimeout(() => {
+                            modal.classList.add("hidden");
+                            modal.classList.remove("flex");
+                        }, 300);
+                    } else {
+                        modal.classList.add("hidden");
+                        modal.classList.remove("flex");
+                    }
+                }
+            }
+
+            // Close mobile menus when clicking outside
+            document.addEventListener('click', function(event) {
+                // Close user menu
+                const userMobileMenu = document.getElementById("userMobileMenu");
+                const userHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleUserMenu()"]');
+                
+                if (userMobileMenu && userHamburgerBtn &&
+                    !userMobileMenu.contains(event.target) &&
+                    !userHamburgerBtn.contains(event.target) &&
+                    userMobileMenu.classList.contains('flex')) {
+                    closeUserMenu();
+                }
+
+                // Close admin menu
+                const adminMobileMenu = document.getElementById("adminMobileMenu");
+                const adminHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleAdminMenu()"]');
+                
+                if (adminMobileMenu && adminHamburgerBtn &&
+                    !adminMobileMenu.contains(event.target) &&
+                    !adminHamburgerBtn.contains(event.target) &&
+                    adminMobileMenu.classList.contains('flex')) {
+                    closeAdminMenu();
+                }
+
+                // Close staff menu
+                const staffMobileMenu = document.getElementById("staffMobileMenu");
+                const staffHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleStaffMenu()"]');
+                
+                if (staffMobileMenu && staffHamburgerBtn &&
+                    !staffMobileMenu.contains(event.target) &&
+                    !staffHamburgerBtn.contains(event.target) &&
+                    staffMobileMenu.classList.contains('flex')) {
+                    closeStaffMenu();
+                }
+            });
 
             // Handle logout confirmation
             document.getElementById('confirmLogoutBtn').addEventListener('click', function() {
@@ -1432,7 +1890,8 @@ body,
                             
                             // Show success message
                             alert('Profile picture updated successfully!');
-                            
+                            // Reset file input so user can upload again
+                            profileImageInput.value = '';
                             // Close modal
                             closeProfileModal();
                         } else {
@@ -1506,9 +1965,11 @@ body,
                 // Function to update profile picture in header
                 function updateProfilePicture(imageUrl) {
                     const profileAvatars = document.querySelectorAll('.profile-avatar');
+                    // Add cache-busting using current timestamp to ensure new image loads
+                    const cacheBustedUrl = imageUrl ? imageUrl + (imageUrl.includes('?') ? '&' : '?') + 't=' + Date.now() : null;
                     profileAvatars.forEach(avatar => {
-                        if (imageUrl) {
-                            avatar.style.backgroundImage = `url('${imageUrl}')`;
+                        if (cacheBustedUrl) {
+                            avatar.style.backgroundImage = `url('${cacheBustedUrl}')`;
                             avatar.classList.add('has-image');
                             // Remove the icon if it exists
                             const icon = avatar.querySelector('i');
@@ -1526,6 +1987,12 @@ body,
                             }
                         }
                     });
+                    
+                    // Also update the preview image in the modal if it exists
+                    const profilePreview = document.getElementById('profilePreview');
+                    if (profilePreview && cacheBustedUrl) {
+                        profilePreview.src = cacheBustedUrl;
+                    }
                 }
             });
 
@@ -1738,8 +2205,12 @@ body,
                 const modal = document.getElementById("loginModal");
                 const modalContent = modal.querySelector('.modal-content');
                 
+                // Reset file input and error on close
+                const profileImageInput = document.getElementById('profile_image');
+                const profileUploadError = document.getElementById('profileUploadError');
+                if (profileImageInput) profileImageInput.value = '';
+                if (profileUploadError) profileUploadError.classList.add('hidden');
                 modalContent.classList.remove('open');
-                
                 // Wait for animation to complete before hiding
                 setTimeout(() => {
                     modal.classList.remove("flex");

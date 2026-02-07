@@ -237,7 +237,8 @@ function showGlassModal($type, $title, $description = '') {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Registration Status</title>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Tailwind CSS - Offline Local Build -->
+        <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
         <style>
             @keyframes fadeIn {
                 from { opacity: 0; transform: translateY(20px); }

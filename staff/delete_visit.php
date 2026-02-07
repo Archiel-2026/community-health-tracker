@@ -20,12 +20,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     }
     
     try {
+        require_once __DIR__ . '/../includes/functions.php';
+
         // Check if the visit belongs to a patient that the staff member has access to
-        $stmt = $pdo->prepare("SELECT pv.id 
-                              FROM patient_visits pv 
-                              JOIN sitio1_patients p ON pv.patient_id = p.id 
-                              WHERE pv.id = ? AND p.added_by = ?");
-        $stmt->execute([$visitId, $_SESSION['user']['id']]);
+        if (staff_can_view_all()) {
+            $stmt = $pdo->prepare("SELECT pv.id FROM patient_visits pv WHERE pv.id = ?");
+            $stmt->execute([$visitId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT pv.id 
+                                  FROM patient_visits pv 
+                                  JOIN sitio1_patients p ON pv.patient_id = p.id 
+                                  WHERE pv.id = ? AND p.added_by = ?");
+            $stmt->execute([$visitId, $_SESSION['user']['id']]);
+        }
         $visit = $stmt->fetch();
         
         if (!$visit) {

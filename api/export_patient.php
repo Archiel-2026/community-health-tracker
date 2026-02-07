@@ -17,11 +17,20 @@ if ($patientId <= 0) {
 
 try {
     // Get patient basic information
-    $stmt = $pdo->prepare("SELECT p.*, u.unique_number, u.email as user_email 
+    require_once __DIR__ . '/../includes/functions.php';
+
+    $query = "SELECT p.*, u.unique_number, u.email as user_email 
                           FROM sitio1_patients p 
                           LEFT JOIN sitio1_users u ON p.user_id = u.id
-                          WHERE p.id = ? AND p.added_by = ?");
-    $stmt->execute([$patientId, $_SESSION['user']['id']]);
+                          WHERE p.id = ?";
+    $params = [$patientId];
+    if (!staff_can_view_all()) {
+        $query .= " AND p.added_by = ?";
+        $params[] = $_SESSION['user']['id'];
+    }
+
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
     $patient = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$patient) {

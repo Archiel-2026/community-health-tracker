@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 redirectIfNotLoggedIn();
 if (!isStaff()) {
@@ -17,8 +18,13 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 // Fetch patient details
 try {
     // Get main patient info
-    $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ? AND added_by = ?");
-    $stmt->execute([$id, $_SESSION['user']['id']]);
+    if (staff_can_view_all()) {
+        $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ?");
+        $stmt->execute([$id]);
+    } else {
+        $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ? AND added_by = ?");
+        $stmt->execute([$id, $_SESSION['user']['id']]);
+    }
     $patient = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$patient) {
@@ -63,15 +69,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo->beginTransaction();
                 
                 // Update main patient info
-                $stmt = $pdo->prepare("UPDATE sitio1_patients SET 
-                    full_name = ?, age = ?, gender = ?, address = ?, 
-                    contact = ?, last_checkup = ?, updated_at = NOW() 
-                    WHERE id = ? AND added_by = ?");
-                
-                $stmt->execute([
-                    $fullName, $age, $gender, $address, 
-                    $contact, $lastCheckup, $id, $_SESSION['user']['id']
-                ]);
+                if (staff_can_view_all()) {
+                    $stmt = $pdo->prepare("UPDATE sitio1_patients SET 
+                        full_name = ?, age = ?, gender = ?, address = ?, 
+                        contact = ?, last_checkup = ?, updated_at = NOW() 
+                        WHERE id = ?");
+                    $stmt->execute([
+                        $fullName, $age, $gender, $address, 
+                        $contact, $lastCheckup, $id
+                    ]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE sitio1_patients SET 
+                        full_name = ?, age = ?, gender = ?, address = ?, 
+                        contact = ?, last_checkup = ?, updated_at = NOW() 
+                        WHERE id = ? AND added_by = ?");
+                    
+                    $stmt->execute([
+                        $fullName, $age, $gender, $address, 
+                        $contact, $lastCheckup, $id, $_SESSION['user']['id']
+                    ]);
+                }
                 
                 // Update or insert medical info
                 if ($medicalInfo) {
@@ -97,6 +114,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 $pdo->commit();
+                
+                // Log staff activity for updating patient
+                try {
+                    $staff_id = $_SESSION['user']['id'] ?? null;
+                    $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
+                    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+                    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                    
+                    $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        staff_id INT,
+                        action_type VARCHAR(100),
+                        related_id INT,
+                        details JSON,
+                        ip_address VARCHAR(45),
+                        user_agent TEXT,
+                        created_at DATETIME
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                    
+                    $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'update_patient', ?, ?, ?, ?, NOW())");
+                    $stmtLog->execute([$staff_id, $id, json_encode(['full_name' => $staff_name, 'patient_name' => $fullName, 'patient_id' => $id]), $ip, $ua]);
+                } catch (Exception $e) {
+                    error_log('Staff activity log error (update_patient): ' . $e->getMessage());
+                }
                 
                 $_SESSION['success'] = 'Patient record updated successfully!';
                 header('Location: patient_records.php');

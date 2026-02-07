@@ -5,9 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Community Health Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS - Offline Local Build -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
     <link rel="stylesheet" href="/community-health-tracker/assets/css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Local Font Awesome for offline support -->
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
     <script src="/community-health-tracker/assets/js/scripts.js" defer></script>
 </head>
 <style>
@@ -226,9 +228,10 @@
     </nav>
 
 <?php elseif (isUser()): ?>
-    <!-- User Header -->
-    <nav class="bg-purple-600 text-white shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <!-- User Header - Responsive with Hamburger Menu -->
+    <nav class="bg-purple-600 text-white shadow-lg sticky top-0 z-50 h-[80px]">
+        <div class="h-full px-4 py-3 flex justify-between items-center">
+            <!-- Logo Section -->
             <div class="flex items-center space-x-2">
                 <div class="h-8 w-8">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -237,10 +240,11 @@
                         <path d="M3 12h2l2 4 3-8 3 8 2-4h2" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </div>
-                <a href="/community-health-tracker/" class="text-2xl font-bold">CHM Portal</a>
+                <a href="/community-health-tracker/" class="text-2xl font-bold hidden sm:block">CHM Portal</a>
             </div>
 
-            <div class="flex items-center space-x-4">
+            <!-- Desktop User Info & Logout -->
+            <div class="hidden md:flex items-center space-x-4">
                 <div class="flex items-center space-x-2">
                     <i class="fas fa-user-circle text-xl"></i>
                     <span class="font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
@@ -251,10 +255,19 @@
                     <span>Logout</span>
                 </a>
             </div>
+
+            <!-- Mobile Hamburger Menu Button -->
+            <button id="residentHamburger" class="md:hidden h-8 w-8 flex items-center justify-center cursor-pointer hover:bg-purple-700 rounded transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" class="w-6 h-6">
+                    <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" />
+                </svg>
+            </button>
         </div>
 
-        <div class="bg-purple-700 py-2">
-            <div class="container mx-auto px-4">
+        <!-- Desktop Navigation Menu -->
+        <div class="hidden md:block bg-purple-700 py-2">
+            <div class="px-4">
                 <ul class="flex space-x-6">
                     <li><a href="/community-health-tracker/user/dashboard.php"
                             class="hover:bg-purple-800 px-3 py-1 rounded">Dashboard</a></li>
@@ -268,6 +281,65 @@
             </div>
         </div>
     </nav>
+
+    <!-- Mobile Full-Screen Menu Modal -->
+    <div id="residentMenuModal" class="fixed inset-0 hidden z-40 bg-purple-600 text-white overflow-y-auto">
+        <!-- Close Button -->
+        <div class="flex justify-between items-center p-4 border-b border-purple-700">
+            <div class="h-8 w-8">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <path d="M12 6v12M6 12h12" stroke-linecap="round" />
+                    <path d="M3 12h2l2 4 3-8 3 8 2-4h2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
+            <button id="closeResidentMenu" class="h-8 w-8 flex items-center justify-center hover:bg-purple-700 rounded transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- User Info Section in Modal -->
+        <div class="p-6 border-b border-purple-700">
+            <div class="flex items-center space-x-4">
+                <i class="fas fa-user-circle text-4xl"></i>
+                <div>
+                    <p class="text-sm text-purple-200">Welcome</p>
+                    <p class="text-xl font-semibold"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Items -->
+        <ul class="divide-y divide-purple-700">
+            <li><a href="/community-health-tracker/user/dashboard.php"
+                    class="block px-6 py-4 hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-home mr-3"></i>Dashboard
+                </a></li>
+            <li><a href="/community-health-tracker/user/appointments.php"
+                    class="block px-6 py-4 hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-calendar mr-3"></i>Appointments
+                </a></li>
+            <li><a href="/community-health-tracker/user/health_records.php"
+                    class="block px-6 py-4 hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-file-medical mr-3"></i>My Records
+                </a></li>
+            <li><a href="/community-health-tracker/user/announcements.php"
+                    class="block px-6 py-4 hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-bell mr-3"></i>Announcements
+                </a></li>
+        </ul>
+
+        <!-- Logout Button -->
+        <div class="p-6 border-t border-purple-700 mt-auto">
+            <a href="/community-health-tracker/auth/logout.php"
+                class="block bg-red-500 hover:bg-red-600 px-4 py-3 rounded-lg transition text-center font-semibold">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </a>
+        </div>
+    </div>
 
 <?php else: ?>
     <!-- Public Header (Not logged in) -->
@@ -639,6 +711,44 @@
             if (overlay) {
                 overlay.classList.add('overlay-hidden');
             }
+        }
+    });
+
+    // Resident User Mobile Menu Toggle
+    const residentHamburgerBtn = document.getElementById('residentHamburger');
+    const residentMenuModal = document.getElementById('residentMenuModal');
+    const closeResidentMenuBtn = document.getElementById('closeResidentMenu');
+
+    if (residentHamburgerBtn) {
+        residentHamburgerBtn.addEventListener('click', function() {
+            residentMenuModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        });
+    }
+
+    if (closeResidentMenuBtn) {
+        closeResidentMenuBtn.addEventListener('click', function() {
+            residentMenuModal.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        });
+    }
+
+    // Close menu when a link is clicked
+    if (residentMenuModal) {
+        const menuLinks = residentMenuModal.querySelectorAll('a');
+        menuLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                residentMenuModal.classList.add('hidden');
+                document.body.style.overflow = 'auto'; // Restore scrolling
+            });
+        });
+    }
+
+    // Close menu when pressing Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && residentMenuModal && !residentMenuModal.classList.contains('hidden')) {
+            residentMenuModal.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Restore scrolling
         }
     });
 </script>

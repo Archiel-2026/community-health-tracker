@@ -15,9 +15,15 @@ $staffId = $_SESSION['user']['id'];
 $inline = isset($_GET['inline']) && $_GET['inline'] == 'true';
 
 try {
-    // Verify patient belongs to staff
-    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
-    $stmt->execute([$patientId, $staffId]);
+    require_once __DIR__ . '/../includes/functions.php';
+    // Verify patient belongs to staff or sharing enabled
+    if (staff_can_view_all()) {
+        $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ?");
+        $stmt->execute([$patientId]);
+    } else {
+        $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ?");
+        $stmt->execute([$patientId, $staffId]);
+    }
     
     if (!$stmt->fetch()) {
         die('Access denied');

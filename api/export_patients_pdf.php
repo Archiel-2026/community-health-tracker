@@ -51,6 +51,30 @@ try {
     $stmt->execute($params);
     $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // Log staff/admin activity for exporting patients PDF
+    try {
+        $staff_id = $_SESSION['user']['id'] ?? null;
+        $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        
+        $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            staff_id INT,
+            action_type VARCHAR(100),
+            related_id INT,
+            details JSON,
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            created_at DATETIME
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
+        $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'export_pdf', NULL, ?, ?, ?, NOW())\");
+        $stmtLog->execute([$staff_id, json_encode(['full_name' => $staff_name, 'record_count' => count($patients), 'date_range' => $startDate . ' to ' . $endDate, 'search' => $searchQuery]), $ip, $ua]);
+    } catch (Exception $e) {
+        error_log('Staff activity log error (export_pdf): ' . $e->getMessage());
+    }
+
     // Create new PDF document
     $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
     

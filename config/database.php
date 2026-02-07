@@ -117,8 +117,16 @@ try {
             staff_id INT NOT NULL,
             title VARCHAR(255) NOT NULL,
             message TEXT NOT NULL,
+            priority ENUM('normal', 'medium', 'high') DEFAULT 'normal',            announcement_type ENUM('simple', 'lab_result') DEFAULT 'simple',            expiry_date DATE NULL,
+            status ENUM('active', 'archived', 'deleted') DEFAULT 'active',
+            audience_type ENUM('landing_page', 'public', 'specific') DEFAULT 'public',
+            image_path VARCHAR(500) NULL,
             post_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (staff_id) REFERENCES sitio1_staff(id)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (staff_id) REFERENCES sitio1_staff(id),
+            INDEX idx_status (status),
+            INDEX idx_post_date (post_date)
         )",
         // patient_visits table for storing visit records
         "CREATE TABLE IF NOT EXISTS patient_visits (
@@ -146,10 +154,35 @@ try {
             user_id INT NOT NULL,
             announcement_id INT NOT NULL,
             status ENUM('accepted', 'dismissed') NOT NULL,
+            response_date TIMESTAMP NULL DEFAULT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES sitio1_users(id),
             FOREIGN KEY (announcement_id) REFERENCES sitio1_announcements(id),
             UNIQUE KEY unique_user_announcement (user_id, announcement_id)
+        )",
+        
+        "CREATE TABLE IF NOT EXISTS announcement_targets (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            announcement_id INT NOT NULL,
+            user_id INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (announcement_id) REFERENCES sitio1_announcements(id),
+            FOREIGN KEY (user_id) REFERENCES sitio1_users(id),
+            UNIQUE KEY unique_target (announcement_id, user_id)
+        )",
+        
+        "CREATE TABLE IF NOT EXISTS announcement_messages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            announcement_id INT NOT NULL,
+            sender_id INT NOT NULL,
+            message TEXT NOT NULL,
+            is_edited BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (announcement_id) REFERENCES sitio1_announcements(id),
+            FOREIGN KEY (sender_id) REFERENCES sitio1_users(id),
+            INDEX idx_announcement (announcement_id),
+            INDEX idx_created_at (created_at)
         )"
     ];
     
@@ -170,6 +203,34 @@ try {
         if ($stmt->rowCount() == 0) {
             $pdo->exec("ALTER TABLE sitio1_users ADD COLUMN occupation VARCHAR(100) DEFAULT NULL AFTER civil_status");
         }
+        
+        // Check and add announcement_type column if it doesn't exist
+        $stmt = $pdo->query("SHOW COLUMNS FROM sitio1_announcements LIKE 'announcement_type'");
+        if ($stmt->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE sitio1_announcements ADD COLUMN announcement_type ENUM('simple', 'lab_result') DEFAULT 'simple' AFTER priority");
+        }
+        
+        // Check and add family_medical_history column if it doesn't exist
+        $stmt = $pdo->query("SHOW COLUMNS FROM existing_info_patients LIKE 'family_medical_history'");
+        if ($stmt->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE existing_info_patients ADD COLUMN family_medical_history TEXT DEFAULT NULL");
+        }
+        
+        // Check and add other missing columns if they don't exist
+        $stmt = $pdo->query("SHOW COLUMNS FROM existing_info_patients LIKE 'chronic_conditions'");
+        if ($stmt->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE existing_info_patients ADD COLUMN chronic_conditions TEXT DEFAULT NULL");
+        }
+        
+        $stmt = $pdo->query("SHOW COLUMNS FROM existing_info_patients LIKE 'immunization_record'");
+        if ($stmt->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE existing_info_patients ADD COLUMN immunization_record TEXT DEFAULT NULL");
+        }
+        
+        $stmt = $pdo->query("SHOW COLUMNS FROM existing_info_patients LIKE 'medical_history'");
+        if ($stmt->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE existing_info_patients ADD COLUMN medical_history TEXT DEFAULT NULL");
+        }
     } catch (PDOException $e) {
         // Columns might already exist, continue
     }
@@ -184,5 +245,10 @@ try {
     
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
+}
+// Helper function to get PDO instance
+function getPDO() {
+    global $pdo;
+    return $pdo;
 }
 ?>
