@@ -143,7 +143,7 @@ $totalPatients = count($allPatientInfo);
                 <svg width="18" height="32" viewBox="0 0 18 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M14.5855 0.523023C15.2829 -0.174341 16.4133 -0.174341 17.1106 0.523023C17.808 1.22039 17.808 2.35077 17.1106 3.04814L4.31069 15.8481L17.1106 28.648C17.808 29.3454 17.808 30.4758 17.1106 31.1731C16.4133 31.8705 15.2829 31.8705 14.5855 31.1731L0.523023 17.1106C-0.174341 16.4133 -0.174341 15.2829 0.523023 14.5855L14.5855 0.523023Z" fill="black"/> </svg>
             </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-1">Health Profile</h1>
+                <h1 class="text-2xl font-medium text-gray-900 mb-1">My Records</h1>
                 <p class="text-[#B8B8B8]">View and manage your medical records</p>
            </div>
         </div>
@@ -197,7 +197,7 @@ $totalPatients = count($allPatientInfo);
         </div> -->
 
         <!-- Main Content Tabs -->
-        <div class="bg-white rounded-lg shadow mb-8">
+        <div class="bg-white rounded-lg mb-8">
             <!-- Tab Headers -->
             <div class="border-b">
                 <div class="flex overflow-x-auto">
@@ -214,7 +214,7 @@ $totalPatients = count($allPatientInfo);
             </div>
 
             <!-- Tab Content -->
-            <div class="p-6">
+            <div class="py-6">
                 <!-- Consultations Tab -->
                 <div id="consultations" class="tab-content active">
                     <?php if (empty($allPatientInfo)): ?>
