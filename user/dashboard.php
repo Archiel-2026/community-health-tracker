@@ -731,7 +731,7 @@ function getTimeAgo($datetime)
         <!-- Analytics Tab Content -->
         <div class="tab-content <?= $activeTab === 'analytics' ? 'active' : '' ?>">
             <!-- Health Analytics Dashboard -->
-            <div class="space-y-8">
+            <div class="space-y-8 mt-24">
                 <!-- Stats Overview Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Consultations Card -->

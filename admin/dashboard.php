@@ -44,16 +44,16 @@ $error_message = null;
 // Handle patient deletion
 if (isset($_GET['delete_patient']) && isset($_GET['confirm']) && $_GET['confirm'] == 'true') {
     $patientId = $_GET['delete_patient'];
-    
+
     try {
         // Start transaction
         $pdo->beginTransaction();
-        
+
         // Get patient data before deletion for archive - ONLY from sitio1_patients
         $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ?");
         $stmt->execute([$patientId]);
         $patientData = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($patientData) {
             // Check if deleted_patients table exists, if not create it
             try {
@@ -93,16 +93,16 @@ if (isset($_GET['delete_patient']) && isset($_GET['confirm']) && $_GET['confirm'
                         )
                     ");
                 }
-                
+
                 // Check the actual structure of deleted_patients table
                 $stmt = $pdo->query("DESCRIBE deleted_patients");
                 $deletedColumns = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
-                
+
                 // Prepare data for insertion - only include columns that exist in both tables
                 $columns = ['original_id'];
                 $placeholders = ['?'];
                 $values = [$patientData['id']];
-                
+
                 // Map columns from patientData to deleted_patients table
                 $columnMappings = [
                     'user_id' => 'user_id',
@@ -126,7 +126,7 @@ if (isset($_GET['delete_patient']) && isset($_GET['confirm']) && $_GET['confirm'
                     'consent_date' => 'consent_date',
                     'patient_record_uid' => 'patient_record_uid'
                 ];
-                
+
                 foreach ($columnMappings as $sourceCol => $destCol) {
                     if (isset($patientData[$sourceCol]) && in_array($destCol, $deletedColumns)) {
                         $columns[] = $destCol;
@@ -134,21 +134,21 @@ if (isset($_GET['delete_patient']) && isset($_GET['confirm']) && $_GET['confirm'
                         $values[] = $patientData[$sourceCol];
                     }
                 }
-                
+
                 // Add deleted_by
                 $columns[] = 'deleted_by';
                 $placeholders[] = "?";
                 $values[] = $_SESSION['user']['id'];
-                
+
                 // Build and execute insert query
                 $insertQuery = "INSERT INTO deleted_patients (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $placeholders) . ")";
                 $stmt = $pdo->prepare($insertQuery);
                 $stmt->execute($values);
-                
+
             } catch (Exception $e) {
                 // If table creation fails, create a simpler version
                 error_log("Table error: " . $e->getMessage());
-                
+
                 // Try to create a simpler table
                 try {
                     $pdo->exec("
@@ -167,14 +167,14 @@ if (isset($_GET['delete_patient']) && isset($_GET['confirm']) && $_GET['confirm'
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )
                     ");
-                    
+
                     // Insert basic patient data
                     $stmt = $pdo->prepare("
                         INSERT INTO deleted_patients 
                         (original_id, full_name, age, gender, address, sitio, contact, added_by, deleted_by)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
-                    
+
                     $stmt->execute([
                         $patientData['id'],
                         $patientData['full_name'] ?? '',
@@ -191,11 +191,11 @@ if (isset($_GET['delete_patient']) && isset($_GET['confirm']) && $_GET['confirm'
                     // If even simple creation fails, just do soft delete without archiving
                 }
             }
-            
+
             // Soft delete from main table
             $stmt = $pdo->prepare("UPDATE sitio1_patients SET deleted_at = NOW() WHERE id = ?");
             $stmt->execute([$patientId]);
-            
+
             $pdo->commit();
             $_SESSION['success_message'] = 'Patient record has been moved to archive successfully!';
             header('Location: admin_dashboard.php');
@@ -214,11 +214,11 @@ if (isset($_GET['delete_patient']) && isset($_GET['confirm']) && $_GET['confirm'
 // Handle permanent deletion (skip archive)
 if (isset($_GET['permanent_delete']) && isset($_GET['confirm']) && $_GET['confirm'] == 'true') {
     $patientId = $_GET['permanent_delete'];
-    
+
     try {
         // Start transaction
         $pdo->beginTransaction();
-        
+
         // Delete from existing_info_patients if table exists
         try {
             $tableCheck = $pdo->query("SHOW TABLES LIKE 'existing_info_patients'");
@@ -229,11 +229,11 @@ if (isset($_GET['permanent_delete']) && isset($_GET['confirm']) && $_GET['confir
         } catch (Exception $e) {
             error_log("Error deleting from existing_info_patients: " . $e->getMessage());
         }
-        
+
         // Delete from main patients table
         $stmt = $pdo->prepare("DELETE FROM sitio1_patients WHERE id = ?");
         $stmt->execute([$patientId]);
-        
+
         $pdo->commit();
         $_SESSION['success_message'] = 'Patient record permanently deleted!';
         header('Location: admin_dashboard.php');
@@ -252,13 +252,13 @@ if (isset($_GET['permanent_delete']) && isset($_GET['confirm']) && $_GET['confir
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_patient') {
     header('Content-Type: application/json; charset=utf-8');
     $response = ['success' => false, 'message' => '', 'errors' => []];
-    
+
     try {
         $patientId = $_POST['patient_id'] ?? null;
         if (!$patientId) {
             throw new Exception("Patient ID is required");
         }
-        
+
         // Validate required fields
         $requiredFields = ['full_name', 'age', 'gender', 'sitio', 'contact'];
         foreach ($requiredFields as $field) {
@@ -266,13 +266,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $response['errors'][$field] = "This field is required";
             }
         }
-        
+
         if (!empty($response['errors'])) {
             $response['message'] = 'Please fill in all required fields';
             echo json_encode($response);
             exit;
         }
-        
+
         // Prepare update data
         $updateFields = [
             'full_name' => $_POST['full_name'],
@@ -293,29 +293,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             'consent_given' => isset($_POST['consent_given']) ? 1 : 0,
             'consent_date' => !empty($_POST['consent_date']) ? $_POST['consent_date'] : null
         ];
-        
+
         // Build the update query
         $setClauses = [];
         $params = [];
-        
+
         foreach ($updateFields as $field => $value) {
             $setClauses[] = "$field = ?";
             $params[] = $value;
         }
-        
+
         $params[] = $patientId;
-        
+
         $updateQuery = "UPDATE sitio1_patients SET " . implode(", ", $setClauses) . " WHERE id = ?";
         $stmt = $pdo->prepare($updateQuery);
         $stmt->execute($params);
-        
+
         $response['success'] = true;
         $response['message'] = 'Patient record updated successfully!';
-        
+
     } catch (Exception $e) {
         $response['message'] = 'Error updating patient: ' . $e->getMessage();
     }
-    
+
     echo json_encode($response);
     exit;
 }
@@ -328,7 +328,7 @@ if (isset($_GET['get_patient']) && is_numeric($_GET['get_patient'])) {
         $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ? AND deleted_at IS NULL");
         $stmt->execute([$patientId]);
         $patient = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($patient) {
             echo json_encode(['success' => true, 'patient' => $patient]);
         } else {
@@ -361,19 +361,19 @@ if (isset($_GET['list_patients'])) {
             $countStmt = $pdo->prepare("SELECT COUNT(*) as cnt FROM sitio1_patients p WHERE p.deleted_at IS NULL " . $where);
             $countStmt->bindValue(':q', '%' . $q . '%', PDO::PARAM_STR);
             $countStmt->execute();
-            $total = (int)$countStmt->fetchColumn();
+            $total = (int) $countStmt->fetchColumn();
 
             $stmt = $pdo->prepare("SELECT p.*, u.email as user_email, s.full_name as added_by_name, CASE WHEN p.user_id IS NOT NULL THEN 'Linked' ELSE 'Unlinked' END as linking_status FROM sitio1_patients p LEFT JOIN sitio1_users u ON p.user_id = u.id LEFT JOIN sitio1_staff s ON p.added_by = s.id WHERE p.deleted_at IS NULL " . $where . " ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset");
             $stmt->bindValue(':q', '%' . $q . '%', PDO::PARAM_STR);
         } else {
             $countStmt = $pdo->query("SELECT COUNT(*) as cnt FROM sitio1_patients p WHERE p.deleted_at IS NULL");
-            $total = (int)$countStmt->fetchColumn();
+            $total = (int) $countStmt->fetchColumn();
 
             $stmt = $pdo->prepare("SELECT p.*, u.email as user_email, s.full_name as added_by_name, CASE WHEN p.user_id IS NOT NULL THEN 'Linked' ELSE 'Unlinked' END as linking_status FROM sitio1_patients p LEFT JOIN sitio1_users u ON p.user_id = u.id LEFT JOIN sitio1_staff s ON p.added_by = s.id WHERE p.deleted_at IS NULL ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset");
         }
 
-        $stmt->bindValue(':limit', (int)$perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int) $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
         $stmt->execute();
         $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -394,18 +394,18 @@ if (isset($_GET['list_patients'])) {
 try {
     // Check if tables exist before querying
     $tables = ['sitio1_staff', 'sitio1_users', 'sitio1_patients'];
-    
+
     foreach ($tables as $table) {
         $check = $pdo->query("SHOW TABLES LIKE '$table'");
         if ($check->rowCount() == 0) {
             throw new Exception("Table '$table' does not exist in the database.");
         }
     }
-    
+
     // Check if existing_info_patients table exists
     $check = $pdo->query("SHOW TABLES LIKE 'existing_info_patients'");
     $has_existing_info_table = $check->rowCount() > 0;
-    
+
     // Check sitio1_staff table structure
     $staffColumns = [];
     try {
@@ -417,32 +417,32 @@ try {
     } catch (Exception $e) {
         error_log("Error checking staff table structure: " . $e->getMessage());
     }
-    
+
     // ACTIVE STAFF - Fixed query
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM sitio1_staff WHERE is_active = 1");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['total_active_staff'] = $result ? $result['count'] : 0;
-    
+
     // INACTIVE STAFF
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM sitio1_staff WHERE is_active = 0");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['total_inactive_staff'] = $result ? $result['count'] : 0;
-    
+
     // RESIDENT ACCOUNTS (ALL CREATED)
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM sitio1_users WHERE role = 'patient'");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['total_approved_residents'] = $result ? $result['count'] : 0;
-    
+
     // PENDING RESIDENTS
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM sitio1_users WHERE role = 'patient' AND status = 'pending'");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['total_pending_residents'] = $result ? $result['count'] : 0;
-    
+
     // DECLINED RESIDENTS
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM sitio1_users WHERE role = 'patient' AND status = 'declined'");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['total_declined_residents'] = $result ? $result['count'] : 0;
-    
+
     // UNLINKED RESIDENTS
     $stmt = $pdo->prepare("
         SELECT COUNT(*) as count
@@ -455,17 +455,17 @@ try {
     $stmt->execute();
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['total_unlinked_residents'] = $result ? $result['count'] : 0;
-    
+
     // TOTAL PATIENTS
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM sitio1_patients WHERE deleted_at IS NULL");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['total_patients'] = $result ? $result['count'] : 0;
-    
+
     // UNLINKED PATIENTS
     $stmt = $pdo->query("SELECT COUNT(*) as count FROM sitio1_patients WHERE user_id IS NULL AND deleted_at IS NULL");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['total_unlinked_patients'] = $result ? $result['count'] : 0;
-    
+
     // LINKED ACCOUNTS COUNT
     $stmt = $pdo->prepare("
         SELECT COUNT(DISTINCT u.id) as count
@@ -478,7 +478,7 @@ try {
     $stmt->execute();
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $stats['linked_accounts_count'] = $result ? $result['count'] : 0;
-    
+
     // Get recent patients (last 20)
     // First, let's check what columns exist in sitio1_staff
     $staffNameField = 'username'; // Default assumption
@@ -489,7 +489,7 @@ try {
     } elseif (in_array('first_name', $staffColumns)) {
         $staffNameField = 'first_name';
     }
-    
+
     // Build the query based on available columns
     $recentPatientsQuery = "
         SELECT 
@@ -507,11 +507,11 @@ try {
         ORDER BY p.created_at DESC
         LIMIT 20
     ";
-    
+
     $stmt = $pdo->prepare($recentPatientsQuery);
     $stmt->execute();
     $stats['recent_patients'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // If the query failed with the first assumption, try a simpler query
     if ($stmt->errorCode() != '00000') {
         $recentPatientsQuery = "
@@ -530,12 +530,12 @@ try {
             ORDER BY p.created_at DESC
             LIMIT 20
         ";
-        
+
         $stmt = $pdo->prepare($recentPatientsQuery);
         $stmt->execute();
         $stats['recent_patients'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
+
 } catch (PDOException $e) {
     error_log("Dashboard database error: " . $e->getMessage());
     $error_message = "Database error: " . $e->getMessage();
@@ -564,21 +564,24 @@ try {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as $r) {
         $idx = array_search($r['month'], $months);
-        if ($idx !== false) $staffCounts[$idx] = (int)$r['cnt'];
+        if ($idx !== false)
+            $staffCounts[$idx] = (int) $r['cnt'];
     }
 
     $stmt = $pdo->query("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as cnt FROM sitio1_users WHERE role = 'patient' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH) GROUP BY month");
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as $r) {
         $idx = array_search($r['month'], $months);
-        if ($idx !== false) $residentCounts[$idx] = (int)$r['cnt'];
+        if ($idx !== false)
+            $residentCounts[$idx] = (int) $r['cnt'];
     }
 
     $stmt = $pdo->query("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as cnt FROM sitio1_patients WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH) AND deleted_at IS NULL GROUP BY month");
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($rows as $r) {
         $idx = array_search($r['month'], $months);
-        if ($idx !== false) $patientCounts[$idx] = (int)$r['cnt'];
+        if ($idx !== false)
+            $patientCounts[$idx] = (int) $r['cnt'];
     }
 } catch (Exception $e) {
     // ignore, use defaults
@@ -602,10 +605,12 @@ if (file_exists($logFile)) {
     $lines = array_filter(array_map('trim', array_slice(file($logFile), -500)));
     foreach ($lines as $line) {
         $decoded = @json_decode($line, true);
-        if (!$decoded) continue;
+        if (!$decoded)
+            continue;
 
         // Normalize time
-        if (isset($decoded['timestamp'])) $decoded['created_at'] = $decoded['timestamp'];
+        if (isset($decoded['timestamp']))
+            $decoded['created_at'] = $decoded['timestamp'];
 
         // Resident login/logout
         if (!empty($decoded['type']) && in_array($decoded['type'], ['login', 'logout'])) {
@@ -620,9 +625,11 @@ if (file_exists($logFile)) {
                     if ($row && !empty($row['full_name'])) {
                         $userNames[$uid] = $row['full_name'];
                     }
-                } catch (Exception $e) {}
+                } catch (Exception $e) {
+                }
             }
-            if ($uid && !empty($userNames[$uid])) $decoded['display_name'] = $userNames[$uid];
+            if ($uid && !empty($userNames[$uid]))
+                $decoded['display_name'] = $userNames[$uid];
 
             $resident_logs[] = $decoded;
             continue;
@@ -640,9 +647,11 @@ if (file_exists($logFile)) {
                     if ($row && !empty($row['full_name'])) {
                         $staffNames[$sid] = $row['full_name'];
                     }
-                } catch (Exception $e) {}
+                } catch (Exception $e) {
+                }
             }
-            if ($sid && !empty($staffNames[$sid])) $decoded['display_name'] = $staffNames[$sid];
+            if ($sid && !empty($staffNames[$sid]))
+                $decoded['display_name'] = $staffNames[$sid];
 
             $staff_logs[] = $decoded;
             continue;
@@ -668,10 +677,13 @@ try {
                 $stmt2 = $pdo->prepare("SELECT full_name FROM sitio1_users WHERE id = ?");
                 $stmt2->execute([$uid]);
                 $row = $stmt2->fetch(PDO::FETCH_ASSOC);
-                if ($row && !empty($row['full_name'])) $userNames[$uid] = $row['full_name'];
-            } catch (Exception $e) {}
+                if ($row && !empty($row['full_name']))
+                    $userNames[$uid] = $row['full_name'];
+            } catch (Exception $e) {
+            }
         }
-        if ($uid && !empty($userNames[$uid])) $r['display_name'] = $userNames[$uid];
+        if ($uid && !empty($userNames[$uid]))
+            $r['display_name'] = $userNames[$uid];
         $resident_logs[] = $r;
     }
 } catch (Exception $e) {
@@ -686,7 +698,7 @@ try {
         $r['type'] = $r['action_type'];
         $r['created_at'] = $r['created_at'];
         $r['display_name'] = 'Staff #' . $sid;
-        
+
         // First try to extract name from details JSON (for login/logout which stores the name)
         if (!empty($r['details'])) {
             $detailsData = json_decode($r['details'], true);
@@ -694,7 +706,7 @@ try {
                 $staffNames[$sid] = $detailsData['full_name'];
             }
         }
-        
+
         // If not found in details, look up from database
         if ($sid && !isset($staffNames[$sid])) {
             try {
@@ -715,9 +727,11 @@ try {
                         $staffNames[$sid] = $row2['username'];
                     }
                 }
-            } catch (Exception $e) {}
+            } catch (Exception $e) {
+            }
         }
-        if ($sid && !empty($staffNames[$sid])) $r['display_name'] = $staffNames[$sid];
+        if ($sid && !empty($staffNames[$sid]))
+            $r['display_name'] = $staffNames[$sid];
         $staff_logs[] = $r;
     }
 } catch (Exception $e) {
@@ -725,13 +739,19 @@ try {
 }
 
 // Sort both logs desc
-usort($resident_logs, function($a, $b) { $ta = strtotime($a['created_at'] ?? 0); $tb = strtotime($b['created_at'] ?? 0); return $tb <=> $ta; });
-usort($staff_logs, function($a, $b) { $ta = strtotime($a['created_at'] ?? 0); $tb = strtotime($b['created_at'] ?? 0); return $tb <=> $ta; });
+usort($resident_logs, function ($a, $b) {
+    $ta = strtotime($a['created_at'] ?? 0);
+    $tb = strtotime($b['created_at'] ?? 0);
+    return $tb <=> $ta; });
+usort($staff_logs, function ($a, $b) {
+    $ta = strtotime($a['created_at'] ?? 0);
+    $tb = strtotime($b['created_at'] ?? 0);
+    return $tb <=> $ta; });
 
 // Pagination
 $perPage = 10;
-$page_resident = isset($_GET['page_resident']) ? max(1,intval($_GET['page_resident'])) : 1;
-$page_staff = isset($_GET['page_staff']) ? max(1,intval($_GET['page_staff'])) : 1;
+$page_resident = isset($_GET['page_resident']) ? max(1, intval($_GET['page_resident'])) : 1;
+$page_staff = isset($_GET['page_staff']) ? max(1, intval($_GET['page_staff'])) : 1;
 
 $resident_total = count($resident_logs);
 $staff_total = count($staff_logs);
@@ -748,6 +768,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -766,7 +787,9 @@ require_once __DIR__ . '/../includes/header.php';
         }
 
         /* Ensure Font Awesome icons are visible */
-        .fas, .far, .fab {
+        .fas,
+        .far,
+        .fab {
             font-family: 'Font Awesome 6 Free' !important;
             font-weight: 900 !important;
             display: inline-block !important;
@@ -775,7 +798,7 @@ require_once __DIR__ . '/../includes/header.php';
         .far {
             font-weight: 400 !important;
         }
-        
+
         /* Main container styling - Updated to match user dashboard */
         .main-container {
             background: white;
@@ -785,7 +808,7 @@ require_once __DIR__ . '/../includes/header.php';
             border: 1px solid #e5e7eb;
             margin-bottom: 24px;
         }
-        
+
         /* Success/Error message styling */
         .alert-success {
             background-color: #f0fdf4;
@@ -793,22 +816,22 @@ require_once __DIR__ . '/../includes/header.php';
             color: #065f46;
             border-radius: 8px;
         }
-        
+
         .alert-error {
             background-color: #fef2f2;
             border: 2px solid #fecaca;
             color: #b91c1c;
             border-radius: 8px;
         }
-        
+
         /* Button Styles - Updated to match user dashboard */
-        .btn-primary { 
-            background-color: white; 
-            color: #3b82f6; 
-            border: 2px solid #bae6fd; 
-            border-radius: 8px; 
-            padding: 12px 24px; 
-            transition: all 0.3s ease; 
+        .btn-primary {
+            background-color: white;
+            color: #3b82f6;
+            border: 2px solid #bae6fd;
+            border-radius: 8px;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
             font-weight: 500;
             min-height: 48px;
             display: inline-flex;
@@ -817,20 +840,21 @@ require_once __DIR__ . '/../includes/header.php';
             font-size: 14px;
             text-decoration: none;
         }
-        .btn-primary:hover { 
-            background-color: #eff6ff; 
+
+        .btn-primary:hover {
+            background-color: #eff6ff;
             border-color: #3b82f6;
-            transform: translateY(-2px); 
+            transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
         }
-        
-        .btn-action { 
-            background-color: white; 
-            color: #374151; 
-            border: 1px solid #e5e7eb; 
-            border-radius: 8px; 
-            padding: 10px 20px; 
-            transition: all 0.3s ease; 
+
+        .btn-action {
+            background-color: white;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
             font-weight: 500;
             display: inline-flex;
             align-items: center;
@@ -838,19 +862,20 @@ require_once __DIR__ . '/../includes/header.php';
             text-decoration: none;
             font-size: 14px;
         }
-        .btn-action:hover { 
-            background-color: #f9fafb; 
+
+        .btn-action:hover {
+            background-color: #f9fafb;
             border-color: #3b82f6;
-            transform: translateY(-2px); 
+            transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
         }
-        
-        .btn-view { 
-            background-color: #3b82f6; 
-            color: white; 
-            border-radius: 8px; 
-            padding: 8px 16px; 
-            transition: all 0.3s ease; 
+
+        .btn-view {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
             font-weight: 500;
             display: inline-flex;
             align-items: center;
@@ -859,18 +884,19 @@ require_once __DIR__ . '/../includes/header.php';
             font-size: 13px;
             border: none;
         }
-        .btn-view:hover { 
-            background-color: #2563eb; 
-            transform: translateY(-2px); 
+
+        .btn-view:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
         }
-        
-        .btn-edit { 
-            background-color: #10b981; 
-            color: white; 
-            border-radius: 8px; 
-            padding: 8px 16px; 
-            transition: all 0.3s ease; 
+
+        .btn-edit {
+            background-color: #10b981;
+            color: white;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
             font-weight: 500;
             display: inline-flex;
             align-items: center;
@@ -879,18 +905,19 @@ require_once __DIR__ . '/../includes/header.php';
             font-size: 13px;
             border: none;
         }
-        .btn-edit:hover { 
-            background-color: #059669; 
-            transform: translateY(-2px); 
+
+        .btn-edit:hover {
+            background-color: #059669;
+            transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
         }
-        
-        .btn-delete { 
-            background-color: #ef4444; 
-            color: white; 
-            border-radius: 8px; 
-            padding: 8px 16px; 
-            transition: all 0.3s ease; 
+
+        .btn-delete {
+            background-color: #ef4444;
+            color: white;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
             font-weight: 500;
             display: inline-flex;
             align-items: center;
@@ -899,44 +926,45 @@ require_once __DIR__ . '/../includes/header.php';
             font-size: 13px;
             border: none;
         }
-        .btn-delete:hover { 
-            background-color: #dc2626; 
-            transform: translateY(-2px); 
+
+        .btn-delete:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
         }
-        
+
         /* Stats card styling */
         .stats-card {
-              background: white;
+            background: white;
             border-radius: 12px;
             padding: 24px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
-              border: 1px solid #e5e7eb;
+            border: 1px solid #e5e7eb;
             height: 100%;
         }
-        
+
         .stats-card:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         /* Icon containers */
         .icon-container {
-              width: 56px;
-              height: 56px;
+            width: 56px;
+            height: 56px;
             border-radius: 12px;
             display: flex !important;
             align-items: center;
             justify-content: center;
             margin-right: 16px;
         }
-        
+
         .icon-container i {
-              font-size: 24px !important;
+            font-size: 24px !important;
             display: block !important;
         }
-        
+
         /* Badge styling */
         .stats-badge {
             padding: 8px 14px;
@@ -947,7 +975,7 @@ require_once __DIR__ . '/../includes/header.php';
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
-        
+
         /* Custom notification animation */
         .custom-notification {
             animation: slideIn 0.3s ease-out;
@@ -958,17 +986,29 @@ require_once __DIR__ . '/../includes/header.php';
             min-width: 300px;
             max-width: 400px;
         }
-        
-        @keyframes slideIn { 
-            from { transform: translateX(100%); opacity: 0; } 
-            to { transform: translateX(0); opacity: 1; } 
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
-        
+
         @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
         }
-        
+
         /* Progress bar */
         .progress-bar {
             height: 8px;
@@ -977,31 +1017,31 @@ require_once __DIR__ . '/../includes/header.php';
             overflow: hidden;
             margin-top: 12px;
         }
-        
+
         .progress-fill {
             height: 100%;
             border-radius: 4px;
             transition: width 0.5s ease;
         }
-        
+
         /* Quick action cards */
         .quick-action-card {
-              padding: 24px;
+            padding: 24px;
             border-radius: 12px;
             transition: all 0.3s ease;
-              border: 1px solid #e5e7eb;
+            border: 1px solid #e5e7eb;
             background: white;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             text-decoration: none !important;
             color: inherit;
             display: block;
         }
-        
+
         .quick-action-card:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         .quick-action-icon {
             width: 48px;
             height: 48px;
@@ -1011,41 +1051,42 @@ require_once __DIR__ . '/../includes/header.php';
             justify-content: center;
             margin-right: 16px;
         }
-        
+
         .quick-action-icon i {
             font-size: 24px !important;
             display: block !important;
         }
-        
+
         /* Table styling */
-        .patient-table { 
-            width: 100%; 
-            border-collapse: collapse; 
+        .patient-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        
-        .patient-table th, .patient-table td { 
-            padding: 12px 15px; 
-            text-align: left; 
-            border-bottom: 1px solid #e2e8f0; 
+
+        .patient-table th,
+        .patient-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
         }
-        
-        .patient-table th { 
-            background-color: #f0f9ff; 
-            color: #2c3e50; 
+
+        .patient-table th {
+            background-color: #f0f9ff;
+            color: #2c3e50;
             border-bottom: 2px solid #e2e8f0;
             font-weight: 600;
             font-size: 14px;
         }
-        
-        .patient-table tr:hover { 
-            background-color: #f8fafc; 
+
+        .patient-table tr:hover {
+            background-color: #f8fafc;
         }
 
         /* Activity logs improvements: fixed layout, truncation, and scroll wrapper */
-        .activity-logs-wrapper { 
-            max-height: 360px; 
-            overflow-y: auto; 
-            overflow-x: auto; 
+        .activity-logs-wrapper {
+            max-height: 360px;
+            overflow-y: auto;
+            overflow-x: auto;
             padding-right: 6px;
             width: 100%;
         }
@@ -1087,7 +1128,9 @@ require_once __DIR__ . '/../includes/header.php';
         }
 
         @keyframes logsSpin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Activity log tabs (ensure visibility) */
@@ -1144,67 +1187,74 @@ require_once __DIR__ . '/../includes/header.php';
             background: rgba(255, 255, 255, 0.2);
             color: #ffffff;
         }
-        
-        .logs-fullwidth { 
-            width: 100%; 
-            max-width: 100%; 
-            margin-left: 0; 
-            margin-right: 0; 
-            box-sizing: border-box; 
+
+        .logs-fullwidth {
+            width: 100%;
+            max-width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+            box-sizing: border-box;
         }
-        
-        .patient-table { 
-            table-layout: fixed; 
+
+        .patient-table {
+            table-layout: fixed;
             width: auto;
             min-width: 100%;
         }
-        
-        .patient-table td { 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            white-space: nowrap; 
+
+        .patient-table td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        
-        .patient-table th:nth-child(1), .patient-table td:nth-child(1) { 
-            min-width: 180px; 
+
+        .patient-table th:nth-child(1),
+        .patient-table td:nth-child(1) {
+            min-width: 180px;
         }
-        
-        .patient-table th:nth-child(2), .patient-table td:nth-child(2) { 
-            min-width: 240px; 
+
+        .patient-table th:nth-child(2),
+        .patient-table td:nth-child(2) {
+            min-width: 240px;
         }
-        
-        .patient-table th:nth-child(3), .patient-table td:nth-child(3) { 
-            min-width: 180px; 
+
+        .patient-table th:nth-child(3),
+        .patient-table td:nth-child(3) {
+            min-width: 180px;
         }
-        
+
         /* allow details column to wrap and show full message */
-        .patient-table th:nth-child(4), .patient-table td:nth-child(4) { 
-            min-width: 300px; 
-            white-space: normal; 
+        .patient-table th:nth-child(4),
+        .patient-table td:nth-child(4) {
+            min-width: 300px;
+            white-space: normal;
         }
-        
-        .patient-table td .small-text { 
-            display:block; 
-            color:#6b7280; 
-            font-size:12px; 
+
+        .patient-table td .small-text {
+            display: block;
+            color: #6b7280;
+            font-size: 12px;
         }
-        
+
         /* Mobile: allow horizontal scroll for very small screens */
         @media (max-width: 640px) {
-            .patient-table { 
-                table-layout: auto; 
+            .patient-table {
+                table-layout: auto;
                 min-width: 600px;
             }
-            .patient-table td { 
-                white-space: normal; 
+
+            .patient-table td {
+                white-space: normal;
             }
-            .activity-logs-wrapper { 
-                max-height: 280px; 
+
+            .activity-logs-wrapper {
+                max-height: 280px;
             }
         }
 
         /* Desktop adjustments: center logs container and improve readability */
         @media (min-width: 1024px) {
+
             /* Keep the activity logs visually contained and centered on large screens */
             .logs-fullwidth {
                 width: 100%;
@@ -1228,15 +1278,37 @@ require_once __DIR__ . '/../includes/header.php';
             }
 
             /* make headers and columns more readable */
-            .patient-table { table-layout: auto; }
-            .patient-table th, .patient-table td { padding: 10px 12px; }
-            .patient-table td { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-            .patient-table th:nth-child(1), .patient-table td:nth-child(1) { min-width: 160px; }
-            .patient-table th:nth-child(2), .patient-table td:nth-child(2) { min-width: 220px; }
-            .patient-table th:nth-child(3), .patient-table td:nth-child(3) { min-width: 160px; }
-            .patient-table th:nth-child(4), .patient-table td:nth-child(4) { min-width: 260px; }
+            .patient-table {
+                table-layout: auto;
+            }
+
+            .patient-table th,
+            .patient-table td {
+                padding: 10px 16px;
+            }
+
+            /* .patient-table td { white-space: normal; overflow-wrap: anywhere; word-break: break-word; } */
+            .patient-table th:nth-child(1),
+            .patient-table td:nth-child(1) {
+                min-width: 160px;
+            }
+
+            .patient-table th:nth-child(2),
+            .patient-table td:nth-child(2) {
+                min-width: 220px;
+            }
+
+            .patient-table th:nth-child(3),
+            .patient-table td:nth-child(3) {
+                min-width: 160px;
+            }
+
+            .patient-table th:nth-child(4),
+            .patient-table td:nth-child(4) {
+                min-width: 260px;
+            }
         }
-        
+
         /* Status badges */
         .status-badge {
             display: inline-block;
@@ -1246,17 +1318,17 @@ require_once __DIR__ . '/../includes/header.php';
             font-weight: 600;
             text-transform: uppercase;
         }
-        
+
         .status-linked {
             background-color: #d1fae5;
             color: #065f46;
         }
-        
+
         .status-unlinked {
             background-color: #fef3c7;
             color: #92400e;
         }
-        
+
         /* Modal styling */
         .modal-overlay {
             display: none;
@@ -1268,7 +1340,7 @@ require_once __DIR__ . '/../includes/header.php';
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 1000;
         }
-        
+
         .modal-container {
             position: fixed;
             top: 50%;
@@ -1278,12 +1350,12 @@ require_once __DIR__ . '/../includes/header.php';
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
             z-index: 1001;
-            max-width: 800px;
+            max-width: auto;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
         }
-        
+
         /* Loading spinner */
         .loading-spinner {
             display: none;
@@ -1293,19 +1365,19 @@ require_once __DIR__ . '/../includes/header.php';
             transform: translate(-50%, -50%);
             z-index: 1002;
         }
-        
+
         /* Form styling */
         .form-group {
             margin-bottom: 1rem;
         }
-        
+
         .form-label {
             display: block;
             font-weight: 500;
             margin-bottom: 0.5rem;
             color: #374151;
         }
-        
+
         .form-control {
             width: 100%;
             padding: 0.75rem;
@@ -1314,24 +1386,24 @@ require_once __DIR__ . '/../includes/header.php';
             font-size: 0.875rem;
             transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
-        
+
         .form-control:focus {
             outline: none;
             border-color: #3498db;
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
-        
+
         .form-textarea {
             min-height: 100px;
             resize: vertical;
         }
-        
+
         .error-message {
             color: #dc2626;
             font-size: 0.75rem;
             margin-top: 0.25rem;
         }
-        
+
         /* Info cards in view modal */
         .info-card {
             background: #f8fafc;
@@ -1340,7 +1412,7 @@ require_once __DIR__ . '/../includes/header.php';
             padding: 12px 14px;
             margin-bottom: 0;
         }
-        
+
         .info-label {
             font-weight: 700;
             color: #2c3e50;
@@ -1349,13 +1421,13 @@ require_once __DIR__ . '/../includes/header.php';
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
-        
+
         .info-value {
             color: #1f2937;
             font-size: 14px;
             font-weight: 500;
         }
-        
+
         .info-empty {
             color: #9ca3af;
             font-style: italic;
@@ -1449,10 +1521,10 @@ require_once __DIR__ . '/../includes/header.php';
 
         .nav-card {
             background: white;
-              border-radius: 12px;
-              padding: 24px 20px;
-              border: 1px solid #e5e7eb;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 24px 20px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
@@ -1465,8 +1537,8 @@ require_once __DIR__ . '/../includes/header.php';
         }
 
         .nav-card:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
         }
 
         .nav-card-icon {
@@ -1515,29 +1587,29 @@ require_once __DIR__ . '/../includes/header.php';
 
         .stat-card {
             background: white;
-              border-radius: 12px;
+            border-radius: 12px;
             padding: 24px;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-              border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
         .stat-card:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
         }
 
         .stat-card-icon {
-              width: 56px;
-              height: 56px;
-              border-radius: 12px;
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 16px;
-              font-size: 24px;
+            font-size: 24px;
         }
 
         .stat-card-value {
@@ -1594,19 +1666,19 @@ require_once __DIR__ . '/../includes/header.php';
             align-items: center;
             gap: 12px;
             padding: 14px 16px;
-                        border: none;
+            border: none;
             border-radius: 12px;
             text-decoration: none;
             transition: all 0.3s ease;
-              background: white;
-                            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.06);
+            background: white;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.06);
             position: relative;
             overflow: hidden;
         }
 
         .icon-action-btn:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14), 0 4px 10px rgba(15, 23, 42, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14), 0 4px 10px rgba(15, 23, 42, 0.08);
         }
 
         .icon-action-icon {
@@ -1663,16 +1735,16 @@ require_once __DIR__ . '/../includes/header.php';
             align-items: center;
             justify-content: space-between;
             padding: 12px 16px;
-              background: #f9fafb;
+            background: #f9fafb;
             border-radius: 12px;
             transition: all 0.2s ease;
-              border: 1px solid #f3f4f6;
+            border: 1px solid #f3f4f6;
         }
 
         .patient-record-item:hover {
-              background: #f3f4f6;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-              border-color: #e5e7eb;
+            background: #f3f4f6;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-color: #e5e7eb;
         }
 
         .patient-record-main {
@@ -1777,6 +1849,7 @@ require_once __DIR__ . '/../includes/header.php';
             .patient-meta {
                 display: none;
             }
+
             .record-date {
                 display: none;
             }
@@ -1802,18 +1875,18 @@ require_once __DIR__ . '/../includes/header.php';
         }
 
         .mini-stat {
-              background: white;
+            background: white;
             border-radius: 12px;
             padding: 16px;
             text-align: center;
-              border: 1px solid #e5e7eb;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             transition: all 0.2s ease;
         }
 
         .mini-stat:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
         }
 
         .mini-stat-value {
@@ -1831,8 +1904,9 @@ require_once __DIR__ . '/../includes/header.php';
         }
     </style>
 </head>
+
 <body class="bg-gray-50">
-    
+
     <div class="container mx-auto px-4">
         <!-- Dashboard Header -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -1847,7 +1921,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <i class="fas fa-calendar-alt mr-2"></i>Last updated: <?= date('M j, Y g:i A') ?>
             </div>
         </div>
-        
+
         <!-- Notification Area -->
         <div id="notificationArea"></div>
 
@@ -1861,7 +1935,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="stat-card-label">Active Staff</div>
                 <div class="stat-card-sublabel"><?= intval($stats['total_inactive_staff']) ?> inactive</div>
             </div>
-            
+
             <div class="stat-card">
                 <div class="stat-card-icon bg-green-100">
                     <i class="fas fa-users text-green-600"></i>
@@ -1870,7 +1944,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="stat-card-label">Resident Accounts</div>
                 <div class="stat-card-sublabel"><?= intval($stats['total_pending_residents']) ?> pending</div>
             </div>
-            
+
             <div class="stat-card">
                 <div class="stat-card-icon bg-purple-100">
                     <i class="fas fa-file-medical text-purple-600"></i>
@@ -1879,7 +1953,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="stat-card-label">Patient Records</div>
                 <div class="stat-card-sublabel"><?= intval($stats['total_unlinked_patients']) ?> unlinked</div>
             </div>
-            
+
             <div class="stat-card">
                 <div class="stat-card-icon bg-amber-100">
                     <i class="fas fa-link text-amber-600"></i>
@@ -1919,7 +1993,9 @@ require_once __DIR__ . '/../includes/header.php';
 
                 <!-- Icon Action Buttons -->
                 <div class="space-y-3">
-                    <a href="viewpatients.php" class="icon-action-btn bg-purple-50 hover:bg-purple-100 border-purple-200" title="View All Patients">
+                    <a href="viewpatients.php"
+                        class="icon-action-btn bg-purple-50 hover:bg-purple-100 border-purple-200"
+                        title="View All Patients">
                         <div class="icon-action-icon bg-purple-100 text-purple-600">
                             <i class="fas fa-users"></i>
                         </div>
@@ -1929,17 +2005,21 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                         <i class="fas fa-arrow-right text-purple-400"></i>
                     </a>
-                    <a href="approvals.php" class="icon-action-btn bg-amber-50 hover:bg-amber-100 border-amber-200" title="Pending Approvals">
+                    <a href="approvals.php" class="icon-action-btn bg-amber-50 hover:bg-amber-100 border-amber-200"
+                        title="Pending Approvals">
                         <div class="icon-action-icon bg-amber-100 text-amber-600">
                             <i class="fas fa-user-clock"></i>
                         </div>
                         <div class="icon-action-content">
                             <div class="icon-action-label">Pending Approvals</div>
-                            <div class="icon-action-desc"><?= intval($stats['total_pending_residents']) ?> awaiting review</div>
+                            <div class="icon-action-desc"><?= intval($stats['total_pending_residents']) ?> awaiting
+                                review</div>
                         </div>
-                        <span class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-bold"><?= intval($stats['total_pending_residents']) ?></span>
+                        <span
+                            class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-bold"><?= intval($stats['total_pending_residents']) ?></span>
                     </a>
-                    <a href="staffrecords.php" class="icon-action-btn bg-cyan-50 hover:bg-cyan-100 border-cyan-200" title="Staff Records">
+                    <a href="staffrecords.php" class="icon-action-btn bg-cyan-50 hover:bg-cyan-100 border-cyan-200"
+                        title="Staff Records">
                         <div class="icon-action-icon bg-cyan-100 text-cyan-600">
                             <i class="fas fa-user-tie"></i>
                         </div>
@@ -1949,7 +2029,8 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                         <i class="fas fa-arrow-right text-cyan-400"></i>
                     </a>
-                    <a href="generate_report.php" target="_blank" class="icon-action-btn bg-blue-50 hover:bg-blue-100 border-blue-200" title="Generate Report">
+                    <a href="generate_report.php" target="_blank"
+                        class="icon-action-btn bg-blue-50 hover:bg-blue-100 border-blue-200" title="Generate Report">
                         <div class="icon-action-icon bg-blue-100 text-blue-600">
                             <i class="fas fa-file-export"></i>
                         </div>
@@ -1978,58 +2059,67 @@ require_once __DIR__ . '/../includes/header.php';
                                 <p class="text-gray-400 text-sm">Latest patient entries</p>
                             </div>
                         </div>
-                        <button class="btn-view" onclick="openRecordsModal(1)"><i class="fas fa-list mr-2"></i>View All</button>
+                        <button class="btn-view" onclick="openRecordsModal(1)"><i class="fas fa-list mr-2"></i>View
+                            All</button>
                     </div>
                 </div>
-                
+
                 <div class="px-5 pb-5">
                     <div class="patient-records-list">
                         <?php foreach (array_slice($stats['recent_patients'], 0, 5) as $patient): ?>
-                        <div class="patient-record-item">
-                            <div class="patient-record-main">
-                                <div class="patient-avatar">
-                                    <?php
-                                    $profileImg = null;
-                                    if (!empty($patient['user_id'])) {
-                                        $uid = $patient['user_id'];
-                                        $profileDir = __DIR__ . '/../uploads/profiles/';
-                                        $allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
-                                        foreach ($allowedExts as $ext) {
-                                            $file = $profileDir . 'profile_' . $uid . '.' . $ext;
-                                            if (file_exists($file)) {
-                                                $profileImg = '/community-health-tracker/uploads/profiles/profile_' . $uid . '.' . $ext;
-                                                break;
+                            <div class="patient-record-item">
+                                <div class="patient-record-main">
+                                    <div class="patient-avatar">
+                                        <?php
+                                        $profileImg = null;
+                                        if (!empty($patient['user_id'])) {
+                                            $uid = $patient['user_id'];
+                                            $profileDir = __DIR__ . '/../uploads/profiles/';
+                                            $allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
+                                            foreach ($allowedExts as $ext) {
+                                                $file = $profileDir . 'profile_' . $uid . '.' . $ext;
+                                                if (file_exists($file)) {
+                                                    $profileImg = '/community-health-tracker/uploads/profiles/profile_' . $uid . '.' . $ext;
+                                                    break;
+                                                }
                                             }
                                         }
-                                    }
-                                    ?>
-                                    <?php if ($profileImg): ?>
-                                        <img src="<?= htmlspecialchars($profileImg) ?>" alt="Profile" class="w-10 h-10 rounded-full object-cover border border-gray-300" style="background:none;" />
-                                    <?php else: ?>
-                                        <span style="display:inline-block;width:40px;height:40px;line-height:40px;text-align:center;font-weight:600;font-size:1.25rem;color:#6b7280;background:none;"><?= strtoupper(substr($patient['full_name'], 0, 1)) ?></span>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="patient-info">
-                                    <div class="patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                    <div class="patient-meta">
-                                        <span><?= htmlspecialchars($patient['age'] ?? 'N/A') ?> yrs</span>
-                                        <span class="meta-divider">•</span>
-                                        <span><?= htmlspecialchars($patient['gender'] ?? 'N/A') ?></span>
-                                        <span class="meta-divider">•</span>
-                                        <span><?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+                                        ?>
+                                        <?php if ($profileImg): ?>
+                                            <img src="<?= htmlspecialchars($profileImg) ?>" alt="Profile"
+                                                class="w-10 h-10 rounded-full object-cover border border-gray-300"
+                                                style="background:none;" />
+                                        <?php else: ?>
+                                            <span
+                                                style="display:inline-block;width:40px;height:40px;line-height:40px;text-align:center;font-weight:600;font-size:1.25rem;color:#6b7280;background:none;"><?= strtoupper(substr($patient['full_name'], 0, 1)) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="patient-info">
+                                        <div class="patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                        <div class="patient-meta">
+                                            <span><?= htmlspecialchars($patient['age'] ?? 'N/A') ?> yrs</span>
+                                            <span class="meta-divider">•</span>
+                                            <span><?= htmlspecialchars($patient['gender'] ?? 'N/A') ?></span>
+                                            <span class="meta-divider">•</span>
+                                            <span><?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+                                        </div>
                                     </div>
                                 </div>
+                                <div class="patient-record-actions">
+                                    <span
+                                        class="record-date"><?= date('M j', strtotime($patient['created_at'] ?? 'now')) ?></span>
+                                    <button class="action-btn action-view"
+                                        onclick="showViewModal(<?= $patient['id'] ?>, '<?= addslashes($patient['full_name']) ?>')"
+                                        title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="action-btn action-edit"
+                                        onclick="showEditModal(<?= $patient['id'] ?>, '<?= addslashes($patient['full_name']) ?>')"
+                                        title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="patient-record-actions">
-                                <span class="record-date"><?= date('M j', strtotime($patient['created_at'] ?? 'now')) ?></span>
-                                <button class="action-btn action-view" onclick="showViewModal(<?= $patient['id'] ?>, '<?= addslashes($patient['full_name']) ?>')" title="View">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="action-btn action-edit" onclick="showEditModal(<?= $patient['id'] ?>, '<?= addslashes($patient['full_name']) ?>')" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            </div>
-                        </div>
                         <?php endforeach; ?>
                     </div>
                     <div class="mt-4 text-center">
@@ -2037,7 +2127,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 </div>
             </div>
-            
+
             <!-- Account Status Overview -->
             <div class="main-container p-6">
                 <div class="flex items-center mb-6">
@@ -2049,36 +2139,43 @@ require_once __DIR__ . '/../includes/header.php';
                         <p class="text-gray-500 text-sm">Linking overview</p>
                     </div>
                 </div>
-                
+
                 <!-- Linked Accounts Highlight -->
-                <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-5 mb-6" style="box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);">
+                <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-5 mb-6"
+                    style="box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);">
                     <div class="flex items-center justify-between">
                         <div>
-                            <div class="text-xs font-bold text-green-700 mb-1 uppercase tracking-wider">Linked Accounts</div>
+                            <div class="text-xs font-bold text-green-700 mb-1 uppercase tracking-wider">Linked Accounts
+                            </div>
                             <div class="text-4xl font-bold text-green-600"><?= $stats['linked_accounts_count'] ?></div>
                             <p class="text-xs text-green-600 font-medium mt-1">Resident-Patient Links</p>
                         </div>
-                        <div class="w-14 h-14 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-200">
+                        <div
+                            class="w-14 h-14 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-200">
                             <i class="fas fa-link text-white text-xl"></i>
                         </div>
                     </div>
                 </div>
-                    
+
                 <!-- Status Grid -->
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-amber-50 rounded-xl p-4 text-center" style="box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12);">
+                    <div class="bg-amber-50 rounded-xl p-4 text-center"
+                        style="box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12);">
                         <div class="text-2xl font-bold text-amber-600"><?= $stats['total_unlinked_residents'] ?></div>
                         <div class="text-xs font-medium text-amber-700">Unlinked Accounts</div>
                     </div>
-                    <div class="bg-orange-50 rounded-xl p-4 text-center" style="box-shadow: 0 2px 8px rgba(249, 115, 22, 0.12);">
+                    <div class="bg-orange-50 rounded-xl p-4 text-center"
+                        style="box-shadow: 0 2px 8px rgba(249, 115, 22, 0.12);">
                         <div class="text-2xl font-bold text-orange-600"><?= $stats['total_unlinked_patients'] ?></div>
                         <div class="text-xs font-medium text-orange-700">Unlinked Patients</div>
                     </div>
-                    <div class="bg-red-50 rounded-xl p-4 text-center" style="box-shadow: 0 2px 8px rgba(239, 68, 68, 0.12);">
+                    <div class="bg-red-50 rounded-xl p-4 text-center"
+                        style="box-shadow: 0 2px 8px rgba(239, 68, 68, 0.12);">
                         <div class="text-2xl font-bold text-red-600"><?= $stats['total_declined_residents'] ?></div>
                         <div class="text-xs font-medium text-red-700">Declined</div>
                     </div>
-                    <div class="bg-gray-100 rounded-xl p-4 text-center" style="box-shadow: 0 2px 8px rgba(107, 114, 128, 0.12);">
+                    <div class="bg-gray-100 rounded-xl p-4 text-center"
+                        style="box-shadow: 0 2px 8px rgba(107, 114, 128, 0.12);">
                         <div class="text-2xl font-bold text-gray-600"><?= $stats['total_inactive_staff'] ?></div>
                         <div class="text-xs font-medium text-gray-700">Inactive Staff</div>
                     </div>
@@ -2108,10 +2205,12 @@ require_once __DIR__ . '/../includes/header.php';
 
             <!-- Log Tabs -->
             <div class="log-tabs mb-6">
-                <a href="?logs_tab=resident#activity-logs" class="log-tab <?= (empty($_GET['logs_tab']) || $_GET['logs_tab']=='resident') ? 'log-tab-active' : '' ?>">
+                <a href="?logs_tab=resident#activity-logs"
+                    class="log-tab <?= (empty($_GET['logs_tab']) || $_GET['logs_tab'] == 'resident') ? 'log-tab-active' : '' ?>">
                     <i class="fas fa-user"></i>Resident Log <span class="log-tab-badge"><?= $resident_total ?></span>
                 </a>
-                <a href="?logs_tab=staff#activity-logs" class="log-tab <?= (isset($_GET['logs_tab']) && $_GET['logs_tab']=='staff') ? 'log-tab-active' : '' ?>">
+                <a href="?logs_tab=staff#activity-logs"
+                    class="log-tab <?= (isset($_GET['logs_tab']) && $_GET['logs_tab'] == 'staff') ? 'log-tab-active' : '' ?>">
                     <i class="fas fa-user-tie"></i>Staff Actions <span class="log-tab-badge"><?= $staff_total ?></span>
                 </a>
             </div>
@@ -2121,8 +2220,9 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="activity-logs-loading-text">Loading records...</div>
             </div>
 
-            <?php if (empty($_GET['logs_tab']) || $_GET['logs_tab']=='resident'): ?>
-                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
+            <?php if (empty($_GET['logs_tab']) || $_GET['logs_tab'] == 'resident'): ?>
+                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl"
+                    style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
                     <table class="patient-table">
                         <thead>
                             <tr>
@@ -2134,16 +2234,22 @@ require_once __DIR__ . '/../includes/header.php';
                         </thead>
                         <tbody>
                             <?php foreach ($resident_logs_page as $log): ?>
-                            <tr>
-                                <td class="text-gray-600"><?= !empty($log['created_at']) ? date('M j, Y g:i A', strtotime($log['created_at'])) : 'N/A' ?></td>
-                                <td class="font-medium"><?= htmlspecialchars($log['display_name'] ?? (isset($log['user_id']) && $log['user_id'] ? 'User #' . $log['user_id'] : 'System')) ?></td>
-                                <td>
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium <?= ($log['type'] ?? '') == 'login' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' ?>">
-                                        <?= htmlspecialchars($log['type'] ?? $log['action_type'] ?? '') ?>
-                                    </span>
-                                </td>
-                                <td class="text-gray-500 text-sm"><?= htmlspecialchars($log['ip'] ?? $log['ip_address'] ?? '—') ?></td>
-                            </tr>
+                                <tr>
+                                    <td class="text-gray-600">
+                                        <?= !empty($log['created_at']) ? date('M j, Y g:i A', strtotime($log['created_at'])) : 'N/A' ?>
+                                    </td>
+                                    <td class="font-medium">
+                                        <?= htmlspecialchars($log['display_name'] ?? (isset($log['user_id']) && $log['user_id'] ? 'User #' . $log['user_id'] : 'System')) ?>
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="px-2 py-1 rounded-full text-xs font-medium <?= ($log['type'] ?? '') == 'login' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' ?>">
+                                            <?= htmlspecialchars($log['type'] ?? $log['action_type'] ?? '') ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-gray-500 text-sm">
+                                        <?= htmlspecialchars($log['ip'] ?? $log['ip_address'] ?? '—') ?></td>
+                                </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -2153,17 +2259,22 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="text-gray-500">Page <?= $page_resident ?> of <?= $resident_total_pages ?></div>
                     <div class="flex gap-2">
                         <?php if ($page_resident > 1): ?>
-                            <a class="btn-action" href="?logs_tab=resident&page_resident=<?= $page_resident - 1 ?>#activity-logs"><i class="fas fa-chevron-left mr-1"></i>Prev</a>
+                            <a class="btn-action"
+                                href="?logs_tab=resident&page_resident=<?= $page_resident - 1 ?>#activity-logs"><i
+                                    class="fas fa-chevron-left mr-1"></i>Prev</a>
                         <?php endif; ?>
 
                         <?php if ($page_resident < $resident_total_pages): ?>
-                            <a class="btn-action" href="?logs_tab=resident&page_resident=<?= $page_resident + 1 ?>#activity-logs">Next<i class="fas fa-chevron-right ml-1"></i></a>
+                            <a class="btn-action"
+                                href="?logs_tab=resident&page_resident=<?= $page_resident + 1 ?>#activity-logs">Next<i
+                                    class="fas fa-chevron-right ml-1"></i></a>
                         <?php endif; ?>
                     </div>
                 </div>
 
             <?php else: ?>
-                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
+                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl"
+                    style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
                     <table class="patient-table">
                         <thead>
                             <tr>
@@ -2176,24 +2287,27 @@ require_once __DIR__ . '/../includes/header.php';
                         </thead>
                         <tbody>
                             <?php foreach ($staff_logs_page as $log): ?>
-                            <tr>
-                                <td class="text-gray-600"><?= !empty($log['created_at']) ? date('M j, Y g:i A', strtotime($log['created_at'])) : 'N/A' ?></td>
-                                <td>
-                                    <div class="flex items-center">
-                                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
-                                            <i class="fas fa-user-md text-blue-600 text-sm"></i>
+                                <tr>
+                                    <td class="text-gray-600">
+                                        <?= !empty($log['created_at']) ? date('M j, Y g:i A', strtotime($log['created_at'])) : 'N/A' ?>
+                                    </td>
+                                    <td>
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                                                <i class="fas fa-user-md text-blue-600 text-sm"></i>
+                                            </div>
+                                            <div>
+                                                <span
+                                                    class="font-semibold text-gray-800"><?= htmlspecialchars($log['display_name'] ?? 'Unknown Staff') ?></span>
+                                                <?php if (!empty($log['staff_id'])): ?>
+                                                    <span class="text-xs text-gray-400 block">ID: <?= $log['staff_id'] ?></span>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <span class="font-semibold text-gray-800"><?= htmlspecialchars($log['display_name'] ?? 'Unknown Staff') ?></span>
-                                            <?php if (!empty($log['staff_id'])): ?>
-                                                <span class="text-xs text-gray-400 block">ID: <?= $log['staff_id'] ?></span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                        <?php 
+                                    </td>
+                                    <td>
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium 
+                                        <?php
                                         $actionType = strtolower($log['type'] ?? $log['action_type'] ?? '');
                                         if (strpos($actionType, 'add') !== false || strpos($actionType, 'create') !== false) {
                                             echo 'bg-green-100 text-green-700';
@@ -2207,14 +2321,15 @@ require_once __DIR__ . '/../includes/header.php';
                                             echo 'bg-blue-100 text-blue-700';
                                         }
                                         ?>">
-                                        <?= htmlspecialchars(ucwords(str_replace('_', ' ', $log['type'] ?? $log['action_type'] ?? ''))) ?>
-                                    </span>
-                                </td>
-                                <td class="text-gray-500 text-sm max-w-xs truncate" title="<?= htmlspecialchars(is_array($log['details'] ?? null) || is_object($log['details'] ?? null) ? json_encode($log['details']) : ($log['details'] ?? '')) ?>">
-                                    <?= htmlspecialchars(is_array($log['details'] ?? null) || is_object($log['details'] ?? null) ? json_encode($log['details']) : ($log['details'] ?? ($log['related_id'] ? 'Record #' . $log['related_id'] : '—'))) ?>
-                                </td>
-                                <td class="text-gray-400 text-xs"><?= htmlspecialchars($log['ip_address'] ?? '—') ?></td>
-                            </tr>
+                                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $log['type'] ?? $log['action_type'] ?? ''))) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-gray-500 text-sm max-w-xs truncate"
+                                        title="<?= htmlspecialchars(is_array($log['details'] ?? null) || is_object($log['details'] ?? null) ? json_encode($log['details']) : ($log['details'] ?? '')) ?>">
+                                        <?= htmlspecialchars(is_array($log['details'] ?? null) || is_object($log['details'] ?? null) ? json_encode($log['details']) : ($log['details'] ?? ($log['related_id'] ? 'Record #' . $log['related_id'] : '—'))) ?>
+                                    </td>
+                                    <td class="text-gray-400 text-xs"><?= htmlspecialchars($log['ip_address'] ?? '—') ?></td>
+                                </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -2224,11 +2339,13 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="text-gray-500">Page <?= $page_staff ?> of <?= $staff_total_pages ?></div>
                     <div class="flex gap-2">
                         <?php if ($page_staff > 1): ?>
-                            <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff - 1 ?>#activity-logs"><i class="fas fa-chevron-left mr-1"></i>Prev</a>
+                            <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff - 1 ?>#activity-logs"><i
+                                    class="fas fa-chevron-left mr-1"></i>Prev</a>
                         <?php endif; ?>
 
                         <?php if ($page_staff < $staff_total_pages): ?>
-                            <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff + 1 ?>#activity-logs">Next<i class="fas fa-chevron-right ml-1"></i></a>
+                            <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff + 1 ?>#activity-logs">Next<i
+                                    class="fas fa-chevron-right ml-1"></i></a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -2244,7 +2361,20 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center">
                         <div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mr-4">
-                            <i class="fas fa-list text-white text-xl"></i>
+                            <!-- <i class="fa-solid fa-list"></i> -->
+                            <svg width="46" height="46" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <g clip-path="url(#clip0_1282_7686)">
+                                    <path
+                                        d="M14.2494 7.49965C14.2494 7.30074 14.3284 7.10998 14.469 6.96932C14.6097 6.82867 14.8004 6.74965 14.9994 6.74965H23.2494C23.4483 6.74965 23.639 6.82867 23.7797 6.96932C23.9203 7.10998 23.9994 7.30074 23.9994 7.49965C23.9994 7.69857 23.9203 7.88933 23.7797 8.02998C23.639 8.17064 23.4483 8.24965 23.2494 8.24965H14.9994C14.8004 8.24965 14.6097 8.17064 14.469 8.02998C14.3284 7.88933 14.2494 7.69857 14.2494 7.49965ZM23.2494 11.2497H14.9994C14.8004 11.2497 14.6097 11.3287 14.469 11.4693C14.3284 11.61 14.2494 11.8007 14.2494 11.9997C14.2494 12.1986 14.3284 12.3893 14.469 12.53C14.6097 12.6706 14.8004 12.7497 14.9994 12.7497H23.2494C23.4483 12.7497 23.639 12.6706 23.7797 12.53C23.9203 12.3893 23.9994 12.1986 23.9994 11.9997C23.9994 11.8007 23.9203 11.61 23.7797 11.4693C23.639 11.3287 23.4483 11.2497 23.2494 11.2497ZM23.2494 15.7497H17.2494C17.0504 15.7497 16.8597 15.8287 16.719 15.9693C16.5784 16.11 16.4994 16.3007 16.4994 16.4997C16.4994 16.6986 16.5784 16.8893 16.719 17.03C16.8597 17.1706 17.0504 17.2497 17.2494 17.2497H23.2494C23.4483 17.2497 23.639 17.1706 23.7797 17.03C23.9203 16.8893 23.9994 16.6986 23.9994 16.4997C23.9994 16.3007 23.9203 16.11 23.7797 15.9693C23.639 15.8287 23.4483 15.7497 23.2494 15.7497ZM14.2259 17.8122C14.2504 17.9076 14.2559 18.0069 14.242 18.1044C14.2282 18.2019 14.1952 18.2958 14.1451 18.3806C14.0949 18.4654 14.0286 18.5395 13.9498 18.5986C13.871 18.6578 13.7813 18.7008 13.6859 18.7253C13.6248 18.7418 13.5617 18.75 13.4984 18.7497C13.3321 18.7497 13.1704 18.6945 13.0389 18.5927C12.9074 18.4909 12.8134 18.3482 12.7719 18.1872C12.1944 15.9428 9.92748 14.2497 7.49842 14.2497C5.06935 14.2497 2.80248 15.9418 2.22498 18.1872C2.17525 18.3799 2.05101 18.5449 1.87959 18.646C1.70817 18.7471 1.50361 18.7759 1.31092 18.7262C1.11822 18.6765 0.953169 18.5522 0.852075 18.3808C0.750981 18.2094 0.722125 18.0049 0.771853 17.8122C1.29592 15.7768 2.81935 14.1287 4.75248 13.3122C4.00813 12.7388 3.4619 11.9469 3.1904 11.0475C2.9189 10.148 2.93573 9.18611 3.23855 8.29671C3.54137 7.4073 4.11498 6.63498 4.87893 6.08806C5.64289 5.54115 6.55887 5.24707 7.49842 5.24707C8.43796 5.24707 9.35394 5.54115 10.1179 6.08806C10.8819 6.63498 11.4555 7.4073 11.7583 8.29671C12.0611 9.18611 12.0779 10.148 11.8064 11.0475C11.5349 11.9469 10.9887 12.7388 10.2444 13.3122C12.1784 14.1287 13.7019 15.7768 14.2259 17.8122ZM7.49935 12.7497C8.0927 12.7497 8.67272 12.5737 9.16606 12.2441C9.65941 11.9144 10.0439 11.4459 10.271 10.8977C10.4981 10.3495 10.5575 9.74633 10.4417 9.16438C10.326 8.58244 10.0402 8.04789 9.62067 7.62833C9.20112 7.20878 8.66657 6.92305 8.08462 6.8073C7.50268 6.69154 6.89948 6.75095 6.3513 6.97802C5.80312 7.20508 5.33459 7.5896 5.00494 8.08294C4.6753 8.57629 4.49935 9.15631 4.49935 9.74965C4.49935 10.5453 4.81542 11.3084 5.37803 11.871C5.94064 12.4336 6.7037 12.7497 7.49935 12.7497Z"
+                                        fill="#3C96E1" />
+                                </g>
+                                <defs>
+                                    <clipPath id="clip0_1282_7686">
+                                        <rect width="24" height="24" fill="white" />
+                                    </clipPath>
+                                </defs>
+                            </svg>
                         </div>
                         <div>
                             <h3 class="text-xl font-bold text-secondary">Patient Records</h3>
@@ -2257,7 +2387,8 @@ require_once __DIR__ . '/../includes/header.php';
                 </div>
 
                 <div class="mb-4">
-                    <input type="text" id="recordsSearch" placeholder="Search by name or sitio..." class="form-control" onkeyup="debouncedLoadPatients(1)">
+                    <input type="text" id="recordsSearch" placeholder="Search by name or sitio..." class="form-control"
+                        onkeyup="debouncedLoadPatients(1)">
                 </div>
 
                 <div class="overflow-x-auto">
@@ -2265,8 +2396,8 @@ require_once __DIR__ . '/../includes/header.php';
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Age</th>
-                                <th>Gender</th>
+                                <!-- <th>Age</th> -->
+                                <!-- <th>Gender</th> -->
                                 <th>Status</th>
                                 <th>Added By</th>
                                 <th>Created</th>
@@ -2292,7 +2423,8 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center">
-                        <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4" id="viewProfileImgContainer"></div>
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4"
+                            id="viewProfileImgContainer"></div>
                         <div>
                             <h3 class="text-xl font-bold text-secondary">Patient Details</h3>
                             <p class="text-gray-600" id="viewPatientName"></p>
@@ -2302,7 +2434,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                
+
                 <div class="space-y-4">
                     <!-- Personal Information -->
                     <div class="flex flex-wrap -mx-2">
@@ -2312,35 +2444,35 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="info-value" id="viewFullName"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Age</div>
                                 <div class="info-value" id="viewAge"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Gender</div>
                                 <div class="info-value" id="viewGender"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Date of Birth</div>
                                 <div class="info-value" id="viewDateOfBirth"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Civil Status</div>
                                 <div class="info-value" id="viewCivilStatus"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Occupation</div>
@@ -2348,7 +2480,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Contact Information -->
                     <h4 class="font-semibold text-gray-700 mb-3">Contact Information</h4>
                     <div class="flex flex-wrap -mx-2">
@@ -2358,14 +2490,14 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="info-value" id="viewAddress"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Sitio</div>
                                 <div class="info-value" id="viewSitio"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Contact Number</div>
@@ -2373,7 +2505,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Medical Information -->
                     <h4 class="font-semibold text-gray-700 mb-3">Medical Information</h4>
                     <div class="flex flex-wrap -mx-2">
@@ -2383,14 +2515,14 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="info-value" id="viewDisease"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Last Checkup</div>
                                 <div class="info-value" id="viewLastCheckup"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Medical History</div>
@@ -2398,7 +2530,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Additional Information -->
                     <h4 class="font-semibold text-gray-700 mb-3">Additional Information</h4>
                     <div class="flex flex-wrap -mx-2">
@@ -2408,28 +2540,28 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="info-value" id="viewBhwAssigned"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Family Number</div>
                                 <div class="info-value" id="viewFamilyNo"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">4Ps Member</div>
                                 <div class="info-value" id="viewFourpsMember"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Consent Given</div>
                                 <div class="info-value" id="viewConsentGiven"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Consent Date</div>
@@ -2437,7 +2569,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Metadata -->
                     <h4 class="font-semibold text-gray-700 mb-3">Record Information</h4>
                     <div class="flex flex-wrap -mx-2">
@@ -2447,7 +2579,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="info-value" id="viewCreatedAt"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="info-card">
                                 <div class="info-label">Last Updated</div>
@@ -2456,7 +2588,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="flex justify-end space-x-3 mt-6 pt-6 border-t">
                     <button onclick="hideViewModal()" class="btn-action">
                         Close
@@ -2475,7 +2607,8 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center">
-                        <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4" id="editProfileImgContainer"></div>
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4"
+                            id="editProfileImgContainer"></div>
                         <div>
                             <h3 class="text-xl font-bold text-secondary">Edit Patient Record</h3>
                             <p class="text-gray-600" id="editModalPatientName">Update patient information</p>
@@ -2485,17 +2618,17 @@ require_once __DIR__ . '/../includes/header.php';
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                
+
                 <form id="editPatientForm" class="space-y-4">
                     <input type="hidden" id="editPatientId" name="patient_id">
                     <input type="hidden" name="action" value="update_patient">
-                    
+
                     <div class="flex flex-wrap -mx-2">
                         <!-- Personal Information -->
                         <div class="w-full px-2 mb-4">
                             <h4 class="font-semibold text-gray-700 mb-3 border-b pb-2">Personal Information</h4>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editFullName">Full Name *</label>
@@ -2503,15 +2636,16 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="error-message" id="errorFullName"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editAge">Age *</label>
-                                <input type="number" id="editAge" name="age" class="form-control" min="0" max="120" required>
+                                <input type="number" id="editAge" name="age" class="form-control" min="0" max="120"
+                                    required>
                                 <div class="error-message" id="errorAge"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editGender">Gender *</label>
@@ -2524,14 +2658,14 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="error-message" id="errorGender"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editDateOfBirth">Date of Birth</label>
                                 <input type="date" id="editDateOfBirth" name="date_of_birth" class="form-control">
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editCivilStatus">Civil Status</label>
@@ -2544,26 +2678,26 @@ require_once __DIR__ . '/../includes/header.php';
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editOccupation">Occupation</label>
                                 <input type="text" id="editOccupation" name="occupation" class="form-control">
                             </div>
                         </div>
-                        
+
                         <!-- Contact Information -->
                         <div class="w-full px-2 mt-4 mb-4">
                             <h4 class="font-semibold text-gray-700 mb-3 border-b pb-2">Contact Information</h4>
                         </div>
-                        
+
                         <div class="w-full px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editAddress">Address</label>
                                 <textarea id="editAddress" name="address" class="form-control form-textarea"></textarea>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editSitio">Sitio *</label>
@@ -2571,7 +2705,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="error-message" id="errorSitio"></div>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editContact">Contact Number *</label>
@@ -2579,52 +2713,53 @@ require_once __DIR__ . '/../includes/header.php';
                                 <div class="error-message" id="errorContact"></div>
                             </div>
                         </div>
-                        
+
                         <!-- Medical Information -->
                         <div class="w-full px-2 mt-4 mb-4">
                             <h4 class="font-semibold text-gray-700 mb-3 border-b pb-2">Medical Information</h4>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editDisease">Disease/Condition</label>
                                 <input type="text" id="editDisease" name="disease" class="form-control">
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editLastCheckup">Last Checkup Date</label>
                                 <input type="date" id="editLastCheckup" name="last_checkup" class="form-control">
                             </div>
                         </div>
-                        
+
                         <div class="w-full px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editMedicalHistory">Medical History</label>
-                                <textarea id="editMedicalHistory" name="medical_history" class="form-control form-textarea"></textarea>
+                                <textarea id="editMedicalHistory" name="medical_history"
+                                    class="form-control form-textarea"></textarea>
                             </div>
                         </div>
-                        
+
                         <!-- Additional Information -->
                         <div class="w-full px-2 mt-4 mb-4">
                             <h4 class="font-semibold text-gray-700 mb-3 border-b pb-2">Additional Information</h4>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editBhwAssigned">BHW Assigned</label>
                                 <input type="text" id="editBhwAssigned" name="bhw_assigned" class="form-control">
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editFamilyNo">Family Number</label>
                                 <input type="text" id="editFamilyNo" name="family_no" class="form-control">
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editFourpsMember">4Ps Member</label>
@@ -2634,22 +2769,24 @@ require_once __DIR__ . '/../includes/header.php';
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="w-full px-2 mb-4">
                             <div class="flex items-center">
-                                <input type="checkbox" id="editConsentGiven" name="consent_given" class="w-4 h-4 text-primary rounded">
+                                <input type="checkbox" id="editConsentGiven" name="consent_given"
+                                    class="w-4 h-4 text-primary rounded">
                                 <label for="editConsentGiven" class="ml-2 text-gray-700">Consent Given</label>
                             </div>
                         </div>
-                        
+
                         <div class="w-full md:w-1/2 px-2 mb-4">
                             <div class="form-group">
                                 <label class="form-label" for="editConsentDate">Consent Date</label>
-                                <input type="datetime-local" id="editConsentDate" name="consent_date" class="form-control">
+                                <input type="datetime-local" id="editConsentDate" name="consent_date"
+                                    class="form-control">
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="flex justify-end space-x-3 mt-6 pt-6 border-t">
                         <button type="button" onclick="hideEditModal()" class="btn-action">
                             Cancel
@@ -2676,23 +2813,25 @@ require_once __DIR__ . '/../includes/header.php';
                         <p class="text-gray-600">This action cannot be undone</p>
                     </div>
                 </div>
-                
+
                 <div class="bg-warmRed border-2 border-red-200 rounded-lg p-4 mb-6">
                     <p class="text-red-700" id="patientNameDisplay"></p>
                     <p class="text-sm text-red-600 mt-2">All associated data will be removed from the system.</p>
                 </div>
-                
+
                 <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
                     <h4 class="font-semibold text-blue-800 mb-2">Consider Archiving Instead</h4>
                     <p class="text-sm text-blue-700">
                         <i class="fas fa-info-circle mr-2"></i>
-                        Archiving moves the record to the deleted patients archive where it can be restored later if needed.
+                        Archiving moves the record to the deleted patients archive where it can be restored later if
+                        needed.
                     </p>
                 </div>
-                
+
                 <div class="flex flex-wrap -mx-2">
                     <div class="w-full md:w-1/2 px-2 mb-4">
-                        <button onclick="archivePatient()" class="btn-action w-full justify-center bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200">
+                        <button onclick="archivePatient()"
+                            class="btn-action w-full justify-center bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200">
                             <i class="fas fa-archive mr-2"></i>Archive (Move to Trash)
                         </button>
                     </div>
@@ -2702,7 +2841,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="mt-6 text-center">
                     <button onclick="hideDeleteModal()" class="text-gray-600 hover:text-gray-800 font-medium">
                         <i class="fas fa-times mr-2"></i>Cancel
@@ -2722,26 +2861,26 @@ require_once __DIR__ . '/../includes/header.php';
         let currentPatientId = null;
         let currentPatientName = '';
         let currentPatientData = null;
-        
+
         // Show notification function
         function showNotification(type, message, duration = 5000) {
             const notificationArea = document.getElementById('notificationArea');
-            
+
             const notification = document.createElement('div');
             notification.className = `custom-notification alert-${type} px-4 py-3 rounded mb-3 flex items-center`;
-            
+
             const icon = type === 'error' ? 'fa-exclamation-circle' :
-                       type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
-            
+                type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+
             notification.innerHTML = `
                 <div class="flex items-center">
                     <i class="fas ${icon} mr-2"></i>
                     <span>${message}</span>
                 </div>
             `;
-            
+
             notificationArea.appendChild(notification);
-            
+
             // Auto-remove after duration
             setTimeout(() => {
                 notification.style.animation = 'fadeOut 0.3s ease-out';
@@ -2752,7 +2891,7 @@ require_once __DIR__ . '/../includes/header.php';
                 }, 300);
             }, duration);
         }
-        
+
         // Show view patient modal
         function showViewModal(patientId, patientName) {
             currentPatientId = patientId;
@@ -2776,7 +2915,7 @@ require_once __DIR__ . '/../includes/header.php';
                         // Profile image logic
                         let profileImgHtml = '';
                         if (patient.user_id) {
-                            const allowedExts = ['jpg','jpeg','png','gif'];
+                            const allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
                             let found = false;
                             for (let ext of allowedExts) {
                                 let url = `/community-health-tracker/uploads/profiles/profile_${patient.user_id}.${ext}`;
@@ -2830,19 +2969,19 @@ require_once __DIR__ . '/../includes/header.php';
                     showNotification('error', 'Error loading patient data: ' + error.message);
                 });
         }
-        
+
         // Hide view modal
         function hideViewModal() {
             document.getElementById('viewModal').style.display = 'none';
             document.body.style.overflow = 'auto';
         }
-        
+
         // Switch from view to edit modal
         function viewToEdit() {
             hideViewModal();
             showEditModal(currentPatientId, currentPatientName);
         }
-        
+
         // Show edit patient modal
         function showEditModal(patientId, patientName) {
             currentPatientId = patientId;
@@ -2867,7 +3006,7 @@ require_once __DIR__ . '/../includes/header.php';
                         // Profile image logic
                         let profileImgHtml = '';
                         if (patient.user_id) {
-                            const allowedExts = ['jpg','jpeg','png','gif'];
+                            const allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
                             let found = false;
                             for (let ext of allowedExts) {
                                 let url = `/community-health-tracker/uploads/profiles/profile_${patient.user_id}.${ext}`;
@@ -2918,103 +3057,103 @@ require_once __DIR__ . '/../includes/header.php';
                     showNotification('error', 'Error loading patient data: ' + error.message);
                 });
         }
-        
+
         // Hide edit modal
         function hideEditModal() {
             document.getElementById('editModal').style.display = 'none';
             document.body.style.overflow = 'auto';
             clearFormErrors();
         }
-        
+
         // Clear form errors
         function clearFormErrors() {
             const errorElements = document.querySelectorAll('.error-message');
             errorElements.forEach(el => el.textContent = '');
         }
-        
+
         // Handle edit form submission
-        document.getElementById('editPatientForm').addEventListener('submit', function(e) {
+        document.getElementById('editPatientForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             // Clear previous errors
             clearFormErrors();
-            
+
             // Validate form
             let isValid = true;
             const requiredFields = ['full_name', 'age', 'gender', 'sitio', 'contact'];
-            
+
             requiredFields.forEach(field => {
                 const input = document.getElementById(`edit${field.charAt(0).toUpperCase() + field.slice(1)}`);
                 const errorElement = document.getElementById(`error${field.charAt(0).toUpperCase() + field.slice(1)}`);
-                
+
                 if (!input.value.trim()) {
                     errorElement.textContent = 'This field is required';
                     isValid = false;
                 }
             });
-            
+
             if (!isValid) {
                 showNotification('error', 'Please fill in all required fields');
                 return;
             }
-            
+
             // Show loading
             showLoading();
-            
+
             // Prepare form data
             const formData = new FormData(this);
-            
+
             // Send AJAX request
             fetch('', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                hideLoading();
-                
-                if (data.success) {
-                    // Show success notification
-                    showNotification('success', data.message);
-                    
-                    // Close modal and reload page after delay
-                    setTimeout(() => {
-                        hideEditModal();
-                        location.reload();
-                    }, 1500);
-                } else {
-                    // Show errors
-                    if (data.errors) {
-                        Object.keys(data.errors).forEach(field => {
-                            const errorElement = document.getElementById(`error${field.charAt(0).toUpperCase() + field.slice(1)}`);
-                            if (errorElement) {
-                                errorElement.textContent = data.errors[field];
-                            }
-                        });
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading();
+
+                    if (data.success) {
+                        // Show success notification
+                        showNotification('success', data.message);
+
+                        // Close modal and reload page after delay
+                        setTimeout(() => {
+                            hideEditModal();
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        // Show errors
+                        if (data.errors) {
+                            Object.keys(data.errors).forEach(field => {
+                                const errorElement = document.getElementById(`error${field.charAt(0).toUpperCase() + field.slice(1)}`);
+                                if (errorElement) {
+                                    errorElement.textContent = data.errors[field];
+                                }
+                            });
+                        }
+
+                        // Show error notification
+                        showNotification('error', data.message || 'Failed to update patient');
                     }
-                    
-                    // Show error notification
-                    showNotification('error', data.message || 'Failed to update patient');
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                showNotification('error', 'Network error: ' + error.message);
-            });
+                })
+                .catch(error => {
+                    hideLoading();
+                    showNotification('error', 'Network error: ' + error.message);
+                });
         });
-        
+
         // Show delete confirmation modal
         function showDeleteModal(patientId, patientName) {
             currentPatientId = patientId;
             currentPatientName = patientName;
-            
-            document.getElementById('patientNameDisplay').textContent = 
+
+            document.getElementById('patientNameDisplay').textContent =
                 `Are you sure you want to delete "${patientName}"?`;
-            
+
             document.getElementById('deleteModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
-        
+
         // Hide delete modal
         function hideDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
@@ -3022,12 +3161,12 @@ require_once __DIR__ . '/../includes/header.php';
             currentPatientId = null;
             currentPatientName = '';
         }
-        
+
         // Show loading spinner
         function showLoading() {
             document.getElementById('loadingSpinner').style.display = 'block';
         }
-        
+
         // Hide loading spinner
         function hideLoading() {
             document.getElementById('loadingSpinner').style.display = 'none';
@@ -3060,12 +3199,10 @@ require_once __DIR__ . '/../includes/header.php';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><div class="font-medium text-gray-900">${escapeHtml(p.full_name)}</div><div class="text-sm text-gray-500">${escapeHtml(p.sitio || 'N/A')}</div>${p.user_email ? `<div class="text-xs text-gray-400">${escapeHtml(p.user_email)}</div>` : ''}</td>
-                    <td>${p.age || 'N/A'}</td>
-                    <td>${escapeHtml(p.gender || 'N/A')}</td>
                     <td>${escapeHtml(p.linking_status || (p.user_id ? 'Linked' : 'Unlinked'))}</td>
                     <td>${escapeHtml(p.added_by_name || (p.added_by ? 'Staff #' + p.added_by : 'System'))}</td>
                     <td>${formatDateTime(p.created_at)}</td>
-                    <td>
+                    <td> 
                         <div class="flex space-x-2">
                             <button class="btn-view" onclick="showViewModal(${p.id}, '${addslashesForJs(p.full_name)}')"><i class="fas fa-eye mr-1"></i>View</button>
                             <button class="btn-edit" onclick="showEditModal(${p.id}, '${addslashesForJs(p.full_name)}')"><i class="fas fa-edit mr-1"></i>Edit</button>
@@ -3141,7 +3278,7 @@ require_once __DIR__ . '/../includes/header.php';
         function escapeHtml(str) {
             if (!str) return '';
             return String(str).replace(/[&<>"'`]/g, function (s) {
-                return ({'&': '&amp;','<': '&lt;','>': '&gt;','"': '&quot;',"'": '&#39;', '`': '&#96;'})[s];
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' })[s];
             });
         }
 
@@ -3149,48 +3286,48 @@ require_once __DIR__ . '/../includes/header.php';
             if (!s) return '';
             return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\"/g, '\\"');
         }
-        
+
         // Archive patient (soft delete)
         function archivePatient() {
             if (!currentPatientId) return;
-            
+
             if (confirm(`Archive "${currentPatientName}"?\n\nThe record will be moved to the archive and can be restored later.`)) {
                 showLoading();
                 window.location.href = `?delete_patient=${currentPatientId}&confirm=true`;
             }
         }
-        
+
         // Permanent delete
         function permanentDelete() {
             if (!currentPatientId) return;
-            
+
             if (confirm(`PERMANENTLY DELETE "${currentPatientName}"?\n\nTHIS ACTION CANNOT BE UNDONE!\n\nAll patient data will be permanently erased from the system.`)) {
                 showLoading();
                 window.location.href = `?permanent_delete=${currentPatientId}&confirm=true`;
             }
         }
-        
+
         // Format date for display
         function formatDate(dateString) {
             if (!dateString) return 'Not specified';
-            
+
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return 'Invalid date';
-            
+
             return date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
         }
-        
+
         // Format datetime for display
         function formatDateTime(datetimeString) {
             if (!datetimeString) return 'Not specified';
-            
+
             const date = new Date(datetimeString);
             if (isNaN(date.getTime())) return 'Invalid date';
-            
+
             return date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -3199,20 +3336,20 @@ require_once __DIR__ . '/../includes/header.php';
                 minute: '2-digit'
             });
         }
-        
+
         // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Show any PHP session messages
             <?php if (isset($_SESSION['success_message'])): ?>
                 showNotification('success', '<?= addslashes($_SESSION['success_message']) ?>');
                 <?php unset($_SESSION['success_message']); ?>
             <?php endif; ?>
-            
+
             <?php if (isset($_SESSION['error_message'])): ?>
                 showNotification('error', '<?= addslashes($_SESSION['error_message']) ?>');
                 <?php unset($_SESSION['error_message']); ?>
             <?php endif; ?>
-            
+
             // Animate stats cards on page load
             const statsCards = document.querySelectorAll('.stats-card');
             statsCards.forEach((card, index) => {
@@ -3226,7 +3363,7 @@ require_once __DIR__ . '/../includes/header.php';
             });
 
             // Initialize Overview Chart (Line - monthly trends)
-            (function initOverviewChart(){
+            (function initOverviewChart() {
                 const canvasEl = document.getElementById('overviewChart');
                 if (!canvasEl || typeof Chart === 'undefined') return;
                 const ctx = canvasEl.getContext('2d');
@@ -3306,8 +3443,8 @@ require_once __DIR__ . '/../includes/header.php';
                         maintainAspectRatio: false,
                         plugins: {
                             legend: { position: 'top', labels: { font: { weight: 600 }, usePointStyle: true } },
-                            tooltip: { 
-                                mode: 'index', 
+                            tooltip: {
+                                mode: 'index',
                                 intersect: false,
                                 backgroundColor: 'rgba(0, 0, 0, 0.8)',
                                 padding: 12,
@@ -3317,12 +3454,12 @@ require_once __DIR__ . '/../includes/header.php';
                         },
                         interaction: { mode: 'index', intersect: false },
                         scales: {
-                            x: { 
-                                grid: { display: false }, 
+                            x: {
+                                grid: { display: false },
                                 ticks: { maxRotation: 0 }
                             },
-                            y: { 
-                                beginAtZero: true, 
+                            y: {
+                                beginAtZero: true,
                                 ticks: { precision: 0 },
                                 grid: {
                                     color: 'rgba(0, 0, 0, 0.05)',
@@ -3349,9 +3486,9 @@ require_once __DIR__ . '/../includes/header.php';
                 });
             });
         });
-        
+
         // Close modal on Escape key
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 hideViewModal();
                 hideEditModal();
@@ -3359,6 +3496,7 @@ require_once __DIR__ . '/../includes/header.php';
             }
         });
     </script>
-    
+
 </body>
+
 </html>

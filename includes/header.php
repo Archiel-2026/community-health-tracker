@@ -1541,7 +1541,7 @@ body,
             </div>
         </div>
 
-        <main class="container mx-auto mt-24"> <!-- Added mt-24 to account for the fixed header height -->
+        <main class="container mx-auto"> <!-- Added mt-24 to account for the fixed header height -->
             <!-- Your main content here -->
         </main>
 
