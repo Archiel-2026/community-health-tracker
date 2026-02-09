@@ -1145,37 +1145,40 @@ $recordsPerPage = 5;
 
     <!-- Stats Cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6 mb-8">
-    <div class="bg-white p-6 rounded-lg shadow stat-card">
+    <div class="bg-white p-6 rounded-lg shadow stat-card inline-block mr-4">
         <div class="flex items-center">
-            <i class="fas fa-user-injured text-2xl text-blue-600 mr-3"></i>
+            <i class="fas fa-users text-2xl text-green-600 mr-3"></i>
             <div>
                 <h3 class="text-lg font-semibold text-gray-700">Total Patients</h3>
                 <div class="stat-count-wrap">
-                    <div class="stat-count text-blue-600 bg-blue-50"><?= $stats['total_patients'] ?></div>
+                    <div class="stat-count text-green-600 bg-green-50"><?= number_format($stats['total_patients']) ?></div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow stat-card">
+    <div class="bg-white p-6 rounded-lg shadow stat-card inline-block mr-4">
         <div class="flex items-center">
-            <i class="fas fa-user-check text-2xl text-green-600 mr-3"></i>
+            <i class="fas fa-user-check text-2xl text-purple-600 mr-3"></i>
             <div>
                 <h3 class="text-lg font-semibold text-gray-700">Resident Accounts</h3>
                 <div class="stat-count-wrap">
-                    <div class="stat-count text-green-600 bg-green-50"><?= number_format($analytics['approved_count']) ?></div>
+                    <div class="stat-count text-purple-600 bg-purple-50"><?= number_format($stats['resident_users']) ?></div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow stat-card">
+    <div class="bg-white p-6 rounded-lg shadow stat-card inline-block">
         <div class="flex items-center">
-            <i class="fas fa-clipboard-check text-2xl text-purple-600 mr-3"></i>
+            <i class="fas fa-user-md text-2xl text-blue-600 mr-3"></i>
             <div>
-                <h3 class="text-lg font-semibold text-gray-700">Staff Actions (30d)</h3>
+                <h3 class="text-lg font-semibold text-gray-700">Doctors Visit (Notes)</h3>
                 <div class="stat-count-wrap">
-                    <div class="stat-count text-purple-600 bg-purple-50"><?= number_format($analytics['staff_actions_30d']) ?></div>
+                    <div class="stat-count text-blue-600 bg-blue-50"><?php
+                        $stmt = $pdo->query("SELECT s.full_name AS doctor, COUNT(*) as cnt FROM consultation_notes cn JOIN sitio1_staff s ON cn.created_by = s.id GROUP BY s.id");
+                        $doctorNotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                        $totalDoctorNotes = array_sum(array_column($doctorNotes, 'cnt'));
+                        echo number_format($totalDoctorNotes);
+                    ?></div>
                 </div>
             </div>
         </div>
@@ -1212,102 +1215,11 @@ $recordsPerPage = 5;
                 </button>
             </div>
             
-            <!-- Overview Cards -->
-            <div id="analyticsCards" class="analytics-grid mb-8">
-                <div class="analytics-card">
-                    <div class="flex items-center mb-3">
-                        <div class="p-2 bg-blue-100 rounded-lg mr-3">
-                            <i class="fas fa-user-injured text-blue-600 text-xl"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700">Total Patients</h3>
-                    </div>
-                    <div class="analytics-value"><?= number_format($analytics['total_patients']) ?></div>
-                    <div class="analytics-label">Based on patient records</div>
-                    <div class="mt-4 pt-4 border-t border-gray-100">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">With Health Issues</span>
-                            <span class="text-sm font-semibold text-red-600"><?= number_format($analytics['health_issues_count']) ?></span>
-                        </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <span class="text-sm text-gray-500">No Reported Issues</span>
-                            <span class="text-sm font-semibold text-green-600"><?= number_format(max(0, $analytics['total_patients'] - $analytics['health_issues_count'])) ?></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="analytics-card">
-                    <div class="flex items-center mb-3">
-                        <div class="p-2 bg-red-100 rounded-lg mr-3">
-                            <i class="fas fa-heartbeat text-red-600 text-xl"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700">Health Issues Rate</h3>
-                    </div>
-                    <div class="analytics-value"><?= $analytics['health_issues_rate'] ?>%</div>
-                    <div class="analytics-label">Patients with reported conditions</div>
-                    <div class="mt-4 pt-4 border-t border-gray-100">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">Total with Issues</span>
-                            <span class="text-sm font-semibold text-red-600"><?= number_format($analytics['health_issues_count']) ?></span>
-                        </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <span class="text-sm text-gray-500">Top Issue</span>
-                            <span class="text-sm font-semibold text-gray-700">
-                                <?= !empty($analytics['top_diseases']) ? htmlspecialchars($analytics['top_diseases'][0]['label']) . ' (' . number_format($analytics['top_diseases'][0]['count']) . ')' : 'N/A' ?>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="analytics-card">
-                    <div class="flex items-center mb-3">
-                        <div class="p-2 bg-purple-100 rounded-lg mr-3">
-                            <i class="fas fa-user-plus text-purple-600 text-xl"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700">Monthly Patient Records</h3>
-                    </div>
-                    <div class="analytics-value">
-                        <?php 
-                            $lastMonthCount = 0;
-                            if (!empty($analytics['patient_registration_trend'])) {
-                                $lastMonth = end($analytics['patient_registration_trend']);
-                                $lastMonthCount = $lastMonth['count'];
-                            }
-                            echo number_format($lastMonthCount);
-                        ?>
-                    </div>
-                    <div class="analytics-label">New records last month</div>
-                    <div class="mt-4 pt-4 border-t border-gray-100">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">6-month avg</span>
-                            <span class="text-sm font-semibold text-purple-600">
-                                <?php 
-                                    $avg = !empty($analytics['patient_registration_trend']) ? 
-                                        array_sum(array_map(function($item) { return $item['count']; }, $analytics['patient_registration_trend'])) / count($analytics['patient_registration_trend']) : 0;
-                                    echo number_format($avg, 1);
-                                ?>
-                            </span>
-                        </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <span class="text-sm text-gray-500">Peak month</span>
-                            <span class="text-sm font-semibold text-orange-600">
-                                <?php 
-                                    $peak = 0;
-                                    if (!empty($analytics['patient_registration_trend'])) {
-                                        $peak = max(array_map(function($item) { return $item['count']; }, $analytics['patient_registration_trend']));
-                                    }
-                                    echo number_format($peak);
-                                ?>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                
-            </div>
+            <!-- No overview cards, only charts below -->
 
             <!-- Charts Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <!-- Patient Registration Trend -->
+                <!-- Patient Records Trend (Bar Graph) -->
                 <div class="chart-container">
                     <h3 class="chart-title">
                         <i class="fas fa-user-plus"></i>
@@ -1317,8 +1229,7 @@ $recordsPerPage = 5;
                         <canvas id="patientRegistrationChart" height="300"></canvas>
                     </div>
                 </div>
-                
-                <!-- Health Issues Chart -->
+                <!-- Health Issues Breakdown (Bar Graph) -->
                 <div class="chart-container">
                     <h3 class="chart-title">
                         <i class="fas fa-heartbeat"></i>
@@ -1329,10 +1240,8 @@ $recordsPerPage = 5;
                     </div>
                 </div>
             </div>
-
-            <!-- Distribution Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Gender Distribution -->
+                <!-- Gender Distribution (Donut Graph) -->
                 <div class="chart-container">
                     <h3 class="chart-title">
                         <i class="fas fa-venus-mars"></i>
@@ -1342,8 +1251,7 @@ $recordsPerPage = 5;
                         <canvas id="genderDistributionChart" height="300"></canvas>
                     </div>
                 </div>
-                
-                <!-- Age Distribution -->
+                <!-- Age Distribution (Donut Graph) -->
                 <div class="chart-container">
                     <h3 class="chart-title">
                         <i class="fas fa-user-friends"></i>
@@ -2323,43 +2231,40 @@ function refreshAnalytics() {
 
 // Chart initialization
 function initializeCharts() {
-    console.log('Initializing charts...');
-    
     // Check if chart elements exist
     const patientRegistrationCanvas = document.getElementById('patientRegistrationChart');
     const healthIssuesCanvas = document.getElementById('healthIssuesChart');
     const genderDistributionCanvas = document.getElementById('genderDistributionChart');
     const ageDistributionCanvas = document.getElementById('ageDistributionChart');
-    
     // Destroy existing charts if they exist
     Chart.getChart(patientRegistrationCanvas)?.destroy();
     Chart.getChart(healthIssuesCanvas)?.destroy();
     Chart.getChart(genderDistributionCanvas)?.destroy();
     Chart.getChart(ageDistributionCanvas)?.destroy();
-    
-    // 1. Patient Registration Trend Chart
+    // 1. Patient Records Trend (Line)
     try {
         const patientRegCtx = patientRegistrationCanvas.getContext('2d');
-        const patientData = <?= json_encode($analytics['patient_registration_trend']) ?>;
+        let patientData = <?= json_encode($analytics['patient_registration_trend']) ?>;
+        // Sort by month ascending
+        patientData = patientData.sort((a, b) => a.month.localeCompare(b.month));
         const patientLabels = patientData.map(item => {
             const date = new Date(item.month + '-01');
             return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         });
         const patientValues = patientData.map(item => item.count);
-        
-        const patientRegChart = new Chart(patientRegCtx, {
+        new Chart(patientRegCtx, {
             type: 'line',
             data: {
                 labels: patientLabels,
                 datasets: [{
                     label: 'New Records',
                     data: patientValues,
-                    borderColor: '#10B981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    borderColor: '#6366F1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.08)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#10B981',
+                    pointBackgroundColor: '#6366F1',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2,
                     pointRadius: 5
@@ -2382,58 +2287,52 @@ function initializeCharts() {
                 }
             }
         });
-        console.log('Patient Registration Chart initialized');
-    } catch (error) {
-        console.error('Error initializing patient registration chart:', error);
-    }
-    
-    // 2. Health Issues Breakdown Chart
+    } catch (error) { console.error('Error initializing patient registration chart:', error); }
+    // 2. Health Issues Breakdown (Bar)
     try {
         const healthIssuesCtx = healthIssuesCanvas.getContext('2d');
-        const diseases = <?= json_encode($analytics['top_diseases']) ?>;
+        let diseases = <?= json_encode($analytics['top_diseases']) ?>;
+        // Sort by count descending
+        diseases = diseases.sort((a, b) => b.count - a.count);
         const diseaseLabels = diseases.length ? diseases.map(d => d.label) : ['No Data'];
         const diseaseValues = diseases.length ? diseases.map(d => d.count) : [0];
-
-        const healthIssuesChart = new Chart(healthIssuesCtx, {
-            type: 'doughnut',
+        new Chart(healthIssuesCtx, {
+            type: 'bar',
             data: {
                 labels: diseaseLabels,
                 datasets: [{
+                    label: 'Cases',
                     data: diseaseValues,
                     backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#06b6d4'],
+                    borderColor: '#fff',
                     borderWidth: 1,
-                    borderColor: '#ffffff',
-                    hoverBackgroundColor: ['#dc2626', '#ea580c', '#d97706', '#65a30d', '#16a34a', '#0891b2']
+                    borderRadius: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true,
-                            font: {
-                                size: 12
-                            }
-                        }
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { drawBorder: false, color: 'rgba(229, 231, 235, 0.5)' },
+                        ticks: { font: { size: 11 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 } }
                     }
-                },
-                cutout: '60%'
+                }
             }
         });
-        console.log('Health Issues Chart initialized');
-    } catch (error) {
-        console.error('Error initializing health issues chart:', error);
-    }
-    
-    // 3. Gender Distribution Chart
+    } catch (error) { console.error('Error initializing health issues chart:', error); }
+    // 3. Gender Distribution (Donut)
     try {
         const genderDistributionCtx = genderDistributionCanvas.getContext('2d');
-        const genderData = <?= json_encode($analytics['gender_distribution']) ?>;
-        
+        let genderData = <?= json_encode($analytics['gender_distribution']) ?>;
+        // Sort by count descending
+        genderData = genderData.sort((a, b) => b.count - a.count);
         const genderLabels = genderData.map(item => item.gender || 'Unknown');
         const genderValues = genderData.map(item => item.count);
         const genderColors = genderLabels.map(label => {
@@ -2441,9 +2340,8 @@ function initializeCharts() {
             if (label.toLowerCase() === 'female') return '#EC4899';
             return '#6B7280';
         });
-        
-        const genderDistributionChart = new Chart(genderDistributionCtx, {
-            type: 'pie',
+        new Chart(genderDistributionCtx, {
+            type: 'doughnut',
             data: {
                 labels: genderLabels,
                 datasets: [{
@@ -2463,39 +2361,33 @@ function initializeCharts() {
                         labels: {
                             padding: 20,
                             usePointStyle: true,
-                            font: {
-                                size: 12
-                            }
+                            font: { size: 12 }
                         }
                     }
-                }
+                },
+                cutout: '60%'
             }
         });
-        console.log('Gender Distribution Chart initialized');
-    } catch (error) {
-        console.error('Error initializing gender distribution chart:', error);
-    }
-    
-    // 4. Age Distribution Chart
+    } catch (error) { console.error('Error initializing gender distribution chart:', error); }
+    // 4. Age Distribution (Donut)
     try {
         const ageDistributionCtx = ageDistributionCanvas.getContext('2d');
-        const ageData = <?= json_encode($analytics['age_distribution']) ?>;
-        
+        let ageData = <?= json_encode($analytics['age_distribution']) ?>;
+        // Sort by count descending
+        ageData = ageData.sort((a, b) => b.count - a.count);
         const ageLabels = ageData.map(item => item.age_group);
         const ageValues = ageData.map(item => item.count);
         const ageColors = ['#60A5FA', '#3B82F6', '#2563EB', '#1D4ED8', '#1E40AF'];
-        
-        const ageDistributionChart = new Chart(ageDistributionCtx, {
-            type: 'bar',
+        new Chart(ageDistributionCtx, {
+            type: 'doughnut',
             data: {
                 labels: ageLabels,
                 datasets: [{
-                    label: 'Patients',
                     data: ageValues,
                     backgroundColor: ageColors,
-                    borderColor: ageColors.map(color => color + 'CC'),
                     borderWidth: 1,
-                    borderRadius: 6
+                    borderColor: '#ffffff',
+                    hoverBackgroundColor: ageColors.map(color => color + 'CC')
                 }]
             },
             options: {
@@ -2503,39 +2395,18 @@ function initializeCharts() {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: { size: 12 }
+                        }
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            drawBorder: false,
-                            color: 'rgba(229, 231, 235, 0.5)'
-                        },
-                        ticks: {
-                            font: {
-                                size: 11
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                size: 11
-                            }
-                        }
-                    }
-                }
+                cutout: '60%'
             }
         });
-        console.log('Age Distribution Chart initialized');
-    } catch (error) {
-        console.error('Error initializing age distribution chart:', error);
-    }
+    } catch (error) { console.error('Error initializing age distribution chart:', error); }
 }
 </script>
 </body>
