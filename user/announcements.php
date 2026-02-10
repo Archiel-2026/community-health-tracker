@@ -414,8 +414,8 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             background: white;
             border-radius: 10px;
             border: 1px solid #e5e7eb;
-            padding: 1.75rem;
-            margin-bottom: 1.5rem;
+            padding: 1.4rem;
+            /* margin-bottom: 1.5rem; */
             transition: all 0.2s;
         }
 
@@ -438,17 +438,17 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             }
         }
 
-        .announcement-item:hover {
+        /* .announcement-item:hover {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
             border-color: #d1d5db;
-        }
+        } */
 
         .announcement-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1rem;
+            /* margin-bottom: 1rem; */
             gap: 1rem;
         }
 
@@ -456,7 +456,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             font-weight: 600;
             color: #111827;
             font-size: 1.125rem;
-            margin-bottom: 0.5rem;
+            /* margin-bottom: 0.5rem; */
         }
 
         .announcement-meta {
@@ -464,20 +464,20 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             color: #6b7280;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
         }
 
         .announcement-meta span {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            /* gap: 0.5rem; */
         }
 
         .announcement-badges {
             display: flex;
             flex-wrap: wrap;
             gap: 0.75rem;
-            margin-bottom: 1rem;
+            /* margin-bottom: 1rem; */
         }
 
         /* Badge Styling */
@@ -486,14 +486,14 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 0.875rem;
-            border-radius: 12px;
+            border-radius: 6px;
             font-size: 0.8125rem;
             font-weight: 600;
-            border: 1px solid;
+            /* border: 1px solid; */
         }
 
         .badge-high {
-            background: #FEE2E2;
+            background: #ecb8b8;
             color: #991B1B;
             border-color: #FECACA;
         }
@@ -517,15 +517,15 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
         }
 
         .badge-simple {
-            background: #F0F9FF;
+            background: #d4e8f2;
             color: #0284C7;
-            border-color: #BFDBFE;
+            /* border-color: #BFDBFE; */
         }
 
         .badge-accepted {
             background: #D1FAE5;
-            color: #065F46;
-            border-color: #A7F3D0;
+            color: #10B981;
+            border-color: #9abaab;
         }
 
         .badge-dismissed {
@@ -586,13 +586,13 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            padding: 0.875rem 1.75rem;
+            padding: 0.2rem 1.5rem;
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             border: none;
             border-radius: 8px;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.8rem;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             min-height: 44px;
@@ -955,7 +955,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                     <div class="stat-value"><?= $pendingCount ?></div>
                                 </div>
 
-                                <div class="stat-icon" style="background: #F3F4F6; color: #6b7280;">
+                                <div class="stat-icon">
                                     <svg width="34" height="34" viewBox="0 0 34 34" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
                                         <path fill-rule="evenodd" clip-rule="evenodd"
@@ -972,11 +972,13 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                     <!-- Lab Results Section -->
 
                     <div class="mb-8">
-                        <div class="flex items-center gap-2 mb-4">
-                            <button id="btnLabResults" type="button" class="tab-header active" style="border-radius: 8px;">
+                        <div class="flex items-center border-b-2 py-6 gap-2 mb-6">
+                            <button id="btnLabResults" type="button" class="tab-header active"
+                                style="border-radius: 8px;">
                                 Laboratory Results
                             </button>
-                            <button id="btnGeneralAnnouncements" type="button" class="tab-header" style="border-radius: 8px;">
+                            <button id="btnGeneralAnnouncements" type="button" class="tab-header"
+                                style="border-radius: 8px;">
                                 General Announcements
                             </button>
                         </div>
@@ -985,16 +987,37 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                 <div class="announcement-grid">
                                     <?php foreach ($labResults as $announcement): ?>
                                         <div class="announcement-card">
-                                            <div style="font-weight:600; font-size:1.25rem; color:#111827; margin-bottom:0.5rem;"> <?= htmlspecialchars($announcement['title']) ?> </div>
-                                            <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-                                                <span style="background:#A7F3D0; color:#047857; border-radius:6px; padding:0.3em 1em; font-size:1em; font-weight:500;">Lab Result</span>
-                                                <span style="background:#DBEAFE; color:#2563eb; border-radius:6px; padding:0.3em 1em; font-size:1em; font-weight:500;"><?= ucfirst($announcement['priority']) ?></span>
+                                            <div class="announcement-title text-blue-700">
+                                                <?= htmlspecialchars($announcement['title']) ?>
                                             </div>
-                                            <div style="color:#6b7280; font-size:1em; margin-bottom:0.5rem;">
-                                                Date Added : <span style="color:#111827; font-weight:500;"> <?= date('F d, Y', strtotime($announcement['post_date'])) ?> </span>
+                                            <div style="display:flex; gap:0.5rem;">
+                                                <span
+                                                    style="background:#A7F3D0; color:#047857; border-radius:6px; padding:0.3em 1em; font-size:1em; font-weight:500;">Lab
+                                                    Result</span>
+                                                <!-- PRIORITY -->
+                                                <span class="badge badge-<?= $announcement['priority'] ?>">
+                                                    <?= ucfirst($announcement['priority']) ?></span>
                                             </div>
-                                            <div style="margin-left:auto;">
-                                                <button onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)" style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.6em 1.5em; font-weight:600; font-size:1em; cursor:pointer; transition:background 0.2s;">View Result</button>
+
+                                            <div class="announcement-meta justify-between items-center mb-2">
+                                                <div>
+                                                    <!-- DATE ADDED -->
+                                                    <div class="flex flex-col md:flex-row gap-2 text-sm mb-1">
+                                                        <span class="text-gray-150">Date Added:</span>
+                                                        <span class="font-bold">
+                                                            <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- VIEW -->
+                                                <div class="announcement-actions">
+                                                    <button
+                                                        onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
+                                                        class="btn-primary" style="background: #2563eb;">
+                                                        View Result
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
@@ -1009,84 +1032,116 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                             <?php if (!empty($basicAnnouncements)): ?>
                                 <div class="announcement-grid">
                                     <?php foreach ($basicAnnouncements as $announcement): ?>
-                                        <div class="announcement-item card-shadow announcement-card" style="border-left: 6px solid #2563eb; background: linear-gradient(90deg,#DBEAFE 60%,#fff 100%);">
-                                                        <style>
-                                                            .announcement-grid {
-                                                                display: grid;
-                                                                grid-template-columns: repeat(4, 1fr);
-                                                                gap: 1.5rem;
-                                                                margin-bottom: 0.5rem;
-                                                            }
-                                                            @media (max-width: 1200px) {
-                                                                .announcement-grid {
-                                                                    grid-template-columns: repeat(2, 1fr);
-                                                                }
-                                                            }
-                                                            @media (max-width: 800px) {
-                                                                .announcement-grid {
-                                                                    grid-template-columns: 1fr;
-                                                                }
-                                                            }
-                                                            .announcement-card {
-                                                                background: #fff;
-                                                                border-radius: 12px;
-                                                                border: 1px solid #e5e7eb;
-                                                                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                                                                padding: 1.5rem;
-                                                                display: flex;
-                                                                flex-direction: column;
-                                                                gap: 0.5rem;
-                                                                min-width: 0;
-                                                            }
-                                                        </style>
-                                                    <div class="announcement-header">
-                                                        <div class="flex-1">
-                                                            <h3 class="announcement-title text-blue-700">
-                                                                <?= htmlspecialchars($announcement['title']) ?>
-                                                            </h3>
-                                                            <div class="announcement-meta">
-                                                                <span><?= htmlspecialchars($announcement['staff_name'] ?? 'Community Staff') ?></span>
-                                                                <span class="mx-2">•</span>
-                                                                <span><?= date('M d, Y', strtotime($announcement['post_date'])) ?></span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="announcement-actions">
-                                                            <button
-                                                                onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
-                                                                class="btn-primary" style="background: #2563eb;">
-                                                                View
-                                                            </button>
-                                                        </div>
+                                        <div class="announcement-item card-shadow announcement-card">
+                                            <style>
+                                                .announcement-grid {
+                                                    display: grid;
+                                                    grid-template-columns: repeat(4, 1fr);
+                                                    gap: 1.5rem;
+                                                    /* margin-bottom: 0.5rem; */
+                                                }
+
+                                                @media (max-width: 1200px) {
+                                                    .announcement-grid {
+                                                        grid-template-columns: repeat(2, 1fr);
+                                                    }
+                                                }
+
+                                                @media (max-width: 800px) {
+                                                    .announcement-grid {
+                                                        grid-template-columns: 1fr;
+                                                    }
+                                                }
+
+                                                .announcement-card {
+                                                    background: #fff;
+                                                    border-radius: 12px;
+                                                    border: 1px solid #e5e7eb;
+                                                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                                                    padding: 1.5rem;
+                                                    display: flex;
+                                                    flex-direction: column;
+                                                    gap: 0.3rem;
+                                                    min-width: 0;
+                                                }
+                                            </style>
+                                            <div class="announcement-header">
+                                                <div class="flex-1">
+                                                    <h3 class="announcement-title text-blue-700">
+                                                        <?= htmlspecialchars($announcement['title']) ?>
+                                                    </h3>
+
+                                                </div>
+                                            </div>
+                                            <div class="announcement-badges">
+                                                <span class="badge badge-simple">Announcement</span>
+                                                <!-- PRIORITY -->
+                                                <span class="badge badge-<?= $announcement['priority'] ?>">
+                                                    <?= ucfirst($announcement['priority']) ?></span>
+                                            </div>
+
+                                            <div class="announcement-meta justify-between items-center mb-2">
+                                                <div>
+                                                    <!-- DATE ADDED -->
+                                                    <div class="flex flex-col md:flex-row gap-2 text-sm mb-1">
+                                                        <span class="text-gray-150">Date Added:</span>
+                                                        <span class="font-bold">
+                                                            <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                                                        </span>
                                                     </div>
-                                                    <div class="announcement-badges mb-2">
-                                                        <span class="badge badge-simple">Announcement</span>
-                                                        <span class="badge badge-<?= $announcement['priority'] ?>">
-                                                            <?= ucfirst($announcement['priority']) ?></span>
-                                                        <?php if ($announcement['user_status']): ?>
+                                                    <!-- STATUS -->
+                                                    <?php if ($announcement['user_status']): ?>
+                                                        <div class="flex flex-col md:flex-row items-center">
                                                             <span class="badge badge-<?= $announcement['user_status'] ?>">
+                                                                <svg class="w-6 h-6" viewBox="0 0 15 15" fill="none"
+                                                                    xmlns="http://www.w3.org/2000/svg">
+                                                                    <path
+                                                                        d="M10.1754 5.76211C10.219 5.80564 10.2536 5.85734 10.2771 5.91425C10.3007 5.97115 10.3129 6.03215 10.3129 6.09375C10.3129 6.15535 10.3007 6.21635 10.2771 6.27325C10.2536 6.33016 10.219 6.38186 10.1754 6.42539L6.89414 9.70664C6.85061 9.75022 6.79891 9.7848 6.74201 9.80839C6.6851 9.83198 6.6241 9.84412 6.5625 9.84412C6.5009 9.84412 6.4399 9.83198 6.383 9.80839C6.32609 9.7848 6.2744 9.75022 6.23086 9.70664L4.82461 8.30039C4.73665 8.21243 4.68724 8.09314 4.68724 7.96875C4.68724 7.84436 4.73665 7.72507 4.82461 7.63711C4.91257 7.54915 5.03186 7.49974 5.15625 7.49974C5.28064 7.49974 5.39994 7.54915 5.48789 7.63711L6.5625 8.7123L9.51211 5.76211C9.55565 5.71853 9.60734 5.68395 9.66425 5.66036C9.72115 5.63677 9.78215 5.62463 9.84375 5.62463C9.90535 5.62463 9.96635 5.63677 10.0233 5.66036C10.0802 5.68395 10.1319 5.71853 10.1754 5.76211ZM13.5938 7.5C13.5938 8.70523 13.2364 9.88339 12.5668 10.8855C11.8972 11.8876 10.9455 12.6687 9.83198 13.1299C8.71849 13.5911 7.49324 13.7118 6.31117 13.4767C5.1291 13.2415 4.0433 12.6612 3.19107 11.8089C2.33884 10.9567 1.75847 9.8709 1.52334 8.68883C1.28821 7.50676 1.40889 6.28151 1.87011 5.16802C2.33133 4.05454 3.11238 3.10282 4.1145 2.43323C5.11661 1.76364 6.29477 1.40625 7.5 1.40625C9.11564 1.40796 10.6646 2.05052 11.807 3.19295C12.9495 4.33538 13.592 5.88436 13.5938 7.5ZM12.6563 7.5C12.6563 6.48019 12.3538 5.48328 11.7873 4.63534C11.2207 3.7874 10.4154 3.12651 9.47321 2.73625C8.53103 2.34598 7.49428 2.24387 6.49407 2.44283C5.49385 2.64178 4.5751 3.13287 3.85398 3.85398C3.13287 4.5751 2.64178 5.49385 2.44283 6.49407C2.24387 7.49428 2.34598 8.53103 2.73625 9.47321C3.12651 10.4154 3.7874 11.2207 4.63534 11.7873C5.48328 12.3538 6.48019 12.6562 7.5 12.6562C8.86705 12.6547 10.1777 12.111 11.1443 11.1443C12.111 10.1777 12.6547 8.86705 12.6563 7.5Z"
+                                                                        fill="#10B981" />
+                                                                </svg>
                                                                 <?= ucfirst($announcement['user_status']) ?>
                                                             </span>
-                                                        <?php else: ?>
-                                                            <span class="badge badge-pending">Pending</span>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <div class="announcement-content mb-2">
-                                                        <?= htmlspecialchars($announcement['message']) ?>
-                                                    </div>
-                                                    <?php if ($announcement['image_path']): ?>
-                                                        <div class="image-preview mb-2">
-                                                            <img src="<?= htmlspecialchars($announcement['image_path']) ?>" alt="Announcement Image"
-                                                                onclick="openImageModal('<?= htmlspecialchars($announcement['image_path']) ?>')">
                                                         </div>
+                                                    <?php else: ?>
+                                                        <span class="badge badge-pending">
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                                                xmlns="http://www.w3.org/2000/svg">
+                                                                <path
+                                                                    d="M18.75 7.09125V3.75C18.75 3.35218 18.592 2.97064 18.3107 2.68934C18.0294 2.40804 17.6478 2.25 17.25 2.25H6.75C6.35218 2.25 5.97064 2.40804 5.68934 2.68934C5.40804 2.97064 5.25 3.35218 5.25 3.75V7.125C5.25051 7.35778 5.30495 7.58727 5.40905 7.79548C5.51315 8.00368 5.66408 8.18493 5.85 8.325L10.7503 12L5.85 15.675C5.66408 15.8151 5.51315 15.9963 5.40905 16.2045C5.30495 16.4127 5.25051 16.6422 5.25 16.875V20.25C5.25 20.6478 5.40804 21.0294 5.68934 21.3107C5.97064 21.592 6.35218 21.75 6.75 21.75H17.25C17.6478 21.75 18.0294 21.592 18.3107 21.3107C18.592 21.0294 18.75 20.6478 18.75 20.25V16.9088C18.7495 16.6769 18.6955 16.4482 18.5922 16.2406C18.489 16.033 18.3393 15.8519 18.1547 15.7116L13.2441 12L18.1547 8.2875C18.3393 8.14742 18.4891 7.96658 18.5924 7.75908C18.6957 7.55158 18.7496 7.32303 18.75 7.09125ZM6.75 3.75H17.25V7.09125L16.7091 7.5H7.24969L6.75 7.125V3.75ZM12 11.0625L9.25031 9H14.7253L12 11.0625ZM17.25 20.25H6.75V16.875L11.25 13.5V15.75C11.25 15.9489 11.329 16.1397 11.4697 16.2803C11.6103 16.421 11.8011 16.5 12 16.5C12.1989 16.5 12.3897 16.421 12.5303 16.2803C12.671 16.1397 12.75 15.9489 12.75 15.75V13.5075L17.25 16.9088V20.25Z"
+                                                                    fill="#92400E" />
+                                                            </svg>
+                                                            Pending
+                                                        </span>
                                                     <?php endif; ?>
-                                                    <?php if ($announcement['expiry_date']): ?>
+                                                </div>
+                                                <!-- VIEW -->
+                                                <div class="announcement-actions">
+                                                    <button
+                                                        onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
+                                                        class="btn-primary" style="background: #2563eb;">
+                                                        View
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <!-- <div class="announcement-content mb-2">
+                                                        <?= htmlspecialchars($announcement['message']) ?>
+                                                    </div> -->
+                                            <?php if ($announcement['image_path']): ?>
+                                                <div class="image-preview mb-2">
+                                                    <img src="<?= htmlspecialchars($announcement['image_path']) ?>"
+                                                        alt="Announcement Image"
+                                                        onclick="openImageModal('<?= htmlspecialchars($announcement['image_path']) ?>')">
+                                                </div>
+                                            <?php endif; ?>
+                                            <!-- <?php if ($announcement['expiry_date']): ?>
                                                         <div class="mb-2 text-blue-700 text-sm flex items-center gap-2">
                                                             Expires:
                                                             <?= date('M d, Y', strtotime($announcement['expiry_date'])) ?>
                                                         </div>
-                                                    <?php endif; ?>
-                                                    <div class="mt-2">
-                                                        <!-- Response Section -->
+                                                    <?php endif; ?> -->
+
+                                            <!-- RESPONSE SECTION -->
+                                            <!-- <div class="mt-2">
                                                         <?php if ($announcement['user_status']): ?>
                                                             <div class="flex items-center gap-2 p-2 rounded bg-blue-50 border border-blue-200">
                                                                 <span class="font-semibold text-blue-700">Response Recorded:
@@ -1106,149 +1161,150 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                                                 </form>
                                                             </div>
                                                         <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
+                                                    </div> -->
                                         </div>
-                                    <?php endif; ?>
+                                    <?php endforeach; ?>
                                 </div>
-                        </div>
-                    </div>
-
-                    <!-- No Announcements Message -->
-                    <?php if (empty($labResults) && empty($basicAnnouncements)): ?>
-                        <div class="text-center py-10 sm:py-20">
-                            <div class="empty-state-icon">
-                                <i class="fas fa-bullhorn icon-3xl"></i>
-                            </div>
-                            <h3 class="empty-state-title">No Announcements</h3>
-                            <p class="empty-state-text">There are currently no active announcements. Check back later for
-                                updates.</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Stats Tab -->
-                <div id="stats" class="tab-content">
-                    <div class="flex flex-col md:flex-row gap-8 w-full mb-6" style="padding-left:2em; padding-right:2em;">
-                        <!-- Total Announcement -->
-                        <div class="stat-card flex-1 flex-col">
-                            <div class="flex justify-between items-center w-full">
-                                <div>
-                                    <div class="stat-value"><?= count($announcements) ?></div>
-                                </div>
-
-                                <div class="stat-icon">
-                                    <svg width="42" height="42" viewBox="0 0 42 42" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M20.8333 33.3333C24.3056 33.3333 27.2569 32.1181 29.6875 29.6875C32.1181 27.2569 33.3333 24.3056 33.3333 20.8333C33.3333 17.3611 32.1181 14.4097 29.6875 11.9792C27.2569 9.54861 24.3056 8.33333 20.8333 8.33333C17.3611 8.33333 14.4097 9.54861 11.9792 11.9792C9.54861 14.4097 8.33334 17.3611 8.33334 20.8333C8.33334 24.3056 9.54861 27.2569 11.9792 29.6875C14.4097 32.1181 17.3611 33.3333 20.8333 33.3333ZM14.5833 22.9167V18.75H27.0833V22.9167H14.5833ZM20.8333 41.6667C17.9514 41.6667 15.2431 41.1194 12.7083 40.025C10.1736 38.9306 7.96875 37.4465 6.09375 35.5729C4.21875 33.6993 2.73472 31.4944 1.64167 28.9583C0.548614 26.4222 0.00139153 23.7139 2.63713e-06 20.8333C-0.00138625 17.9528 0.545836 15.2444 1.64167 12.7083C2.7375 10.1722 4.22153 7.96736 6.09375 6.09375C7.96597 4.22014 10.1708 2.73611 12.7083 1.64167C15.2458 0.547222 17.9542 0 20.8333 0C23.7125 0 26.4208 0.547222 28.9583 1.64167C31.4958 2.73611 33.7007 4.22014 35.5729 6.09375C37.4451 7.96736 38.9299 10.1722 40.0271 12.7083C41.1243 15.2444 41.6708 17.9528 41.6667 20.8333C41.6625 23.7139 41.1153 26.4222 40.025 28.9583C38.9347 31.4944 37.4507 33.6993 35.5729 35.5729C33.6951 37.4465 31.4903 38.9312 28.9583 40.0271C26.4264 41.1229 23.7181 41.6694 20.8333 41.6667Z"
-                                            fill="#3C96E1" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="stat-label mt-2">Total Announcements</div>
-                        </div>
-
-                        <!-- Accepted -->
-                        <div class="stat-card flex-1 flex-col">
-                            <div class="flex justify-between items-center w-full">
-                                <div>
-                                    <div class="stat-value"><?= $acceptedCount ?></div>
-                                </div>
-
-                                <div class="stat-icon">
-                                    <svg width="44" height="34" viewBox="0 0 44 34" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M41.667 16.625V2H2V31.25H21.833C22.3853 31.25 22.833 31.6977 22.833 32.25C22.833 32.8023 22.3853 33.25 21.833 33.25H1C0.447716 33.25 1.0308e-06 32.8023 0 32.25V1C0 0.447715 0.447715 0 1 0H42.667C43.2191 0.000173136 43.667 0.447822 43.667 1V16.625C43.667 17.1772 43.2191 17.6248 42.667 17.625C42.1147 17.625 41.667 17.1773 41.667 16.625Z"
-                                            fill="#10B981" />
-                                        <path
-                                            d="M42.667 26.041C43.2193 26.041 43.667 26.4887 43.667 27.041C43.667 27.5933 43.2193 28.041 42.667 28.041H28.084C27.5317 28.041 27.084 27.5933 27.084 27.041C27.084 26.4887 27.5317 26.041 28.084 26.041H42.667Z"
-                                            fill="#10B981" />
-                                        <path
-                                            d="M32.5848 21.1268C32.9753 20.7363 33.6083 20.7364 33.9989 21.1268C34.3894 21.5173 34.3894 22.1503 33.9989 22.5409L29.4969 27.0418L33.9989 31.5438C34.3894 31.9343 34.3894 32.5673 33.9989 32.9579C33.6083 33.348 32.9752 33.3483 32.5848 32.9579L27.3768 27.7489C26.9864 27.3583 26.9863 26.7253 27.3768 26.3348L32.5848 21.1268Z"
-                                            fill="#10B981" />
-                                        <path
-                                            d="M0.199913 0.400183C0.531245 -0.0415923 1.15751 -0.131244 1.59933 0.199988L21.8327 15.3748L42.0661 0.199988C42.508 -0.131383 43.1351 -0.0416444 43.4665 0.400183C43.7976 0.841978 43.708 1.46829 43.2663 1.7996L22.4333 17.4246C22.0778 17.6913 21.5887 17.6913 21.2331 17.4246L0.400109 1.7996C-0.041667 1.46827 -0.131319 0.842003 0.199913 0.400183Z"
-                                            fill="#10B981" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="stat-label mt-2">Accepted</div>
-                        </div>
-
-                        <!-- Pending Response -->
-                        <div class="stat-card flex-1 flex-col">
-                            <div class="flex justify-between items-center w-full">
-                                <div>
-                                    <div class="stat-value"><?= $pendingCount ?></div>
-                                </div>
-
-                                <div class="stat-icon">
-                                    <svg width="40" height="44" viewBox="0 0 40 44" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M29.1667 43.75C26.2847 43.75 23.8285 42.734 21.7979 40.7021C19.7674 38.6701 18.7514 36.2139 18.75 33.3333C18.7486 30.4528 19.7646 27.9965 21.7979 25.9646C23.8312 23.9326 26.2875 22.9167 29.1667 22.9167C32.0458 22.9167 34.5028 23.9326 36.5375 25.9646C38.5722 27.9965 39.5875 30.4528 39.5833 33.3333C39.5792 36.2139 38.5632 38.6708 36.5354 40.7042C34.5076 42.7375 32.0514 43.7528 29.1667 43.75ZM32.6562 38.2812L34.1146 36.8229L30.2083 32.9167V27.0833H28.125V33.75L32.6562 38.2812ZM4.16667 41.6667C3.02083 41.6667 2.04028 41.259 1.225 40.4437C0.409722 39.6285 0.00138889 38.6472 0 37.5V8.33333C0 7.1875 0.408333 6.20694 1.225 5.39167C2.04167 4.57639 3.02222 4.16806 4.16667 4.16667H12.8646C13.2465 2.95139 13.9931 1.95347 15.1042 1.17292C16.2153 0.392361 17.4306 0.00138889 18.75 0C20.1389 0 21.3806 0.390972 22.475 1.17292C23.5694 1.95486 24.3069 2.95278 24.6875 4.16667H33.3333C34.4792 4.16667 35.4604 4.575 36.2771 5.39167C37.0937 6.20833 37.5014 7.18889 37.5 8.33333V21.3542C36.875 20.9028 36.2153 20.5208 35.5208 20.2083C34.8264 19.8958 34.0972 19.6181 33.3333 19.375V8.33333H29.1667V14.5833H8.33333V8.33333H4.16667V37.5H15.2083C15.4514 38.2639 15.7292 38.9931 16.0417 39.6875C16.3542 40.3819 16.7361 41.0417 17.1875 41.6667H4.16667ZM18.75 8.33333C19.3403 8.33333 19.8354 8.13333 20.2354 7.73333C20.6354 7.33333 20.8347 6.83889 20.8333 6.25C20.8319 5.66111 20.6319 5.16667 20.2333 4.76667C19.8347 4.36667 19.3403 4.16667 18.75 4.16667C18.1597 4.16667 17.6653 4.36667 17.2667 4.76667C16.8681 5.16667 16.6681 5.66111 16.6667 6.25C16.6653 6.83889 16.8653 7.33403 17.2667 7.73542C17.6681 8.1368 18.1625 8.33611 18.75 8.33333Z"
-                                            fill="#D97706" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="stat-label mt-2">Pending Response</div>
-                        </div>
-
-                        <!-- Dismissed -->
-                        <div class="stat-card flex-1 flex-col">
-                            <div class="flex justify-between items-center w-full">
-                                <div>
-                                    <div class="stat-value"><?= $dismissedCount ?></div>
-                                </div>
-
-                                <div class="stat-icon">
-                                    <svg width="43" height="43" viewBox="0 0 43 43" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M42.8571 21.4286C42.8571 9.59464 33.2625 0 21.4286 0C9.59464 0 0 9.59464 0 21.4286C0 33.2625 9.59464 42.8571 21.4286 42.8571C33.2625 42.8571 42.8571 33.2625 42.8571 21.4286ZM29.0714 13.7857C29.3222 14.0368 29.4631 14.3772 29.4631 14.7321C29.4631 15.0871 29.3222 15.4275 29.0714 15.6786L23.3214 21.4286L29.0714 27.1786C29.203 27.3012 29.3086 27.449 29.3818 27.6133C29.455 27.7776 29.4943 27.955 29.4975 28.1348C29.5007 28.3146 29.4676 28.4932 29.4002 28.66C29.3329 28.8268 29.2326 28.9782 29.1054 29.1054C28.9782 29.2326 28.8268 29.3329 28.66 29.4002C28.4932 29.4676 28.3146 29.5007 28.1348 29.4975C27.955 29.4943 27.7776 29.455 27.6133 29.3818C27.449 29.3086 27.3012 29.203 27.1786 29.0714L21.4286 23.3214L15.6786 29.0714C15.556 29.203 15.4081 29.3086 15.2438 29.3818C15.0795 29.455 14.9022 29.4943 14.7224 29.4975C14.5425 29.5007 14.3639 29.4676 14.1971 29.4002C14.0304 29.3329 13.8789 29.2326 13.7517 29.1054C13.6245 28.9782 13.5243 28.8268 13.4569 28.66C13.3896 28.4932 13.3565 28.3146 13.3597 28.1348C13.3628 27.955 13.4022 27.7776 13.4754 27.6133C13.5486 27.449 13.6541 27.3012 13.7857 27.1786L19.5357 21.4286L13.7857 15.6786C13.6541 15.556 13.5486 15.4081 13.4754 15.2438C13.4022 15.0795 13.3628 14.9022 13.3597 14.7224C13.3565 14.5425 13.3896 14.3639 13.4569 14.1971C13.5243 14.0304 13.6245 13.8789 13.7517 13.7517C13.8789 13.6245 14.0304 13.5243 14.1971 13.4569C14.3639 13.3896 14.5425 13.3565 14.7224 13.3597C14.9022 13.3628 15.0795 13.4022 15.2438 13.4754C15.4081 13.5486 15.556 13.6541 15.6786 13.7857L21.4286 19.5357L27.1786 13.7857C27.4297 13.5349 27.7701 13.394 28.125 13.394C28.4799 13.394 28.8203 13.5349 29.0714 13.7857Z"
-                                            fill="black" fill-opacity="0.5" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="stat-label mt-2">Dismissed</div>
-                        </div>
-                    </div>
-
-                    <div class="mb-8">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4" style="padding-left:2em; padding-right:2em;">Your Responded Announcements</h3>
-                        <div class="space-y-4" style="padding-left:2em; padding-right:2em;">
-                            <?php foreach ($announcements as $a):
-                                if (!empty($a['user_status'])): ?>
-                                    <div class="card-shadow p-4 rounded flex flex-col gap-2">
-                                        <div class="flex items-center gap-2">
-                                            <span
-                                                class="font-bold text-base text-gray-900"><?= htmlspecialchars($a['title']) ?></span>
-                                            <?php if ($a['user_status'] === 'accepted'): ?>
-                                                <span class="badge badge-accepted"><i class="fas fa-check-circle"></i>
-                                                    Accepted</span>
-                                            <?php elseif ($a['user_status'] === 'dismissed'): ?>
-                                                <span class="badge badge-dismissed"><i class="fas fa-times-circle"></i>
-                                                    Dismissed</span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="text-sm text-gray-500 flex items-center gap-2">
-                                            <i class="fas fa-calendar"></i> <?= date('M d, Y', strtotime($a['post_date'])) ?>
-                                        </div>
-                                        <div class="text-sm text-gray-700"><?= htmlspecialchars($a['message']) ?></div>
-                                    </div>
-                                <?php endif;
-                            endforeach; ?>
-                            <?php if ($acceptedCount + $dismissedCount === 0): ?>
-                                <div class="text-center py-8 text-gray-500">No responded announcements yet.</div>
                             <?php endif; ?>
                         </div>
                     </div>
                 </div>
+
+                <!-- No Announcements Message -->
+                <?php if (empty($labResults) && empty($basicAnnouncements)): ?>
+                    <div class="text-center py-10 sm:py-20">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-bullhorn icon-3xl"></i>
+                        </div>
+                        <h3 class="empty-state-title">No Announcements</h3>
+                        <p class="empty-state-text">There are currently no active announcements. Check back later for
+                            updates.</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Stats Tab -->
+            <div id="stats" class="tab-content">
+                <div class="flex flex-col md:flex-row gap-8 w-full mb-6" style="padding-left:2em; padding-right:2em;">
+                    <!-- Total Announcement -->
+                    <div class="stat-card flex-1 flex-col">
+                        <div class="flex justify-between items-center w-full">
+                            <div>
+                                <div class="stat-value"><?= count($announcements) ?></div>
+                            </div>
+
+                            <div class="stat-icon">
+                                <svg width="42" height="42" viewBox="0 0 42 42" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M20.8333 33.3333C24.3056 33.3333 27.2569 32.1181 29.6875 29.6875C32.1181 27.2569 33.3333 24.3056 33.3333 20.8333C33.3333 17.3611 32.1181 14.4097 29.6875 11.9792C27.2569 9.54861 24.3056 8.33333 20.8333 8.33333C17.3611 8.33333 14.4097 9.54861 11.9792 11.9792C9.54861 14.4097 8.33334 17.3611 8.33334 20.8333C8.33334 24.3056 9.54861 27.2569 11.9792 29.6875C14.4097 32.1181 17.3611 33.3333 20.8333 33.3333ZM14.5833 22.9167V18.75H27.0833V22.9167H14.5833ZM20.8333 41.6667C17.9514 41.6667 15.2431 41.1194 12.7083 40.025C10.1736 38.9306 7.96875 37.4465 6.09375 35.5729C4.21875 33.6993 2.73472 31.4944 1.64167 28.9583C0.548614 26.4222 0.00139153 23.7139 2.63713e-06 20.8333C-0.00138625 17.9528 0.545836 15.2444 1.64167 12.7083C2.7375 10.1722 4.22153 7.96736 6.09375 6.09375C7.96597 4.22014 10.1708 2.73611 12.7083 1.64167C15.2458 0.547222 17.9542 0 20.8333 0C23.7125 0 26.4208 0.547222 28.9583 1.64167C31.4958 2.73611 33.7007 4.22014 35.5729 6.09375C37.4451 7.96736 38.9299 10.1722 40.0271 12.7083C41.1243 15.2444 41.6708 17.9528 41.6667 20.8333C41.6625 23.7139 41.1153 26.4222 40.025 28.9583C38.9347 31.4944 37.4507 33.6993 35.5729 35.5729C33.6951 37.4465 31.4903 38.9312 28.9583 40.0271C26.4264 41.1229 23.7181 41.6694 20.8333 41.6667Z"
+                                        fill="#3C96E1" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="stat-label mt-2">Total Announcements</div>
+                    </div>
+
+                    <!-- Accepted -->
+                    <div class="stat-card flex-1 flex-col">
+                        <div class="flex justify-between items-center w-full">
+                            <div>
+                                <div class="stat-value"><?= $acceptedCount ?></div>
+                            </div>
+
+                            <div class="stat-icon">
+                                <svg width="44" height="34" viewBox="0 0 44 34" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M41.667 16.625V2H2V31.25H21.833C22.3853 31.25 22.833 31.6977 22.833 32.25C22.833 32.8023 22.3853 33.25 21.833 33.25H1C0.447716 33.25 1.0308e-06 32.8023 0 32.25V1C0 0.447715 0.447715 0 1 0H42.667C43.2191 0.000173136 43.667 0.447822 43.667 1V16.625C43.667 17.1772 43.2191 17.6248 42.667 17.625C42.1147 17.625 41.667 17.1773 41.667 16.625Z"
+                                        fill="#10B981" />
+                                    <path
+                                        d="M42.667 26.041C43.2193 26.041 43.667 26.4887 43.667 27.041C43.667 27.5933 43.2193 28.041 42.667 28.041H28.084C27.5317 28.041 27.084 27.5933 27.084 27.041C27.084 26.4887 27.5317 26.041 28.084 26.041H42.667Z"
+                                        fill="#10B981" />
+                                    <path
+                                        d="M32.5848 21.1268C32.9753 20.7363 33.6083 20.7364 33.9989 21.1268C34.3894 21.5173 34.3894 22.1503 33.9989 22.5409L29.4969 27.0418L33.9989 31.5438C34.3894 31.9343 34.3894 32.5673 33.9989 32.9579C33.6083 33.348 32.9752 33.3483 32.5848 32.9579L27.3768 27.7489C26.9864 27.3583 26.9863 26.7253 27.3768 26.3348L32.5848 21.1268Z"
+                                        fill="#10B981" />
+                                    <path
+                                        d="M0.199913 0.400183C0.531245 -0.0415923 1.15751 -0.131244 1.59933 0.199988L21.8327 15.3748L42.0661 0.199988C42.508 -0.131383 43.1351 -0.0416444 43.4665 0.400183C43.7976 0.841978 43.708 1.46829 43.2663 1.7996L22.4333 17.4246C22.0778 17.6913 21.5887 17.6913 21.2331 17.4246L0.400109 1.7996C-0.041667 1.46827 -0.131319 0.842003 0.199913 0.400183Z"
+                                        fill="#10B981" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="stat-label mt-2">Accepted</div>
+                    </div>
+
+                    <!-- Pending Response -->
+                    <div class="stat-card flex-1 flex-col">
+                        <div class="flex justify-between items-center w-full">
+                            <div>
+                                <div class="stat-value"><?= $pendingCount ?></div>
+                            </div>
+
+                            <div class="stat-icon">
+                                <svg width="40" height="44" viewBox="0 0 40 44" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M29.1667 43.75C26.2847 43.75 23.8285 42.734 21.7979 40.7021C19.7674 38.6701 18.7514 36.2139 18.75 33.3333C18.7486 30.4528 19.7646 27.9965 21.7979 25.9646C23.8312 23.9326 26.2875 22.9167 29.1667 22.9167C32.0458 22.9167 34.5028 23.9326 36.5375 25.9646C38.5722 27.9965 39.5875 30.4528 39.5833 33.3333C39.5792 36.2139 38.5632 38.6708 36.5354 40.7042C34.5076 42.7375 32.0514 43.7528 29.1667 43.75ZM32.6562 38.2812L34.1146 36.8229L30.2083 32.9167V27.0833H28.125V33.75L32.6562 38.2812ZM4.16667 41.6667C3.02083 41.6667 2.04028 41.259 1.225 40.4437C0.409722 39.6285 0.00138889 38.6472 0 37.5V8.33333C0 7.1875 0.408333 6.20694 1.225 5.39167C2.04167 4.57639 3.02222 4.16806 4.16667 4.16667H12.8646C13.2465 2.95139 13.9931 1.95347 15.1042 1.17292C16.2153 0.392361 17.4306 0.00138889 18.75 0C20.1389 0 21.3806 0.390972 22.475 1.17292C23.5694 1.95486 24.3069 2.95278 24.6875 4.16667H33.3333C34.4792 4.16667 35.4604 4.575 36.2771 5.39167C37.0937 6.20833 37.5014 7.18889 37.5 8.33333V21.3542C36.875 20.9028 36.2153 20.5208 35.5208 20.2083C34.8264 19.8958 34.0972 19.6181 33.3333 19.375V8.33333H29.1667V14.5833H8.33333V8.33333H4.16667V37.5H15.2083C15.4514 38.2639 15.7292 38.9931 16.0417 39.6875C16.3542 40.3819 16.7361 41.0417 17.1875 41.6667H4.16667ZM18.75 8.33333C19.3403 8.33333 19.8354 8.13333 20.2354 7.73333C20.6354 7.33333 20.8347 6.83889 20.8333 6.25C20.8319 5.66111 20.6319 5.16667 20.2333 4.76667C19.8347 4.36667 19.3403 4.16667 18.75 4.16667C18.1597 4.16667 17.6653 4.36667 17.2667 4.76667C16.8681 5.16667 16.6681 5.66111 16.6667 6.25C16.6653 6.83889 16.8653 7.33403 17.2667 7.73542C17.6681 8.1368 18.1625 8.33611 18.75 8.33333Z"
+                                        fill="#D97706" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="stat-label mt-2">Pending Response</div>
+                    </div>
+
+                    <!-- Dismissed -->
+                    <div class="stat-card flex-1 flex-col">
+                        <div class="flex justify-between items-center w-full">
+                            <div>
+                                <div class="stat-value"><?= $dismissedCount ?></div>
+                            </div>
+
+                            <div class="stat-icon">
+                                <svg width="43" height="43" viewBox="0 0 43 43" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M42.8571 21.4286C42.8571 9.59464 33.2625 0 21.4286 0C9.59464 0 0 9.59464 0 21.4286C0 33.2625 9.59464 42.8571 21.4286 42.8571C33.2625 42.8571 42.8571 33.2625 42.8571 21.4286ZM29.0714 13.7857C29.3222 14.0368 29.4631 14.3772 29.4631 14.7321C29.4631 15.0871 29.3222 15.4275 29.0714 15.6786L23.3214 21.4286L29.0714 27.1786C29.203 27.3012 29.3086 27.449 29.3818 27.6133C29.455 27.7776 29.4943 27.955 29.4975 28.1348C29.5007 28.3146 29.4676 28.4932 29.4002 28.66C29.3329 28.8268 29.2326 28.9782 29.1054 29.1054C28.9782 29.2326 28.8268 29.3329 28.66 29.4002C28.4932 29.4676 28.3146 29.5007 28.1348 29.4975C27.955 29.4943 27.7776 29.455 27.6133 29.3818C27.449 29.3086 27.3012 29.203 27.1786 29.0714L21.4286 23.3214L15.6786 29.0714C15.556 29.203 15.4081 29.3086 15.2438 29.3818C15.0795 29.455 14.9022 29.4943 14.7224 29.4975C14.5425 29.5007 14.3639 29.4676 14.1971 29.4002C14.0304 29.3329 13.8789 29.2326 13.7517 29.1054C13.6245 28.9782 13.5243 28.8268 13.4569 28.66C13.3896 28.4932 13.3565 28.3146 13.3597 28.1348C13.3628 27.955 13.4022 27.7776 13.4754 27.6133C13.5486 27.449 13.6541 27.3012 13.7857 27.1786L19.5357 21.4286L13.7857 15.6786C13.6541 15.556 13.5486 15.4081 13.4754 15.2438C13.4022 15.0795 13.3628 14.9022 13.3597 14.7224C13.3565 14.5425 13.3896 14.3639 13.4569 14.1971C13.5243 14.0304 13.6245 13.8789 13.7517 13.7517C13.8789 13.6245 14.0304 13.5243 14.1971 13.4569C14.3639 13.3896 14.5425 13.3565 14.7224 13.3597C14.9022 13.3628 15.0795 13.4022 15.2438 13.4754C15.4081 13.5486 15.556 13.6541 15.6786 13.7857L21.4286 19.5357L27.1786 13.7857C27.4297 13.5349 27.7701 13.394 28.125 13.394C28.4799 13.394 28.8203 13.5349 29.0714 13.7857Z"
+                                        fill="black" fill-opacity="0.5" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="stat-label mt-2">Dismissed</div>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4" style="padding-left:2em; padding-right:2em;">
+                        Your Responded Announcements</h3>
+                    <div class="space-y-4" style="padding-left:2em; padding-right:2em;">
+                        <?php foreach ($announcements as $a):
+                            if (!empty($a['user_status'])): ?>
+                                <div class="card-shadow p-4 rounded flex flex-col gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="font-bold text-base text-gray-900"><?= htmlspecialchars($a['title']) ?></span>
+                                        <?php if ($a['user_status'] === 'accepted'): ?>
+                                            <span class="badge badge-accepted"><i class="fas fa-check-circle"></i>
+                                                Accepted</span>
+                                        <?php elseif ($a['user_status'] === 'dismissed'): ?>
+                                            <span class="badge badge-dismissed"><i class="fas fa-times-circle"></i>
+                                                Dismissed</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-sm text-gray-500 flex items-center gap-2">
+                                        <i class="fas fa-calendar"></i> <?= date('M d, Y', strtotime($a['post_date'])) ?>
+                                    </div>
+                                    <div class="text-sm text-gray-700"><?= htmlspecialchars($a['message']) ?></div>
+                                </div>
+                            <?php endif;
+                        endforeach; ?>
+                        <?php if ($acceptedCount + $dismissedCount === 0): ?>
+                            <div class="text-center py-8 text-gray-500">No responded announcements yet.</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- View Announcement Modal -->
@@ -1470,13 +1526,13 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             const labSection = document.getElementById('labResultsSection');
             const genSection = document.getElementById('generalAnnouncementsSection');
             if (btnLab && btnGen && labSection && genSection) {
-                btnLab.addEventListener('click', function() {
+                btnLab.addEventListener('click', function () {
                     btnLab.classList.add('active');
                     btnGen.classList.remove('active');
                     labSection.style.display = '';
                     genSection.style.display = 'none';
                 });
-                btnGen.addEventListener('click', function() {
+                btnGen.addEventListener('click', function () {
                     btnGen.classList.add('active');
                     btnLab.classList.remove('active');
                     genSection.style.display = '';

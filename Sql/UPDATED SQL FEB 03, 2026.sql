@@ -276,10 +276,10 @@ CREATE TABLE `sitio1_announcements` (
 --
 
 INSERT INTO `sitio1_announcements` (`id`, `staff_id`, `title`, `message`, `priority`, `announcement_type`, `expiry_date`, `post_date`, `updated_at`, `status`, `audience_type`, `announcement_category`, `image_path`) VALUES
-(69, 7, 'Cebu Water Producer Program Cebu Water Producer Program', 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer Program', 'high', 'simple', '2026-02-03', '2026-02-03 04:24:27', NULL, 'active', 'specific', 'basic', NULL),
-(70, 7, 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer', 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer Program', 'normal', 'simple', '2026-02-03', '2026-02-03 04:29:12', NULL, 'active', 'specific', 'basic', NULL),
-(71, 7, 'Cebu Water Producer ProgramCebu Water Producer Program', 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer Program', 'high', 'simple', '2026-02-03', '2026-02-03 04:29:32', NULL, 'active', 'specific', 'lab_result', NULL),
-(72, 7, 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer', 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer Program', 'high', 'simple', '2026-02-03', '2026-02-03 04:30:01', NULL, 'active', 'specific', 'basic', NULL);
+(69, 7, 'TEST ANNOUNCEMENT', 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer Program', 'high', 'simple', '2026-02-03', '2026-02-03 04:24:27', NULL, 'active', 'specific', 'basic', NULL),
+(70, 7, 'TEST ANNOUNCEMENT', 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer Program', 'normal', 'simple', '2026-02-03', '2026-02-03 04:29:12', NULL, 'active', 'specific', 'basic', NULL),
+(71, 7, 'TEST ANNOUNCEMENT', 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer Program', 'high', 'simple', '2026-02-03', '2026-02-03 04:29:32', NULL, 'active', 'specific', 'lab_result', NULL),
+(72, 7, 'TEST ANNOUNCEMENT', 'Cebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer ProgramCebu Water Producer Program', 'high', 'simple', '2026-02-03', '2026-02-03 04:30:01', NULL, 'active', 'specific', 'basic', NULL);
 
 -- --------------------------------------------------------
 
