@@ -2260,8 +2260,8 @@ if (!empty($searchTerm)) {
     </style>
 </head>
 <body class="bg-gray-50">
-    <div class="container mx-auto px-4 py-1 page-container">
-        <h1 class="text-3xl font-semibold mb-6 text-secondary">Resident Patient Records</h1>
+    <div class="container mx-auto px-4 py-8 page-container">
+       
         
 
         <?php if ($message): ?>
@@ -2298,7 +2298,7 @@ if (!empty($searchTerm)) {
             <!-- Patients Tab (Only Tab Now) -->
             <div id="patients-tab" class="tab-content p-6 active">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-semibold text-secondary">Patient Records</h2>
+                    <h2 class="text-xl font-semibold text-secondary">Resident Patient Records</h2>
                 </div>
 
                 <?php if ($manualSelectMode): ?>

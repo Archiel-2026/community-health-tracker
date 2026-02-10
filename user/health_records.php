@@ -988,10 +988,8 @@ foreach ($allPatientInfo as $patient) {
                                 <i class="fas fa-user-md icon-3xl"></i>
                             </div>
                             <h3 class="empty-state-title">No Doctor's Notes</h3>
-                            <p class="empty-state-text mb-8 max-w-sm mx-auto">Your account is not yet linked to any patient
-                                records. Please contact the health center to establish the connection.</p>
-                            <button class="btn-primary"
-                                onclick="alert('Please contact the health center to link your account.')">
+                            <p class="empty-state-text mb-8 max-w-sm mx-auto">Your account is not yet linked to any patient records. Please contact the health center to establish the connection.</p>
+                            <button class="btn-primary" onclick="alert('Please contact the health center to link your account.')">
                                 <i class="fas fa-phone icon-sm mr-2"></i>Contact Health Center
                             </button>
                         </div>
@@ -1001,15 +999,13 @@ foreach ($allPatientInfo as $patient) {
                                 <i class="fas fa-file-medical-alt icon-3xl"></i>
                             </div>
                             <h3 class="empty-state-title">No Consultations Yet</h3>
-                            <p class="empty-state-text">Visit the health center for your first consultation and medical
-                                evaluation.</p>
+                            <p class="empty-state-text">Visit the health center for your first consultation and medical evaluation.</p>
                         </div>
                     <?php else: ?>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <?php
                             $consultationIndex = 1;
                             foreach ($allConsultationNotes as $note):
-                                // Find patient name
                                 $patientName = 'Unknown';
                                 foreach ($allPatientInfo as $patient) {
                                     if ($patient['id'] == $note['patient_id']) {
@@ -1018,62 +1014,27 @@ foreach ($allPatientInfo as $patient) {
                                     }
                                 }
                                 ?>
-                                <div class="card-shadow p-5">
-                                    <div class="mb-4">
-                                        <div class="flex items-center justify-between mb-3 gap-2">
-                                            <span
-                                                class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-600">
-                                                <i class="fas fa-stethoscope icon-xs mr-1"></i>
-                                                Consultation <?php echo $consultationIndex; ?>
-                                            </span>
-                                            <span class="text-xs text-gray-500">
-                                                <?php echo date('M d, Y', strtotime($note['consultation_date'] ?? 'now')); ?>
-                                            </span>
+                                <div style="border-radius:18px;box-shadow:0 2px 8px 0 #0001;background:#fff;padding:28px 24px;display:flex;flex-direction:column;justify-content:space-between;min-height:220px;border:0.5px solid #e5e7eb;">
+                                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                                        <div style="display:flex;align-items:center;gap:10px;">
+                                            <span style="display:inline-flex;align-items:center;padding:10px 18px 10px 18px;background:#fdf6e3;color:#e6b800;border-radius:10px;font-size:1.5rem;font-weight:500;letter-spacing:0.5px;">Consultation</span>
+                                            <span style="margin-left:10px;display:flex;align-items:center;justify-content:center;background:#fffbe6;color:#e6b800;border-radius:50%;width:36px;height:36px;font-size:1.2rem;font-weight:600;box-shadow:0 1px 4px #0001;"> <?php echo $consultationIndex; ?> </span>
                                         </div>
-
-                                        <h3 class="text-base font-600 text-gray-800 mb-3">
-                                            Consultation on
-                                            <?php echo date('M d, Y', strtotime($note['consultation_date'] ?? 'now')); ?>
-                                        </h3>
-
-                                        <div class="space-y-2">
-                                            <?php if (!empty($note['doctor_name'])): ?>
-                                                <p class="text-sm text-gray-600">
-                                                    <span class="font-600 text-gray-800">Doctor Assigned :</span>
-                                                    <span
-                                                        class="text-gray-700"><?php echo htmlspecialchars($note['doctor_name']); ?></span>
-                                                </p>
-                                            <?php endif; ?>
-
-                                            <p class="text-sm text-gray-600">
-                                                <span class="font-600 text-gray-800">Last Consultation :</span>
-                                                <span
-                                                    class="text-gray-700"><?php echo date('M d, Y', strtotime($note['consultation_date'] ?? 'now')); ?></span>
-                                            </p>
-                                        </div>
-                                    </div>
-
-
-
-                                    <div class="flex items-center justify-between flex-wrap gap-3">
                                         <?php if (!empty($note['next_consultation_date'])): ?>
-                                            <div
-                                                class="inline-flex items-center px-3 py-1.5 bg-green-50 rounded-full border border-green-200">
-                                                <i class="fas fa-calendar-check text-green-600 mr-2 text-sm"></i>
-                                                <span class="text-xs font-600 text-gray-700 mr-1">Next:</span>
-                                                <span
-                                                    class="text-xs font-700 text-green-700"><?php echo date('M d, Y', strtotime($note['next_consultation_date'])); ?></span>
+                                            <div style="display:flex;flex-direction:column;align-items:flex-end;">
+                                                <span style="color:#888;font-size:1rem;margin-bottom:2px;">Next Consultation</span>
+                                                <span style="display:inline-block;padding:7px 18px;border-radius:9px;background:#baf5e0;color:#1db489;font-weight:500;font-size:1.1rem;"> <?php echo date('F d, Y', strtotime($note['next_consultation_date'])); ?> </span>
                                             </div>
-                                        <?php else: ?>
-                                            <span></span>
                                         <?php endif; ?>
-
-                                        <button
-                                            onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)"
-                                            class="btn-primary">
-                                            <i class="fas fa-eye"></i>
-                                            <span>View Details</span>
-                                        </button>
+                                    </div>
+                                    <div style="margin:18px 0 10px 0;">
+                                        <div style="color:#888;font-size:1.1rem;margin-bottom:2px;">Consultation on :</div>
+                                        <div style="font-size:1.6rem;font-weight:600;margin-bottom:10px;letter-spacing:0.5px;line-height:1.2;"> <?php echo date('F d, Y', strtotime($note['consultation_date'] ?? 'now')); ?> </div>
+                                        <div style="color:#888;font-size:1.1rem;margin-bottom:2px;">Doctor Assigned :</div>
+                                        <div style="font-size:1.25rem;font-weight:500;margin-bottom:0;letter-spacing:0.5px;line-height:1.2;"> <?php echo htmlspecialchars($note['doctor_name']); ?> </div>
+                                    </div>
+                                    <div style="display:flex;justify-content:flex-end;margin-top:auto;">
+                                        <button onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)" style="border-radius:10px;padding:10px 32px;background:#3490ec;color:#fff;font-weight:500;font-size:1.25rem;transition:background 0.2s;outline:none;border:none;cursor:pointer;">View</button>
                                     </div>
                                 </div>
                                 <?php $consultationIndex++; endforeach; ?>
@@ -1376,23 +1337,21 @@ foreach ($allPatientInfo as $patient) {
                                         continue;
 
                                     $medicalUpdatedAt = $patient['medical_updated_at'] ?? null;
+                                    $medicalCreatedAt = $patient['created_at'] ?? null;
                                     $medicalHasUpdate = false;
-                                    if (!empty($medicalUpdatedAt) && !empty($patient['created_at']) && strtotime($medicalUpdatedAt) > strtotime($patient['created_at'])) {
+                                    if (!empty($medicalUpdatedAt) && !empty($medicalCreatedAt) && strtotime($medicalUpdatedAt) > strtotime($medicalCreatedAt)) {
                                         $medicalHasUpdate = true;
                                     }
                                     ?>
-                                    <div class="<?php echo $medicalHasUpdate ? : ''; ?>">
-                                        <!-- <div class="flex items-center justify-between mb-4 sm:mb-6">
-                                            <div class="text-base sm:text-lg font-600 text-gray-800">
-                                                <?php echo htmlspecialchars($patient['full_name'] ?? 'Patient'); ?>
-                                            </div>
+                                    <div class="<?php echo $medicalHasUpdate ? 'updated-record' : ''; ?>">
+                                        <div class="flex items-center justify-between mb-4 sm:mb-6">
                                             <?php if ($medicalHasUpdate): ?>
                                                 <span class="update-indicator">
                                                     <i class="fas fa-rotate"></i>
                                                     Updated <?php echo date('M d, Y', strtotime($medicalUpdatedAt)); ?>
                                                 </span>
                                             <?php endif; ?>
-                                        </div> -->
+                                        </div>
 
                                         <!-- Two Column Layout: Vital Statistics and Medical Details -->
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
