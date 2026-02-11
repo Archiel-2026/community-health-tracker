@@ -1273,27 +1273,49 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                 </div>
 
                 <div class="mb-8">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4" style="padding-left:2em; padding-right:2em;">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b-2 py-2"
+                        style=" margin-left: 2em; margin-right: 2em;">
                         Your Responded Announcements</h3>
-                    <div class="space-y-4" style="padding-left:2em; padding-right:2em;">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 px-8">
                         <?php foreach ($announcements as $a):
                             if (!empty($a['user_status'])): ?>
                                 <div class="card-shadow p-4 rounded flex flex-col gap-2">
-                                    <div class="flex items-center gap-2">
-                                        <span
-                                            class="font-bold text-base text-gray-900"><?= htmlspecialchars($a['title']) ?></span>
-                                        <?php if ($a['user_status'] === 'accepted'): ?>
-                                            <span class="badge badge-accepted"><i class="fas fa-check-circle"></i>
-                                                Accepted</span>
-                                        <?php elseif ($a['user_status'] === 'dismissed'): ?>
-                                            <span class="badge badge-dismissed"><i class="fas fa-times-circle"></i>
-                                                Dismissed</span>
-                                        <?php endif; ?>
+                                    <span class="font-bold text-base text-gray-900"><?= htmlspecialchars($a['title']) ?></span>
+                                    <div class="announcement-badges">
+                                        <span class="badge badge-simple">Announcement</span>
+                                        <!-- PRIORITY -->
+                                        <span class="badge badge-<?= $announcement['priority'] ?>">
+                                            <?= ucfirst($announcement['priority']) ?>
+                                        </span>
                                     </div>
-                                    <div class="text-sm text-gray-500 flex items-center gap-2">
-                                        <i class="fas fa-calendar"></i> <?= date('M d, Y', strtotime($a['post_date'])) ?>
+                                    <!-- DATE ADDED -->
+                                    <div class="flex flex-col md:flex-row gap-2 text-sm mb-1">
+                                        <span class="text-gray-150">Date Added:</span>
+                                        <span class="font-bold">
+                                            <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                                        </span>
                                     </div>
-                                    <div class="text-sm text-gray-700"><?= htmlspecialchars($a['message']) ?></div>
+                                    <div class="flex flex-col md:flex-row justify-between">
+                                        <!-- STATUS -->
+                                        <div class="flex items-center gap-2">
+                                            <?php if ($a['user_status'] === 'accepted'): ?>
+                                                <span class="badge badge-accepted"><i class="fas fa-check-circle"></i>
+                                                    Accepted</span>
+                                            <?php elseif ($a['user_status'] === 'dismissed'): ?>
+                                                <span class="badge badge-dismissed"><i class="fas fa-times-circle"></i>
+                                                    Dismissed</span>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- VIEW -->
+                                        <div class="announcement-actions">
+                                            <button
+                                                onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
+                                                class="btn-primary" style="background: #2563eb;">
+                                                View
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             <?php endif;
                         endforeach; ?>
