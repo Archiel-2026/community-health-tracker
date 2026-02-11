@@ -12,7 +12,7 @@ if (isStaff()) {
         if ($inactive >= 3600) { // 1 hour = 3600 seconds
             session_unset();
             session_destroy();
-            header('Location: /community-health-tracker/auth/login.php');
+            header('Location: /community-health-tracker/index-admin-staff.php');
             exit();
         } else {
             $_SESSION['last_action'] = $now;
@@ -764,12 +764,39 @@ $recordsPerPage = 5;
         }
 
         .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
             min-height: 7.5rem;
         }
 
-        .stat-count-wrap {
-            padding-top: 10px;
-            padding-bottom: 10px;
+        .chart-container,
+        .chart-container-two {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container,
+            .chart-container-two,
+            .stat-card {
+                padding: 16px;
+                border-radius: 8px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .chart-container,
+            .chart-container-two,
+            .stat-card {
+                padding: 12px;
+                border-radius: 8px;
+            }
         }
         
         /* Button styles */
