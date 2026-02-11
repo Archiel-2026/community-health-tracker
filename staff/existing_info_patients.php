@@ -2,6 +2,23 @@
 ob_start();
 
 require_once __DIR__ . '/../includes/auth.php';
+// --- Auto-logout for staff after 1 hour of inactivity ---
+if (isStaff()) {
+    $now = time();
+    if (!isset($_SESSION['last_action'])) {
+        $_SESSION['last_action'] = $now;
+    } else {
+        $inactive = $now - $_SESSION['last_action'];
+        if ($inactive >= 3600) { // 1 hour = 3600 seconds
+            session_unset();
+            session_destroy();
+            header('Location: /community-health-tracker/index-admin-staff.php');
+            exit();
+        } else {
+            $_SESSION['last_action'] = $now;
+        }
+    }
+}
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/functions.php';
 

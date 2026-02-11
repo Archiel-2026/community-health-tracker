@@ -1,12 +1,30 @@
 <?php
 // staff/announcements.php
 require_once __DIR__ . '/../includes/auth.php';
+// --- Auto-logout for staff after 1 hour of inactivity ---
+if (isStaff()) {
+    $now = time();
+    if (!isset($_SESSION['last_action'])) {
+        $_SESSION['last_action'] = $now;
+    } else {
+        $inactive = $now - $_SESSION['last_action'];
+        if ($inactive >= 3600) { // 1 hour = 3600 seconds
+            session_unset();
+            session_destroy();
+            header('Location: /community-health-tracker/index-admin-staff.php');
+            exit();
+        } else {
+            $_SESSION['last_action'] = $now;
+        }
+    }
+}
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../vendor/autoload.php'; // For PHPMailer
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;
+
 // Send email to specific users for announcement
 function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'basic', $imageUrl = null) {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -47,7 +65,37 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
             <title>Announcement</title>
             <style>
                 body { font-family: Arial, Helvetica, sans-serif; background: #f4f6f8; margin: 0; padding: 0; }
-                .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; }
+                .container {
+                    width: 100%;
+                    max-width: none;
+                    margin: 40px auto;
+                    background: #fff;
+                    border-radius: 10px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+                    overflow: hidden;
+                    padding-left: 3rem;
+                    padding-right: 3rem;
+                    padding-top: 3rem;
+                    padding-bottom: 3rem;
+                }
+                @media (max-width: 1024px) {
+                    .container {
+                        max-width: 100%;
+                        padding-left: 1.5rem;
+                        padding-right: 1.5rem;
+                        padding-top: 1.5rem;
+                        padding-bottom: 1.5rem;
+                    }
+                }
+                @media (max-width: 768px) {
+                    .container {
+                        max-width: 100%;
+                        padding-left: 0.5rem;
+                        padding-right: 0.5rem;
+                        padding-top: 0.5rem;
+                        padding-bottom: 0.5rem;
+                    }
+                }
                 .header { background: #3498db; color: #fff; padding: 32px 24px 20px 24px; text-align: center; }
                 .header h1 { margin: 0; font-size: 2rem; font-weight: 700; letter-spacing: 1px; }
                 .logo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.10); background: #fff; border: 3px solid #fff; }
@@ -58,7 +106,7 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
             </style>
         </head>
         <body>
-            <div class="container">
+            <div class="container w-full max-w-none px-4 py-6 mt-16">
                 <div class="header">
                     <img src="' . $logoUrl . '" alt="Barangay Luz Logo" class="logo"><br>
                     <h1>Barangay Luz Health Center</h1>
@@ -660,6 +708,7 @@ try {
         color: #dc2626;
     }
 
+    /* MODAL STYLES - FIXED */
     .modal {
         position: fixed;
         top: 0;
@@ -684,6 +733,11 @@ try {
         width: 90%;
         max-height: 90vh;
         overflow-y: auto;
+        z-index: 1001;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: translateY(0) !important;
     }
 
     .modal-header {
@@ -845,7 +899,7 @@ try {
 </head>
 <body class="bg-gray-50 min-h-screen">
     
-    <div class="container mx-auto px-4 py-6 mt-16">
+    <div class="container w-full max-w-none px-4 py-6 mt-16">
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-2xl font-bold text-secondary mb-2">Announcement Management</h1>
@@ -947,17 +1001,20 @@ try {
                     </div>
                     <div class="card-body">
                         <form method="POST" action="" enctype="multipart/form-data">
-                            <!-- Title -->
                             <!-- Loading Animation Overlay -->
-                            <div id="announcement-loading" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);z-index:1000;align-items:center;justify-content:center;" class="flex">
+                            <div id="announcement-loading" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,41,59,0.7);z-index:2000;align-items:center;justify-content:center;" class="flex">
                                 <div class="flex flex-col items-center justify-center w-full h-full">
-                                    <svg class="animate-spin h-12 w-12 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                                    </svg>
-                                    <span class="text-lg font-semibold text-blue-600">Sending announcement and emails...</span>
+                                    <div class="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center">
+                                        <svg class="animate-spin h-16 w-16 text-blue-500 mb-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                        </svg>
+                                        <span id="announcement-loading-message" class="text-xl font-semibold text-blue-700 text-center">Sending announcement and emails...</span>
+                                    </div>
                                 </div>
                             </div>
+                            
+                            <!-- Title -->
                             <div class="form-group">
                                 <label class="form-label">Title *</label>
                                 <input type="text" name="title" required class="form-control" 
@@ -1058,11 +1115,11 @@ try {
                             </div>
 
                             <!-- Announcement Type Buttons (for Specific Users) -->
-                            <div id="announcement-type-buttons" class="flex gap-3 pt-4 border-t border-gray-200 hidden">
-                                <button type="submit" name="post_announcement" value="basic" class="btn btn-success" onclick="setAnnouncementType('basic'); return showAnnouncementLoading();">
+                            <div id="announcement-type-buttons" class="gap-6 pt-4 border-t border-gray-200 hidden">
+                                <button type="submit" name="post_announcement" value="basic" class="btn btn-success rounded-full" onclick="setAnnouncementType('basic'); return showAnnouncementLoading();">
                                     <i class="fas fa-paper-plane"></i> Basic Announcement
                                 </button>
-                                <button type="submit" name="post_announcement" value="lab_result" class="btn btn-info" onclick="setAnnouncementType('lab_result'); return showAnnouncementLoading();">
+                                <button type="submit" name="post_announcement" value="lab_result" class="btn btn-info bg-green-500 hover:bg-green-600 text-white" style="border-radius:30px;" onclick="setAnnouncementType('lab_result'); return showAnnouncementLoading();">
                                     <i class="fas fa-vial"></i> Lab Results
                                 </button>
                             </div>
@@ -1225,7 +1282,7 @@ try {
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Announcement Details</h3>
-                <button onclick="closeViewModal()" class="text-gray-500 hover:text-gray-700">
+                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1233,7 +1290,7 @@ try {
                 <div id="modalContent"></div>
             </div>
             <div class="modal-footer">
-                <button onclick="closeViewModal()" class="btn btn-secondary">
+                <button type="button" class="btn btn-secondary close-modal">
                     Close
                 </button>
             </div>
@@ -1245,7 +1302,7 @@ try {
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Edit Announcement</h3>
-                <button type="button" onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700">
+                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1283,7 +1340,7 @@ try {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" onclick="closeEditModal()" class="btn btn-secondary">
+                    <button type="button" class="btn btn-secondary close-modal">
                         <i class="fas fa-times"></i> Cancel
                     </button>
                     <button type="submit" class="btn btn-success">
@@ -1301,7 +1358,7 @@ try {
                 <h3 class="modal-title text-red-700">
                     <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Deletion
                 </h3>
-                <button type="button" onclick="closeDeleteModal()" class="text-gray-500 hover:text-gray-700">
+                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1320,7 +1377,7 @@ try {
                     </div>
                 </div>
                 <div class="modal-footer bg-gray-50">
-                    <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary">
+                    <button type="button" class="btn btn-secondary close-modal">
                         <i class="fas fa-times"></i> Cancel
                     </button>
                     <button type="submit" class="btn btn-danger">
@@ -1338,7 +1395,7 @@ try {
                 <h3 class="modal-title text-yellow-700">
                     <i class="fas fa-archive mr-2"></i>Archive Announcement
                 </h3>
-                <button type="button" onclick="closeArchiveModal()" class="text-gray-500 hover:text-gray-700">
+                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1356,7 +1413,7 @@ try {
                     </div>
                 </div>
                 <div class="modal-footer bg-gray-50">
-                    <button type="button" onclick="closeArchiveModal()" class="btn btn-secondary">
+                    <button type="button" class="btn btn-secondary close-modal">
                         <i class="fas fa-times"></i> Cancel
                     </button>
                     <button type="submit" class="btn btn-warning">
@@ -1372,7 +1429,7 @@ try {
         <div class="modal-content" style="max-width: 700px;">
             <div class="modal-header">
                 <h3 class="modal-title">All Announcements</h3>
-                <button onclick="closeAllAnnouncementsModal()" class="text-gray-500 hover:text-gray-700">
+                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1380,92 +1437,64 @@ try {
                 <!-- Announcements will be rendered here -->
             </div>
             <div class="modal-footer">
-                <button onclick="closeAllAnnouncementsModal()" class="btn btn-secondary">Close</button>
+                <button type="button" class="btn btn-secondary close-modal">Close</button>
             </div>
         </div>
     </div>
+
     <script>
-        // All Announcements Modal with Pagination
-        function openAllAnnouncementsModal(page = 1, perPage = 5) {
-            const announcements = <?= json_encode($activeAnnouncements) ?>;
-            const total = announcements.length;
-            const totalPages = Math.ceil(total / perPage);
-            let html = '';
-
-            const start = (page - 1) * perPage;
-            const end = Math.min(start + perPage, total);
-
-            for (let i = start; i < end; i++) {
-                const a = announcements[i];
-                html += `
-                    <div class=\"announcement-item mb-3\">
-                        <div class=\"announcement-header\">
-                            <div>
-                                <h3 class=\"announcement-title\">${a.title}</h3>
-                                <div class=\"announcement-meta\">${new Date(a.post_date).toLocaleDateString()}</div>
-                            </div>
-                            <div class=\"flex gap-1\">
-                                <button onclick='openViewModal(${JSON.stringify(a)})' class=\"btn btn-primary btn-sm\" title=\"View\"><i class=\"fas fa-eye\"></i></button>
-                                <button onclick='openEditModal(${JSON.stringify(a)})' class=\"btn btn-warning btn-sm\" title=\"Edit\"><i class=\"fas fa-edit\"></i></button>
-                                <button onclick='openArchiveModal(${a.id})' class=\"btn btn-danger btn-sm\" title=\"Archive\"><i class=\"fas fa-archive\"></i></button>
-                            </div>
-                        </div>
-                        <div class=\"announcement-content\">${a.message.length > 100 ? a.message.substring(0, 100) + '...' : a.message}</div>
-                    </div>
-                `;
-            }
-
-            // Pagination controls
-            if (totalPages > 1) {
-                html += `<div class=\"flex justify-center gap-2 mt-4\">`;
-                for (let p = 1; p <= totalPages; p++) {
-                    html += `<button class=\"btn btn-sm ${p === page ? 'btn-primary' : ''}\" onclick=\"openAllAnnouncementsModal(${p},${perPage})\">${p}</button>`;
-                }
-                html += `</div>`;
-            }
-
-            document.getElementById('allAnnouncementsBody').innerHTML = html;
-            document.getElementById('allAnnouncementsModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
-        function closeAllAnnouncementsModal() {
-            document.getElementById('allAnnouncementsModal').classList.remove('active');
+        // Close all modals function
+        function closeAllModals() {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.classList.remove('active');
+            });
             document.body.style.overflow = 'auto';
         }
-        // Tab functionality
-        document.querySelectorAll('.tab-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const tabId = this.dataset.tab;
-                
-                // Update active tab button
-                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Show active tab content
-                document.getElementById('active-tab-content').classList.toggle('hidden', tabId !== 'active');
-                document.getElementById('archived-tab-content').classList.toggle('hidden', tabId !== 'archived');
-            });
-        });
-        
-        // Audience selection
-        document.querySelectorAll('input[name="audience_type"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const userSelection = document.getElementById('user-selection');
-                const typeButtons = document.getElementById('announcement-type-buttons');
-                const submitDiv = document.getElementById('announcement-submit');
-                if (this.value === 'specific') {
-                    userSelection.classList.remove('hidden');
-                    typeButtons.classList.remove('hidden');
-                    submitDiv.classList.add('hidden');
-                    updateSelectedUserCount();
+
+        // Show modal function
+        function showModal(modalId) {
+            closeAllModals();
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                // Use setTimeout to ensure DOM is updated
+                setTimeout(() => {
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }, 10);
+            }
+        }
+
+        // Show announcement loading with dynamic message
+        function showAnnouncementLoading() {
+            const audienceType = document.querySelector('input[name="audience_type"]:checked')?.value;
+            const loadingDiv = document.getElementById('announcement-loading');
+            const loadingMsg = document.getElementById('announcement-loading-message');
+            if (audienceType === 'landing_page') {
+                // No Gmail/email for landing page, skip loading
+                return true;
+            }
+            if (loadingDiv && loadingMsg) {
+                let msg = '';
+                if (audienceType === 'specific') {
+                    msg = 'Announcement Sending to Specific User and Email';
+                } else if (audienceType === 'public') {
+                    msg = 'Announcement Sending to All Users and Email';
                 } else {
-                    userSelection.classList.add('hidden');
-                    typeButtons.classList.add('hidden');
-                    submitDiv.classList.remove('hidden');
+                    msg = 'Sending announcement and emails...';
                 }
-            });
-        });
+                loadingMsg.textContent = msg;
+                loadingDiv.style.display = 'flex';
+            }
+            return true;
+        }
 
         // Set announcement type
         function setAnnouncementType(type) {
@@ -1484,34 +1513,53 @@ try {
         function updateSelectedUserCount() {
             const checkboxes = document.querySelectorAll('.user-checkbox:checked');
             const count = checkboxes.length;
-            document.getElementById('selected-count').textContent = `${count} user${count !== 1 ? 's' : ''} selected`;
+            const countElement = document.getElementById('selected-count');
+            if (countElement) {
+                countElement.textContent = `${count} user${count !== 1 ? 's' : ''} selected`;
+            }
         }
-        
-        // User search
-        document.getElementById('user-search')?.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const userItems = document.querySelectorAll('.checkbox-item');
-            
-            userItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
-            });
-            
-            updateSelectedUserCount();
-        });
         
         // Clear form
         function clearForm() {
             document.querySelector('form').reset();
-            document.getElementById('user-selection').classList.add('hidden');
+            const userSelection = document.getElementById('user-selection');
+            if (userSelection) userSelection.classList.add('hidden');
             document.getElementById('image-name').textContent = 'Click to upload image';
             document.getElementById('selected-count').textContent = '0 users selected';
             document.getElementById('audience-landing').checked = true;
         }
         
+        // Character counter function
+        function updateCharCounter(inputId, counterId, maxLength) {
+            const input = document.getElementById(inputId);
+            const counter = document.getElementById(counterId);
+            
+            if (input && counter) {
+                const currentLength = input.value.length;
+                counter.textContent = `${currentLength}/${maxLength} characters`;
+                
+                if (currentLength > maxLength * 0.9) {
+                    counter.classList.add('text-red-500');
+                    counter.classList.remove('text-gray-500');
+                } else {
+                    counter.classList.remove('text-red-500');
+                    counter.classList.add('text-gray-500');
+                }
+            }
+        }
+        
         // View Modal Functions
         function openViewModal(announcement) {
-            const modal = document.getElementById('viewModal');
+            // Ensure announcement is properly parsed
+            if (typeof announcement === 'string') {
+                try {
+                    announcement = JSON.parse(announcement);
+                } catch (e) {
+                    console.error('Error parsing announcement data:', e);
+                    return;
+                }
+            }
+            
             const modalContent = document.getElementById('modalContent');
             
             const postDate = new Date(announcement.post_date).toLocaleDateString('en-US', { 
@@ -1523,7 +1571,7 @@ try {
             let content = `
                 <div class="space-y-4">
                     <div class="flex justify-between items-start">
-                        <h4 class="font-semibold text-lg">${announcement.title || 'No Title'}</h4>
+                        <h4 class="font-semibold text-lg">${escapeHtml(announcement.title || 'No Title')}</h4>
                         <span class="badge badge-${announcement.priority || 'normal'}">
                             ${announcement.priority ? announcement.priority.charAt(0).toUpperCase() + announcement.priority.slice(1) : 'Normal'} Priority
                         </span>
@@ -1563,7 +1611,7 @@ try {
                 <div>
                     <p class="text-gray-500 mb-2">Message:</p>
                     <div class="bg-gray-50 p-4 rounded border">
-                        <p class="text-gray-700 whitespace-pre-line">${announcement.message || 'No message'}</p>
+                        <p class="text-gray-700 whitespace-pre-line">${escapeHtml(announcement.message || 'No message')}</p>
                     </div>
                 </div>
                 
@@ -1584,18 +1632,21 @@ try {
             `;
             
             modalContent.innerHTML = content;
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeViewModal() {
-            document.getElementById('viewModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
+            showModal('viewModal');
         }
 
         // Edit Modal Functions
         function openEditModal(announcement) {
-            const modal = document.getElementById('editModal');
+            // Ensure announcement is properly parsed
+            if (typeof announcement === 'string') {
+                try {
+                    announcement = JSON.parse(announcement);
+                } catch (e) {
+                    console.error('Error parsing announcement data:', e);
+                    return;
+                }
+            }
+            
             document.getElementById('edit-id').value = announcement.id || '';
             document.getElementById('edit-title').value = announcement.title || '';
             document.getElementById('edit-message').value = announcement.message || '';
@@ -1606,18 +1657,7 @@ try {
             updateCharCounter('edit-title', 'edit-title-counter', 200);
             updateCharCounter('edit-message', 'edit-message-counter', 1000);
             
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        function closeEditModal() {
-            const modal = document.getElementById('editModal');
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-            // Clear any error states
-            modal.querySelectorAll('.form-control').forEach(input => {
-                input.classList.remove('border-red-500');
-            });
+            showModal('editModal');
         }
         
         function validateEditForm() {
@@ -1641,75 +1681,104 @@ try {
             return true;
         }
         
-        // Character counter function
-        function updateCharCounter(inputId, counterId, maxLength) {
-            const input = document.getElementById(inputId);
-            const counter = document.getElementById(counterId);
-            
-            if (input && counter) {
-                const currentLength = input.value.length;
-                counter.textContent = `${currentLength}/${maxLength} characters`;
-                
-                if (currentLength > maxLength * 0.9) {
-                    counter.classList.add('text-red-500');
-                    counter.classList.remove('text-gray-500');
-                } else {
-                    counter.classList.remove('text-red-500');
-                    counter.classList.add('text-gray-500');
-                }
-            }
-        }
-        
         // Archive Modal Functions
         function openArchiveModal(announcementId) {
-            const modal = document.getElementById('archiveModal');
             document.getElementById('archive-id').value = announcementId;
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        function closeArchiveModal() {
-            document.getElementById('archiveModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
+            showModal('archiveModal');
         }
         
         // Delete Modal Functions
         function openDeleteModal(announcementId) {
-            const modal = document.getElementById('deleteModal');
             document.getElementById('delete-id').value = announcementId;
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
+            showModal('deleteModal');
         }
 
-        // Close modal when clicking outside
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    if (this.id === 'viewModal') closeViewModal();
-                    if (this.id === 'editModal') closeEditModal();
-                    if (this.id === 'deleteModal') closeDeleteModal();
-                    if (this.id === 'archiveModal') closeArchiveModal();
-                }
-            });
-        });
+        // All Announcements Modal with Pagination
+        function openAllAnnouncementsModal(page = 1, perPage = 5) {
+            const announcements = <?= json_encode($activeAnnouncements) ?>;
+            const total = announcements.length;
+            const totalPages = Math.ceil(total / perPage);
+            let html = '';
 
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeViewModal();
-                closeEditModal();
-                closeDeleteModal();
-                closeArchiveModal();
+            const start = (page - 1) * perPage;
+            const end = Math.min(start + perPage, total);
+
+            for (let i = start; i < end; i++) {
+                const a = announcements[i];
+                html += `
+                    <div class="announcement-item mb-3">
+                        <div class="announcement-header">
+                            <div>
+                                <h3 class="announcement-title">${escapeHtml(a.title)}</h3>
+                                <div class="announcement-meta">${new Date(a.post_date).toLocaleDateString()}</div>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick='openViewModal(${JSON.stringify(a)})' class="btn btn-primary btn-sm" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick='openEditModal(${JSON.stringify(a)})' class="btn btn-warning btn-sm" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick='openArchiveModal(${a.id})' class="btn btn-danger btn-sm" title="Archive">
+                                    <i class="fas fa-archive"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="announcement-content">${escapeHtml(a.message.length > 100 ? a.message.substring(0, 100) + '...' : a.message)}</div>
+                    </div>
+                `;
             }
-        });
 
-        // Initialize
+            // Pagination controls
+            if (totalPages > 1) {
+                html += `<div class="flex justify-center gap-2 mt-4">
+                    ${Array.from({ length: totalPages }, (_, i) => i + 1).map(p => `
+                        <button class="btn btn-sm ${p === page ? 'btn-primary' : 'btn-secondary'}" onclick="openAllAnnouncementsModal(${p},${perPage})">${p}</button>
+                    `).join('')}
+                </div>`;
+            }
+
+            document.getElementById('allAnnouncementsBody').innerHTML = html;
+            showModal('allAnnouncementsModal');
+        }
+
+        // Initialize all event listeners
         document.addEventListener('DOMContentLoaded', function() {
+            // Tab functionality
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const tabId = this.dataset.tab;
+                    
+                    // Update active tab button
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show active tab content
+                    document.getElementById('active-tab-content').classList.toggle('hidden', tabId !== 'active');
+                    document.getElementById('archived-tab-content').classList.toggle('hidden', tabId !== 'archived');
+                });
+            });
+            
+            // Audience selection
+            document.querySelectorAll('input[name="audience_type"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const userSelection = document.getElementById('user-selection');
+                    const typeButtons = document.getElementById('announcement-type-buttons');
+                    const submitDiv = document.getElementById('announcement-submit');
+                    if (this.value === 'specific') {
+                        userSelection.classList.remove('hidden');
+                        typeButtons.classList.remove('hidden');
+                        submitDiv.classList.add('hidden');
+                        updateSelectedUserCount();
+                    } else {
+                        userSelection.classList.add('hidden');
+                        typeButtons.classList.add('hidden');
+                        submitDiv.classList.remove('hidden');
+                    }
+                });
+            });
+
             // Add click listeners to checkboxes
             document.querySelectorAll('.checkbox-item').forEach(item => {
                 item.addEventListener('click', function(e) {
@@ -1722,6 +1791,22 @@ try {
                     }
                 });
             });
+
+            // User search functionality
+            const userSearch = document.getElementById('user-search');
+            if (userSearch) {
+                userSearch.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const userItems = document.querySelectorAll('.checkbox-item');
+                    
+                    userItems.forEach(item => {
+                        const text = item.textContent.toLowerCase();
+                        item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+                    });
+                    
+                    updateSelectedUserCount();
+                });
+            }
 
             // Add character counter event listeners
             const editTitle = document.getElementById('edit-title');
@@ -1741,16 +1826,31 @@ try {
                 });
             }
 
+            // Initialize user count
             updateSelectedUserCount();
 
-            // Auto-hide success/error messages after 5 seconds
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    alert.style.opacity = '0';
-                    alert.style.transition = 'opacity 0.5s';
-                    setTimeout(() => alert.remove(), 500);
-                }, 5000);
+            // Close modal when clicking outside
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeAllModals();
+                    }
+                });
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeAllModals();
+                }
+            });
+
+            // Add click listeners to close buttons
+            document.querySelectorAll('.close-modal').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeAllModals();
+                });
             });
         });
     </script>

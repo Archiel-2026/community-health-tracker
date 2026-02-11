@@ -413,11 +413,16 @@ function getTimeAgo($datetime)
 
         .stats-card {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 24px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             border: 1px solid #e5e7eb;
+            min-height: 160px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         /* .stats-card:hover {
@@ -428,31 +433,52 @@ function getTimeAgo($datetime)
         .chart-container,
         .chart-container-two {
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 24px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             border: 1px solid #e5e7eb;
             width: 100%;
-            /* ✅ always fluid */
+            min-height: 400px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Ensure consistent height for chart containers */
+        .chart-content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Mobile optimized */
         @media (max-width: 768px) {
             .chart-container,
             .chart-container-two {
-                padding: 16px;
-                border-radius: 8px;
+                padding: 20px;
+                border-radius: 12px;
+                min-height: 350px;
+            }
+            
+            .stats-card {
+                min-height: 140px;
+                padding: 20px;
             }
         }
 
         @media (max-width: 640px) {
             .chart-container,
             .chart-container-two {
-                padding: 12px;
-                border-radius: 8px;
+                padding: 16px;
+                border-radius: 12px;
+                min-height: 320px;
+            }
+            
+            .stats-card {
+                min-height: 130px;
+                padding: 16px;
             }
         }
-
 
         .tab-active {
             border-bottom: 2px solid #3b82f6;
@@ -475,24 +501,24 @@ function getTimeAgo($datetime)
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 1.8rem;
-            height: 1.8rem;
+            min-width: 2rem;
+            height: 2rem;
             border-radius: 9999px;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            padding: 0 0.6rem;
-            margin-left: 0.5rem;
+            padding: 0 0.8rem;
+            margin-left: 0.7rem;
         }
 
         .info-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 18px;
+            padding: 24px;
         }
 
         .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
+            width: 6px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-track {
@@ -506,18 +532,19 @@ function getTimeAgo($datetime)
 
         /* Activity Log Styles */
         .activity-log-container {
-            max-height: 300px;
+            max-height: 260px;
             overflow-y: auto;
+            flex: 1;
         }
 
         .activity-log-item {
             display: flex;
             align-items: flex-start;
             padding: 16px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 12px;
             background: #f8fafc;
-            border-left: 4px solid;
+            border-left: 5px solid;
             transition: all 0.2s ease;
         }
 
@@ -538,8 +565,8 @@ function getTimeAgo($datetime)
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 10px;
             margin-right: 16px;
             flex-shrink: 0;
@@ -561,21 +588,21 @@ function getTimeAgo($datetime)
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .activity-title {
             font-weight: 600;
             color: #1f2937;
-            font-size: 14px;
+            font-size: 16px;
         }
 
         .activity-time {
-            font-size: 12px;
+            font-size: 13px;
             color: #6b7280;
             background: #f3f4f6;
-            padding: 2px 8px;
-            border-radius: 12px;
+            padding: 4px 10px;
+            border-radius: 14px;
             font-weight: 500;
         }
 
@@ -590,12 +617,12 @@ function getTimeAgo($datetime)
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 12px;
+            font-size: 13px;
             color: #6b7280;
         }
 
         .activity-detail i {
-            font-size: 11px;
+            font-size: 12px;
         }
 
         /* Bold Icons */
@@ -607,10 +634,10 @@ function getTimeAgo($datetime)
         .chart-legend-item {
             display: flex;
             align-items: center;
-            padding: 8px 12px;
-            border-radius: 8px;
+            padding: 10px 14px;
+            border-radius: 10px;
             background: #f9fafb;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             transition: all 0.2s ease;
         }
 
@@ -622,29 +649,31 @@ function getTimeAgo($datetime)
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            margin-right: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            margin-right: 14px;
         }
 
         /* Stats card icons */
         .stats-icon-container {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
+            width: 68px;
+            height: 68px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 16px;
+            margin-right: 20px;
+            flex-shrink: 0;
         }
 
         /* Personal Information Styles */
         .personal-info-item {
-            padding: 12px;
-            border-radius: 8px;
+            padding: 16px;
+            border-radius: 10px;
             background: #f9fafb;
             transition: all 0.2s ease;
+            margin-bottom: 4px;
         }
 
         .personal-info-item:hover {
@@ -659,6 +688,7 @@ function getTimeAgo($datetime)
             padding: 16px;
             transition: all 0.2s ease;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 12px;
         }
 
         .doctor-note-item:hover {
@@ -668,11 +698,12 @@ function getTimeAgo($datetime)
 
         /* Modal Info Item Styles */
         .modal-info-item {
-            padding: 16px;
+            padding: 20px;
             border-radius: 12px;
             background: #f9fafb;
             transition: all 0.2s ease;
             border: 1px solid #e5e7eb;
+            margin-bottom: 6px;
         }
 
         .modal-info-item:hover {
@@ -681,49 +712,140 @@ function getTimeAgo($datetime)
         }
 
         .ml-13 {
-            margin-left: 3.25rem;
+            margin-left: 3.75rem;
         }
+
+        /* Consistent spacing utilities */
+        .space-y-consistent {
+            margin-top: 1.5rem;
+        }
+        
+        .space-y-consistent > * + * {
+            margin-top: 1.5rem;
+        }
+        
+        .mb-consistent {
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Ensure all content is visible with top padding */
+        .content-visible {
+            padding-top: 25px;
+            min-height: 100vh;
+        }
+        
+        /* Consistent height for stats cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        /* Add this to your existing style section */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Adjust the announcements container height */
+#announcementsContainer {
+    height: 288px; /* Exactly fits 3 announcements at ~96px each */
+    max-height: 288px;
+    min-height: 288px;
+}
+
+/* Ensure announcement items have consistent height */
+#announcementsContainer > div:not(.text-center) {
+    min-height: 96px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #announcementsContainer {
+        height: 264px; /* Slightly smaller on mobile */
+        max-height: 264px;
+        min-height: 264px;
+    }
+}
+
+/* Add smooth scrolling */
+.custom-scrollbar {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+}
+
+/* Better scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
     </style>
-<div class="bg-gray-100">
-    <div class=" px-4 py-6 -mt-24">
+<div class="bg-gray-100 content-visible">
+    <div class="px-6 py-8">
         <!-- Dashboard Header -->
-        <!-- <div class="flex justify-between items-center mb-8">
+        <!-- <div class="flex justify-between items-center mb-10">
             <h1 class="text-2xl font-bold flex items-center">
-                <div class="stats-icon-container bg-blue-100 mr-3">
-                    <i class="fas fa-chart-pie text-blue-600 text-xl bold-icon"></i>
+                <div class="stats-icon-container bg-blue-100 mr-4">
+                    <i class="fas fa-chart-pie text-blue-600 text-2xl bold-icon"></i>
                 </div>
                 Health Analytics Dashboard
             </h1>
            
             <button onclick="openHelpModal()" class="help-icon text-blue-600 hover:text-blue-500 transition">
-                <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                     <i class="fa-solid fa-circle-question text-2xl bold-icon"></i>
                 </div>
             </button>
         </div> -->
 
         <?php if ($error): ?>
-            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4 flex items-center">
-                <div class="w-8 h-8 bg-yellow-200 rounded-full flex items-center justify-center mr-3">
+            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-5 py-4 rounded mb-5 flex items-center mb-consistent">
+                <div class="w-10 h-10 bg-yellow-200 rounded-full flex items-center justify-center mr-4">
                     <i class="fas fa-exclamation-circle text-yellow-600 bold-icon"></i>
                 </div>
-                <span>Note: <?= htmlspecialchars($error) ?></span>
+                <span class="text-base">Note: <?= htmlspecialchars($error) ?></span>
             </div>
         <?php endif; ?>
 
         <?php if ($success): ?>
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
-                <div class="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center mr-3">
+            <div class="bg-green-100 border border-green-400 text-green-700 px-5 py-4 rounded mb-5 flex items-center mb-consistent">
+                <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center mr-4">
                     <i class="fas fa-check-circle text-green-600 bold-icon"></i>
                 </div>
-                <span><?= htmlspecialchars($success) ?></span>
+                <span class="text-base"><?= htmlspecialchars($success) ?></span>
             </div>
         <?php endif; ?>
 
         <!-- Main Tabs - Only Analytics -->
-        <!-- <div class="flex border-b border-gray-200 mb-6">
-            <a href="?tab=analytics" class="<?= $activeTab === 'analytics' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700' ?> px-4 py-2 font-medium flex items-center">
-                <i class="fas fa-chart-pie text-lg mr-2 bold-icon"></i>
+        <!-- <div class="flex border-b border-gray-200 mb-8">
+            <a href="?tab=analytics" class="<?= $activeTab === 'analytics' ? 'border-b-3 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700' ?> px-5 py-3 font-medium flex items-center text-lg">
+                <i class="fas fa-chart-pie text-xl mr-3 bold-icon"></i>
                 Health Analytics
             </a>
         </div> -->
@@ -731,14 +853,14 @@ function getTimeAgo($datetime)
         <!-- Analytics Tab Content -->
         <div class="tab-content <?= $activeTab === 'analytics' ? 'active' : '' ?>">
             <!-- Health Analytics Dashboard -->
-            <div class="space-y-8 mt-24">
+            <div class="space-y-8">
                 <!-- Stats Overview Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="stats-grid mb-consistent">
                     <!-- Consultations Card -->
                     <div class="stats-card">
-                        <div class="flex items-center mt-4">
+                        <div class="flex items-center">
                             <div class="stats-icon-container bg-green-100">
-                                <svg width="66" height="66" viewBox="0 0 66 66" fill="none"
+                                <svg width="72" height="72" viewBox="0 0 66 66" fill="none"
                                     xmlns="http://www.w3.org/2000/svg">
                                     <path
                                         d="M0 4C0 1.79086 1.79086 0 4 0H62C64.2091 0 66 1.79086 66 4V62C66 64.2091 64.2091 66 62 66H4C1.79086 66 0 64.2091 0 62V4Z"
@@ -749,24 +871,18 @@ function getTimeAgo($datetime)
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-2xl font-semibold text-gray-700">Consultations</h3>
-                                <p class="text-3xl font-bold text-green-600"><?= $analytics['consultations'] ?></p>
-                                <p class="text-sm text-gray-500 mt-1">Consultations Visits</p>
+                                <h3 class="text-2xl font-semibold text-gray-700 mb-1">Consultations</h3>
+                                <p class="text-3xl font-bold text-green-600 mb-1"><?= $analytics['consultations'] ?></p>
+                                <p class="text-base text-gray-500">Consultations Visits</p>
                             </div>
                         </div>
-                        <!-- <div class="mt-4">
-                            <a href="profile.php" class="text-sm text-green-600 font-medium hover:text-green-800 flex items-center">
-                                <i class="fas fa-history mr-2 bold-icon"></i>
-                                View consultation history
-                            </a>
-                        </div> -->
                     </div>
 
                     <!-- Announcements Card -->
                     <div class="stats-card">
-                        <div class="flex items-center mt-4">
+                        <div class="flex items-center">
                             <div class="stats-icon-container bg-blue-100">
-                                <svg width="66" height="66" viewBox="0 0 66 66" fill="none"
+                                <svg width="72" height="72" viewBox="0 0 66 66" fill="none"
                                     xmlns="http://www.w3.org/2000/svg">
                                     <path
                                         d="M0 4C0 1.79086 1.79086 0 4 0H62C64.2091 0 66 1.79086 66 4V62C66 64.2091 64.2091 66 62 66H4C1.79086 66 0 64.2091 0 62V4Z"
@@ -775,202 +891,221 @@ function getTimeAgo($datetime)
                                         d="M49.4948 26.2183L20.61 17.3589C20.219 17.2449 19.8069 17.2234 19.4062 17.2961C19.0055 17.3688 18.6273 17.5338 18.3013 17.7779C17.9754 18.0221 17.7107 18.3387 17.5282 18.7028C17.3458 19.0668 17.2505 19.4684 17.25 19.8756V43.5006C17.25 44.1968 17.5266 44.8645 18.0188 45.3568C18.5111 45.8491 19.1788 46.1256 19.875 46.1256C20.126 46.1257 20.3757 46.0898 20.6166 46.019L34.3125 41.8157V43.5006C34.3125 44.1968 34.5891 44.8645 35.0813 45.3568C35.5736 45.8491 36.2413 46.1256 36.9375 46.1256H42.1875C42.8837 46.1256 43.5514 45.8491 44.0437 45.3568C44.5359 44.8645 44.8125 44.1968 44.8125 43.5006V38.5952L49.4948 37.1596C50.0368 36.9968 50.512 36.6641 50.8505 36.2107C51.1891 35.7573 51.3729 35.2071 51.375 34.6413V28.735C51.3726 28.1694 51.1885 27.6196 50.85 27.1665C50.5116 26.7134 50.0365 26.381 49.4948 26.2183ZM34.3125 39.0709L19.875 43.5006V19.8756L34.3125 24.3053V39.0709ZM42.1875 43.5006H36.9375V41.0102L42.1875 39.3991V43.5006ZM48.75 34.6413H48.732L36.9375 38.2638V25.1125L48.732 28.7219H48.75V34.6281V34.6413Z"
                                         fill="#2563EB" />
                                 </svg>
-
                             </div>
                             <div>
-                                <h3 class="text-2xl font-semibold text-gray-700">Announcements</h3>
-                                <p class="text-3xl font-bold text-blue-600"><?= $analytics['announcements'] ?></p>
-                                <p class="text-sm text-gray-500 mt-1">Active announcements</p>
+                                <h3 class="text-2xl font-semibold text-gray-700 mb-1">Announcements</h3>
+                                <p class="text-3xl font-bold text-blue-600 mb-1"><?= $analytics['announcements'] ?></p>
+                                <p class="text-base text-gray-500">Active announcements</p>
                             </div>
                         </div>
-                        <!-- <div class="mt-4">
-                            <div class="flex justify-between text-sm">
-                                <span class="text-green-600 font-medium flex items-center">
-                                    <i class="fas fa-check-circle mr-2 bold-icon"></i>
-                                    <?= $announcementStats['accepted'] ?> Accepted
-                                </span>
-                                <span class="text-yellow-600 font-medium flex items-center">
-                                    <i class="fas fa-clock mr-2 bold-icon"></i>
-                                    <?= $announcementStats['pending'] ?> Pending
-                                </span>
-                            </div>
-                        </div> -->
                     </div>
 
                     <!-- Lab Results Card -->
                     <div class="stats-card">
-                        <div class="flex items-center mt-4">
+                        <div class="flex items-center">
                             <div class="stats-icon-container bg-purple-100">
                                 <i class="fas fa-vial text-purple-600 text-2xl"></i>
                             </div>
                             <div>
-                                <h3 class="text-2xl font-semibold text-gray-700">Lab Result</h3>
-                                <p class="text-3xl font-bold text-purple-600">
+                                <h3 class="text-2xl font-semibold text-gray-700 mb-1">Lab Result</h3>
+                                <p class="text-3xl font-bold text-purple-600 mb-1">
                                     <?= isset($labResultsCount) ? $labResultsCount : 0 ?>
                                 </p>
-                                <p class="text-sm text-gray-500 mt-1">Available results</p>
-                                <!-- Lab Result count is now always based on announcements for this user -->
+                                <p class="text-base text-gray-500">Available results</p>
                             </div>
                         </div>
                     </div>
-
-                    
                 </div>
 
                 <!-- Charts and Activity Log Section -->
-                <div class="flex flex-col md:flex-row gap-4 md:gap-6">
+                <div class="flex flex-col md:flex-row gap-6 md:gap-7">
                     <!-- LEFT: 40% - Recent Consultations -->
                     <div class="chart-container w-full md:flex-[0_0_40%]">
-                        <div class="flex items-center justify-between mb-3 md:mb-4">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                                    <i class="fas fa-file-medical-alt text-green-600 text-base md:text-lg"></i>
-                                </div>
-                                <h3 class="text-lg md:text-xl font-600 text-gray-800">
-                                    Recent Consultations
-                                </h3>
-                            </div>
-                            <a href="health_records.php" class="text-sm font-medium text-blue-600 hover:text-blue-800">View All</a>
-                        </div>
-
-                        <div class="space-y-4 h-auto">
-                            <?php if (empty($consultationNotes)): ?>
-                                <div class="text-center py-8">
-                                    <i class="fas fa-file-medical-alt text-4xl text-gray-300"></i>
-                                    <p class="mt-2 text-gray-500">No consultation notes found.</p>
-                                </div>
-                            <?php else: ?>
-                                <?php 
-                                $recentNotes = array_slice($consultationNotes, 0, 4);
-                                foreach ($recentNotes as $note): ?>
-                                    <div class="doctor-note-item p-4">
-                                        <div class="flex justify-between items-start">
-                                            <div>
-                                                <p class="font-semibold text-gray-800"><?= htmlspecialchars($note['patient_name']) ?></p>
-                                                <p class="text-sm text-gray-600"><?= htmlspecialchars($note['doctor_name']) ?></p>
-                                            </div>
-                                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full"><?= date('M d, Y', strtotime($note['consultation_date'])) ?></span>
-                                        </div>
+                        <div class="chart-content-wrapper">
+                            <div class="flex items-center justify-between mb-5">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                        <i class="fas fa-file-medical-alt text-green-600 text-lg md:text-xl"></i>
                                     </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
+                                    <h3 class="text-xl md:text-2xl font-600 text-gray-800">
+                                        Recent Consultations
+                                    </h3>
+                                </div>
+                                <a href="health_records.php" class="text-base font-medium text-blue-600 hover:text-blue-800">View All</a>
+                            </div>
+
+                            <div class="space-y-4 flex-1 overflow-auto">
+                                <?php if (empty($consultationNotes)): ?>
+                                    <div class="text-center py-10 flex flex-col justify-center items-center h-full">
+                                        <i class="fas fa-file-medical-alt text-4xl text-gray-300 mb-3"></i>
+                                        <p class="text-gray-500 text-lg">No consultation notes found.</p>
+                                    </div>
+                                <?php else: ?>
+                                    <?php 
+                                    $recentNotes = array_slice($consultationNotes, 0, 4);
+                                    foreach ($recentNotes as $note): ?>
+                                        <div class="doctor-note-item">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <p class="font-semibold text-gray-800 text-lg mb-1"><?= htmlspecialchars($note['patient_name']) ?></p>
+                                                    <p class="text-base text-gray-600"><?= htmlspecialchars($note['doctor_name']) ?></p>
+                                                </div>
+                                                <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full"><?= date('M d, Y', strtotime($note['consultation_date'])) ?></span>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
 
                     <!-- RIGHT: 60% - Announcements and Lab Results -->
-                    <div class="chart-container-two w-full md:flex-[0_0_58.5%] py-4 md:py-6">
-                        <!-- Lab Results Section (if any) -->
-                        <?php if (!empty($labAnnouncements)): ?>
-                        <div class="mb-6">
-                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                        <i class="fas fa-flask text-green-600 text-lg md:text-xl"></i>
+                    <div class="chart-container-two w-full md:flex-[0_0_58.5%]">
+                        <div class="chart-content-wrapper">
+                            <!-- Lab Results Section (if any) -->
+                            <?php if (!empty($labAnnouncements)): ?>
+                            <div class="mb-6">
+                                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-5 mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-flask text-green-600 text-lg md:text-xl"></i>
+                                        </div>
+                                        <h3 class="text-xl md:text-2xl font-600 text-gray-800">
+                                            Laboratory Results
+                                        </h3>
                                     </div>
-                                    <h3 class="text-lg md:text-xl font-600 text-gray-800">
-                                        Laboratory Results
-                                    </h3>
+                                    <a href="announcements.php" class="text-base font-medium text-green-600 hover:text-green-800">View All</a>
                                 </div>
-                                <a href="announcements.php" class="text-sm font-medium text-green-600 hover:text-green-800">View All</a>
-                            </div>
 
-                            <div class="activity-log-container custom-scrollbar h-auto space-y-3 mb-6">
-                                <?php 
-                                $recentLabResults = array_slice($labAnnouncements, 0, 2);
-                                foreach ($recentLabResults as $labResult): 
-                                ?>
-                                    <div class="border-2 border-green-200 bg-green-50 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                        <div class="flex items-start justify-between mb-2">
-                                            <div class="flex items-center gap-2">
-                                                <i class="fas fa-flask text-green-600"></i>
-                                                <h4 class="font-semibold text-gray-800 text-sm"><?= htmlspecialchars($labResult['title']) ?></h4>
+                                <div class="activity-log-container custom-scrollbar mb-5">
+                                    <?php 
+                                    $recentLabResults = array_slice($labAnnouncements, 0, 2);
+                                    foreach ($recentLabResults as $labResult): 
+                                    ?>
+                                        <div class="border-2 border-green-200 bg-green-50 rounded-lg p-4 hover:shadow-md transition-shadow mb-3">
+                                            <div class="flex items-start justify-between mb-2">
+                                                <div class="flex items-center gap-3">
+                                                    <i class="fas fa-flask text-green-600"></i>
+                                                    <h4 class="font-semibold text-gray-800 text-base"><?= htmlspecialchars($labResult['title']) ?></h4>
+                                                </div>
+                                                <span class="text-sm px-2 py-1 rounded-full <?= 
+                                                    $labResult['priority'] === 'high' ? 'bg-red-100 text-red-800' : 
+                                                    ($labResult['priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') 
+                                                ?>">
+                                                    <?= ucfirst($labResult['priority']) ?>
+                                                </span>
                                             </div>
-                                            <span class="text-xs px-2 py-1 rounded-full <?= 
-                                                $labResult['priority'] === 'high' ? 'bg-red-100 text-red-800' : 
-                                                ($labResult['priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') 
-                                            ?>">
-                                                <?= ucfirst($labResult['priority']) ?>
-                                            </span>
-                                        </div>
-                                        <p class="text-xs text-green-700 mb-2">
-                                            <i class="fas fa-user-md"></i> <?= htmlspecialchars($labResult['staff_name'] ?? 'Medical Staff') ?> • 
-                                            <i class="fas fa-calendar"></i> <?= date('M d, Y', strtotime($labResult['post_date'])) ?>
-                                        </p>
-                                        <p class="text-sm text-gray-700 mb-3"><?= substr(htmlspecialchars($labResult['message']), 0, 80) ?>...</p>
-                                        <div class="flex gap-2 text-xs">
-                                            <span class="px-2 py-1 rounded bg-green-200 text-green-800 font-semibold">
-                                                <i class="fas fa-flask"></i> Laboratory Result
-                                            </span>
-                                            <?php if ($labResult['user_status']): ?>
-                                                <span class="px-2 py-1 rounded bg-<?= $labResult['user_status'] === 'accepted' ? 'green' : 'gray' ?>-100 text-<?= $labResult['user_status'] === 'accepted' ? 'green' : 'gray' ?>-800">
-                                                    <i class="fas fa-<?= $labResult['user_status'] === 'accepted' ? 'check-circle' : 'times-circle' ?>"></i> <?= ucfirst($labResult['user_status']) ?>
+                                            <p class="text-sm text-green-700 mb-2">
+                                                <i class="fas fa-user-md"></i> <?= htmlspecialchars($labResult['staff_name'] ?? 'Medical Staff') ?> • 
+                                                <i class="fas fa-calendar"></i> <?= date('M d, Y', strtotime($labResult['post_date'])) ?>
+                                            </p>
+                                            <p class="text-base text-gray-700 mb-2"><?= substr(htmlspecialchars($labResult['message']), 0, 80) ?>...</p>
+                                            <div class="flex gap-2 text-sm">
+                                                <span class="px-2 py-1 rounded bg-green-200 text-green-800 font-semibold">
+                                                    <i class="fas fa-flask"></i> Laboratory Result
                                                 </span>
-                                            <?php else: ?>
-                                                <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
-                                                    <i class="fas fa-clock"></i> Pending Response
-                                                </span>
-                                            <?php endif; ?>
+                                                <?php if ($labResult['user_status']): ?>
+                                                    <span class="px-2 py-1 rounded bg-<?= $labResult['user_status'] === 'accepted' ? 'green' : 'gray' ?>-100 text-<?= $labResult['user_status'] === 'accepted' ? 'green' : 'gray' ?>-800">
+                                                        <i class="fas fa-<?= $labResult['user_status'] === 'accepted' ? 'check-circle' : 'times-circle' ?>"></i> <?= ucfirst($labResult['user_status']) ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
+                                                        <i class="fas fa-clock"></i> Pending Response
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-
-                        <!-- General Announcements Section -->
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-4 md:mb-5">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <i class="fas fa-bullhorn text-blue-600 text-lg md:text-xl"></i>
+                                    <?php endforeach; ?>
                                 </div>
-                                <h3 class="text-lg md:text-xl font-600 text-gray-800">
-                                    General Announcements
-                                </h3>
                             </div>
-                            <a href="announcements.php" class="text-sm font-medium text-blue-600 hover:text-blue-800">View All</a>
-                        </div>
-
-                        <div id="announcementsContainer" class="activity-log-container custom-scrollbar h-auto space-y-3">
-                            <?php 
-                            // Filter out lab results from general announcements
-                            $generalAnnouncements = array_filter($announcements ?? [], function($ann) {
-                                return !isset($ann['announcement_category']) || $ann['announcement_category'] !== 'lab_result';
-                            });
-                            $recentAnnouncements = array_slice($generalAnnouncements, 0, 3);
-                            if (empty($recentAnnouncements)): 
-                            ?>
-                                <div class="text-center py-8">
-                                    <i class="fas fa-bullhorn text-4xl text-gray-300 mb-2"></i>
-                                    <p class="text-gray-500">No announcements yet.</p>
-                                </div>
-                            <?php else: ?>
-                                <?php foreach ($recentAnnouncements as $announcement): ?>
-                                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                        <div class="flex items-start justify-between mb-2">
-                                            <h4 class="font-semibold text-gray-800 text-sm"><?= htmlspecialchars($announcement['title']) ?></h4>
-                                            <span class="text-xs px-2 py-1 rounded-full <?= 
-                                                $announcement['priority'] === 'high' ? 'bg-red-100 text-red-800' : 
-                                                ($announcement['priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800') 
-                                            ?>">
-                                                <?= ucfirst($announcement['priority']) ?>
-                                            </span>
-                                        </div>
-                                        <p class="text-xs text-gray-600 mb-2"><?= htmlspecialchars($announcement['staff_name'] ?? 'Community Staff') ?> • <?= date('M d, Y', strtotime($announcement['post_date'])) ?></p>
-                                        <p class="text-sm text-gray-700 mb-3"><?= substr(htmlspecialchars($announcement['message']), 0, 80) ?>...</p>
-                                        <div class="flex gap-2 text-xs">
-                                            <?php if ($announcement['user_status']): ?>
-                                                <span class="px-2 py-1 rounded bg-<?= $announcement['user_status'] === 'accepted' ? 'green' : 'gray' ?>-100 text-<?= $announcement['user_status'] === 'accepted' ? 'green' : 'gray' ?>-800">
-                                                    <i class="fas fa-<?= $announcement['user_status'] === 'accepted' ? 'check-circle' : 'times-circle' ?>"></i> <?= ucfirst($announcement['user_status']) ?>
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
-                                                    <i class="fas fa-clock"></i> Pending Response
-                                                </span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
                             <?php endif; ?>
+
+                            <!-- General Announcements Section -->
+<div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-5 mb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-bullhorn text-blue-600 text-lg md:text-xl"></i>
+            </div>
+            <h3 class="text-xl md:text-2xl font-600 text-gray-800">
+                General Announcements
+            </h3>
+        </div>
+        <a href="announcements.php" class="text-base font-medium text-blue-600 hover:text-blue-800">View All</a>
+    </div>
+
+    <div id="announcementsContainer" class="h-72 overflow-y-auto custom-scrollbar">
+        <?php 
+        // Filter out lab results from general announcements
+        $generalAnnouncements = array_filter($announcements ?? [], function($ann) {
+            return !isset($ann['announcement_category']) || $ann['announcement_category'] !== 'lab_result';
+        });
+        
+        if (empty($generalAnnouncements)): 
+        ?>
+            <div class="h-full flex flex-col justify-center items-center py-8">
+                <i class="fas fa-bullhorn text-4xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500 text-lg">No announcements yet.</p>
+            </div>
+        <?php else: ?>
+            <?php 
+            $recentAnnouncements = array_slice($generalAnnouncements, 0, 5); // Get 5 announcements but only show 3 at a time
+            
+            foreach ($recentAnnouncements as $index => $announcement): 
+                $isPriorityHigh = $announcement['priority'] === 'high';
+                $isPriorityMedium = $announcement['priority'] === 'medium';
+                $isAccepted = $announcement['user_status'] === 'accepted';
+                $isDismissed = $announcement['user_status'] === 'dismissed';
+            ?>
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow mb-3 <?= $index >= 3 ? 'opacity-0 h-0 overflow-hidden' : '' ?>">
+                    <div class="flex items-start justify-between mb-2">
+                        <h4 class="font-semibold text-gray-800 text-base"><?= htmlspecialchars($announcement['title']) ?></h4>
+                        <span class="text-sm px-2 py-1 rounded-full whitespace-nowrap <?= 
+                            $isPriorityHigh ? 'bg-red-100 text-red-800' : 
+                            ($isPriorityMedium ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800') 
+                        ?>">
+                            <?= ucfirst($announcement['priority']) ?>
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">
+                        <i class="fas fa-user-md mr-1"></i> 
+                        <?= htmlspecialchars($announcement['staff_name'] ?? 'Community Staff') ?> • 
+                        <i class="fas fa-calendar mr-1 ml-2"></i> 
+                        <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                    </p>
+                    <p class="text-base text-gray-700 mb-2 line-clamp-2">
+                        <?= htmlspecialchars(substr($announcement['message'], 0, 80)) ?>
+                        <?= strlen($announcement['message']) > 80 ? '...' : '' ?>
+                    </p>
+                    <div class="flex gap-2 text-sm flex-wrap">
+                        <?php if ($announcement['user_status']): ?>
+                            <span class="px-2 py-1 rounded <?= 
+                                $isAccepted ? 'bg-green-100 text-green-800' : 
+                                'bg-gray-100 text-gray-800'
+                            ?>">
+                                <i class="fas fa-<?= $isAccepted ? 'check-circle' : 'times-circle' ?> mr-1"></i> 
+                                <?= ucfirst($announcement['user_status']) ?>
+                            </span>
+                        <?php else: ?>
+                            <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-clock mr-1"></i> Pending Response
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            
+            <?php if (count($recentAnnouncements) > 3): ?>
+                <div class="text-center py-3">
+                    <span class="text-blue-600 text-sm font-medium">
+                        +<?= count($recentAnnouncements) - 3 ?> more announcement<?= (count($recentAnnouncements) - 3) > 1 ? 's' : '' ?>
+                    </span>
+                </div>
+            <?php endif; ?>
+        
+                                    <?php endif; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -983,8 +1118,8 @@ function getTimeAgo($datetime)
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h3 class="text-2xl font-bold text-white mb-1">Analytics Dashboard Guide</h3>
-                        <p class="text-blue-100 text-sm">Understanding your health analytics</p>
+                        <h3 class="text-2xl font-bold text-white mb-2">Analytics Dashboard Guide</h3>
+                        <p class="text-blue-100 text-base">Understanding your health analytics</p>
                     </div>
                     <button onclick="closeHelpModal()" class="text-white hover:text-blue-200 transition-colors">
                         <i class="fas fa-times text-2xl bold-icon"></i>
@@ -999,8 +1134,8 @@ function getTimeAgo($datetime)
                             <i class="fas fa-heartbeat text-red-600 text-lg bold-icon"></i>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800 text-lg mb-2">Health Records</h4>
-                            <p class="text-gray-600">Number of patient profiles linked to your account from the sitio1_patients table.</p>
+                            <h4 class="font-semibold text-gray-800 text-xl mb-2">Health Records</h4>
+                            <p class="text-gray-600 text-base">Number of patient profiles linked to your account from the sitio1_patients table.</p>
                         </div>
                     </div>
 
@@ -1009,8 +1144,8 @@ function getTimeAgo($datetime)
                             <i class="fas fa-bullhorn text-blue-600 text-lg bold-icon"></i>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800 text-lg mb-2">Announcements</h4>
-                            <p class="text-gray-600">Active announcements targeted to you. Track your responses and pending items.</p>
+                            <h4 class="font-semibold text-gray-800 text-xl mb-2">Announcements</h4>
+                            <p class="text-gray-600 text-base">Active announcements targeted to you. Track your responses and pending items.</p>
                         </div>
                     </div>
 
@@ -1019,8 +1154,8 @@ function getTimeAgo($datetime)
                             <i class="fas fa-file-medical-alt text-green-600 text-lg bold-icon"></i>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800 text-lg mb-2">Consultations</h4>
-                            <p class="text-gray-600">Total consultation notes from all linked patient profiles in the consultation_notes table.</p>
+                            <h4 class="font-semibold text-gray-800 text-xl mb-2">Consultations</h4>
+                            <p class="text-gray-600 text-base">Total consultation notes from all linked patient profiles in the consultation_notes table.</p>
                         </div>
                     </div>
 
@@ -1029,15 +1164,15 @@ function getTimeAgo($datetime)
                             <i class="fas fa-history text-purple-600 text-lg bold-icon"></i>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-800 text-lg mb-2">Activity Log</h4>
-                            <p class="text-gray-600">Track your login and logout activities with timestamps and IP addresses.</p>
+                            <h4 class="font-semibold text-gray-800 text-xl mb-2">Activity Log</h4>
+                            <p class="text-gray-600 text-base">Track your login and logout activities with timestamps and IP addresses.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="px-8 py-6 bg-gray-50 border-t border-gray-200">
-                <button type="button" onclick="closeHelpModal()" class="px-7 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg flex items-center">
+                <button type="button" onclick="closeHelpModal()" class="px-7 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg flex items-center text-base">
                     <i class="fas fa-check mr-2 bold-icon"></i>
                     Got it, thanks!
                 </button>
@@ -1046,7 +1181,6 @@ function getTimeAgo($datetime)
     </div> -->
 
         <script>
-            
             // Personal Information Modal functions
             function openPersonalInfoModal() {
                 document.getElementById('personalInfoModal').classList.remove('hidden');
@@ -1097,12 +1231,12 @@ function getTimeAgo($datetime)
                 <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
-                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-4">
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-5">
                                 <i class="fas fa-id-card text-white text-2xl"></i>
                             </div>
                             <div>
                                 <h3 class="text-2xl font-bold text-white mb-1">Personal Information</h3>
-                                <p class="text-blue-100 text-sm">Complete profile details</p>
+                                <p class="text-blue-100 text-base">Complete profile details</p>
                             </div>
                         </div>
                         <button onclick="closePersonalInfoModal()" class="text-white hover:text-blue-200 transition-colors">
@@ -1114,140 +1248,140 @@ function getTimeAgo($datetime)
                 <!-- Modal Body -->
                 <div class="px-8 py-6">
                     <!-- Profile Image Section -->
-                    <div class="flex justify-center mb-6">
+                    <div class="flex justify-center mb-7">
                         <?php if (!empty($userData['profile_image'])): ?>
                             <img src="/community-health-tracker/<?= htmlspecialchars($userData['profile_image']) ?>" 
                                  alt="Profile" 
-                                 class="w-32 h-32 rounded-full object-cover border-4 border-blue-200 shadow-lg">
+                                 class="w-36 h-36 rounded-full object-cover border-5 border-blue-200 shadow-lg">
                         <?php else: ?>
-                            <div class="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center border-4 border-blue-200 shadow-lg">
-                                <i class="fas fa-user text-6xl text-blue-400"></i>
+                            <div class="w-36 h-36 rounded-full bg-blue-100 flex items-center justify-center border-5 border-blue-200 shadow-lg">
+                                <i class="fas fa-user text-7xl text-blue-400"></i>
                             </div>
                         <?php endif; ?>
                     </div>
                     
                     <!-- Information Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <!-- Full Name -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-user text-blue-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Full Name</span>
+                                <span class="text-base font-medium text-gray-600">Full Name</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['full_name'] ?? 'N/A') ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['full_name'] ?? 'N/A') ?></p>
                         </div>
                         
                         <!-- Username -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-user-tag text-purple-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Username</span>
+                                <span class="text-base font-medium text-gray-600">Username</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['username'] ?? 'N/A') ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['username'] ?? 'N/A') ?></p>
                         </div>
                         
                         <!-- Email -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-envelope text-red-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Email Address</span>
+                                <span class="text-base font-medium text-gray-600">Email Address</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['email'] ?? 'N/A') ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['email'] ?? 'N/A') ?></p>
                         </div>
                         
                         <!-- Contact -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-phone text-green-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Contact Number</span>
+                                <span class="text-base font-medium text-gray-600">Contact Number</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['contact'] ?? 'N/A') ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['contact'] ?? 'N/A') ?></p>
                         </div>
                         
                         <!-- Date of Birth -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-birthday-cake text-yellow-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Date of Birth</span>
+                                <span class="text-base font-medium text-gray-600">Date of Birth</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= $userData['date_of_birth'] ? date('F d, Y', strtotime($userData['date_of_birth'])) : 'N/A' ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= $userData['date_of_birth'] ? date('F d, Y', strtotime($userData['date_of_birth'])) : 'N/A' ?></p>
                         </div>
                         
                         <!-- Age -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-calendar text-indigo-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Age</span>
+                                <span class="text-base font-medium text-gray-600">Age</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= $userData['age'] ?? 'N/A' ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= $userData['age'] ?? 'N/A' ?></p>
                         </div>
                         
                         <!-- Gender -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-venus-mars text-pink-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Gender</span>
+                                <span class="text-base font-medium text-gray-600">Gender</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= ucfirst($userData['gender'] ?? 'N/A') ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= ucfirst($userData['gender'] ?? 'N/A') ?></p>
                         </div>
                         
                         <!-- Civil Status -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-heart text-rose-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Civil Status</span>
+                                <span class="text-base font-medium text-gray-600">Civil Status</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['civil_status'] ?? 'N/A') ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['civil_status'] ?? 'N/A') ?></p>
                         </div>
                         
                         <!-- Sitio -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-map-marker-alt text-teal-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Sitio</span>
+                                <span class="text-base font-medium text-gray-600">Sitio</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['sitio'] ?? 'N/A') ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['sitio'] ?? 'N/A') ?></p>
                         </div>
                         
                         <!-- Occupation -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-briefcase text-orange-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Occupation</span>
+                                <span class="text-base font-medium text-gray-600">Occupation</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['occupation'] ?? 'N/A') ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['occupation'] ?? 'N/A') ?></p>
                         </div>
                         
                         <!-- Address (Full Width) -->
                         <?php if (!empty($userData['address'])): ?>
                         <div class="modal-info-item md:col-span-2">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-home text-cyan-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Address</span>
+                                <span class="text-base font-medium text-gray-600">Address</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['address']) ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['address']) ?></p>
                         </div>
                         <?php endif; ?>
                         
@@ -1255,24 +1389,24 @@ function getTimeAgo($datetime)
                         <?php if (!empty($userData['unique_number'])): ?>
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-hashtag text-gray-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Unique ID</span>
+                                <span class="text-base font-medium text-gray-600">Unique ID</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['unique_number']) ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= htmlspecialchars($userData['unique_number']) ?></p>
                         </div>
                         <?php endif; ?>
                         
                         <!-- Member Since -->
                         <div class="modal-info-item">
                             <div class="flex items-center mb-2">
-                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
                                     <i class="fas fa-clock text-blue-600"></i>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600">Member Since</span>
+                                <span class="text-base font-medium text-gray-600">Member Since</span>
                             </div>
-                            <p class="text-base font-semibold text-gray-800 ml-13"><?= date('F d, Y', strtotime($userData['created_at'])) ?></p>
+                            <p class="text-lg font-semibold text-gray-800 ml-13"><?= date('F d, Y', strtotime($userData['created_at'])) ?></p>
                         </div>
                     </div>
                 </div>
@@ -1280,7 +1414,7 @@ function getTimeAgo($datetime)
                 <!-- Modal Footer -->
                 <div class="px-8 py-6 bg-gray-50 border-t border-gray-200 flex justify-end">
                     <button onclick="closePersonalInfoModal()" 
-                            class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+                            class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-base">
                         <i class="fas fa-check"></i>
                         <span>Close</span>
                     </button>
@@ -1288,3 +1422,37 @@ function getTimeAgo($datetime)
             </div>
         </div>
 </div>
+
+<script>
+    // Add this to your existing script section
+function adjustAnnouncementsHeight() {
+    const container = document.getElementById('announcementsContainer');
+    const announcements = container.querySelectorAll('.border-gray-200:not(.opacity-0)');
+    
+    if (announcements.length === 0) return;
+    
+    // Calculate ideal height for exactly 3 announcements
+    const announcementHeight = 96; // Approximate height per announcement
+    const spacing = 12; // mb-3 spacing
+    const idealHeight = (announcementHeight + spacing) * 3 - spacing;
+    
+    container.style.height = idealHeight + 'px';
+    container.style.maxHeight = idealHeight + 'px';
+    container.style.minHeight = idealHeight + 'px';
+    
+    // Show exactly 3 announcements
+    announcements.forEach((ann, index) => {
+        if (index >= 3) {
+            ann.classList.add('opacity-0', 'h-0', 'overflow-hidden');
+            ann.classList.remove('mb-3');
+        } else {
+            ann.classList.remove('opacity-0', 'h-0', 'overflow-hidden');
+            ann.classList.add('mb-3');
+        }
+    });
+}
+
+// Call on load and window resize
+document.addEventListener('DOMContentLoaded', adjustAnnouncementsHeight);
+window.addEventListener('resize', adjustAnnouncementsHeight);
+</script>

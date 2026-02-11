@@ -984,6 +984,35 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                         </div>
                         <div id="labResultsSection">
                             <?php if (!empty($labResults)): ?>
+                                <style>
+                                    .announcement-grid {
+                                        display: grid;
+                                        grid-template-columns: repeat(4, 1fr);
+                                        gap: 1.5rem;
+                                    }
+                                    @media (max-width: 1200px) {
+                                        .announcement-grid {
+                                            grid-template-columns: repeat(2, 1fr);
+                                        }
+                                    }
+                                    @media (max-width: 800px) {
+                                        .announcement-grid {
+                                            grid-template-columns: 1fr;
+                                        }
+                                    }
+                                    .announcement-card {
+                                        background: #fff;
+                                        border-radius: 12px;
+                                        border: 1px solid #e5e7eb;
+                                        padding: 1.5rem;
+                                        display: flex;
+                                        flex-direction: column;
+                                        gap: 0.3rem;
+                                        min-width: 0;
+                                        height: auto;
+                                        min-height: 0;
+                                    }
+                                </style>
                                 <div class="announcement-grid">
                                     <?php foreach ($labResults as $announcement): ?>
                                         <div class="announcement-card">
@@ -998,7 +1027,6 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                                 <span class="badge badge-<?= $announcement['priority'] ?>">
                                                     <?= ucfirst($announcement['priority']) ?></span>
                                             </div>
-
                                             <div class="announcement-meta justify-between items-center mb-2">
                                                 <div>
                                                     <!-- DATE ADDED -->
@@ -1009,7 +1037,6 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                                         </span>
                                                     </div>
                                                 </div>
-
                                                 <!-- VIEW -->
                                                 <div class="announcement-actions">
                                                     <button
@@ -1032,7 +1059,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                             <?php if (!empty($basicAnnouncements)): ?>
                                 <div class="announcement-grid">
                                     <?php foreach ($basicAnnouncements as $announcement): ?>
-                                        <div class="announcement-item card-shadow announcement-card">
+                                        <div class="announcement-item announcement-card">
                                             <style>
                                                 .announcement-grid {
                                                     display: grid;
@@ -1057,12 +1084,14 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                                     background: #fff;
                                                     border-radius: 12px;
                                                     border: 1px solid #e5e7eb;
-                                                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                                                    /* box-shadow removed */
                                                     padding: 1.5rem;
                                                     display: flex;
                                                     flex-direction: column;
                                                     gap: 0.3rem;
                                                     min-width: 0;
+                                                    height: auto;
+                                                    min-height: 0;
                                                 }
                                             </style>
                                             <div class="announcement-header">

@@ -628,7 +628,7 @@ foreach ($allPatientInfo as $patient) {
 
     .custom-scrollbar::-webkit-scrollbar-thumb {
         background: #cbd5e1;
-        border-radius: 10px;
+        
     }
 
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -687,10 +687,10 @@ foreach ($allPatientInfo as $patient) {
 
     /* Section Title */
     .section-title {
-        font-size: 1.3rem;
-        font-weight: 400;
-        color: #3C96E1;
-        margin-bottom: 0.5rem;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #2563eb;
+        margin-bottom: 1.25rem;
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -910,7 +910,7 @@ foreach ($allPatientInfo as $patient) {
         <?php endif; ?>
 
         <!-- Main Content Tabs -->
-        <div class="card-shadow overflow-hidden">
+        <div class="overflow-hidden">
             <!-- Mobile Tab Selector (visible on mobile only) -->
             <div class="mobile-tab-selector">
                 <!-- Tab Counts at the top -->
@@ -1002,7 +1002,7 @@ foreach ($allPatientInfo as $patient) {
                             <p class="empty-state-text">Visit the health center for your first consultation and medical evaluation.</p>
                         </div>
                     <?php else: ?>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <?php
                             $consultationIndex = 1;
                             foreach ($allConsultationNotes as $note):
@@ -1014,27 +1014,27 @@ foreach ($allPatientInfo as $patient) {
                                     }
                                 }
                                 ?>
-                                <div style="border-radius:18px;box-shadow:0 2px 8px 0 #0001;background:#fff;padding:28px 24px;display:flex;flex-direction:column;justify-content:space-between;min-height:220px;border:0.5px solid #e5e7eb;">
-                                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
-                                        <div style="display:flex;align-items:center;gap:10px;">
-                                            <span style="display:inline-flex;align-items:center;padding:10px 18px 10px 18px;background:#fdf6e3;color:#e6b800;border-radius:10px;font-size:1.5rem;font-weight:500;letter-spacing:0.5px;">Consultation</span>
-                                            <span style="margin-left:10px;display:flex;align-items:center;justify-content:center;background:#fffbe6;color:#e6b800;border-radius:50%;width:36px;height:36px;font-size:1.2rem;font-weight:600;box-shadow:0 1px 4px #0001;"> <?php echo $consultationIndex; ?> </span>
+                                <div style="border-radius:8px;background:#fff;padding:24px 32px;display:flex;flex-direction:column;justify-content:space-between;min-height:180px;border:0.5px solid #e5e7eb;width:100%;box-shadow:none;margin:0 auto;">
+                                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;width:100%;">
+                                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                                            <span style="display:inline-flex;align-items:center;padding:8px 16px;background:#fdf6e3;color:#e6b800;border-radius:8px;font-size:1.15rem;font-weight:500;letter-spacing:0.5px;">Consultation</span>
+                                            <span style="margin-left:8px;display:flex;align-items:center;justify-content:center;background:#fffbe6;color:#e6b800;border-radius:50%;width:30px;height:30px;font-size:1rem;font-weight:600;"> <?php echo $consultationIndex; ?> </span>
                                         </div>
                                         <?php if (!empty($note['next_consultation_date'])): ?>
                                             <div style="display:flex;flex-direction:column;align-items:flex-end;">
-                                                <span style="color:#888;font-size:1rem;margin-bottom:2px;">Next Consultation</span>
-                                                <span style="display:inline-block;padding:7px 18px;border-radius:9px;background:#baf5e0;color:#1db489;font-weight:500;font-size:1.1rem;"> <?php echo date('F d, Y', strtotime($note['next_consultation_date'])); ?> </span>
+                                                <span style="color:#888;font-size:0.95rem;margin-bottom:2px;">Next Consultation</span>
+                                                <span style="display:inline-block;padding:6px 14px;border-radius:7px;background:#baf5e0;color:#1db489;font-weight:500;font-size:1rem;"> <?php echo date('F d, Y', strtotime($note['next_consultation_date'])); ?> </span>
                                             </div>
                                         <?php endif; ?>
                                     </div>
-                                    <div style="margin:18px 0 10px 0;">
-                                        <div style="color:#888;font-size:1.1rem;margin-bottom:2px;">Consultation on :</div>
-                                        <div style="font-size:1.6rem;font-weight:600;margin-bottom:10px;letter-spacing:0.5px;line-height:1.2;"> <?php echo date('F d, Y', strtotime($note['consultation_date'] ?? 'now')); ?> </div>
-                                        <div style="color:#888;font-size:1.1rem;margin-bottom:2px;">Doctor Assigned :</div>
-                                        <div style="font-size:1.25rem;font-weight:500;margin-bottom:0;letter-spacing:0.5px;line-height:1.2;"> <?php echo htmlspecialchars($note['doctor_name']); ?> </div>
+                                    <div style="margin:14px 0 8px 0;width:100%;">
+                                        <div style="color:#888;font-size:1rem;margin-bottom:2px;width:100%;text-align:left;">Consultation on :</div>
+                                        <div style="font-size:1.25rem;font-weight:600;margin-bottom:8px;letter-spacing:0.5px;line-height:1.2;width:100%;text-align:left;"> <?php echo date('F d, Y', strtotime($note['consultation_date'] ?? 'now')); ?> </div>
+                                        <div style="color:#888;font-size:1rem;margin-bottom:2px;width:100%;text-align:left;">Doctor Assigned :</div>
+                                        <div style="font-size:1.1rem;font-weight:500;margin-bottom:0;letter-spacing:0.5px;line-height:1.2;width:100%;text-align:left;"> <?php echo htmlspecialchars($note['doctor_name']); ?> </div>
                                     </div>
                                     <div style="display:flex;justify-content:flex-end;margin-top:auto;">
-                                        <button onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)" style="border-radius:10px;padding:10px 32px;background:#3490ec;color:#fff;font-weight:500;font-size:1.25rem;transition:background 0.2s;outline:none;border:none;cursor:pointer;">View</button>
+                                        <button onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)" style="border-radius:7px;padding:8px 24px;background:#3490ec;color:#fff;font-weight:500;font-size:1rem;transition:background 0.2s;outline:none;border:none;cursor:pointer;">View</button>
                                     </div>
                                 </div>
                                 <?php $consultationIndex++; endforeach; ?>
@@ -1066,7 +1066,7 @@ foreach ($allPatientInfo as $patient) {
                                 ?>
                                 <div class="record-details-blur <?php echo $patientHasUpdate ?: ''; ?>">
                                     <!-- Identity Information Section -->
-                                    <div class="mb-6">
+                                    <div ">
                                         <h4 class="section-title">
                                             <i class="fas fa-id-card text-blue-500 icon-lg"></i>Identity Information
                                             <?php if ($patientHasUpdate): ?>
@@ -1079,7 +1079,7 @@ foreach ($allPatientInfo as $patient) {
 
                                         <!--INFORMATION DATA  -->
                                         <div class="flex flex-col md:flex-row gap-8 w-full">
-                                            <div class="flex-1 bg-white p-3 rounded-md shadow-md min-h-[120px] w-full">
+                                            <div class="flex-1 bg-white p-3 rounded-md min-h-[120px] w-full">
                                                 <!-- Full Name -->
                                                 <div>
                                                     <p class="text-label text-gray-50 mb-2">Full Name</p>
@@ -1192,7 +1192,7 @@ foreach ($allPatientInfo as $patient) {
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
-                                            <div class="flex-1 bg-white p-3 rounded-md shadow-md w-full">
+                                            <div class="flex-1 bg-white p-3 rounded-md w-full">
                                                 <div class="grid grid-cols-2 md:grid-cols-2 gap-6 py-4 record-details-columns">
                                                     <!-- Last Check-up -->
                                                     <div>
@@ -1243,7 +1243,7 @@ foreach ($allPatientInfo as $patient) {
 
                                     <!-- Additional Information Section -->
                                     <!-- <?php if (!empty($patient['sitio']) || !empty($patient['contact']) || !empty($patient['disease'])): ?>
-                                    <div class="card-shadow rounded-2xl p-8 hover:shadow-lg record-details-columns">
+                                    <div class="rounded-2xl p-8 record-details-columns">
                                         <h4 class="section-title mb-6">
                                             <i class="fas fa-info-circle text-blue-500 icon-lg"></i>Additional Information
                                             <?php if ($patientHasUpdate): ?>
@@ -1356,7 +1356,7 @@ foreach ($allPatientInfo as $patient) {
                                         <!-- Two Column Layout: Vital Statistics and Medical Details -->
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                                             <!-- Vital Statistics Section -->
-                                            <div class="flex-1 bg-white p-3 rounded-md shadow-md">
+                                            <div class="flex-1 bg-white p-3 rounded-md">
                                                 <h4
                                                     class="text-base sm:text-lg font-600 text-blue-500 mb-4 sm:mb-6 flex items-center gap-2">
                                                     <i class="fas fa-heartbeat text-blue-500 text-lg sm:text-xl"></i>Vital
@@ -1427,7 +1427,7 @@ foreach ($allPatientInfo as $patient) {
                                             </div>
 
                                             <!-- Medical Details Section -->
-                                            <div class="flex-1 bg-white p-3 rounded-md shadow-md">
+                                            <div class="flex-1 bg-white p-3 rounded-md">
                                                 <h4 class="text-lg font-600 text-blue-500 mb-6 flex items-center gap-2">
                                                     <i class="fas fa-capsules text-blue-500 icon-lg"></i>Medical Details
                                                 </h4>
@@ -1496,7 +1496,7 @@ foreach ($allPatientInfo as $patient) {
     <!-- Consultation Details Modal -->
     <div id="consultationModal"
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-[100] backdrop-blur-sm">
-        <div class="bg-white rounded-2xl card-shadow max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-5 sm:p-8 border-b border-gray-100 sticky top-0 bg-white z-10">
                 <div class="flex justify-between items-start">
                     <div>
@@ -1513,7 +1513,7 @@ foreach ($allPatientInfo as $patient) {
             <div class="p-5 sm:p-8 space-y-6" id="modalBody"></div>
 
             <div
-                class="p-4 sm:p-8 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0 shadow-lg">
+                class="p-4 sm:p-8 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0">
                 <button onclick="closeModal()"
                     class="px-5 py-3 sm:py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-600 text-sm order-2 sm:order-2">
                     Close
