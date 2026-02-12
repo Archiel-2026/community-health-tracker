@@ -1,5 +1,24 @@
+
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+// --- Auto-logout for resident users after 10 minutes of inactivity ---
+if (isUser()) {
+    $now = time();
+    if (!isset($_SESSION['last_action'])) {
+        $_SESSION['last_action'] = $now;
+    } else {
+        $inactive = $now - $_SESSION['last_action'];
+        if ($inactive >= 600) { // 10 minutes = 600 seconds
+            // Destroy session and redirect to resident landing page
+            session_unset();
+            session_destroy();
+            header('Location: /community-health-tracker/index.php');
+            exit();
+        } else {
+            $_SESSION['last_action'] = $now;
+        }
+    }
+}
 require_once __DIR__ . '/../includes/header.php';
 
 redirectIfNotLoggedIn();
@@ -875,10 +894,10 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
         <div class="card-shadow overflow-hidden mb-10 mt-24">
             <!-- Tab Navigation -->
             <div class="tab-nav-container">
-                <button class="tab-header active" data-tab="announcements">
+                <button class="tab-header <?= $activeTab === 'announcements' ? 'active' : '' ?>" data-tab="announcements">
                     <span>All Announcements</span>
                 </button>
-                <button class="tab-header " data-tab="stats">
+                <button class="tab-header <?= $activeTab === 'stats' ? 'active' : '' ?>" data-tab="stats">
                     <span>Response Stats</span>
                 </button>
             </div>
@@ -886,7 +905,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             <!-- Tab Content -->
             <div class="tab-content-wrapper custom-scrollbar">
                 <!-- Announcements Tab -->
-                <div id="announcements" class="tab-content active">
+                <div id="announcements" class="tab-content <?= $activeTab === 'announcements' ? 'active' : 'hidden' ?>">
                     <!-- Stats Grid -->
                     <div class="flex flex-col md:flex-row gap-8 w-full mb-6">
                         <div class="stat-card flex-1 flex-col">
@@ -1013,31 +1032,72 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                         min-height: 0;
                                     }
                                 </style>
+                                <style>
+                                    .lab-result-accepted {
+                                        background: linear-gradient(to right, #D1FAE5, #FFFFFF);
+                                        border: 2px solid #10B981;
+                                    }
+                                    .lab-result-dismissed {
+                                        background: linear-gradient(to right, #F3F4F6, #FFFFFF);
+                                        border: 2px solid #E5E7EB;
+                                    }
+                                </style>
                                 <div class="announcement-grid">
                                     <?php foreach ($labResults as $announcement): ?>
-                                        <div class="announcement-card">
-                                            <div class="announcement-title text-blue-700">
-                                                <?= htmlspecialchars($announcement['title']) ?>
+                                        <?php
+                                        $responseStatus = $announcement['user_status'];
+                                        $highlightClass = '';
+                                        $responseBadge = '';
+                                        if ($responseStatus === 'accepted') {
+                                            $highlightClass = 'lab-result-accepted';
+                                            $responseBadge = '<span class="badge badge-accepted" style="margin-left:0.5em;">Accepted</span>';
+                                        } elseif ($responseStatus === 'dismissed') {
+                                            $highlightClass = 'lab-result-dismissed';
+                                            $responseBadge = '<span class="badge badge-dismissed" style="margin-left:0.5em;">Dismissed</span>';
+                                        }
+                                        ?>
+                                        <div class="announcement-item announcement-card <?= $highlightClass ?>">
+                                            <div class="announcement-header">
+                                                <div class="flex-1">
+                                                    <h3 class="announcement-title text-blue-700">
+                                                        <?= htmlspecialchars($announcement['title']) ?>
+                                                    </h3>
+                                                </div>
                                             </div>
-                                            <div style="display:flex; gap:0.5rem;">
-                                                <span
-                                                    style="background:#A7F3D0; color:#047857; border-radius:6px; padding:0.3em 1em; font-size:1em; font-weight:500;">Lab
-                                                    Result</span>
-                                                <!-- PRIORITY -->
+                                            <div class="announcement-badges">
+                                                <span class="badge badge-lab-result">Lab Result</span>
                                                 <span class="badge badge-<?= $announcement['priority'] ?>">
-                                                    <?= ucfirst($announcement['priority']) ?></span>
+                                                    <?= ucfirst($announcement['priority']) ?>
+                                                </span>
                                             </div>
                                             <div class="announcement-meta justify-between items-center mb-2">
                                                 <div>
-                                                    <!-- DATE ADDED -->
                                                     <div class="flex flex-col md:flex-row gap-2 text-sm mb-1">
                                                         <span class="text-gray-150">Date Added:</span>
                                                         <span class="font-bold">
                                                             <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
                                                         </span>
                                                     </div>
+                                                    <!-- STATUS BADGE BELOW DATE -->
+                                                    <?php if ($announcement['user_status']): ?>
+                                                        <div class="flex flex-col md:flex-row items-center mt-1">
+                                                            <span class="badge badge-<?= $announcement['user_status'] ?>">
+                                                                <?php if ($announcement['user_status'] === 'accepted'): ?>
+                                                                    <svg class="w-6 h-6" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M10.1754 5.76211C10.219 5.80564 10.2536 5.85734 10.2771 5.91425C10.3007 5.97115 10.3129 6.03215 10.3129 6.09375C10.3129 6.15535 10.3007 6.21635 10.2771 6.27325C10.2536 6.33016 10.219 6.38186 10.1754 6.42539L6.89414 9.70664C6.85061 9.75022 6.79891 9.7848 6.74201 9.80839C6.6851 9.83198 6.6241 9.84412 6.5625 9.84412C6.5009 9.84412 6.4399 9.83198 6.383 9.80839C6.32609 9.7848 6.2744 9.75022 6.23086 9.70664L4.82461 8.30039C4.73665 8.21243 4.68724 8.09314 4.68724 7.96875C4.68724 7.84436 4.73665 7.72507 4.82461 7.63711C4.91257 7.54915 5.03186 7.49974 5.15625 7.49974C5.28064 7.49974 5.39994 7.54915 5.48789 7.63711L6.5625 8.7123L9.51211 5.76211C9.55565 5.71853 9.60734 5.68395 9.66425 5.66036C9.72115 5.63677 9.78215 5.62463 9.84375 5.62463C9.90535 5.62463 9.96635 5.63677 10.0233 5.66036C10.0802 5.68395 10.1319 5.71853 10.1754 5.76211Z" fill="#10B981" />
+                                                                    </svg>
+                                                                <?php elseif ($announcement['user_status'] === 'dismissed'): ?>
+                                                                    <svg class="w-6 h-6" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                        <path d="M10.1754 5.76211C10.219 5.80564 10.2536 5.85734 10.2771 5.91425C10.3007 5.97115 10.3129 6.03215 10.3129 6.09375C10.3129 6.15535 10.3007 6.21635 10.2771 6.27325C10.2536 6.33016 10.219 6.38186 10.1754 6.42539L6.89414 9.70664C6.85061 9.75022 6.79891 9.7848 6.74201 9.80839C6.6851 9.83198 6.6241 9.84412 6.5625 9.84412C6.5009 9.84412 6.4399 9.83198 6.383 9.80839C6.32609 9.7848 6.2744 9.75022 6.23086 9.70664L4.82461 8.30039C4.73665 8.21243 4.68724 8.09314 4.68724 7.96875C4.68724 7.84436 4.73665 7.72507 4.82461 7.63711C4.91257 7.54915 5.03186 7.49974 5.15625 7.49974C5.28064 7.49974 5.39994 7.54915 5.48789 7.63711L6.5625 8.7123L9.51211 5.76211C9.55565 5.71853 9.60734 5.68395 9.66425 5.66036C9.72115 5.63677 9.78215 5.62463 9.84375 5.62463C9.90535 5.62463 9.96635 5.63677 10.0233 5.66036C10.0802 5.68395 10.1319 5.71853 10.1754 5.76211Z" fill="#374151" />
+                                                                    </svg>
+                                                                <?php endif; ?>
+                                                                <?= ucfirst($announcement['user_status']) ?>
+                                                            </span>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <span class="badge badge-pending mt-1">Pending</span>
+                                                    <?php endif; ?>
                                                 </div>
-                                                <!-- VIEW -->
                                                 <div class="announcement-actions">
                                                     <button
                                                         onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
@@ -1046,6 +1106,13 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                                     </button>
                                                 </div>
                                             </div>
+                                            <?php if ($announcement['image_path']): ?>
+                                                <div class="image-preview mb-2">
+                                                    <img src="<?= htmlspecialchars($announcement['image_path']) ?>"
+                                                        alt="Announcement Image"
+                                                        onclick="openImageModal('<?= htmlspecialchars($announcement['image_path']) ?>')">
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -1213,7 +1280,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             </div>
 
             <!-- Stats Tab -->
-            <div id="stats" class="tab-content">
+            <div id="stats" class="tab-content <?= $activeTab === 'stats' ? 'active' : 'hidden' ?>">
                 <div class="flex flex-col md:flex-row gap-8 w-full mb-6" style="padding-left:2em; padding-right:2em;">
                     <!-- Total Announcement -->
                     <div class="stat-card flex-1 flex-col">
@@ -1311,17 +1378,21 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                 <div class="card-shadow p-4 rounded flex flex-col gap-2">
                                     <span class="font-bold text-base text-gray-900"><?= htmlspecialchars($a['title']) ?></span>
                                     <div class="announcement-badges">
-                                        <span class="badge badge-simple">Announcement</span>
+                                        <?php if (isset($a['announcement_type']) && $a['announcement_type'] === 'lab_result'): ?>
+                                            <span class="badge badge-lab-result">Lab Result</span>
+                                        <?php else: ?>
+                                            <span class="badge badge-simple">General Announcement</span>
+                                        <?php endif; ?>
                                         <!-- PRIORITY -->
-                                        <span class="badge badge-<?= $announcement['priority'] ?>">
-                                            <?= ucfirst($announcement['priority']) ?>
+                                        <span class="badge badge-<?= $a['priority'] ?>">
+                                            <?= ucfirst($a['priority']) ?>
                                         </span>
                                     </div>
                                     <!-- DATE ADDED -->
                                     <div class="flex flex-col md:flex-row gap-2 text-sm mb-1">
                                         <span class="text-gray-150">Date Added:</span>
                                         <span class="font-bold">
-                                            <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                                            <?= date('M d, Y', strtotime($a['post_date'])) ?>
                                         </span>
                                     </div>
                                     <div class="flex flex-col md:flex-row justify-between">
@@ -1339,7 +1410,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                         <!-- VIEW -->
                                         <div class="announcement-actions">
                                             <button
-                                                onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
+                                                onclick="openViewModal(<?= htmlspecialchars(json_encode($a, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
                                                 class="btn-primary" style="background: #2563eb;">
                                                 View
                                             </button>
@@ -1592,6 +1663,51 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             }
         });
     </script>
-</body>
 
-</html>
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Always default to All Announcements tab on load
+    setTimeout(function() {
+        document.querySelectorAll('.tab-header[data-tab]').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        var allTabBtn = document.querySelector('.tab-header[data-tab="announcements"]');
+        if (allTabBtn) allTabBtn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        var allTabContent = document.getElementById('announcements');
+        if (allTabContent) allTabContent.classList.add('active');
+    }, 100);
+
+    // Tab switching functionality
+    document.querySelectorAll('.tab-header[data-tab]').forEach(button => {
+        button.addEventListener('click', function () {
+            const tabName = this.getAttribute('data-tab');
+            document.querySelectorAll('.tab-header[data-tab]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            this.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            // If Announcements tab is clicked, always show All Announcements and reset sub-tabs
+            if (tabName === 'announcements') {
+                // Reset sub-tabs: show Lab Results by default
+                const btnLab = document.getElementById('btnLabResults');
+                const btnGen = document.getElementById('btnGeneralAnnouncements');
+                const labSection = document.getElementById('labResultsSection');
+                const genSection = document.getElementById('generalAnnouncementsSection');
+                if (btnLab && btnGen && labSection && genSection) {
+                    btnLab.classList.add('active');
+                    btnGen.classList.remove('active');
+                    labSection.style.display = '';
+                    genSection.style.display = 'none';
+                }
+            }
+        });
+    });
+});
+</script>
+</body>

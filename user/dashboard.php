@@ -9,7 +9,7 @@ if (isUser()) {
         $_SESSION['last_action'] = $now;
     } else {
         $inactive = $now - $_SESSION['last_action'];
-        if ($inactive >= 3600) { // 1 hour = 3600 seconds
+        if ($inactive >= 600) { // 10 minutes = 600 seconds
             // Destroy session and redirect to resident landing page
             session_unset();
             session_destroy();
@@ -931,7 +931,7 @@ function getTimeAgo($datetime)
                                         Recent Consultations
                                     </h3>
                                 </div>
-                                <a href="health_records.php" class="text-base font-medium text-blue-600 hover:text-blue-800">View All</a>
+                                <a href="health_records.php?tab=consultations" class="text-base font-medium text-blue-600 hover:text-blue-800" target="_blank" rel="noopener">View All</a>
                             </div>
 
                             <div class="space-y-4 flex-1 overflow-auto">
@@ -944,7 +944,7 @@ function getTimeAgo($datetime)
                                     <?php 
                                     $recentNotes = array_slice($consultationNotes, 0, 4);
                                     foreach ($recentNotes as $note): ?>
-                                        <div class="doctor-note-item">
+                                        <div class="doctor-note-item consultation-item" style="cursor:pointer" data-record-id="<?= htmlspecialchars($note['patient_id']) ?>">
                                             <div class="flex justify-between items-start">
                                                 <div>
                                                     <p class="font-semibold text-gray-800 text-lg mb-1"><?= htmlspecialchars($note['patient_name']) ?></p>
@@ -1031,7 +1031,7 @@ function getTimeAgo($datetime)
                 General Announcements
             </h3>
         </div>
-        <a href="announcements.php" class="text-base font-medium text-blue-600 hover:text-blue-800">View All</a>
+        <a href="announcements.php?tab=announcements" class="text-base font-medium text-blue-600 hover:text-blue-800" target="_blank" rel="noopener">View All</a>
     </div>
 
     <div id="announcementsContainer" class="h-72 overflow-y-auto custom-scrollbar">
@@ -1057,7 +1057,7 @@ function getTimeAgo($datetime)
                 $isAccepted = $announcement['user_status'] === 'accepted';
                 $isDismissed = $announcement['user_status'] === 'dismissed';
             ?>
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow mb-3 <?= $index >= 3 ? 'opacity-0 h-0 overflow-hidden' : '' ?>">
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow mb-3 announcement-item <?= $index >= 3 ? 'opacity-0 h-0 overflow-hidden' : '' ?>" style="cursor:pointer" data-announcement-id="<?= htmlspecialchars($announcement['id']) ?>">
                     <div class="flex items-start justify-between mb-2">
                         <h4 class="font-semibold text-gray-800 text-base"><?= htmlspecialchars($announcement['title']) ?></h4>
                         <span class="text-sm px-2 py-1 rounded-full whitespace-nowrap <?= 
@@ -1182,6 +1182,21 @@ function getTimeAgo($datetime)
 
         <script>
             // Personal Information Modal functions
+                        // Tab redirect handlers for dashboard items
+                        document.addEventListener('DOMContentLoaded', function() {
+                            // Consultation item click: go to health_records.php with tab=record
+                            document.querySelectorAll('.consultation-item').forEach(function(item) {
+                                item.addEventListener('click', function() {
+                                    window.location.href = 'health_records.php?tab=record&record_id=' + item.dataset.recordId;
+                                });
+                            });
+                            // Announcement item click: go to announcements.php with tab=announcements
+                            document.querySelectorAll('.announcement-item').forEach(function(item) {
+                                item.addEventListener('click', function() {
+                                    window.location.href = 'announcements.php?tab=announcements&announcement_id=' + item.dataset.announcementId;
+                                });
+                            });
+                        });
             function openPersonalInfoModal() {
                 document.getElementById('personalInfoModal').classList.remove('hidden');
                 document.body.style.overflow = 'hidden';

@@ -1595,7 +1595,15 @@ try {
         $selectParams[] = $_SESSION['user']['id'];
     }
 
-    $selectQuery .= " ORDER BY p.created_at DESC";
+    // Filter by specific date if provided
+    if (!empty($_GET['filter_date'])) {
+        $selectQuery .= " AND DATE(p.created_at) = ?";
+        $selectParams[] = $_GET['filter_date'];
+    }
+
+    // Determine sort order from filter
+    $dateSortOrder = (isset($_GET['date_sort']) && strtolower($_GET['date_sort']) === 'asc') ? 'ASC' : 'DESC';
+    $selectQuery .= " ORDER BY p.created_at $dateSortOrder";
 
     $limitNeeded = false;
     if (!$viewAll && !$manualSelectMode) {
@@ -2542,7 +2550,7 @@ if (!empty($searchTerm)) {
                                 <button type="button" onclick="openExportModal()" class="btn-export inline-flex items-center px-6" style="background-color: #10b981;">
                                     <i class="fas fa-download mr-2"></i>Export Records
                                 </button>
-                                <!-- Patient Type Filter -->
+                                <!-- Filter by Date Added/Timestamp -->
                                 <form method="get" action="" class="flex items-center gap-2">
                                     <input type="hidden" name="tab" value="patients-tab">
                                     <?php if ($viewAll): ?>
@@ -2556,6 +2564,11 @@ if (!empty($searchTerm)) {
                                         <option value="registered" <?= $patientTypeFilter === 'registered' ? 'selected' : '' ?>>Registered Patient</option>
                                         <option value="regular" <?= $patientTypeFilter === 'regular' ? 'selected' : '' ?>>Regular Patient</option>
                                     </select>
+                                    <select name="date_sort" onchange="this.form.submit()" class="patient-type-filter ml-2">
+                                        <option value="desc" <?= (empty($_GET['date_sort']) || $_GET['date_sort'] === 'desc') ? 'selected' : '' ?>>Newest First</option>
+                                        <option value="asc" <?= (isset($_GET['date_sort']) && $_GET['date_sort'] === 'asc') ? 'selected' : '' ?>>Oldest First</option>
+                                    </select>
+                                    <input type="date" name="filter_date" value="<?= isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : '' ?>" class="patient-type-filter ml-2" onchange="this.form.submit()" placeholder="Filter by Date">
                                 </form>
                             </div>
                         </div>

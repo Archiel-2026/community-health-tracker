@@ -300,15 +300,23 @@ if (isset($_GET['restore_patient'])) {
 try {
     require_once __DIR__ . '/../includes/functions.php';
 
+
+    // Search logic
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     $params = [];
     $whereClause1 = "1=1";
     $whereClause2 = "p.deleted_at IS NOT NULL";
-    
     if (!staff_can_view_all()) {
         $whereClause1 = "d.deleted_by = ?";
         $whereClause2 = "p.added_by = ?";
         $params[] = $_SESSION['user']['id'];
         $params[] = $_SESSION['user']['id'];
+    }
+    if ($search !== '') {
+        $whereClause1 .= " AND d.full_name LIKE ?";
+        $whereClause2 .= " AND p.full_name LIKE ?";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
     }
 
     // Query for hard-deleted records from deleted_patients table
@@ -360,10 +368,36 @@ try {
                       LEFT JOIN sitio1_users u ON p.user_id = u.id
                       WHERE $whereClause2";
     
-    // Combine both queries
-    $combinedQuery = "($hardDeleteQuery) UNION ALL ($softDeleteQuery) ORDER BY archived_date DESC";
+    // Combine both queries (no ORDER BY here)
+    $combinedQuery = "($hardDeleteQuery) UNION ALL ($softDeleteQuery)";
     
-    $stmt = $pdo->prepare($combinedQuery);
+    // Sorting logic
+    $sort = isset($_GET['sort']) ? $_GET['sort'] : '';
+    $orderBy = '';
+    if ($sort === 'name_asc') {
+        $orderBy = ' ORDER BY full_name ASC';
+    } elseif ($sort === 'name_desc') {
+        $orderBy = ' ORDER BY full_name DESC';
+    } elseif ($sort === 'date_asc') {
+        $orderBy = ' ORDER BY archived_date ASC';
+    } else {
+        $orderBy = ' ORDER BY archived_date DESC';
+    }
+
+    $perPage = 5;
+    $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+    $offset = ($page - 1) * $perPage;
+
+    // Get total count for pagination
+    $countQuery = "SELECT COUNT(*) as total FROM (($hardDeleteQuery) UNION ALL ($softDeleteQuery)) as all_patients";
+    $stmt = $pdo->prepare($countQuery);
+    $stmt->execute($params);
+    $totalRows = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $totalPages = ceil($totalRows / $perPage);
+
+    // Add ORDER BY, LIMIT, and OFFSET outside the UNION ALL
+    $paginatedQuery = $combinedQuery . $orderBy . " LIMIT $perPage OFFSET $offset";
+    $stmt = $pdo->prepare($paginatedQuery);
     $stmt->execute($params);
     $deletedPatients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
@@ -441,8 +475,11 @@ try {
             border-radius: 8px;
         }
         
-        /* Button Styles */
-        .btn-primary { 
+        /* Button Styles - Consistent across all buttons */
+        .btn-primary, 
+        .btn-search,
+        .btn-filter,
+        .btn-clear { 
             background-color: white; 
             color: #3498db; 
             border: 2px solid #bae6fd; 
@@ -450,18 +487,35 @@ try {
             padding: 12px 24px; 
             transition: all 0.3s ease; 
             font-weight: 500;
-            min-height: 55px;
+            min-height: 48px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 15px;
             text-decoration: none;
+            gap: 8px;
         }
-        .btn-primary:hover { 
+        
+        .btn-primary:hover,
+        .btn-search:hover,
+        .btn-filter:hover { 
             background-color: #f0f9ff; 
             border-color: #3498db;
             transform: translateY(-2px); 
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+        }
+        
+        /* Clear button variant */
+        .btn-clear {
+            border-color: #fecaca;
+            color: #e74c3c;
+        }
+        
+        .btn-clear:hover {
+            background-color: #fef2f2;
+            border-color: #e74c3c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.15);
         }
         
         .btn-restore { 
@@ -475,6 +529,8 @@ try {
             align-items: center;
             justify-content: center;
             text-decoration: none;
+            border: 2px solid transparent;
+            gap: 8px;
         }
         .btn-restore:hover { 
             background-color: #42d881; 
@@ -482,7 +538,98 @@ try {
             box-shadow: 0 4px 12px rgba(46, 204, 113, 0.15);
         }
         
-        /* REMOVED: .btn-delete styling */
+        /* Search and Filter Section */
+        .search-section {
+            background-color: white;
+            border: 1px solid #f0f9ff;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+        }
+        
+        /* Input field styling */
+        .search-input {
+            width: 100%;
+            border: 2px solid #f0f9ff;
+            border-radius: 30px;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        /* Clear icon inside input - properly positioned */
+        .clear-search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: transparent;
+        }
+        
+        .clear-search-icon:hover {
+            color: #e74c3c;
+            background-color: #fef2f2;
+        }
+        
+        /* Select dropdown styling - with integrated chevron that rotates */
+        .sort-select-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .sort-select {
+            border: 2px solid #f0f9ff;
+            border-radius: 30px;
+            padding: 0.75rem 2.5rem 0.75rem 1.25rem;
+            font-size: 0.95rem;
+            color: #2c3e50;
+            background-color: white;
+            appearance: none;
+            cursor: pointer;
+            min-width: 200px;
+            width: 100%;
+            line-height: 1.5;
+        }
+        
+        .sort-select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        /* Integrated chevron icon inside select */
+        .sort-select-chevron {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            padding-left: 4px;
+            transition: transform 0.3s ease;
+        }
+        
+        /* Rotated state when select is open - chevron points up */
+        .sort-select-wrapper.sort-select-open .sort-select-chevron {
+            transform: translateY(-50%) rotate(180deg);
+        }
         
         /* Table styling */
         .patient-table { 
@@ -508,24 +655,62 @@ try {
             background-color: #f8fafc; 
         }
         
-        /* Patient ID styling */
-        .patient-id { 
-            font-weight: bold; 
-            color: #3498db; 
-        }
-        
         /* Custom notification animation */
         .custom-notification { animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { 
             from { transform: translateX(100%); opacity: 0; } 
             to { transform: translateX(0); opacity: 1; } 
         }
+        
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .btn-primary, 
+            .btn-search,
+            .btn-filter,
+            .btn-clear {
+                width: 100%;
+                padding: 10px 20px;
+                min-height: 44px;
+            }
+            
+            .sort-select-wrapper {
+                width: 100%;
+            }
+            
+            .sort-select {
+                width: 100%;
+                min-width: unset;
+            }
+            
+            .flex.items-center.gap-2 {
+                width: 100%;
+                margin-left: 0 !important;
+            }
+            
+            .flex.items-center.gap-2 > .sort-select-wrapper {
+                flex: 1;
+            }
+            
+            .search-section .flex-wrap > div {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6 text-secondary">Deleted Patients Archive</h1>
+        <!-- Header with Title -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-secondary">Deleted Patients Archive</h1>
+                <p class="text-gray-600 mt-1">Patient records that have been moved to archive. Only restoration is allowed.</p>
+            </div>
+            <a href="existing_info_patients.php" class="btn-primary mt-4 md:mt-0">
+                <i class="fas fa-arrow-left mr-1"></i>Back to Patients
+            </a>
+        </div>
         
+        <!-- Success/Error Messages -->
         <?php if ($message): ?>
             <div id="successMessage" class="alert-success px-4 py-3 rounded mb-4 flex items-center">
                 <i class="fas fa-check-circle mr-2"></i>
@@ -540,16 +725,91 @@ try {
             </div>
         <?php endif; ?>
         
+        <?php if (isset($_SESSION['success_message'])): ?>
+            <div id="successMessage" class="alert-success px-4 py-3 rounded mb-4 flex items-center">
+                <i class="fas fa-check-circle mr-2"></i>
+                <?= htmlspecialchars($_SESSION['success_message']) ?>
+            </div>
+            <?php unset($_SESSION['success_message']); ?>
+        <?php endif; ?>
+        
+        <!-- SEARCH AND FILTER SECTION - IMPROVED UX WITH TOGGLE CHEVRON -->
+        <div class="search-section p-4 mb-6">
+            <form method="get" class="flex flex-wrap items-end gap-3">
+                <!-- Search Input Group - Flexible width -->
+                <div class="flex-1 min-w-[240px]">
+                    <label for="search" class="block text-sm font-medium text-secondary mb-1">
+                        <i class="fas fa-search text-primary mr-1"></i>Search Patients
+                    </label>
+                    <div class="relative">
+                        <input type="text" 
+                               id="search" 
+                               name="search" 
+                               value="<?= htmlspecialchars($search ?? '') ?>" 
+                               placeholder="Enter patient name..." 
+                               class="search-input pr-10" />
+                        <?php if (!empty($search)): ?>
+                            <a href="deleted_patients.php" 
+                               class="clear-search-icon"
+                               title="Clear search">
+                                <i class="fas fa-times-circle"></i>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- Search Button -->
+                <div class="flex-shrink-0">
+                    <button type="submit" class="btn-search">
+                        <i class="fas fa-search"></i>
+                        <span>Search</span>
+                    </button>
+                </div>
+                
+                <!-- Clear Button - Only shows when search is active -->
+                <?php if (!empty($search)): ?>
+                    <div class="flex-shrink-0">
+                        <a href="deleted_patients.php" class="btn-clear">
+                            <i class="fas fa-times"></i>
+                            <span>Clear</span>
+                        </a>
+                    </div>
+                <?php endif; ?>
+                
+                <!-- Filter Dropdown Group - With toggle chevron -->
+                <div class="flex items-center gap-2 <?= !empty($search) ? 'ml-auto' : '' ?>">
+                    <div class="sort-select-wrapper" id="sortSelectWrapper">
+                        <select name="sort" class="sort-select" id="sortSelect">
+                            <option value="" <?= $sort === '' ? 'selected' : '' ?>>Sort: Date (Newest)</option>
+                            <option value="date_asc" <?= $sort === 'date_asc' ? 'selected' : '' ?>>Sort: Date (Oldest)</option>
+                            <option value="name_asc" <?= $sort === 'name_asc' ? 'selected' : '' ?>>Sort: Name (A-Z)</option>
+                            <option value="name_desc" <?= $sort === 'name_desc' ? 'selected' : '' ?>>Sort: Name (Z-A)</option>
+                        </select>
+                        <div class="sort-select-chevron">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-filter">
+                        <i class="fas fa-filter"></i>
+                        <span class="hidden sm:inline">Apply</span>
+                        <span class="sm:hidden">Filter</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Main Content Card -->
         <div class="main-container overflow-hidden mb-8">
             <div class="p-6 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="text-xl font-semibold text-secondary">Archived Patient Records</h2>
-                        <p class="text-sm text-gray-500 mt-1">Patient records that have been moved to archive. Only restoration is allowed.</p>
+                        <p class="text-sm text-gray-500 mt-1">Total archived records: <?= $totalRows ?? 0 ?></p>
                     </div>
-                    <a href="existing_info_patients.php" class="btn-primary">
-                        <i class="fas fa-arrow-left mr-2"></i>Back to Patients
-                    </a>
+                    <div class="flex gap-2">
+                        <span class="user-badge"><i class="fas fa-user-check mr-1"></i>Registered</span>
+                        <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">Regular</span>
+                    </div>
                 </div>
             </div>
             
@@ -559,7 +819,16 @@ try {
                         <i class="fas fa-archive text-primary text-3xl"></i>
                     </div>
                     <h3 class="text-lg font-medium text-gray-900">Archive is Empty</h3>
-                    <p class="mt-1 text-sm text-gray-500">No deleted patient records found in archive.</p>
+                    <p class="mt-1 text-sm text-gray-500">
+                        <?php if (!empty($search)): ?>
+                            No archived patients found matching "<?= htmlspecialchars($search) ?>".
+                            <a href="deleted_patients.php" class="text-primary hover:underline block mt-2">
+                                <i class="fas fa-undo mr-1"></i>Clear search
+                            </a>
+                        <?php else: ?>
+                            No deleted patient records found in archive.
+                        <?php endif; ?>
+                    </p>
                 </div>
             <?php else: ?>
                 <div class="overflow-x-auto">
@@ -589,9 +858,9 @@ try {
                                     <td><?= htmlspecialchars($patient['gender'] ?? 'N/A') ?></td>
                                     <td>
                                         <?php if (!empty($patient['user_id']) && $patient['is_registered_user']): ?>
-                                            <span class="user-badge">Registered User</span>
+                                            <span class="user-badge"><i class="fas fa-user-check mr-1"></i>Registered</span>
                                         <?php else: ?>
-                                            <span class="text-gray-500">Regular Patient</span>
+                                            <span class="text-gray-500"><i class="fas fa-user mr-1"></i>Regular</span>
                                         <?php endif; ?>
                                     </td>
                                     <td><?= htmlspecialchars($patient['contact'] ?? 'N/A') ?></td>
@@ -602,20 +871,52 @@ try {
                                         </div>
                                     </td>
                                     <td>
-                                        <div class="flex">
-                                            <a href="?restore_patient=<?= $patient['original_id'] ?>" 
-                                               class="btn-restore" 
-                                               onclick="return confirm('Are you sure you want to restore this patient record?')">
-                                                <i class="fas fa-undo mr-1"></i>Restore
-                                            </a>
-                                        </div>
+                                        <a href="?restore_patient=<?= $patient['original_id'] ?>&search=<?= urlencode($search ?? '') ?>&sort=<?= urlencode($sort ?? '') ?>&page=<?= $page ?>" 
+                                           class="btn-restore" 
+                                           onclick="return confirm('Are you sure you want to restore this patient record?\n\nThis will recover all personal information, medical history, and consultation notes for <?= htmlspecialchars(addslashes($patient['full_name'])) ?>.')">
+                                            <i class="fas fa-undo"></i>
+                                            <span>Restore</span>
+                                        </a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Pagination -->
+                <?php if ($totalPages > 1): ?>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="text-sm text-gray-600">
+                        Page <?= $page ?> of <?= $totalPages ?> (<?= $totalRows ?> records)
+                    </div>
+                    <div class="flex gap-2">
+                        <?php if ($page > 1): ?>
+                            <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search ?? '') ?>&sort=<?= urlencode($sort ?? '') ?>" 
+                               class="btn-primary px-4 py-2 text-sm">
+                                <i class="fas fa-chevron-left"></i>
+                                <span>Previous</span>
+                            </a>
+                        <?php endif; ?>
+                        
+                        <?php if ($page < $totalPages): ?>
+                            <a href="?page=<?= $page + 1 ?>&search=<?= urlencode($search ?? '') ?>&sort=<?= urlencode($sort ?? '') ?>" 
+                               class="btn-primary px-4 py-2 text-sm">
+                                <span>Next</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
             <?php endif; ?>
+        </div>
+        
+        <!-- Footer Information -->
+        <div class="text-center text-sm text-gray-500 mt-6">
+            <i class="fas fa-shield-alt text-primary mr-1"></i>
+            Archived patient records are retained for data recovery purposes. 
+            Restoring a patient will recover all associated consultation notes and medical information.
         </div>
     </div>
 
@@ -623,17 +924,79 @@ try {
         // Auto-hide messages after 3 seconds
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
-                var successMessage = document.getElementById('successMessage');
-                var errorMessage = document.querySelector('.alert-error');
+                var successMessages = document.querySelectorAll('#successMessage');
+                var errorMessages = document.querySelectorAll('.alert-error');
                 
-                if (successMessage) {
-                    successMessage.style.display = 'none';
-                }
+                successMessages.forEach(function(message) {
+                    message.style.transition = 'opacity 0.5s ease';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.style.display = 'none';
+                    }, 500);
+                });
                 
-                if (errorMessage) {
-                    errorMessage.style.display = 'none';
-                }
+                errorMessages.forEach(function(message) {
+                    message.style.transition = 'opacity 0.5s ease';
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.style.display = 'none';
+                    }, 500);
+                });
             }, 3000);
+        });
+        
+        // Rotating chevron icon for sort dropdown - FIXED toggle behavior
+        document.addEventListener('DOMContentLoaded', function() {
+            const sortSelect = document.getElementById('sortSelect');
+            const wrapper = document.getElementById('sortSelectWrapper');
+            
+            if (sortSelect && wrapper) {
+                let isOpen = false;
+                
+                // Toggle dropdown when select is clicked
+                sortSelect.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    
+                    if (isOpen) {
+                        // If open, close it - chevron points down
+                        wrapper.classList.remove('sort-select-open');
+                        this.blur(); // Remove focus
+                        isOpen = false;
+                    } else {
+                        // If closed, open it - chevron points up
+                        wrapper.classList.add('sort-select-open');
+                        isOpen = true;
+                    }
+                });
+                
+                // When an option is selected
+                sortSelect.addEventListener('change', function() {
+                    wrapper.classList.remove('sort-select-open');
+                    isOpen = false;
+                });
+                
+                // When select loses focus
+                sortSelect.addEventListener('blur', function() {
+                    wrapper.classList.remove('sort-select-open');
+                    isOpen = false;
+                });
+                
+                // Handle click outside to close
+                document.addEventListener('click', function(event) {
+                    if (!wrapper.contains(event.target) && isOpen) {
+                        wrapper.classList.remove('sort-select-open');
+                        isOpen = false;
+                    }
+                });
+                
+                // Handle escape key
+                sortSelect.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        wrapper.classList.remove('sort-select-open');
+                        isOpen = false;
+                    }
+                });
+            }
         });
         
         // Show notification function

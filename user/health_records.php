@@ -1,5 +1,24 @@
+
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+// --- Auto-logout for resident users after 10 minutes of inactivity ---
+if (isUser()) {
+    $now = time();
+    if (!isset($_SESSION['last_action'])) {
+        $_SESSION['last_action'] = $now;
+    } else {
+        $inactive = $now - $_SESSION['last_action'];
+        if ($inactive >= 600) { // 10 minutes = 600 seconds
+            // Destroy session and redirect to resident landing page
+            session_unset();
+            session_destroy();
+            header('Location: /community-health-tracker/index.php');
+            exit();
+        } else {
+            $_SESSION['last_action'] = $now;
+        }
+    }
+}
 require_once __DIR__ . '/../includes/header.php';
 
 redirectIfNotLoggedIn();
@@ -134,6 +153,9 @@ foreach ($allPatientInfo as $patient) {
         break;
     }
 }
+
+// Auto-switch tab based on ?tab parameter
+$activeTab = $_GET['tab'] ?? 'consultations';
 ?>
 
 <style>
@@ -966,14 +988,14 @@ foreach ($allPatientInfo as $patient) {
 
             <!-- Desktop Tab Navigation (visible on desktop only) -->
             <div class="tab-nav-container ">
-                <button class="tab-header active" data-tab="consultations">
+                <button class="tab-header <?= $activeTab === 'consultations' ? 'active' : '' ?>" data-tab="consultations">
                     <span>Doctor's Notes</span>
                     <span class="tab-badge tab-badge-count"><?php echo $totalConsultationNotes; ?></span>
                 </button>
-                <button class="tab-header" data-tab="patients">
+                <button class="tab-header <?= $activeTab === 'patients' ? 'active' : '' ?>" data-tab="patients">
                     <span>Personal Records</span>
                 </button>
-                <button class="tab-header" data-tab="medical">
+                <button class="tab-header <?= $activeTab === 'medical' ? 'active' : '' ?>" data-tab="medical">
                     <span>Health Metrics</span>
                 </button>
             </div>
@@ -981,7 +1003,7 @@ foreach ($allPatientInfo as $patient) {
             <!-- Tab Content -->
             <div class="tab-content-wrapper">
                 <!-- Consultations Tab -->
-                <div id="consultations" class="tab-content active">
+                <div id="consultations" class="tab-content <?= $activeTab === 'consultations' ? 'active' : 'hidden' ?>">
                     <?php if (empty($allPatientInfo)): ?>
                         <div class="text-center py-10 sm:py-20">
                             <div class="empty-state-icon">
@@ -1043,7 +1065,7 @@ foreach ($allPatientInfo as $patient) {
                 </div>
 
                 <!-- Patients Tab -->
-                <div id="patients" class="tab-content hidden">
+                <div id="patients" class="tab-content <?= $activeTab === 'patients' ? 'active' : 'hidden' ?>">
                     <?php if (empty($allPatientInfo)): ?>
                         <div class="text-center py-10 sm:py-20">
                             <div class="empty-state-icon">
@@ -1294,7 +1316,7 @@ foreach ($allPatientInfo as $patient) {
                 </div>
 
                 <!-- Medical Info Tab -->
-                <div id="medical" class="tab-content hidden">
+                <div id="medical" class="tab-content <?= $activeTab === 'medical' ? 'active' : 'hidden' ?>">
                     <?php if (empty($allPatientInfo)): ?>
                         <div class="text-center py-10 sm:py-20">
                             <div class="empty-state-icon">
@@ -1639,8 +1661,7 @@ foreach ($allPatientInfo as $patient) {
                 const nextDate = new Date(note.next_consultation_date).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric',
-                    weekday: 'long'
+                    day: 'numeric'
                 });
 
                 nextVisitHtml = `
@@ -1872,4 +1893,30 @@ foreach ($allPatientInfo as $patient) {
             }
         });
     </script>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    var phpActiveTab = '<?= $activeTab ?>';
+    setTimeout(function() {
+        if (typeof switchTab === 'function') {
+            switchTab(phpActiveTab);
+        } else {
+            document.querySelectorAll('.tab-header').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            var activeButton = document.querySelector('.tab-header[data-tab="' + phpActiveTab + '"]');
+            if (activeButton) activeButton.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+                content.classList.add('hidden');
+            });
+            var tabContent = document.getElementById(phpActiveTab);
+            if (tabContent) {
+                tabContent.classList.remove('hidden');
+                tabContent.classList.add('active');
+            }
+        }
+    }, 100);
+});
+</script>
 </div>

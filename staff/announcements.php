@@ -35,8 +35,8 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'cabanagarchiel@gmail.com'; // Replace with your email
-        $mail->Password   = 'qmdh ofnf bhfj wxsa'; // Replace with your email password
+        $mail->Username   = 'cabanagarchiel@gmail.com';
+        $mail->Password   = 'qmdh ofnf bhfj wxsa';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
         $mail->setFrom('cabanagarchiel@gmail.com', 'Barangay Luz Health Center');
@@ -49,76 +49,131 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
         $logoUrl = 'https://' . $host . '/community-health-tracker/asssets/images/Luz.jpg';
         $imageHtml = '';
         if ($imageUrl) {
-            // If the imageUrl is relative, make it absolute
             if (strpos($imageUrl, 'http') !== 0) {
                 $imageUrl = 'https://' . $host . $imageUrl;
             }
             $imageHtml = '<div style="text-align:center;margin:24px 0;"><img src="' . htmlspecialchars($imageUrl) . '" alt="Announcement Image" style="max-width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.10);"></div>';
         }
 
+        // Unique, branded email design for Brgy Luz Health Center
+        $subtitle = 'Official Announcement';
+        if ($type === 'basic') {
+            $subtitle = 'Specific Resident Announcement';
+        } elseif ($type === 'lab_result') {
+            $subtitle = 'Specific Resident Lab Result';
+        }
         $mail->Body = '
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Announcement</title>
+            <title>Barangay Luz Health Center Announcement</title>
+            <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,700,800&display=swap" rel="stylesheet">
             <style>
-                body { font-family: Arial, Helvetica, sans-serif; background: #f4f6f8; margin: 0; padding: 0; }
-                .container {
-                    width: 100%;
-                    max-width: none;
+                body {
+                    background: #fff;
+                    margin: 0;
+                    padding: 0;
+                    font-family: Poppins, Arial, Helvetica, sans-serif;
+                }
+                .main-container {
+                    max-width: 480px;
                     margin: 40px auto;
                     background: #fff;
-                    border-radius: 10px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+                    border-radius: 16px;
+                    box-shadow: 0 6px 32px rgba(52,152,219,0.18);
                     overflow: hidden;
-                    padding-left: 3rem;
-                    padding-right: 3rem;
-                    padding-top: 3rem;
-                    padding-bottom: 3rem;
                 }
-                @media (max-width: 1024px) {
-                    .container {
-                        max-width: 100%;
-                        padding-left: 1.5rem;
-                        padding-right: 1.5rem;
-                        padding-top: 1.5rem;
-                        padding-bottom: 1.5rem;
-                    }
+                .email-header {
+                    background: #3498db;
+                    color: #fff;
+                    text-align: center;
+                    padding: 32px 18px 16px 18px;
+                    box-shadow: 0 2px 12px rgba(52,152,219,0.12);
                 }
-                @media (max-width: 768px) {
-                    .container {
-                        max-width: 100%;
-                        padding-left: 0.5rem;
-                        padding-right: 0.5rem;
-                        padding-top: 0.5rem;
-                        padding-bottom: 0.5rem;
-                    }
+                .email-header .logo {
+                    width: 72px;
+                    height: 72px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    margin-bottom: 10px;
+                    box-shadow: 0 2px 8px rgba(52,152,219,0.18);
                 }
-                .header { background: #3498db; color: #fff; padding: 32px 24px 20px 24px; text-align: center; }
-                .header h1 { margin: 0; font-size: 2rem; font-weight: 700; letter-spacing: 1px; }
-                .logo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.10); background: #fff; border: 3px solid #fff; }
-                .content { padding: 32px 24px; color: #2c3e50; }
-                .content h2 { color: #3498db; margin-top: 0; }
-                .footer { background: #f8f9fa; color: #7b8a8b; font-size: 13px; text-align: center; padding: 18px 24px; border-top: 1px solid #e2e8f0; }
-                .btn { display: inline-block; background: #3498db; color: #fff; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; margin-top: 18px; }
+                .email-header h1 {
+                    margin: 0;
+                    font-size: 1.6rem;
+                    font-weight: 700;
+                    letter-spacing: 1px;
+                    font-family: Poppins, Arial, Helvetica, sans-serif;
+                }
+                .email-header .subtitle {
+                    font-size: 1rem;
+                    font-weight: 500;
+                    margin-top: 4px;
+                    color: #e0eaff;
+                }
+                .email-content {
+                    padding: 24px 18px 18px 18px;
+                    color: #222;
+                    font-size: 1rem;
+                }
+                .email-content h2 {
+                    color: #3498db;
+                    margin-top: 0;
+                    font-size: 1.15rem;
+                    font-weight: 600;
+                }
+                .email-content .greeting {
+                    font-weight: 500;
+                    margin-bottom: 10px;
+                }
+                .email-content .main-message {
+                    background: #f4f8ff;
+                    padding: 14px 16px;
+                    border-radius: 8px;
+                    margin: 14px 0 14px 0;
+                    font-size: 1rem;
+                    box-shadow: 0 2px 8px rgba(52,152,219,0.10);
+                }
+                .email-content .image-section {
+                    margin: 14px 0;
+                    text-align: center;
+                }
+                .email-content .image-section img {
+                    max-width: 90%;
+                    border-radius: 10px;
+                    box-shadow: 0 2px 8px rgba(52,152,219,0.18);
+                }
+                .email-footer {
+                    background: #fff;
+                    color: #3498db;
+                    font-size: 12px;
+                    text-align: center;
+                    padding: 16px 18px;
+                    box-shadow: 0 -2px 8px rgba(52,152,219,0.10);
+                }
+                @media (max-width: 600px) {
+                    .main-container { max-width: 98vw; }
+                    .email-content { padding: 12px 4vw 12px 4vw; }
+                }
             </style>
         </head>
         <body>
-            <div class="container w-full max-w-none px-4 py-6 mt-16">
-                <div class="header">
-                    <img src="' . $logoUrl . '" alt="Barangay Luz Logo" class="logo"><br>
+            <div class="main-container">
+                <div class="email-header">
+                    <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="logo">
                     <h1>Barangay Luz Health Center</h1>
+                    <div class="subtitle">' . $subtitle . '</div>
                 </div>
-                <div class="content">
+                <div class="email-content">
                     <h2>' . htmlspecialchars($title) . '</h2>
-                    <p>Dear ' . htmlspecialchars($fullName) . ',</p>
-                    ' . $imageHtml . '
-                    <p>' . nl2br(htmlspecialchars($message)) . '</p>
-                    <p style="margin-top:2em;">If you have questions, please contact us or visit the health center.</p>
+                    <div class="greeting">Dear ' . htmlspecialchars($fullName) . ',</div>
+                    <div class="main-message">' . nl2br(htmlspecialchars($message)) . '</div>
+                    ' . ($imageHtml ? '<div class="image-section">' . $imageHtml . '</div>' : '') . '
+                    <div style="margin-top:1.5em;color:#3498db;font-size:0.95em;">If you have questions, please contact us or visit the health center.</div>
                 </div>
-                <div class="footer">
+                <div class="email-footer">
                     This is an automated message. Please do not reply.<br>
                     &copy; ' . date('Y') . ' Barangay Luz Health Monitoring and Tracking System
                 </div>
@@ -191,6 +246,11 @@ global $pdo;
 $staffId = $_SESSION['user']['id'];
 $error = '';
 $success = '';
+// Show success message from session if redirected after POST
+if (isset($_SESSION['announcement_success'])) {
+    $success = $_SESSION['announcement_success'];
+    unset($_SESSION['announcement_success']);
+}
 
 // Handle form submission for new announcement
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['post_announcement'])) {
@@ -201,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['post_announcement']))
     $audience_type = isset($_POST['audience_type']) ? $_POST['audience_type'] : 'public';
     $target_users = isset($_POST['target_users']) ? (is_array($_POST['target_users']) ? array_filter($_POST['target_users']) : []) : [];
     $announcement_type = isset($_POST['announcement_type']) ? $_POST['announcement_type'] : 'basic';
-    
+
     if ($audience_type === 'specific' && empty($target_users)) {
         $error = 'Please select at least one user for specific announcement.';
     } elseif (!empty($title) && !empty($message)) {
@@ -212,28 +272,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['post_announcement']))
             if (!file_exists($upload_dir)) {
                 mkdir($upload_dir, 0777, true);
             }
-            
+
             $file_extension = pathinfo($_FILES['announcement_image']['name'], PATHINFO_EXTENSION);
             $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
-            
+
             if (in_array(strtolower($file_extension), $allowed_ext)) {
                 $file_name = uniqid() . '.' . $file_extension;
                 $file_path = $upload_dir . $file_name;
-                
+
                 if (move_uploaded_file($_FILES['announcement_image']['tmp_name'], $file_path)) {
                     $image_path = '/community-health-tracker/uploads/announcements/' . $file_name;
                 }
             }
         }
-        
+
         try {
             $stmt = $pdo->prepare("INSERT INTO sitio1_announcements 
                                   (staff_id, title, message, priority, expiry_date, status, audience_type, image_path, post_date, announcement_type) 
                                   VALUES (?, ?, ?, ?, ?, 'active', ?, ?, NOW(), ?)");
             $stmt->execute([$staffId, $title, $message, $priority, $expiry_date, $audience_type, $image_path, $announcement_type]);
-            
+
             $announcementId = $pdo->lastInsertId();
-            
+
             // Handle target users if specific audience
             if ($audience_type === 'specific' && !empty($target_users)) {
                 foreach ($target_users as $userId) {
@@ -250,12 +310,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['post_announcement']))
                 createTargetedAnnouncementNotification($announcementId, $title, $target_users);
                 $success = ($announcement_type === 'lab_result') ? 'Lab Result sent to ' . count($target_users) . ' user(s) successfully!' : 'Message sent to ' . count($target_users) . ' user(s) successfully!';
             } elseif ($audience_type === 'public') {
-                createAnnouncementNotification($announcementId, $title);
-                $success = 'Message broadcasted to all users successfully!';
+                    createAnnouncementNotification($announcementId, $title);
+                    // Send email to all approved users
+                    $stmtAll = $pdo->prepare("SELECT email, full_name FROM sitio1_users WHERE approved = TRUE AND email IS NOT NULL AND email != ''");
+                    $stmtAll->execute();
+                    $allUserInfos = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
+                    $sentCount = 0;
+                    foreach ($allUserInfos as $userInfo) {
+                        if (!empty($userInfo['email'])) {
+                            if (sendAnnouncementEmail($userInfo['email'], $userInfo['full_name'], $title, $message, $announcement_type, $image_path)) {
+                                $sentCount++;
+                            }
+                        }
+                    }
+                    $success = 'Message broadcasted to all users successfully! Email sent to ' . $sentCount . ' user(s).';
             } else {
                 // For landing_page announcements, no notifications needed
                 $success = 'Landing page announcement published successfully!';
             }
+
+            // Prevent duplicate POST on refresh: redirect to same page with success message
+            $_SESSION['announcement_success'] = $success;
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit();
         } catch (PDOException $e) {
             $error = 'Error sending message: ' . $e->getMessage();
         }
@@ -485,6 +562,9 @@ try {
         font-size: 0.875rem;
         transition: border-color 0.2s;
         font-family: 'Poppins', sans-serif;
+        background: rgba(255,255,255,0.7);
+        box-shadow: 0 2px 8px rgba(52,152,219,0.10);
+        backdrop-filter: blur(2px);
     }
 
     .form-control:focus {
@@ -992,24 +1072,32 @@ try {
         </script>
 
         <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Left Column - Form -->
-            <div class="lg:col-span-2">
+            <div class="lg:col-span-1 flex-1">
                 <div class="card mb-6">
                     <div class="card-header">
                         <h2 class="text-lg font-semibold text-secondary">Create New Announcement</h2>
                     </div>
                     <div class="card-body">
                         <form method="POST" action="" enctype="multipart/form-data">
-                            <!-- Loading Animation Overlay -->
+                            <!-- Redesigned Loading Animation Overlay -->
                             <div id="announcement-loading" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,41,59,0.7);z-index:2000;align-items:center;justify-content:center;" class="flex">
                                 <div class="flex flex-col items-center justify-center w-full h-full">
-                                    <div class="bg-white rounded-xl shadow-lg p-8 flex flex-col items-center">
-                                        <svg class="animate-spin h-16 w-16 text-blue-500 mb-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                                        </svg>
-                                        <span id="announcement-loading-message" class="text-xl font-semibold text-blue-700 text-center">Sending announcement and emails...</span>
+                                    <div class="bg-gradient-to-br from-blue-100 via-white to-blue-50 rounded-2xl shadow-2xl px-10 py-10 flex flex-col items-center border border-blue-200 animate-fade-in">
+                                        <div class="relative mb-7">
+                                            <svg class="animate-spin-smooth h-16 w-16 text-blue-400 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48">
+                                                <circle class="opacity-20" cx="24" cy="24" r="20" stroke="#3498db" stroke-width="6" />
+                                                <path class="opacity-90" fill="#3498db" d="M24 4a20 20 0 0 1 20 20h-6a14 14 0 0 0-14-14V4z">
+                                                    <animateTransform attributeName='transform' type='rotate' from='0 24 24' to='360 24 24' dur='1.2s' repeatCount='indefinite' />
+                                                </path>
+                                            </svg>
+                                            <svg class="absolute top-2 left-2 h-12 w-12 text-blue-200 animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48">
+                                                <circle cx="24" cy="24" r="18" stroke="#b6d0f7" stroke-width="4" />
+                                            </svg>
+                                        </div>
+                                        <span id="announcement-loading-message" class="text-lg font-medium text-blue-800 text-center tracking-wide" style="font-family: Poppins, Arial, Helvetica, sans-serif;">Sending announcement and emails...</span>
+                                        <span class="mt-3 text-base text-slate-500 text-center" style="font-family: Poppins, Arial, Helvetica, sans-serif; font-weight: 400;">Please wait while we process your announcement.<br>Do not close or refresh this page.</span>
                                     </div>
                                 </div>
                             </div>
@@ -1092,7 +1180,6 @@ try {
                                                            class="user-checkbox mr-2">
                                                     <span>
                                                         <?= htmlspecialchars($user['full_name']) ?>
-                                                        <span class="text-gray-400 ml-1">@<?= htmlspecialchars($user['username']) ?></span>
                                                     </span>
                                                 </label>
                                             <?php endforeach; ?>
@@ -1140,7 +1227,7 @@ try {
             </div>
 
             <!-- Right Column - Announcements List -->
-            <div class="lg:col-span-1">
+            <div class="lg:col-span-1 flex-1">
                 <div class="card">
                     <div class="card-header">
                         <h2 class="text-lg font-semibold text-secondary">Announcements</h2>
@@ -1577,6 +1664,15 @@ try {
                         </span>
                     </div>
                     
+                            <!-- Show specific user names if audience is specific -->
+                            ${announcement.audience_type === 'specific' && announcement.target_users && announcement.target_users.length > 0 ? `
+                                <div>
+                                    <p class="text-gray-500 mb-1">Specific Users:</p>
+                                    <ul class="pl-4 list-disc text-sm">
+                                        ${announcement.target_users.map(u => `<li>${escapeHtml(u.full_name)}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <p class="text-gray-500">Posted on:</p>

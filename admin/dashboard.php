@@ -1,17 +1,18 @@
 <?php
 
 require_once __DIR__ . '/../includes/auth.php';
-// --- Auto-logout for admin after 1 hour of inactivity ---
-if (isAdmin()) {
+// --- Auto-logout for resident users after 10 minutes of inactivity ---
+if (isUser()) {
     $now = time();
     if (!isset($_SESSION['last_action'])) {
         $_SESSION['last_action'] = $now;
     } else {
         $inactive = $now - $_SESSION['last_action'];
-        if ($inactive >= 3600) { // 1 hour = 3600 seconds
+        if ($inactive >= 600) { // 10 minutes = 600 seconds
+            // Destroy session and redirect to resident landing page
             session_unset();
             session_destroy();
-            header('Location: /community-health-tracker/auth/login.php');
+            header('Location: /community-health-tracker/index-admin-staff.php');
             exit();
         } else {
             $_SESSION['last_action'] = $now;
@@ -1357,13 +1358,72 @@ require_once __DIR__ . '/../includes/header.php';
         }
 
         /* Loading spinner */
-        .loading-spinner {
+        /* Unified loading overlay */
+        #loadingOverlay {
             display: none;
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1002;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30,41,59,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        #loadingOverlay .overlay-content {
+            background: linear-gradient(135deg, #e3f0fc 0%, #fafdff 100%);
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 32px rgba(52,152,219,0.13);
+            padding: 2.5rem 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1.5px solid #b6d0f7;
+            animation: fadeInOverlay 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes fadeInOverlay {
+            0% { opacity: 0; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .overlay-spinner {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .overlay-spinner svg {
+            display: block;
+        }
+        .overlay-spin {
+            animation: spinSmooth 1.2s linear infinite;
+        }
+        @keyframes spinSmooth {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .overlay-spinner .pulse {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            animation: pulse 1.5s infinite alternate;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .overlay-message {
+            font-size: 1.15rem;
+            color: #2563eb;
+            font-family: Poppins, Arial, Helvetica, sans-serif;
+            font-weight: 500;
+            text-align: center;
+        }
+        .overlay-desc {
+            margin-top: 0.75rem;
+            font-size: 1rem;
+            color: #64748b;
+            font-family: Poppins, Arial, Helvetica, sans-serif;
+            font-weight: 400;
+            text-align: center;
         }
 
         /* Form styling */
@@ -2851,9 +2911,23 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="loading-spinner">
-        <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+    <!-- Unified Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="overlay-content">
+            <div class="overlay-spinner">
+                <svg class="overlay-spin" width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="24" cy="24" r="20" stroke="#3498db" stroke-width="6" opacity="0.18" />
+                    <path fill="#3498db" d="M24 4a20 20 0 0 1 20 20h-6a14 14 0 0 0-14-14V4z">
+                        <animateTransform attributeName='transform' type='rotate' from='0 24 24' to='360 24 24' dur='1.2s' repeatCount='indefinite' />
+                    </path>
+                </svg>
+                <svg class="pulse" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="24" cy="24" r="18" stroke="#b6d0f7" stroke-width="4" />
+                </svg>
+            </div>
+            <div class="overlay-message" id="loadingOverlayMessage">Processing, please wait...</div>
+            <div class="overlay-desc">Do not close or refresh this page.</div>
+        </div>
     </div>
 
     <script>
@@ -3162,14 +3236,18 @@ require_once __DIR__ . '/../includes/header.php';
             currentPatientName = '';
         }
 
-        // Show loading spinner
-        function showLoading() {
-            document.getElementById('loadingSpinner').style.display = 'block';
+        // Show unified loading overlay
+        function showLoading(message = 'Processing, please wait...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const msg = document.getElementById('loadingOverlayMessage');
+            if (msg) msg.textContent = message;
+            if (overlay) overlay.style.display = 'flex';
         }
 
-        // Hide loading spinner
+        // Hide unified loading overlay
         function hideLoading() {
-            document.getElementById('loadingSpinner').style.display = 'none';
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = 'none';
         }
 
         // --- Records modal functions ---
