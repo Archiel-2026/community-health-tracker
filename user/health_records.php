@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 // --- Auto-logout for resident users after 10 minutes of inactivity ---
@@ -196,7 +195,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     }
 
     body {
-        background: #f3f4f6;
+        background: #f6f3f3;
         color: #1a202c;
     }
 
@@ -242,11 +241,11 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     }
 
     .text-label {
-        font-size: 0.8125rem;
-        font-weight: 600;
+        font-size: 1rem;
+        font-weight: 400;
         letter-spacing: 0.025em;
         /* text-transform: uppercase; */
-        color: #6b7280;
+        color: #969696;
         line-height: 1.4;
     }
 
@@ -361,11 +360,12 @@ $activeTab = $_GET['tab'] ?? 'consultations';
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        padding: 0.2rem 0.6rem;
+        padding: 0.4rem 0.5rem;
+        margin-bottom: 1em;
         border-radius: 4px;
-        background: rgba(16, 185, 129, 0.8);
-        color: #ffffff;
-        font-size: 0.75rem;
+        background: rgba(0, 184, 55, 0.3);
+        color: #00B837;
+        font-size: 1rem;
         font-weight: 400;
         letter-spacing: 0.2px;
     }
@@ -423,9 +423,9 @@ $activeTab = $_GET['tab'] ?? 'consultations';
         display: flex;
         flex-wrap: wrap;
         border-bottom: 1px solid #e1e1e1;
-        margin-left: 2em;
-        margin-right: 2em;
-        background: white;
+        margin-left: 2rem;
+        margin-right: 2rem;
+        /* background: white; */
         overflow: hidden;
         gap: 0.5rem;
     }
@@ -535,7 +535,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     /* Tab Content - Allow scrolling only for content */
     .tab-content-wrapper {
         padding: 1.9rem;
-        background: white;
+        /* background: white; */
         overflow-y: auto;
         max-height: calc(100vh - 100px);
     }
@@ -650,7 +650,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
 
     .custom-scrollbar::-webkit-scrollbar-thumb {
         background: #cbd5e1;
-        
+
     }
 
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -710,8 +710,8 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     /* Section Title */
     .section-title {
         font-size: 1.35rem;
-        font-weight: 700;
-        color: #2563eb;
+        font-weight: 400;
+        color: #000000;
         margin-bottom: 1.25rem;
         display: flex;
         align-items: center;
@@ -919,7 +919,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     }
 </style>
 
-<div class="bg-gray-100 h-full">
+<div>
     <div>
         <?php if (!empty($error)): ?>
             <div
@@ -987,8 +987,9 @@ $activeTab = $_GET['tab'] ?? 'consultations';
             </div>
 
             <!-- Desktop Tab Navigation (visible on desktop only) -->
-            <div class="tab-nav-container ">
-                <button class="tab-header <?= $activeTab === 'consultations' ? 'active' : '' ?>" data-tab="consultations">
+            <div class="tab-nav-container">
+                <button class="tab-header <?= $activeTab === 'consultations' ? 'active' : '' ?>"
+                    data-tab="consultations">
                     <span>Doctor's Notes</span>
                     <span class="tab-badge tab-badge-count"><?php echo $totalConsultationNotes; ?></span>
                 </button>
@@ -996,7 +997,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                     <span>Personal Records</span>
                 </button>
                 <button class="tab-header <?= $activeTab === 'medical' ? 'active' : '' ?>" data-tab="medical">
-                    <span>Health Metrics</span>
+                    <span>Health Records</span>
                 </button>
             </div>
 
@@ -1010,8 +1011,10 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                 <i class="fas fa-user-md icon-3xl"></i>
                             </div>
                             <h3 class="empty-state-title">No Doctor's Notes</h3>
-                            <p class="empty-state-text mb-8 max-w-sm mx-auto">Your account is not yet linked to any patient records. Please contact the health center to establish the connection.</p>
-                            <button class="btn-primary" onclick="alert('Please contact the health center to link your account.')">
+                            <p class="empty-state-text mb-8 max-w-sm mx-auto">Your account is not yet linked to any patient
+                                records. Please contact the health center to establish the connection.</p>
+                            <button class="btn-primary"
+                                onclick="alert('Please contact the health center to link your account.')">
                                 <i class="fas fa-phone icon-sm mr-2"></i>Contact Health Center
                             </button>
                         </div>
@@ -1021,7 +1024,8 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                 <i class="fas fa-file-medical-alt icon-3xl"></i>
                             </div>
                             <h3 class="empty-state-title">No Consultations Yet</h3>
-                            <p class="empty-state-text">Visit the health center for your first consultation and medical evaluation.</p>
+                            <p class="empty-state-text">Visit the health center for your first consultation and medical
+                                evaluation.</p>
                         </div>
                     <?php else: ?>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1036,27 +1040,80 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                     }
                                 }
                                 ?>
-                                <div style="border-radius:8px;background:#fff;padding:24px 32px;display:flex;flex-direction:column;justify-content:space-between;min-height:180px;border:0.5px solid #e5e7eb;width:100%;box-shadow:none;margin:0 auto;">
-                                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;width:100%;">
-                                        <div style="display:flex;align-items:center;gap:0.75rem;">
-                                            <span style="display:inline-flex;align-items:center;padding:8px 16px;background:#fdf6e3;color:#e6b800;border-radius:8px;font-size:1.15rem;font-weight:500;letter-spacing:0.5px;">Consultation</span>
-                                            <span style="margin-left:8px;display:flex;align-items:center;justify-content:center;background:#fffbe6;color:#e6b800;border-radius:50%;width:30px;height:30px;font-size:1rem;font-weight:600;"> <?php echo $consultationIndex; ?> </span>
-                                        </div>
-                                        <?php if (!empty($note['next_consultation_date'])): ?>
-                                            <div style="display:flex;flex-direction:column;align-items:flex-end;">
-                                                <span style="color:#888;font-size:0.95rem;margin-bottom:2px;">Next Consultation</span>
-                                                <span style="display:inline-block;padding:6px 14px;border-radius:7px;background:#baf5e0;color:#1db489;font-weight:500;font-size:1rem;"> <?php echo date('F d, Y', strtotime($note['next_consultation_date'])); ?> </span>
+                                <div
+                                    class="rounded-xl bg-white px-4 py-6 flex flex-col justify-between min-h-[180px] border border-gray-200 w-full">
+                                    <div class="flex gap-4 justify-between">
+                                        <!-- LEFT -->
+                                        <style>
+                                            .bg-color {
+                                                background: rgba(242, 196, 80, 0.3);
+                                            }
+
+                                            .text-color {
+                                                color: #F2C450;
+                                            }
+
+                                            .bg-emerald {
+                                                background-color: rgb(177, 243, 212);
+                                            }
+                                        </style>
+                                        <div class="items-center gap-5">
+                                            <div class="bg-color flex justify-between gap-6 rounded-md w-full px-2 py-2 mb-2">
+                                                <span class="items-center text-color text-base font-medium">
+                                                    Consultation
+                                                </span>
+                                                <p
+                                                    class="bg-white rounded-full w-7 h-7 flex text-md items-center justify-center">
+                                                    <?php echo $consultationIndex; ?>
+                                                </p>
                                             </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div style="margin:14px 0 8px 0;width:100%;">
-                                        <div style="color:#888;font-size:1rem;margin-bottom:2px;width:100%;text-align:left;">Consultation on :</div>
-                                        <div style="font-size:1.25rem;font-weight:600;margin-bottom:8px;letter-spacing:0.5px;line-height:1.2;width:100%;text-align:left;"> <?php echo date('F d, Y', strtotime($note['consultation_date'] ?? 'now')); ?> </div>
-                                        <div style="color:#888;font-size:1rem;margin-bottom:2px;width:100%;text-align:left;">Doctor Assigned :</div>
-                                        <div style="font-size:1.1rem;font-weight:500;margin-bottom:0;letter-spacing:0.5px;line-height:1.2;width:100%;text-align:left;"> <?php echo htmlspecialchars($note['doctor_name']); ?> </div>
-                                    </div>
-                                    <div style="display:flex;justify-content:flex-end;margin-top:auto;">
-                                        <button onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)" style="border-radius:7px;padding:8px 24px;background:#3490ec;color:#fff;font-weight:500;font-size:1rem;transition:background 0.2s;outline:none;border:none;cursor:pointer;">View</button>
+
+                                            <div class="flex-col">
+                                                <div class="text-gray-500 text-base mb-1 text-left">
+                                                    Consultation on :
+                                                </div>
+                                                <div class="text-lg font-semibold mb-3 tracking-wide leading-tight text-left">
+                                                    <?php echo date('F d, Y', strtotime($note['consultation_date'] ?? 'now')); ?>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="text-gray-500 text-base mb-1 text-left">
+                                                    Doctor Assigned :
+                                                </div>
+
+                                                <div class="text-lg font-medium tracking-wide leading-tight text-left">
+                                                    <?php echo htmlspecialchars($note['doctor_name']); ?>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- RIGHT -->
+                                        <div class="flex items-end flex-col">
+                                            <div>
+                                                <!-- Next Consultation -->
+                                                <?php if (!empty($note['next_consultation_date'])): ?>
+                                                    <div class="flex flex-col">
+                                                        <span class="text-gray-500text-sm mb-1">
+                                                            Next Consultation
+                                                        </span>
+
+                                                        <span
+                                                            class="block w-full px-2 py-1.5 rounded-md bg-emerald text-emerald-600 font-medium text-base">
+                                                            <?php echo date('F d, Y', strtotime($note['next_consultation_date'])); ?>
+                                                        </span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Button -->
+                                            <div class="flex justify-end mt-auto">
+                                                <button
+                                                    onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)"
+                                                    class="rounded-md px-6 py-2 bg-blue-500 text-white font-medium text-md transition hover:bg-blue-600 focus:outline-none">
+                                                    View Doctor's Note
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <?php $consultationIndex++; endforeach; ?>
@@ -1088,36 +1145,42 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                 ?>
                                 <div class="record-details-blur <?php echo $patientHasUpdate ?: ''; ?>">
                                     <!-- Identity Information Section -->
-                                    <div ">
-                                        <h4 class="section-title">
-                                            <i class="fas fa-id-card text-blue-500 icon-lg"></i>Identity Information
+                                    <div>
+                                        <div>
                                             <?php if ($patientHasUpdate): ?>
                                                 <span class="update-indicator update-indicator-mobile">
-                                                    <i class="fas fa-rotate"></i>
-                                                    Updated <?php echo date('M d, Y', strtotime($patientUpdatedAt)); ?>
+                                                    Updated
+                                                    <?php echo date('M d, Y', strtotime($patientUpdatedAt)); ?>
                                                 </span>
                                             <?php endif; ?>
+                                        </div>
+                                        <h4 class="section-title">
+                                            <svg class="w-8 h-8" viewBox="0 0 27 27" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M9.28125 6.75C9.28125 6.52622 9.37014 6.31161 9.52838 6.15338C9.68661 5.99515 9.90122 5.90625 10.125 5.90625H22.7812C23.005 5.90625 23.2196 5.99515 23.3779 6.15338C23.5361 6.31161 23.625 6.52622 23.625 6.75C23.625 6.97378 23.5361 7.18839 23.3779 7.34662C23.2196 7.50486 23.005 7.59375 22.7812 7.59375H10.125C9.90122 7.59375 9.68661 7.50486 9.52838 7.34662C9.37014 7.18839 9.28125 6.97378 9.28125 6.75ZM22.7812 12.6562H10.125C9.90122 12.6562 9.68661 12.7451 9.52838 12.9034C9.37014 13.0616 9.28125 13.2762 9.28125 13.5C9.28125 13.7238 9.37014 13.9384 9.52838 14.0966C9.68661 14.2549 9.90122 14.3438 10.125 14.3438H22.7812C23.005 14.3438 23.2196 14.2549 23.3779 14.0966C23.5361 13.9384 23.625 13.7238 23.625 13.5C23.625 13.2762 23.5361 13.0616 23.3779 12.9034C23.2196 12.7451 23.005 12.6562 22.7812 12.6562ZM22.7812 19.4062H10.125C9.90122 19.4062 9.68661 19.4951 9.52838 19.6534C9.37014 19.8116 9.28125 20.0262 9.28125 20.25C9.28125 20.4738 9.37014 20.6884 9.52838 20.8466C9.68661 21.0049 9.90122 21.0938 10.125 21.0938H22.7812C23.005 21.0938 23.2196 21.0049 23.3779 20.8466C23.5361 20.6884 23.625 20.4738 23.625 20.25C23.625 20.0262 23.5361 19.8116 23.3779 19.6534C23.2196 19.4951 23.005 19.4062 22.7812 19.4062ZM5.90625 5.90625H4.21875C3.99497 5.90625 3.78036 5.99515 3.62213 6.15338C3.4639 6.31161 3.375 6.52622 3.375 6.75C3.375 6.97378 3.4639 7.18839 3.62213 7.34662C3.78036 7.50486 3.99497 7.59375 4.21875 7.59375H5.90625C6.13003 7.59375 6.34464 7.50486 6.50287 7.34662C6.6611 7.18839 6.75 6.97378 6.75 6.75C6.75 6.52622 6.6611 6.31161 6.50287 6.15338C6.34464 5.99515 6.13003 5.90625 5.90625 5.90625ZM5.90625 12.6562H4.21875C3.99497 12.6562 3.78036 12.7451 3.62213 12.9034C3.4639 13.0616 3.375 13.2762 3.375 13.5C3.375 13.7238 3.4639 13.9384 3.62213 14.0966C3.78036 14.2549 3.99497 14.3438 4.21875 14.3438H5.90625C6.13003 14.3438 6.34464 14.2549 6.50287 14.0966C6.6611 13.9384 6.75 13.7238 6.75 13.5C6.75 13.2762 6.6611 13.0616 6.50287 12.9034C6.34464 12.7451 6.13003 12.6562 5.90625 12.6562ZM5.90625 19.4062H4.21875C3.99497 19.4062 3.78036 19.4951 3.62213 19.6534C3.4639 19.8116 3.375 20.0262 3.375 20.25C3.375 20.4738 3.4639 20.6884 3.62213 20.8466C3.78036 21.0049 3.99497 21.0938 4.21875 21.0938H5.90625C6.13003 21.0938 6.34464 21.0049 6.50287 20.8466C6.6611 20.6884 6.75 20.4738 6.75 20.25C6.75 20.0262 6.6611 19.8116 6.50287 19.6534C6.34464 19.4951 6.13003 19.4062 5.90625 19.4062Z"
+                                                    fill="#3C96E1" />
+                                            </svg>
+                                            Identity Information
                                         </h4>
 
                                         <!--INFORMATION DATA  -->
-                                        <div class="flex flex-col md:flex-row gap-8 w-full">
-                                            <div class="flex-1 bg-white p-3 rounded-md min-h-[120px] w-full">
+                                        <div class="flex flex-col md:flex-row gap-8 w-full items-stretch">
+                                            <div class="flex-1 bg-white border-2 shadow-md rounded-md p-6 min-h-[120px] w-full">
                                                 <!-- Full Name -->
                                                 <div>
                                                     <p class="text-label text-gray-50 mb-2">Full Name</p>
-                                                    <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                    <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                         <?php echo htmlspecialchars($patient['full_name']); ?>
                                                     </p>
                                                 </div>
 
-                                                <div class="grid grid-cols-2 md:grid-cols-2 gap-6 py-4 record-details-columns">
+                                                <div class="grid grid-cols-2 md:grid-cols-2 gap-6 py-6 record-details-columns">
                                                     <!-- Date of Birth -->
-
-
                                                     <?php if (!empty($patient['date_of_birth'])): ?>
                                                         <div>
                                                             <p class="text-label mb-2">Date of Birth</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                                 <?php echo date('M d, Y', strtotime($patient['date_of_birth'])); ?>
                                                             </p>
                                                         </div>
@@ -1127,14 +1190,14 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <?php if (!empty($patient['occupation'])): ?>
                                                         <div>
                                                             <p class="text-label mb-2">Occupation</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                                 <?php echo htmlspecialchars($patient['occupation']); ?>
                                                             </p>
                                                         </div>
                                                     <?php else: ?>
                                                         <div>
                                                             <p class="text-label mb-2">Occupation</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-500 font-500">N/A
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">N/A
                                                             </p>
                                                         </div>
                                                     <?php endif; ?>
@@ -1143,14 +1206,14 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <?php if (!empty($patient['civil_status'])): ?>
                                                         <div>
                                                             <p class="text-label mb-2">Civil Status</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                                 <?php echo htmlspecialchars($patient['civil_status']); ?>
                                                             </p>
                                                         </div>
                                                     <?php else: ?>
                                                         <div>
                                                             <p class="text-label mb-2">Civil Status</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-500 font-500">N/A
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">N/A
                                                             </p>
                                                         </div>
                                                     <?php endif; ?>
@@ -1159,14 +1222,14 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <?php if (!empty($patient['family_no'])): ?>
                                                         <div>
                                                             <p class="text-label mb-2">Family No.</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                                 <?php echo htmlspecialchars($patient['family_no']); ?>
                                                             </p>
                                                         </div>
                                                     <?php else: ?>
                                                         <div>
                                                             <p class="text-label mb-2">Family No.</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-500 font-500">N/A
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">N/A
                                                             </p>
                                                         </div>
                                                     <?php endif; ?>
@@ -1175,14 +1238,14 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <?php if (!empty($patient['phic_no'])): ?>
                                                         <div>
                                                             <p class="text-label mb-2">PHIC No.</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                                 <?php echo htmlspecialchars($patient['phic_no']); ?>
                                                             </p>
                                                         </div>
                                                     <?php else: ?>
                                                         <div>
                                                             <p class="text-label mb-2">PHIC No.</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-500 font-500">N/A
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">N/A
                                                             </p>
                                                         </div>
                                                     <?php endif; ?>
@@ -1190,7 +1253,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <!-- 4P's Member -->
                                                     <div>
                                                         <p class="text-label mb-2">4P's Member</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                        <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                             <?php echo (!empty($patient['fourps_member']) && $patient['fourps_member'] == 'Yes') ? 'Yes' : 'No'; ?>
                                                         </p>
                                                     </div>
@@ -1201,25 +1264,25 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <?php if (!empty($patient['bhw_assigned'])): ?>
                                                         <div>
                                                             <p class="text-label mb-2">BHW Assigned</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                                 <?php echo htmlspecialchars($patient['bhw_assigned']); ?>
                                                             </p>
                                                         </div>
                                                     <?php else: ?>
                                                         <div>
                                                             <p class="text-label mb-2">BHW Assigned</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-500 font-500">N/A
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">N/A
                                                             </p>
                                                         </div>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
-                                            <div class="flex-1 bg-white p-3 rounded-md w-full">
-                                                <div class="grid grid-cols-2 md:grid-cols-2 gap-6 py-4 record-details-columns">
+                                            <div class="flex-1 bg-white p-6 border-2 shadow-md rounded-md w-full">
+                                                <div class="grid grid-cols-2 md:grid-cols-2 gap-6 record-details-columns">
                                                     <!-- Last Check-up -->
                                                     <div>
                                                         <p class="text-label mb-2">Last Check-up</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                        <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                             <?php echo (!empty($patient['last_checkup'])) ? date('M d, Y', strtotime($patient['last_checkup'])) : 'None'; ?>
                                                         </p>
                                                     </div>
@@ -1228,14 +1291,15 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <?php if (!empty($patient['consultation_type'])): ?>
                                                         <div>
                                                             <p class="text-label mb-2">Consultation Type</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                                 <?php echo htmlspecialchars($patient['consultation_type']); ?>
                                                             </p>
                                                         </div>
                                                     <?php else: ?>
                                                         <div>
                                                             <p class="text-label mb-2">Consultation Type</p>
-                                                            <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-500 font-500">Onsite
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
+                                                                Onsite
                                                             </p>
                                                         </div>
                                                     <?php endif; ?>
@@ -1243,9 +1307,9 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <!-- Record Status -->
                                                     <div>
                                                         <p class="text-label mb-2">Record Status</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg">
+                                                        <p class="px-4 py-4 bg-gray-100 rounded">
                                                             <span
-                                                                class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-500">
+                                                                class="inline-flex items-center bg-green-100 text-green-700 rounded-full text-base font-medium">
                                                                 <i class="fas fa-check-circle icon-xs mr-1.5"></i>Active
                                                             </span>
                                                         </p>
@@ -1254,7 +1318,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <!-- Link Since -->
                                                     <div>
                                                         <p class="text-label mb-2">Link Since</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-700 font-500">
+                                                        <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
                                                             <?php echo date('M d, Y', strtotime($patient['created_at'])); ?>
                                                         </p>
                                                     </div>
@@ -1365,11 +1429,11 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                         $medicalHasUpdate = true;
                                     }
                                     ?>
-                                    <div class="<?php echo $medicalHasUpdate ? 'updated-record' : ''; ?>">
-                                        <div class="flex items-center justify-between mb-4 sm:mb-6">
+                                    <div class="<?php echo $medicalHasUpdate ?: ''; ?>">
+                                        <div class="flex items-center justify-between ">
                                             <?php if ($medicalHasUpdate): ?>
                                                 <span class="update-indicator">
-                                                    <i class="fas fa-rotate"></i>
+                                                    <!-- <i class="fas fa-rotate"></i> -->
                                                     Updated <?php echo date('M d, Y', strtotime($medicalUpdatedAt)); ?>
                                                 </span>
                                             <?php endif; ?>
@@ -1378,37 +1442,41 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                         <!-- Two Column Layout: Vital Statistics and Medical Details -->
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
                                             <!-- Vital Statistics Section -->
-                                            <div class="flex-1 bg-white p-3 rounded-md">
-                                                <h4
-                                                    class="text-base sm:text-lg font-600 text-blue-500 mb-4 sm:mb-6 flex items-center gap-2">
-                                                    <i class="fas fa-heartbeat text-blue-500 text-lg sm:text-xl"></i>Vital
-                                                    Statistics
+                                            <div class="flex-1 bg-white px-3 py-4 border-2 shadow-md rounded-lg">
+                                                <h4 class="text-xl font-medium mb-12 sm:mb-14 flex items-center text-center gap-2">
+                                                    <svg class="w-8 h-8" viewBox="0 0 27 27" fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path
+                                                            d="M9.28125 6.75C9.28125 6.52622 9.37014 6.31161 9.52838 6.15338C9.68661 5.99515 9.90122 5.90625 10.125 5.90625H22.7812C23.005 5.90625 23.2196 5.99515 23.3779 6.15338C23.5361 6.31161 23.625 6.52622 23.625 6.75C23.625 6.97378 23.5361 7.18839 23.3779 7.34662C23.2196 7.50486 23.005 7.59375 22.7812 7.59375H10.125C9.90122 7.59375 9.68661 7.50486 9.52838 7.34662C9.37014 7.18839 9.28125 6.97378 9.28125 6.75ZM22.7812 12.6562H10.125C9.90122 12.6562 9.68661 12.7451 9.52838 12.9034C9.37014 13.0616 9.28125 13.2762 9.28125 13.5C9.28125 13.7238 9.37014 13.9384 9.52838 14.0966C9.68661 14.2549 9.90122 14.3438 10.125 14.3438H22.7812C23.005 14.3438 23.2196 14.2549 23.3779 14.0966C23.5361 13.9384 23.625 13.7238 23.625 13.5C23.625 13.2762 23.5361 13.0616 23.3779 12.9034C23.2196 12.7451 23.005 12.6562 22.7812 12.6562ZM22.7812 19.4062H10.125C9.90122 19.4062 9.68661 19.4951 9.52838 19.6534C9.37014 19.8116 9.28125 20.0262 9.28125 20.25C9.28125 20.4738 9.37014 20.6884 9.52838 20.8466C9.68661 21.0049 9.90122 21.0938 10.125 21.0938H22.7812C23.005 21.0938 23.2196 21.0049 23.3779 20.8466C23.5361 20.6884 23.625 20.4738 23.625 20.25C23.625 20.0262 23.5361 19.8116 23.3779 19.6534C23.2196 19.4951 23.005 19.4062 22.7812 19.4062ZM5.90625 5.90625H4.21875C3.99497 5.90625 3.78036 5.99515 3.62213 6.15338C3.4639 6.31161 3.375 6.52622 3.375 6.75C3.375 6.97378 3.4639 7.18839 3.62213 7.34662C3.78036 7.50486 3.99497 7.59375 4.21875 7.59375H5.90625C6.13003 7.59375 6.34464 7.50486 6.50287 7.34662C6.6611 7.18839 6.75 6.97378 6.75 6.75C6.75 6.52622 6.6611 6.31161 6.50287 6.15338C6.34464 5.99515 6.13003 5.90625 5.90625 5.90625ZM5.90625 12.6562H4.21875C3.99497 12.6562 3.78036 12.7451 3.62213 12.9034C3.4639 13.0616 3.375 13.2762 3.375 13.5C3.375 13.7238 3.4639 13.9384 3.62213 14.0966C3.78036 14.2549 3.99497 14.3438 4.21875 14.3438H5.90625C6.13003 14.3438 6.34464 14.2549 6.50287 14.0966C6.6611 13.9384 6.75 13.7238 6.75 13.5C6.75 13.2762 6.6611 13.0616 6.50287 12.9034C6.34464 12.7451 6.13003 12.6562 5.90625 12.6562ZM5.90625 19.4062H4.21875C3.99497 19.4062 3.78036 19.4951 3.62213 19.6534C3.4639 19.8116 3.375 20.0262 3.375 20.25C3.375 20.4738 3.4639 20.6884 3.62213 20.8466C3.78036 21.0049 3.99497 21.0938 4.21875 21.0938H5.90625C6.13003 21.0938 6.34464 21.0049 6.50287 20.8466C6.6611 20.6884 6.75 20.4738 6.75 20.25C6.75 20.0262 6.6611 19.8116 6.50287 19.6534C6.34464 19.4951 6.13003 19.4062 5.90625 19.4062Z"
+                                                            fill="#2e8ad6" />
+                                                    </svg>
+                                                    Vital Statistics
                                                 </h4>
                                                 <div class="grid grid-cols-2 gap-2 sm:gap-4">
                                                     <!-- Blood Type & Height Row -->
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Blood Type</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Blood Type</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php echo !empty($patient['blood_type']) ? htmlspecialchars($patient['blood_type']) : 'N/A'; ?>
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Height</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Height</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php echo !empty($patient['height']) ? htmlspecialchars($patient['height']) . ' cm' : 'N/A'; ?>
                                                         </p>
                                                     </div>
 
                                                     <!-- Weight & BMI Row -->
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Weight</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Weight</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php echo !empty($patient['weight']) ? htmlspecialchars($patient['weight']) . ' kg' : 'N/A'; ?>
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">BMI</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">BMI</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php
                                                             $height = !empty($patient['height']) ? $patient['height'] / 100 : 0;
                                                             $weight = !empty($patient['weight']) ? $patient['weight'] : 0;
@@ -1434,14 +1502,14 @@ $activeTab = $_GET['tab'] ?? 'consultations';
 
                                                     <!-- Temperature & Blood Pressure Row -->
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Temperature</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Temperature</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php echo !empty($patient['temperature']) ? htmlspecialchars($patient['temperature']) . ' °C' : 'N/A'; ?>
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Blood Pressure</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-emerald-500 font-500">
+                                                        <p class="text-label mb-2">Blood Pressure</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-emerald-500 font-500">
                                                             <?php echo !empty($patient['blood_pressure']) ? htmlspecialchars($patient['blood_pressure']) : 'N/A'; ?>
                                                         </p>
                                                     </div>
@@ -1449,49 +1517,55 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                             </div>
 
                                             <!-- Medical Details Section -->
-                                            <div class="flex-1 bg-white p-3 rounded-md">
-                                                <h4 class="text-lg font-600 text-blue-500 mb-6 flex items-center gap-2">
-                                                    <i class="fas fa-capsules text-blue-500 icon-lg"></i>Medical Details
+                                            <div class="flex-1 bg-white px-3 py-4 border-2 shadow-md rounded-lg">
+                                                <h4 class="text-xl font-medium mb-12 sm:mb-14 flex items-center text-center gap-2">
+                                                    <svg class="w-8 h-8" viewBox="0 0 27 27" fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path
+                                                            d="M9.28125 6.75C9.28125 6.52622 9.37014 6.31161 9.52838 6.15338C9.68661 5.99515 9.90122 5.90625 10.125 5.90625H22.7812C23.005 5.90625 23.2196 5.99515 23.3779 6.15338C23.5361 6.31161 23.625 6.52622 23.625 6.75C23.625 6.97378 23.5361 7.18839 23.3779 7.34662C23.2196 7.50486 23.005 7.59375 22.7812 7.59375H10.125C9.90122 7.59375 9.68661 7.50486 9.52838 7.34662C9.37014 7.18839 9.28125 6.97378 9.28125 6.75ZM22.7812 12.6562H10.125C9.90122 12.6562 9.68661 12.7451 9.52838 12.9034C9.37014 13.0616 9.28125 13.2762 9.28125 13.5C9.28125 13.7238 9.37014 13.9384 9.52838 14.0966C9.68661 14.2549 9.90122 14.3438 10.125 14.3438H22.7812C23.005 14.3438 23.2196 14.2549 23.3779 14.0966C23.5361 13.9384 23.625 13.7238 23.625 13.5C23.625 13.2762 23.5361 13.0616 23.3779 12.9034C23.2196 12.7451 23.005 12.6562 22.7812 12.6562ZM22.7812 19.4062H10.125C9.90122 19.4062 9.68661 19.4951 9.52838 19.6534C9.37014 19.8116 9.28125 20.0262 9.28125 20.25C9.28125 20.4738 9.37014 20.6884 9.52838 20.8466C9.68661 21.0049 9.90122 21.0938 10.125 21.0938H22.7812C23.005 21.0938 23.2196 21.0049 23.3779 20.8466C23.5361 20.6884 23.625 20.4738 23.625 20.25C23.625 20.0262 23.5361 19.8116 23.3779 19.6534C23.2196 19.4951 23.005 19.4062 22.7812 19.4062ZM5.90625 5.90625H4.21875C3.99497 5.90625 3.78036 5.99515 3.62213 6.15338C3.4639 6.31161 3.375 6.52622 3.375 6.75C3.375 6.97378 3.4639 7.18839 3.62213 7.34662C3.78036 7.50486 3.99497 7.59375 4.21875 7.59375H5.90625C6.13003 7.59375 6.34464 7.50486 6.50287 7.34662C6.6611 7.18839 6.75 6.97378 6.75 6.75C6.75 6.52622 6.6611 6.31161 6.50287 6.15338C6.34464 5.99515 6.13003 5.90625 5.90625 5.90625ZM5.90625 12.6562H4.21875C3.99497 12.6562 3.78036 12.7451 3.62213 12.9034C3.4639 13.0616 3.375 13.2762 3.375 13.5C3.375 13.7238 3.4639 13.9384 3.62213 14.0966C3.78036 14.2549 3.99497 14.3438 4.21875 14.3438H5.90625C6.13003 14.3438 6.34464 14.2549 6.50287 14.0966C6.6611 13.9384 6.75 13.7238 6.75 13.5C6.75 13.2762 6.6611 13.0616 6.50287 12.9034C6.34464 12.7451 6.13003 12.6562 5.90625 12.6562ZM5.90625 19.4062H4.21875C3.99497 19.4062 3.78036 19.4951 3.62213 19.6534C3.4639 19.8116 3.375 20.0262 3.375 20.25C3.375 20.4738 3.4639 20.6884 3.62213 20.8466C3.78036 21.0049 3.99497 21.0938 4.21875 21.0938H5.90625C6.13003 21.0938 6.34464 21.0049 6.50287 20.8466C6.6611 20.6884 6.75 20.4738 6.75 20.25C6.75 20.0262 6.6611 19.8116 6.50287 19.6534C6.34464 19.4951 6.13003 19.4062 5.90625 19.4062Z"
+                                                            fill="#2e8ad6" />
+                                                    </svg>
+                                                    Medical Details
                                                 </h4>
                                                 <div class="grid sm:grid-cols-2 gap-4">
                                                     <!-- Allergies & Current Medications Row -->
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Allergies</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Allergies</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php echo !empty($patient['allergies']) ? htmlspecialchars($patient['allergies']) : 'None'; ?>
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Current Medications</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Current Medications</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php echo !empty($patient['current_medications']) ? htmlspecialchars($patient['current_medications']) : 'None'; ?>
                                                         </p>
                                                     </div>
 
                                                     <!-- Chronic Conditions & Immunization Row -->
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Chronic Conditions</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Chronic Conditions</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php echo !empty($patient['chronic_conditions']) ? htmlspecialchars($patient['chronic_conditions']) : 'None'; ?>
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Immunization Record</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Immunization Record</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php echo !empty($patient['immunization_record']) ? htmlspecialchars($patient['immunization_record']) : 'None'; ?>
                                                         </p>
                                                     </div>
 
                                                     <!-- Medical History & Family Medical History Row -->
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Medical History</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Medical History</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php echo !empty($patient['medical_history']) ? htmlspecialchars($patient['medical_history']) : 'None'; ?>
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p class="text-sm text-gray-600 mb-2">Family Medical History</p>
-                                                        <p class="px-4 py-3 bg-gray-100 rounded-lg text-gray-900 font-500">
+                                                        <p class="text-label mb-2">Family Medical History</p>
+                                                        <p class="px-4 py-4 bg-gray-100 rounded-lg text-gray-900 font-500">
                                                             <?php
                                                             if (isset($patient['family_history'])) {
                                                                 $fmh = trim($patient['family_history']);
@@ -1895,28 +1969,28 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     </script>
 
     <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var phpActiveTab = '<?= $activeTab ?>';
-    setTimeout(function() {
-        if (typeof switchTab === 'function') {
-            switchTab(phpActiveTab);
-        } else {
-            document.querySelectorAll('.tab-header').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            var activeButton = document.querySelector('.tab-header[data-tab="' + phpActiveTab + '"]');
-            if (activeButton) activeButton.classList.add('active');
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-                content.classList.add('hidden');
-            });
-            var tabContent = document.getElementById(phpActiveTab);
-            if (tabContent) {
-                tabContent.classList.remove('hidden');
-                tabContent.classList.add('active');
-            }
-        }
-    }, 100);
-});
-</script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var phpActiveTab = '<?= $activeTab ?>';
+            setTimeout(function () {
+                if (typeof switchTab === 'function') {
+                    switchTab(phpActiveTab);
+                } else {
+                    document.querySelectorAll('.tab-header').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    var activeButton = document.querySelector('.tab-header[data-tab="' + phpActiveTab + '"]');
+                    if (activeButton) activeButton.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                        content.classList.add('hidden');
+                    });
+                    var tabContent = document.getElementById(phpActiveTab);
+                    if (tabContent) {
+                        tabContent.classList.remove('hidden');
+                        tabContent.classList.add('active');
+                    }
+                }
+            }, 100);
+        });
+    </script>
 </div>
