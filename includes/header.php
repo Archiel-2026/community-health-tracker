@@ -961,9 +961,7 @@ body,
                             <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
                                  style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
                                  onclick="openProfileModal('staff')">
-                                <?php if (!$profile_picture): ?>
-                                    <i class="fas fa-user-circle text-4xl text-white absolute inset-0 flex items-center justify-center"></i>
-                                <?php endif; ?>
+                                
                             </div>
                             <span class="font-medium">Welcome, <?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>
@@ -1054,9 +1052,7 @@ body,
                             <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
                                  style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
                                  onclick="openProfileModal('user')">
-                                <?php if (!$profile_picture): ?>
-                                    <i class="fas fa-user-circle text-4xl text-white absolute inset-0 flex items-center justify-center"></i>
-                                <?php endif; ?>
+                                
                             </div>
                             <span class="font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>

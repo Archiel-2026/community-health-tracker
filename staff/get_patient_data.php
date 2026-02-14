@@ -146,14 +146,21 @@ try {
                 <label class="form-label-modal required-field">Sitio</label>
                 <select name="sitio" required class="form-select-modal">
                     <option value="">Select Sitio</option>
-                    <option value="Proper Luz" <?= ($patientData['sitio'] ?? '') == 'Proper Luz' ? 'selected' : '' ?>>Proper Luz</option>
-                    <option value="Lower Luz" <?= ($patientData['sitio'] ?? '') == 'Lower Luz' ? 'selected' : '' ?>>Lower Luz</option>
-                    <option value="Upper Luz" <?= ($patientData['sitio'] ?? '') == 'Upper Luz' ? 'selected' : '' ?>>Upper Luz</option>
-                    <option value="Luz Proper" <?= ($patientData['sitio'] ?? '') == 'Luz Proper' ? 'selected' : '' ?>>Luz Proper</option>
-                    <option value="Luz Heights" <?= ($patientData['sitio'] ?? '') == 'Luz Heights' ? 'selected' : '' ?>>Luz Heights</option>
-                    <option value="Panganiban" <?= ($patientData['sitio'] ?? '') == 'Panganiban' ? 'selected' : '' ?>>Panganiban</option>
-                    <option value="Balagtas" <?= ($patientData['sitio'] ?? '') == 'Balagtas' ? 'selected' : '' ?>>Balagtas</option>
-                    <option value="Carbon" <?= ($patientData['sitio'] ?? '') == 'Carbon' ? 'selected' : '' ?>>Carbon</option>
+                    <option value="Kalinao" <?= ($patientData['sitio'] ?? '') == 'Kalinao' ? 'selected' : '' ?>>Kalinao</option>
+                    <option value="Nangka" <?= ($patientData['sitio'] ?? '') == 'Nangka' ? 'selected' : '' ?>>Nangka</option>
+                    <option value="Lubi" <?= ($patientData['sitio'] ?? '') == 'Lubi' ? 'selected' : '' ?>>Lubi</option>
+                    <option value="Sta. Cruz" <?= ($patientData['sitio'] ?? '') == 'Sta. Cruz' ? 'selected' : '' ?>>Sta. Cruz</option>
+                    <option value="Regla" <?= ($patientData['sitio'] ?? '') == 'Regla' ? 'selected' : '' ?>>Regla</option>
+                    <option value="Abellana" <?= ($patientData['sitio'] ?? '') == 'Abellana' ? 'selected' : '' ?>>Abellana</option>
+                    <option value="Sto.niño l" <?= ($patientData['sitio'] ?? '') == 'Sto.niño l' ? 'selected' : '' ?>>Sto.niño l</option>
+                    <option value="Sto.niño ll" <?= ($patientData['sitio'] ?? '') == 'Sto.niño ll' ? 'selected' : '' ?>>Sto.niño ll</option>
+                    <option value="Sto.niño lll" <?= ($patientData['sitio'] ?? '') == 'Sto.niño lll' ? 'selected' : '' ?>>Sto.niño lll</option>
+                    <option value="Zapatera" <?= ($patientData['sitio'] ?? '') == 'Zapatera' ? 'selected' : '' ?>>Zapatera</option>
+                    <option value="Mabuhay" <?= ($patientData['sitio'] ?? '') == 'Mabuhay' ? 'selected' : '' ?>>Mabuhay</option>
+                    <option value="San Vicente" <?= ($patientData['sitio'] ?? '') == 'San Vicente' ? 'selected' : '' ?>>San Vicente</option>
+                    <option value="City Central" <?= ($patientData['sitio'] ?? '') == 'City Central' ? 'selected' : '' ?>>City Central</option>
+                    <option value="San. Antonio" <?= ($patientData['sitio'] ?? '') == 'San. Antonio' ? 'selected' : '' ?>>San. Antonio</option>
+                    <option value="San Roque" <?= ($patientData['sitio'] ?? '') == 'San Roque' ? 'selected' : '' ?>>San Roque</option>
                 </select>
             </div>
 

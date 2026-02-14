@@ -523,7 +523,8 @@ try {
     }
     
     // Get resident users with pagination, search and filter
-    $usersPerPage = 10;
+    // Show only 5 per page for dashboard preview
+    $usersPerPage = isset($_GET['view_all_residents']) && $_GET['view_all_residents'] == '1' ? 1000 : 5;
     $currentPage = isset($_GET['user_page']) ? max(1, intval($_GET['user_page'])) : 1;
     $offset = ($currentPage - 1) * $usersPerPage;
     
@@ -1298,6 +1299,15 @@ $recordsPerPage = 5;
                 <div class="text-sm text-gray-600">
                     Total: <span class="font-semibold"><?= $totalResidentUsers ?></span> residents
                 </div>
+                <?php if ($totalResidentUsers > 5 && (!isset($_GET['view_all_residents']) || $_GET['view_all_residents'] != '1')): ?>
+                <a href="?tab=account-management&view_all_residents=1" class="ml-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm">
+                    <i class="fas fa-list mr-1"></i> View All Resident Accounts
+                </a>
+                <?php elseif (isset($_GET['view_all_residents']) && $_GET['view_all_residents'] == '1'): ?>
+                <a href="?tab=account-management" class="ml-4 px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition font-medium text-sm">
+                    <i class="fas fa-eye-slash mr-1"></i> Show Less
+                </a>
+                <?php endif; ?>
             </div>
             
             <!-- Search and Filter Section -->

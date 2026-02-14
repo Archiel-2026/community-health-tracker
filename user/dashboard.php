@@ -100,7 +100,7 @@ if ($userData) {
         try {
             // First, get all announcements targeted to this user with full details, sorted by latest first
             $stmt = $pdo->prepare("
-                SELECT a.*, ua.status as user_status, s.full_name as staff_name
+                SELECT a.*, ua.status as user_status, s.full_name as staff_name, s.position as staff_position
                 FROM sitio1_announcements a
                 LEFT JOIN user_announcements ua ON a.id = ua.announcement_id AND ua.user_id = ?
                 LEFT JOIN sitio1_staff s ON a.staff_id = s.id
@@ -944,13 +944,17 @@ function getTimeAgo($datetime)
                                     <?php 
                                     $recentNotes = array_slice($consultationNotes, 0, 4);
                                     foreach ($recentNotes as $note): ?>
-                                        <div class="doctor-note-item consultation-item" style="cursor:pointer" data-record-id="<?= htmlspecialchars($note['patient_id']) ?>">
-                                            <div class="flex justify-between items-start">
-                                                <div>
-                                                    <p class="font-semibold text-gray-800 text-lg mb-1"><?= htmlspecialchars($note['patient_name']) ?></p>
-                                                    <p class="text-base text-gray-600"><?= htmlspecialchars($note['doctor_name']) ?></p>
+                                        <div class="border border-gray-200 rounded-lg p-4 mb-3 bg-white">
+                                            <div class="flex justify-between items-start w-full mb-2">
+                                                <span class="inline-block px-4 py-1 rounded bg-blue-600 text-white font-semibold text-base">Consultation Note</span>
+                                                <div class="flex flex-col items-end">
+                                                    <span class="text-sm text-gray-800 font-semibold mb-0.5">Consultation Date :</span>
+                                                    <span class="inline-block px-3 py-1 rounded bg-gray-200 text-gray-700 text-base font-medium" style="margin-top:2px;"><?= date('F d, Y', strtotime($note['consultation_date'])) ?></span>
                                                 </div>
-                                                <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full"><?= date('M d, Y', strtotime($note['consultation_date'])) ?></span>
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="block text-base text-gray-400 font-medium mb-0.5">Consulting Doctor :</span>
+                                                <div class="text-xl text-gray-800 font-medium mt-0.5 mb-0"><?= htmlspecialchars($note['doctor_name']) ?></div>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
@@ -1028,7 +1032,7 @@ function getTimeAgo($datetime)
                 <i class="fas fa-bullhorn text-blue-600 text-lg md:text-xl"></i>
             </div>
             <h3 class="text-xl md:text-2xl font-600 text-gray-800">
-                General Announcements
+                All Announcements
             </h3>
         </div>
         <a href="announcements.php?tab=announcements" class="text-base font-medium text-blue-600 hover:text-blue-800" target="_blank" rel="noopener">View All</a>
@@ -1056,42 +1060,45 @@ function getTimeAgo($datetime)
                 $isPriorityMedium = $announcement['priority'] === 'medium';
                 $isAccepted = $announcement['user_status'] === 'accepted';
                 $isDismissed = $announcement['user_status'] === 'dismissed';
+                // Badge logic for announcement type/audience
+                $badge = '';
+                $priorityBadge = '';
+                if ((isset($announcement['announcement_type']) && $announcement['announcement_type'] === 'lab_result') || (isset($announcement['announcement_category']) && $announcement['announcement_category'] === 'lab_result')) {
+                    $badge = '<span class="px-2 py-1 rounded bg-green-600 text-white font-semibold text-sm">Lab Result</span>';
+                    $priorityBadge = '<span class="px-2 py-1 rounded bg-blue-100 text-blue-600 font-semibold text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'public') {
+                    $badge = '<span class="px-2 py-1 rounded bg-blue-600 text-white font-semibold text-sm">For All Resident</span>';
+                    $priorityClass = strtolower($announcement['priority']) === 'high' ? 'bg-red-100 text-red-700' : (strtolower($announcement['priority']) === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-600');
+                    $priorityTextClass = strtolower($announcement['priority']) === 'high' ? 'text-red-700' : (strtolower($announcement['priority']) === 'medium' ? 'text-yellow-800' : 'text-blue-600');
+                    $priorityBgClass = strtolower($announcement['priority']) === 'high' ? 'bg-red-100' : (strtolower($announcement['priority']) === 'medium' ? 'bg-yellow-100' : 'bg-blue-100');
+                    $priorityBadge = '<span class="px-2 py-1 rounded ' . $priorityBgClass . ' ' . $priorityTextClass . ' font-semibold text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'specific') {
+                    $badge = '<span class="px-2 py-1 rounded bg-blue-600 text-white font-semibold text-sm">For Specific Resident</span>';
+                    $priorityBadge = '<span class="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 font-semibold text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                }
+                // Prepare staff display for new layout
+                $staffPosition = !empty($announcement['staff_position']) ? htmlspecialchars($announcement['staff_position']) : '';
+                $staffName = !empty($announcement['staff_name']) ? htmlspecialchars($announcement['staff_name']) : '';
             ?>
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow mb-3 announcement-item <?= $index >= 3 ? 'opacity-0 h-0 overflow-hidden' : '' ?>" style="cursor:pointer" data-announcement-id="<?= htmlspecialchars($announcement['id']) ?>">
-                    <div class="flex items-start justify-between mb-2">
-                        <h4 class="font-semibold text-gray-800 text-base"><?= htmlspecialchars($announcement['title']) ?></h4>
-                        <span class="text-sm px-2 py-1 rounded-full whitespace-nowrap <?= 
-                            $isPriorityHigh ? 'bg-red-100 text-red-800' : 
-                            ($isPriorityMedium ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800') 
-                        ?>">
-                            <?= ucfirst($announcement['priority']) ?>
-                        </span>
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow mb-3 announcement-item <?= $index >= 3 ? 'opacity-0 h-0 overflow-hidden' : '' ?>" data-announcement-id="<?= htmlspecialchars($announcement['id']) ?>">
+                    <div class="flex justify-between items-start mb-2 w-full">
+                        <div class="flex gap-2 items-center">
+                            <?= $badge ?><?= $priorityBadge ?>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs text-gray-500 font-medium mb-0.5">Date Posted :</span>
+                            <span class="inline-block px-3 py-1 rounded bg-gray-200 text-gray-700 text-sm font-semibold" style="margin-top:2px;"><?= date('F d, Y', strtotime($announcement['post_date'])) ?></span>
+                        </div>
                     </div>
-                    <p class="text-sm text-gray-600 mb-2">
-                        <i class="fas fa-user-md mr-1"></i> 
-                        <?= htmlspecialchars($announcement['staff_name'] ?? 'Community Staff') ?> • 
-                        <i class="fas fa-calendar mr-1 ml-2"></i> 
-                        <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
-                    </p>
-                    <p class="text-base text-gray-700 mb-2 line-clamp-2">
-                        <?= htmlspecialchars(substr($announcement['message'], 0, 80)) ?>
-                        <?= strlen($announcement['message']) > 80 ? '...' : '' ?>
-                    </p>
-                    <div class="flex gap-2 text-sm flex-wrap">
-                        <?php if ($announcement['user_status']): ?>
-                            <span class="px-2 py-1 rounded <?= 
-                                $isAccepted ? 'bg-green-100 text-green-800' : 
-                                'bg-gray-100 text-gray-800'
-                            ?>">
-                                <i class="fas fa-<?= $isAccepted ? 'check-circle' : 'times-circle' ?> mr-1"></i> 
-                                <?= ucfirst($announcement['user_status']) ?>
-                            </span>
-                        <?php else: ?>
-                            <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
-                                <i class="fas fa-clock mr-1"></i> Pending Response
-                            </span>
+                    <div class="flex items-center gap-2 mb-0.5 mt-1">
+                        <span class="text-xs text-gray-500 font-medium">Posted By :</span>
+                        <?php if ($staffPosition): ?>
+                            <span class="inline-block px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold text-xs ml-0.5 align-middle" style="margin-left:4px;"><?= $staffPosition ?></span>
                         <?php endif; ?>
                     </div>
+                    <?php if ($staffName): ?>
+                        <div class="text-base text-gray-800 font-medium mt-0.5 mb-0"><?= $staffName ?></div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
             

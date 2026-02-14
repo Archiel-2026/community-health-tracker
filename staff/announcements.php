@@ -400,22 +400,26 @@ $archivedAnnouncements = [];
 
 try {
     $stmt = $pdo->prepare("SELECT a.*, 
+                          s.full_name AS staff_full_name, s.position AS staff_position,
                           COUNT(CASE WHEN ua.status = 'accepted' THEN 1 END) as accepted_count,
                           COUNT(CASE WHEN ua.status = 'dismissed' THEN 1 END) as dismissed_count,
                           COUNT(CASE WHEN ua.status IS NULL THEN 1 END) as pending_count
                           FROM sitio1_announcements a
+                          JOIN sitio1_staff s ON a.staff_id = s.id
                           LEFT JOIN sitio1_users u ON u.approved = TRUE AND a.audience_type IN ('public', 'specific')
                           LEFT JOIN user_announcements ua ON ua.announcement_id = a.id AND ua.user_id = u.id
-                          WHERE a.staff_id = ? AND a.status = 'active'
+                          WHERE a.status = 'active'
                           GROUP BY a.id
                           ORDER BY a.post_date DESC");
-    $stmt->execute([$staffId]);
+    $stmt->execute();
     $activeAnnouncements = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    $stmt = $pdo->prepare("SELECT * FROM sitio1_announcements 
-                          WHERE staff_id = ? AND status = 'archived' 
-                          ORDER BY post_date DESC");
-    $stmt->execute([$staffId]);
+
+    $stmt = $pdo->prepare("SELECT a.*, s.full_name AS staff_full_name, s.position AS staff_position
+                          FROM sitio1_announcements a
+                          JOIN sitio1_staff s ON a.staff_id = s.id
+                          WHERE a.status = 'archived'
+                          ORDER BY a.post_date DESC");
+    $stmt->execute();
     $archivedAnnouncements = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Get detailed responses
@@ -1265,6 +1269,31 @@ try {
                                             <div class="announcement-meta">
                                                 <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
                                             </div>
+                                            <div class="announcement-staff-meta text-xs text-gray-500 mt-1">
+                                                <span>Posted by: <b><?= htmlspecialchars($announcement['staff_full_name']) ?></b> (<?= htmlspecialchars($announcement['staff_position']) ?>)</span>
+                                            </div>
+                                            <div class="announcement-type-meta mt-1">
+                                                <span class="badge badge-normal">
+                                                    <?php
+                                                        if ($announcement['announcement_type'] === 'lab_result') {
+                                                            echo 'Lab Result';
+                                                        } else {
+                                                            echo 'Basic Announcement';
+                                                        }
+                                                    ?>
+                                                </span>
+                                                <span class="badge badge-normal">
+                                                    <?php
+                                                        if ($announcement['audience_type'] === 'public') {
+                                                            echo 'All Users';
+                                                        } elseif ($announcement['audience_type'] === 'landing_page') {
+                                                            echo 'Landing Page';
+                                                        } elseif ($announcement['audience_type'] === 'specific') {
+                                                            echo 'Specific Users';
+                                                        }
+                                                    ?>
+                                                </span>
+                                            </div>
                                         </div>
                                         <div class="flex gap-1">
                                             <button onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
@@ -1294,22 +1323,22 @@ try {
                                         </span>
                                         <div class="stats">
                                             <div class="stat-item">
-                                                <div class="stat-icon stat-accepted">
+                                                <div class="stat-icon stat-accepted" title="Accepted">
                                                     <i class="fas fa-check"></i>
                                                 </div>
-                                                <span class="text-sm"><?= $announcement['accepted_count'] ?></span>
+                                                <span class="text-sm">Accepted: <?= $announcement['accepted_count'] ?></span>
                                             </div>
                                             <div class="stat-item">
-                                                <div class="stat-icon stat-pending">
+                                                <div class="stat-icon stat-pending" title="Pending">
                                                     <i class="fas fa-clock"></i>
                                                 </div>
-                                                <span class="text-sm"><?= $announcement['pending_count'] ?></span>
+                                                <span class="text-sm">Pending: <?= $announcement['pending_count'] ?></span>
                                             </div>
                                             <div class="stat-item">
-                                                <div class="stat-icon stat-dismissed">
+                                                <div class="stat-icon stat-dismissed" title="Dismissed">
                                                     <i class="fas fa-times"></i>
                                                 </div>
-                                                <span class="text-sm"><?= $announcement['dismissed_count'] ?></span>
+                                                <span class="text-sm">Dismissed: <?= $announcement['dismissed_count'] ?></span>
                                             </div>
                                         </div>
                                     </div>
@@ -1336,6 +1365,9 @@ try {
                                             <h3 class="announcement-title"><?= htmlspecialchars($announcement['title']) ?></h3>
                                             <div class="announcement-meta">
                                                 Archived on <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                                            </div>
+                                            <div class="announcement-staff-meta text-xs text-gray-500 mt-1">
+                                                <span>Posted by: <b><?= htmlspecialchars($announcement['staff_full_name']) ?></b> (<?= htmlspecialchars($announcement['staff_position']) ?>)</span>
                                             </div>
                                         </div>
                                         <div class="flex gap-1">
@@ -1658,7 +1690,12 @@ try {
             let content = `
                 <div class="space-y-4">
                     <div class="flex justify-between items-start">
-                        <h4 class="font-semibold text-lg">${escapeHtml(announcement.title || 'No Title')}</h4>
+                        <div>
+                            <h4 class="font-semibold text-lg">${escapeHtml(announcement.title || 'No Title')}</h4>
+                            <div class="text-xs text-gray-500 mt-1">
+                                Posted by: <b>${escapeHtml(announcement.staff_full_name || '')}</b> (${escapeHtml(announcement.staff_position || '')})
+                            </div>
+                        </div>
                         <span class="badge badge-${announcement.priority || 'normal'}">
                             ${announcement.priority ? announcement.priority.charAt(0).toUpperCase() + announcement.priority.slice(1) : 'Normal'} Priority
                         </span>

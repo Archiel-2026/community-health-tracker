@@ -3536,14 +3536,21 @@ if (!empty($searchTerm)) {
                                     </label>
                                     <select id="modal_sitio" name="sitio" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
                                         <option value="">Select Sitio</option>
-                                        <option value="Proper Luz">Proper Luz</option>
-                                        <option value="Lower Luz">Lower Luz</option>
-                                        <option value="Upper Luz">Upper Luz</option>
-                                        <option value="Luz Proper">Luz Proper</option>
-                                        <option value="Luz Heights">Luz Heights</option>
-                                        <option value="Panganiban">Panganiban</option>
-                                        <option value="Balagtas">Balagtas</option>
-                                        <option value="Carbon">Carbon</option>
+                                        <option value="Kalinao">Kalinao</option>
+                                        <option value="Nangka">Nangka</option>
+                                        <option value="Lubi">Lubi</option>
+                                        <option value="Sta. Cruz">Sta. Cruz</option>
+                                        <option value="Regla">Regla</option>
+                                        <option value="Abellana">Abellana</option>
+                                        <option value="Sto.niño l">Sto.niño l</option>
+                                        <option value="Sto.niño ll">Sto.niño ll</option>
+                                        <option value="Sto.niño lll">Sto.niño lll</option>
+                                        <option value="Zapatera">Zapatera</option>
+                                        <option value="Mabuhay">Mabuhay</option>
+                                        <option value="San Vicente">San Vicente</option>
+                                        <option value="City Central">City Central</option>
+                                        <option value="San. Antonio">San. Antonio</option>
+                                        <option value="San Roque">San Roque</option>
                                     </select>
                                 </div>
                             <?php endif; ?>

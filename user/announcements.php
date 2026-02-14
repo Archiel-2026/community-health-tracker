@@ -89,7 +89,7 @@ $basicAnnouncements = [];
 try {
     $stmt = $pdo->prepare("
         SELECT a.*, ua.status as user_status, ua.response_date,
-               s.full_name as staff_name
+               s.full_name as staff_name, s.position as staff_position
         FROM sitio1_announcements a
         LEFT JOIN user_announcements ua ON a.id = ua.announcement_id AND ua.user_id = ?
         LEFT JOIN sitio1_staff s ON a.staff_id = s.id
@@ -1185,11 +1185,14 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                                     <h3 class="announcement-title text-blue-700">
                                                         <?= htmlspecialchars($announcement['title']) ?>
                                                     </h3>
-
                                                 </div>
                                             </div>
                                             <div class="announcement-badges">
-                                                <span class="badge badge-simple">Announcement</span>
+                                                <?php if (isset($announcement['audience_type']) && $announcement['audience_type'] === 'public'): ?>
+                                                    <span class="badge badge-normal">For All Residents</span>
+                                                <?php elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'specific'): ?>
+                                                    <span class="badge badge-normal">For Specific Resident</span>
+                                                <?php endif; ?>
                                                 <!-- PRIORITY -->
                                                 <span class="badge badge-<?= $announcement['priority'] ?>">
                                                     <?= ucfirst($announcement['priority']) ?></span>
@@ -1403,7 +1406,11 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                         <?php if (isset($a['announcement_type']) && $a['announcement_type'] === 'lab_result'): ?>
                                             <span class="badge badge-lab-result">Lab Result</span>
                                         <?php else: ?>
-                                            <span class="badge badge-simple">General Announcement</span>
+                                            <?php if (isset($a['audience_type']) && $a['audience_type'] === 'public'): ?>
+                                                <span class="badge badge-normal">For All Residents</span>
+                                            <?php elseif (isset($a['audience_type']) && $a['audience_type'] === 'specific'): ?>
+                                                <span class="badge badge-normal">For Specific Resident</span>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                         <!-- PRIORITY -->
                                         <span class="badge badge-<?= $a['priority'] ?>">
@@ -1512,7 +1519,6 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                     <div style="margin-bottom: 1.5rem;">
                         <h3 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 0.5rem;">${announcement.title || 'Announcement'}</h3>
                         <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.875rem; color: #6b7280;">
-                            <span><i class="fas fa-user icon-sm"></i> ${announcement.staff_name || 'Community Staff'}</span>
                             <span><i class="fas fa-calendar icon-sm"></i> ${postDate}</span>
                         </div>
                     </div>
