@@ -1153,10 +1153,14 @@ $recordsPerPage = 5;
 <body class="bg-gray-100">
 
 <!-- AJAX Loader -->
-<div id="ajaxLoader" class="fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50" style="display: none;">
-    <div class="bg-white p-6 rounded-lg shadow-xl">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p class="text-gray-700">Loading analytics...</p>
+<div id="ajaxLoader" class="cht-analytics-loader-bg" style="display: none;">
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div class="cht-loader-unique">
+            <div class="cht-loader-bounce"></div>
+            <div class="cht-loader-bounce"></div>
+            <div class="cht-loader-bounce"></div>
+        </div>
+        <div class="cht-loader-text">Loading analytics...</div>
     </div>
 </div>
 
@@ -1229,11 +1233,287 @@ $recordsPerPage = 5;
                 Resident Accounts
                 <span class="count-badge"><?= $stats['resident_users'] ?></span>
             </button>
+            <button class="nav-tab-button tab-reports <?= $activeTab === 'reports' ? 'active' : '' ?>" id="reports-tab" data-tabs-target="#reports" type="button" role="tab" aria-controls="reports" aria-selected="<?= $activeTab === 'reports' ? 'true' : 'false' ?>">
+                <i class="fas fa-file-alt"></i> Generate Reports
+            </button>
         </div>
     </div>
     
     <!-- Tab Contents -->
     <div class="tab-content">
+        <!-- Reports Section -->
+        <div class="<?= $activeTab === 'reports' ? '' : 'hidden' ?> p-6 bg-white rounded-lg border border-gray-200" id="reports" role="tabpanel" aria-labelledby="reports-tab">
+            <h2 class="text-2xl font-semibold mb-6 text-blue-700">Comprehensive Health Report</h2>
+            <div id="fullReportContent">
+                <div class="flex gap-2 mb-4">
+                    <button onclick="generateFullReport()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center"><i class="fas fa-sync-alt mr-2"></i> Generate Full Report</button>
+                    <button onclick="printFullReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center"><i class="fas fa-print mr-2"></i> Print</button>
+                    <button onclick="exportFullReport('pdf')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium flex items-center"><i class="fas fa-file-pdf mr-2"></i> Export PDF</button>
+                    <button onclick="exportFullReport('excel')" class="px-4 py-2 bg-yellow-600 text-gray-900 rounded-lg hover:bg-yellow-500 transition font-medium flex items-center"><i class="fas fa-file-excel mr-2"></i> Export Excel</button>
+                </div>
+                <div id="fullReportResult" class="mt-4"></div>
+            </div>
+            <script>
+            let lastReportHtml = '';
+            function generateFullReport() {
+                const resultDiv = document.getElementById('fullReportResult');
+                // Show loading overlay
+                let loader = document.getElementById('reportLoadingOverlay');
+                if (!loader) {
+                    loader = document.createElement('div');
+                    loader.id = 'reportLoadingOverlay';
+                    loader.innerHTML = `
+                        <div class="cht-loader-bg">
+                            <div class="cht-loader-unique">
+                                <div class="cht-loader-bounce"></div>
+                                <div class="cht-loader-bounce"></div>
+                                <div class="cht-loader-bounce"></div>
+                            </div>
+                            <div class="cht-loader-text">Generating report, please wait...</div>
+                        </div>
+                    `;
+                    document.body.appendChild(loader);
+                } else {
+                    // Reset loader to initial state if reused
+                    loader.innerHTML = `
+                        <div class="cht-loader-bg">
+                            <div class="cht-loader-unique">
+                                <div class="cht-loader-bounce"></div>
+                                <div class="cht-loader-bounce"></div>
+                                <div class="cht-loader-bounce"></div>
+                            </div>
+                            <div class="cht-loader-text">Generating report, please wait...</div>
+                        </div>
+                    `;
+                }
+                loader.style.display = 'flex';
+                resultDiv.innerHTML = '';
+                const startTime = Date.now();
+                fetch('./generate_full_report.php')
+                    .then(async res => {
+                        if (res.status === 403) {
+                            setTimeout(() => {
+                                loader.style.display = 'none';
+                                resultDiv.innerHTML = '<div class="text-red-600">Access denied. Please log in as staff to generate the report.</div>';
+                            }, Math.max(0, 3000 - (Date.now() - startTime)));
+                            return;
+                        }
+                        let data;
+                        try {
+                            data = await res.json();
+                        } catch (e) {
+                            setTimeout(() => {
+                                loader.style.display = 'none';
+                                resultDiv.innerHTML = '<div class="text-red-600">Invalid response from report generator.</div>';
+                            }, Math.max(0, 3000 - (Date.now() - startTime)));
+                            return;
+                        }
+                        setTimeout(() => {
+                            // Show completion checkmark and message for 1s before hiding loader
+                            loader.innerHTML = `
+                                <div class="cht-loader-bg">
+                                    <div class="cht-loader-complete">
+                                        <svg width="60" height="60" viewBox="0 0 60 60">
+                                            <circle cx="30" cy="30" r="28" fill="#e0f2fe" stroke="#38bdf8" stroke-width="4"/>
+                                            <polyline points="18,32 28,42 44,22" fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <div class="cht-loader-complete-text">Generation Completed!</div>
+                                    </div>
+                                </div>
+                            `;
+                            setTimeout(() => {
+                                loader.style.display = 'none';
+                                if (data.success) {
+                                    lastReportHtml = renderFullReport(data.data);
+                                    resultDiv.innerHTML = lastReportHtml;
+                                } else if (data.error) {
+                                    resultDiv.innerHTML = `<div class='text-red-600'>${data.error}</div>`;
+                                } else {
+                                    resultDiv.innerHTML = '<div class="text-red-600">Failed to generate report.</div>';
+                                }
+                            }, 1000);
+                        }, Math.max(0, 3000 - (Date.now() - startTime)));
+                    })
+                    .catch(() => {
+                        setTimeout(() => {
+                            loader.style.display = 'none';
+                            resultDiv.innerHTML = '<div class="text-red-600">Failed to connect to report generator.</div>';
+                        }, Math.max(0, 3000 - (Date.now() - startTime)));
+                    });
+                        }
+                // Professional unique loader styles
+                const loaderStyles = document.createElement('style');
+                loaderStyles.innerHTML = `
+                #reportLoadingOverlay {
+                    position: fixed; z-index: 9999; top: 0; left: 0; width: 100vw; height: 100vh;
+                    display: none; align-items: center; justify-content: center; background: rgba(248,250,252,0.85);
+                }
+                .cht-loader-bg { display: flex; flex-direction: column; align-items: center; }
+                .cht-loader-unique {
+                    display: flex; gap: 0.7em; margin-bottom: 1.5rem;
+                }
+                .cht-loader-bounce {
+                    width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #2563eb 60%, #38bdf8 100%);
+                    animation: cht-bounce 1.1s infinite cubic-bezier(.68,-0.55,.27,1.55);
+                }
+                .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #22c55e 60%, #bef264 100%); }
+                .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #f59e42 60%, #fbbf24 100%); }
+                @keyframes cht-bounce {
+                    0%, 80%, 100% { transform: translateY(0); }
+                    40% { transform: translateY(-30px); }
+                }
+                .cht-loader-text {
+                    color: #22223b; font-size: 1.2rem; font-weight: 500; letter-spacing: 0.01em;
+                }
+                .cht-loader-complete {
+                    display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem;
+                }
+                .cht-loader-complete svg {
+                    display: block; margin-bottom: 0.7em;
+                }
+                .cht-loader-complete-text {
+                    color: #22c55e; font-size: 1.25rem; font-weight: 600; letter-spacing: 0.01em;
+                }
+                `;
+                document.head.appendChild(loaderStyles);
+            function renderFullReport(data) {
+                let html = '';
+                // Add custom CSS for report backgrounds
+                html += `<style>
+                .cht-report-container {
+                    max-width: 1400px;
+                    margin: 0 auto;
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    background: #f8fafc;
+                    padding: 3.5rem 0 3rem 0;
+                }
+                .cht-section-card {
+                    background: #fff;
+                    border-radius: 1.1rem;
+                    /* box-shadow removed for no container shadow */
+                    padding: 2.7rem 3.2rem;
+                    margin-bottom: 3.2rem;
+                }
+                .cht-section-card:not(:last-child) {
+                    margin-bottom: 3.2rem;
+                }
+                .cht-section-title {
+                    color: #1e293b;
+                    font-size: 1.7rem;
+                    font-weight: 700;
+                    margin-bottom: 1.5rem;
+                    letter-spacing: 0.01em;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.7em;
+                }
+                .cht-section-title i {
+                    font-size: 1.3em;
+                    color: #64748b;
+                }
+                .cht-report-list {
+                    margin: 0;
+                    padding: 0;
+                    list-style: none;
+                }
+                .cht-report-list > li {
+                    margin-bottom: 1.1em;
+                    font-size: 1.13em;
+                }
+                .cht-report-list ul {
+                    margin-left: 2em;
+                    margin-top: 0.4em;
+                }
+                .cht-label {
+                    background: #f1f5f9;
+                    color: #22223b;
+                    border-radius: 0.4em;
+                    padding: 0.18em 0.85em;
+                    font-size: 1em;
+                    font-weight: 600;
+                    margin-right: 0.6em;
+                }
+                .cht-report-list b {
+                    color: #1e293b;
+                    font-weight: 700;
+                }
+                @media (max-width: 900px) {
+                    .cht-section-card { padding: 1.2rem 0.7rem; }
+                    .cht-report-container { padding: 1.2rem 0; }
+                }
+                </style>`;
+                html += `<div class='cht-report-container'><div class='cht-section-card'>`;
+
+                // Resident Demographics
+                let d = data.resident_demographics;
+                html += `<div class='cht-section-title'><i class='fas fa-users'></i> Resident Demographics</div><ul class='cht-report-list'>`;
+                if (typeof d.total_registered !== 'undefined') html += `<li><span class='cht-label'>Total Registered Residents</span> <b>${d.total_registered}</b></li>`;
+                if (typeof d.new_registrations !== 'undefined') html += `<li><span class='cht-label'>New Registrations This Period</span> <b>${d.new_registrations}</b></li>`;
+                if (d.age_distribution) html += `<li><span class='cht-label'>Age Distribution</span><ul><li>Children (0–12): <b>${d.age_distribution.children}</b></li><li>Adolescents (13–19): <b>${d.age_distribution.adolescents}</b></li><li>Adults (20–59): <b>${d.age_distribution.adults}</b></li><li>Seniors (60+): <b>${d.age_distribution.seniors}</b></li></ul></li>`;
+                if (d.sex_distribution) html += `<li><span class='cht-label'>Sex Distribution</span><ul><li>Male: <b>${d.sex_distribution.Male||0}</b></li><li>Female: <b>${d.sex_distribution.Female||0}</b></li></ul></li>`;
+                html += `</ul>`;
+
+                // Medical Information Summary
+                let m = data.medical_summary;
+                html += `<div class='cht-section-title'><i class='fas fa-notes-medical'></i> Medical Information Summary</div><ul class='cht-report-list'>`;
+                if (m.common_conditions) html += `<li><span class='cht-label'>Common Conditions Recorded</span><ul><li>Hypertension: <b>${m.common_conditions.hypertension}</b></li><li>Diabetes: <b>${m.common_conditions.diabetes}</b></li><li>Tuberculosis: <b>${m.common_conditions.tuberculosis}</b></li><li>Other: <b>${Object.keys(m.common_conditions.other).map(k=>k+': '+m.common_conditions.other[k]).join(', ')}</b></li></ul></li>`;
+                if (typeof m.fully_immunized_children !== 'undefined' || m.vaccines_administered) html += `<li><span class='cht-label'>Immunization Coverage</span><ul>` + (typeof m.fully_immunized_children !== 'undefined' ? `<li>Fully Immunized Children: <b>${m.fully_immunized_children}</b></li>` : '') + (m.vaccines_administered ? `<li>Vaccines Administered (by type): <b>${Object.keys(m.vaccines_administered).map(k=>k+': '+m.vaccines_administered[k]).join(', ')}</b></li>` : '') + `</ul></li>`;
+                html += `</ul>`;
+
+                // Consultation Records
+                let c = data.consultation_records;
+                html += `<div class='cht-section-title'><i class='fas fa-stethoscope'></i> Consultation Records</div><ul class='cht-report-list'>`;
+                if (typeof c.total_consultations !== 'undefined') html += `<li><span class='cht-label'>Total Consultations</span> <b>${c.total_consultations}</b></li>`;
+                if (c.consultations_by_type) html += `<li><span class='cht-label'>Consultations by Type</span> <b>${Object.keys(c.consultations_by_type).map(k=>k+': '+c.consultations_by_type[k]).join(', ')}</b></li>`;
+                if (c.top_reasons) html += `<li><span class='cht-label'>Top Reasons for Consultation</span> <b>${Object.keys(c.top_reasons).map(k=>k+': '+c.top_reasons[k]).join(', ')}</b></li>`;
+                if (c.referrals_made) html += `<li><span class='cht-label'>Referrals Made</span> <b>${Object.keys(c.referrals_made).map(k=>k+': '+c.referrals_made[k]).join(', ')}</b></li>`;
+                html += `</ul>`;
+
+                // Doctor’s Notes & Case Summaries
+                let dn = data.doctor_notes;
+                html += `<div class='cht-section-title'><i class='fas fa-user-md'></i> Doctor’s Notes & Case Summaries</div><ul class='cht-report-list'>`;
+                if (dn.diagnoses) html += `<li><span class='cht-label'>Summary of Diagnoses</span> <b>${Object.keys(dn.diagnoses).map(k=>k+': '+dn.diagnoses[k]).join(', ')}</b></li>`;
+                if (dn.treatments) html += `<li><span class='cht-label'>Treatments Provided</span> <b>${Object.keys(dn.treatments).map(k=>k+': '+dn.treatments[k]).join(', ')}</b></li>`;
+                html += `<li>Cases Requiring City Health Department Attention: <b>${Object.keys(dn.cases_for_city_health).map(k=>k+': '+dn.cases_for_city_health[k]).join(', ')}</b></li>`;
+                html += `</ul>`;
+                html += `<h3 class='text-lg font-bold mb-2'>Public Health Indicators</h3>`;
+                let ph = data.public_health;
+                html += `<ul class='mb-4'>`;
+                html += `<li>Notifiable Diseases Reported: <b>${Object.keys(ph.notifiable).map(k=>k+': '+ph.notifiable[k]).join(', ')}</b></li>`;
+                html += `<li>Health Campaigns Conducted: <b>${ph.campaigns.map(c=>c.title+': '+c.details).join('; ')}</b></li>`;
+                html += `<li>Community Health Trends: <b>${Object.keys(ph.community_trends).map(k=>k+':'+Object.keys(ph.community_trends[k]).map(m=>m+':'+ph.community_trends[k][m]).join(', ')).join(' | ')}</b></li>`;
+                html += `</ul>`;
+                html += `<h3 class='text-lg font-bold mb-2'>Administrative Data</h3>`;
+                let a = data.admin;
+                html += `<ul class='mb-4'>`;
+                html += `<li>Average Patients per Doctor: <b>${a.avg_patients_per_doctor}</b></li>`;
+                html += `<li>Average Patients per Nurse: <b>${a.avg_patients_per_nurse}</b></li>`;
+                html += `<li>Medical Supplies Used/Needed: <b>${a.supplies}</b></li>`;
+                html += `<li>Challenges Encountered: <b>${a.challenges}</b></li>`;
+                html += `</ul>`;
+                html += `<h3 class='text-lg font-bold mb-2'>Recommendations</h3>`;
+                html += `<div class='mb-4'>${data.recommendations}</div>`;
+                html += `<div class='mt-6 text-sm text-gray-600'>Prepared by: <b>${data.prepared_by}</b><br>Date: <b>${data.date}</b></div>`;
+                html += `</div></div>`;
+                return html;
+            }
+            function printFullReport() {
+                if (!lastReportHtml) { alert('Please generate the report first.'); return; }
+                const win = window.open('', '', 'width=900,height=700');
+                win.document.write('<html><head><title>Print Report</title><style>body{font-family:sans-serif;}h3{margin-top:1.5em;}ul{margin-bottom:1em;}li{margin-bottom:0.3em;}</style></head><body>' + lastReportHtml + '</body></html>');
+                win.document.close();
+                win.focus();
+                win.print();
+            }
+            function exportFullReport(type) {
+                if (type === 'pdf') {
+                    window.open('./export_full_report_pdf.php', '_blank');
+                } else if (type === 'excel') {
+                    window.open('./export_full_report_excel.php', '_blank');
+                }
+            }
+            </script>
+        </div>
         <!-- Analytics Dashboard Section -->
         <div class="<?= $activeTab === 'analytics' ? '' : 'hidden' ?> p-6 bg-white rounded-lg border border-gray-200" id="analytics" role="tabpanel" aria-labelledby="analytics-tab">
             <div class="flex justify-between items-center mb-6">
@@ -2264,6 +2544,41 @@ function refreshAnalytics() {
     setTimeout(() => {
         location.reload();
     }, 1000);
+}
+
+// Loader animation styles for analytics loader (reuse from Reports tab)
+if (!document.getElementById('chtLoaderUniqueStyles')) {
+    const style = document.createElement('style');
+    style.id = 'chtLoaderUniqueStyles';
+    style.innerHTML = `
+        .cht-analytics-loader-bg {
+            position: fixed; z-index: 9999; top: 0; left: 0; width: 100vw; height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(248,250,252,0.85);
+            backdrop-filter: blur(6px);
+        }
+        .cht-loader-unique {
+            display: flex; flex-direction: row; gap: 0.7em; margin-bottom: 1.5rem;
+        }
+        .cht-loader-vertical {
+            /* No longer used for horizontal layout */
+        }
+        .cht-loader-bounce {
+            width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #2563eb 60%, #38bdf8 100%);
+            animation: cht-bounce 1.1s infinite cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #22c55e 60%, #bef264 100%); }
+        .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #f59e42 60%, #fbbf24 100%); }
+        @keyframes cht-bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-30px); }
+        }
+        .cht-loader-text {
+            color: #22223b; font-size: 1.2rem; font-weight: 500; letter-spacing: 0.01em;
+            text-align: center;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 // Chart initialization

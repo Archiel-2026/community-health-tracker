@@ -1085,24 +1085,16 @@ try {
                     </div>
                     <div class="card-body">
                         <form method="POST" action="" enctype="multipart/form-data">
-                            <!-- Redesigned Loading Animation Overlay -->
-                            <div id="announcement-loading" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(30,41,59,0.7);z-index:2000;align-items:center;justify-content:center;" class="flex">
-                                <div class="flex flex-col items-center justify-center w-full h-full">
-                                    <div class="bg-gradient-to-br from-blue-100 via-white to-blue-50 rounded-2xl shadow-2xl px-10 py-10 flex flex-col items-center border border-blue-200 animate-fade-in">
-                                        <div class="relative mb-7">
-                                            <svg class="animate-spin-smooth h-16 w-16 text-blue-400 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48">
-                                                <circle class="opacity-20" cx="24" cy="24" r="20" stroke="#3498db" stroke-width="6" />
-                                                <path class="opacity-90" fill="#3498db" d="M24 4a20 20 0 0 1 20 20h-6a14 14 0 0 0-14-14V4z">
-                                                    <animateTransform attributeName='transform' type='rotate' from='0 24 24' to='360 24 24' dur='1.2s' repeatCount='indefinite' />
-                                                </path>
-                                            </svg>
-                                            <svg class="absolute top-2 left-2 h-12 w-12 text-blue-200 animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 48 48">
-                                                <circle cx="24" cy="24" r="18" stroke="#b6d0f7" stroke-width="4" />
-                                            </svg>
-                                        </div>
-                                        <span id="announcement-loading-message" class="text-lg font-medium text-blue-800 text-center tracking-wide" style="font-family: Poppins, Arial, Helvetica, sans-serif;">Sending announcement and emails...</span>
-                                        <span class="mt-3 text-base text-slate-500 text-center" style="font-family: Poppins, Arial, Helvetica, sans-serif; font-weight: 400;">Please wait while we process your announcement.<br>Do not close or refresh this page.</span>
+                            <!-- Modern Loader Animation Overlay (matches Reports/Analytics) -->
+                            <div id="announcement-loading" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(248,250,252,0.85);z-index:2000;align-items:center;justify-content:center;" class="flex cht-analytics-loader-bg">
+                                <div class="cht-loader-bg">
+                                    <div class="cht-loader-unique">
+                                        <div class="cht-loader-bounce"></div>
+                                        <div class="cht-loader-bounce"></div>
+                                        <div class="cht-loader-bounce"></div>
                                     </div>
+                                    <div class="cht-loader-text" id="announcement-loading-message">Sending announcement and emails...</div>
+                                    <span class="mt-3 text-base text-slate-500 text-center" style="font-family: Poppins, Arial, Helvetica, sans-serif; font-weight: 400;">Please wait while we process your announcement.<br>Do not close or refresh this page.</span>
                                 </div>
                             </div>
                             
@@ -1882,17 +1874,13 @@ try {
                 button.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const tabId = this.dataset.tab;
-                    
-                    // Update active tab button
                     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
-                    
-                    // Show active tab content
                     document.getElementById('active-tab-content').classList.toggle('hidden', tabId !== 'active');
                     document.getElementById('archived-tab-content').classList.toggle('hidden', tabId !== 'archived');
                 });
             });
-            
+
             // Audience selection
             document.querySelectorAll('input[name="audience_type"]').forEach(radio => {
                 radio.addEventListener('change', function() {
@@ -1909,6 +1897,7 @@ try {
                         typeButtons.classList.add('hidden');
                         submitDiv.classList.remove('hidden');
                     }
+                    validateAnnouncementForm();
                 });
             });
 
@@ -1920,8 +1909,15 @@ try {
                         if (checkbox) {
                             checkbox.checked = !checkbox.checked;
                             updateSelectedUserCount();
+                            validateAnnouncementForm();
                         }
                     }
+                });
+            });
+            document.querySelectorAll('.user-checkbox').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    updateSelectedUserCount();
+                    validateAnnouncementForm();
                 });
             });
 
@@ -1931,27 +1927,24 @@ try {
                 userSearch.addEventListener('input', function() {
                     const searchTerm = this.value.toLowerCase();
                     const userItems = document.querySelectorAll('.checkbox-item');
-                    
                     userItems.forEach(item => {
                         const text = item.textContent.toLowerCase();
                         item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
                     });
-                    
                     updateSelectedUserCount();
+                    validateAnnouncementForm();
                 });
             }
 
             // Add character counter event listeners
             const editTitle = document.getElementById('edit-title');
             const editMessage = document.getElementById('edit-message');
-
             if (editTitle) {
                 editTitle.addEventListener('input', function() {
                     updateCharCounter('edit-title', 'edit-title-counter', 200);
                     this.classList.remove('border-red-500');
                 });
             }
-
             if (editMessage) {
                 editMessage.addEventListener('input', function() {
                     updateCharCounter('edit-message', 'edit-message-counter', 1000);
@@ -1961,6 +1954,7 @@ try {
 
             // Initialize user count
             updateSelectedUserCount();
+            validateAnnouncementForm();
 
             // Close modal when clicking outside
             document.querySelectorAll('.modal').forEach(modal => {
@@ -1970,14 +1964,12 @@ try {
                     }
                 });
             });
-
             // Close modal with Escape key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeAllModals();
                 }
             });
-
             // Add click listeners to close buttons
             document.querySelectorAll('.close-modal').forEach(button => {
                 button.addEventListener('click', function(e) {
@@ -1985,7 +1977,51 @@ try {
                     closeAllModals();
                 });
             });
+            // Add input listeners for required fields
+            document.querySelector('input[name="title"]').addEventListener('input', validateAnnouncementForm);
+            document.querySelector('textarea[name="message"]').addEventListener('input', validateAnnouncementForm);
         });
-    </script>
+
+        // Validate announcement form and disable/enable submit buttons
+        function validateAnnouncementForm() {
+            const title = document.querySelector('input[name="title"]');
+            const message = document.querySelector('textarea[name="message"]');
+            const audienceType = document.querySelector('input[name="audience_type"]:checked')?.value;
+            const submitBtn = document.querySelector('#announcement-submit button.btn-success');
+            const basicBtn = document.querySelector('#announcement-type-buttons button[name="post_announcement"][value="basic"]');
+            const labBtn = document.querySelector('#announcement-type-buttons button[name="post_announcement"][value="lab_result"]');
+            let valid = true;
+            if (!title || !title.value.trim()) valid = false;
+            if (!message || !message.value.trim()) valid = false;
+            if (audienceType === 'specific') {
+                const checkedUsers = document.querySelectorAll('.user-checkbox:checked');
+                if (checkedUsers.length === 0) valid = false;
+            }
+            if (submitBtn) submitBtn.disabled = !valid;
+            if (basicBtn) basicBtn.disabled = !valid;
+            if (labBtn) labBtn.disabled = !valid;
+        }
+        </script>
+        <!-- Loader animation styles for announcement loader (copied from dashboard.php) -->
+        <style>
+        .cht-loader-bg { display: flex; flex-direction: column; align-items: center; }
+        .cht-loader-unique {
+            display: flex; gap: 0.7em; margin-bottom: 1.5rem;
+        }
+        .cht-loader-bounce {
+            width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #2563eb 60%, #38bdf8 100%);
+            animation: cht-bounce 1.1s infinite cubic-bezier(.68,-0.55,.27,1.55);
+        }
+        .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #22c55e 60%, #bef264 100%); }
+        .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #f59e42 60%, #fbbf24 100%); }
+        @keyframes cht-bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-30px); }
+        }
+        .cht-loader-text {
+            color: #22223b; font-size: 1.2rem; font-weight: 500; letter-spacing: 0.01em;
+            text-align: center;
+        }
+        </style>
 </body>
 </html>
