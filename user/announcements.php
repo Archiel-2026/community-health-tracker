@@ -768,7 +768,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
         .empty-state-title {
             font-size: 1.25rem;
             font-weight: 600;
-            color: #111827;
+            color: #8d8d8d;
             margin-bottom: 12px;
         }
 
@@ -1002,6 +1002,8 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                 General Announcements
                             </button>
                         </div>
+
+                        <!-- LAB RESULT CONTENT -->
                         <div id="labResultsSection">
                             <?php if (!empty($labResults)): ?>
                                 <style>
@@ -1134,12 +1136,28 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
+
+                                <!-- NO LABORATORY RESULT MESSAGE -->
                             <?php else: ?>
-                                <div class="text-center py-10 sm:py-20">
-                                    <div class="empty-state-title">No Laboratory Results</div>
+                                <div class="flex flex-col items-center justify-center text-center py-10 sm:py-20 min-h-[300px]">
+                                    <div class="mb-4">
+                                        <svg width="100" height="100" viewBox="0 0 100 100" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M8.33301 97.918H91.6663M36.0247 62.5013C38.0026 64.7119 40.4768 66.4216 43.244 67.49C46.0112 68.5584 48.9924 68.9551 51.9427 68.6474C54.893 68.3397 57.7282 67.3364 60.2153 65.7199C62.7025 64.1035 64.7706 61.92 66.2499 59.3488C67.7291 56.7777 68.5772 53.8923 68.7245 50.9297C68.8718 47.967 68.3141 45.0117 67.0972 42.3065C65.8803 39.6014 64.039 37.2235 61.7244 35.3683C59.4099 33.5131 56.6882 32.2335 53.783 31.6346M53.783 31.6346L43.7497 41.668L29.1663 27.0846L51.958 4.29297C52.6583 3.59249 53.4898 3.03683 54.4049 2.65773C55.32 2.27862 56.3008 2.0835 57.2913 2.0835C58.2819 2.0835 59.2627 2.27862 60.1778 2.65773C61.0929 3.03683 61.9243 3.59249 62.6247 4.29297L66.5413 8.20964C67.2418 8.90996 67.7975 9.74142 68.1766 10.6565C68.5557 11.5716 68.7508 12.5524 68.7508 13.543C68.7508 14.5335 68.5557 15.5143 68.1766 16.4294C67.7975 17.3445 67.2418 18.176 66.5413 18.8763L63.5747 21.843M53.783 31.6346L63.5747 21.843M21.3497 62.5013C23.2047 66.7391 25.9751 70.5136 29.4619 73.5537C32.9486 76.5939 37.0653 78.8242 41.5163 80.0846M41.5163 80.0846C43.9164 78.1409 46.9112 77.0802 49.9997 77.0802C53.0881 77.0802 56.0829 78.1409 58.483 80.0846M41.5163 80.0846C40.0169 81.2937 38.7973 82.8133 37.9413 84.5388L35.4163 89.5846C35.4163 89.5846 31.2497 97.918 22.9163 97.918H77.083C68.7497 97.918 64.583 89.5846 64.583 89.5846L62.058 84.5388C61.2021 82.8133 59.9824 81.2937 58.483 80.0846M27.083 39.5846L33.333 45.8346M8.33301 56.2513H45.833M63.5747 21.843C69.2887 24.6004 74.0285 29.0311 77.1644 34.5464C80.3003 40.0618 81.6839 46.4008 81.1314 52.7212C80.5788 59.0417 78.1163 65.0444 74.0709 69.932C70.0255 74.8195 64.5888 78.3605 58.483 80.0846M64.583 6.2513L69.1663 1.66797"
+                                                stroke="black" stroke-opacity="0.7" />
+                                        </svg>
+                                    </div>
+                                    <div class="empty-state-title">
+                                        No Laboratory Results
+                                    </div>
+                                    <p class="empty-state-text">There are currently no active Laboratory Results. Check back
+                                        later for
+                                        updates.</p>
                                 </div>
                             <?php endif; ?>
                         </div>
+
                         <!-- GENERAL ANNOUNCEMENT CONTENT -->
                         <div id="generalAnnouncementsSection" style="display:none;">
                             <?php if (!empty($basicAnnouncements)): ?>
@@ -1287,21 +1305,22 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
+
+                            <!-- NO ANNOUNCEMENT MESSAGE -->
+                            <?php if (empty($labResults) && empty($basicAnnouncements)): ?>
+                                <div class="text-center py-10 sm:py-20">
+                                    <div class="empty-state-icon">
+                                        <i class="fas fa-bullhorn icon-3xl"></i>
+                                    </div>
+                                    <h3 class="empty-state-title">No Announcements</h3>
+                                    <p class="empty-state-text">There are currently no active announcements. Check back
+                                        later for
+                                        updates.</p>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
-
-                <!-- No Announcements Message -->
-                <?php if (empty($labResults) && empty($basicAnnouncements)): ?>
-                    <div class="text-center py-10 sm:py-20">
-                        <div class="empty-state-icon">
-                            <i class="fas fa-bullhorn icon-3xl"></i>
-                        </div>
-                        <h3 class="empty-state-title">No Announcements</h3>
-                        <p class="empty-state-text">There are currently no active announcements. Check back later for
-                            updates.</p>
-                    </div>
-                <?php endif; ?>
             </div>
 
             <!-- Stats Tab -->
@@ -1460,10 +1479,22 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                 </div>
                             <?php endif;
                         endforeach; ?>
-                        <?php if ($acceptedCount + $dismissedCount === 0): ?>
-                            <div class="text-center py-8 text-gray-500">No responded announcements yet.</div>
-                        <?php endif; ?>
                     </div>
+                    <?php if ($acceptedCount + $dismissedCount === 0): ?>
+                        <div class="flex flex-col items-center justify-center text-center py-10 sm:py-20 min-h-[300px]">
+                            <div class="mb-4">
+                                <svg width="100" height="100" viewBox="0 0 100 100" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M18.3751 14.7695C9.93758 21.832 13.0001 33.3529 17.2084 37.6862M42.1251 47.9154C59.3543 48.4987 70.7293 46.0612 79.8334 37.4987C89.4793 28.4154 87.9376 21.5195 83.4584 17.4987C72.9168 8.10286 44.0834 28.3529 31.2501 42.832C22.5001 52.7279 9.45842 70.6445 18.4168 80.332C29.0001 91.7695 49.4167 81.1654 63.6459 68.707"
+                                        stroke="black" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <h3 class="empty-state-title">No Responded Announcement Yet.</h3>
+                            <p class="empty-state-text">There are currently no active announcements. Check back later for
+                                updates.</p>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
