@@ -424,15 +424,19 @@ $activeTab = $_GET['tab'] ?? 'consultations';
         flex-wrap: wrap;
         border-bottom: 1px solid #e1e1e1;
         margin-left: 2rem;
+        padding-bottom: 2em;
         margin-right: 2rem;
         /* background: white; */
         overflow: hidden;
         gap: 0.5rem;
     }
+    .text-gray-sample {
+        color: rgba(48, 48, 48, 0.4);
+    }
 
     @media (min-width: 640px) {
         .tab-nav-container {
-            padding: 2rem 0;
+            /* padding: 2rem 0; */
             gap: 0.75rem;
         }
     }
@@ -982,8 +986,22 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                 <select class="tab-select" id="mobileTabSelect" aria-label="Select tab">
                     <option value="consultations" selected>Doctor's Notes</option>
                     <option value="patients">Personal Records</option>
-                    <option value="medical">Health Metrics</option>
+                    <option value="medical">Health Records</option>
                 </select>
+            </div>
+
+            <div class="flex flex-col md:flex-row items-center px-6 py-8 gap-2">
+                <div>
+                    <svg class="h-14 w-14" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M30.7691 9.67537C31.4665 8.978 32.5969 8.978 33.2942 9.67537C33.9916 10.3727 33.9916 11.5031 33.2942 12.2005L20.4943 25.0004L33.2942 37.8004C33.9916 38.4977 33.9916 39.6281 33.2942 40.3255C32.5969 41.0228 31.4665 41.0228 30.7691 40.3255L16.7066 26.263C16.0093 25.5656 16.0093 24.4352 16.7066 23.7379L30.7691 9.67537Z"
+                            fill="black" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-2xl text-gray-200 mb-2">My Records</h3>
+                    <p class="text-gray-sample">View your medical history and health records</p>
+                </div>
             </div>
 
             <!-- Desktop Tab Navigation (visible on desktop only) -->
