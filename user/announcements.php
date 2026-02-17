@@ -1559,7 +1559,24 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                             <span style="color: #10B981;">${postDate}</span>
                         </div>
                     </div>
-                    
+
+                    <div style="margin-bottom: 1rem; text-align: left;">
+                        <span style="font-weight: 500; color: #374151;">Posted by:</span>
+                        <span style="
+                            display: inline-block;
+                            background: #cce6ff;
+                            color: #3390e6;
+                            border-radius: 999px;
+                            padding: 0.15em 1em;
+                            font-weight: 500;
+                            font-size: 1em;
+                            margin-left: 0.5em;
+                            margin-bottom: 0.2em;">
+                            ${announcement.staff_position ? announcement.staff_position : 'Staff'}
+                        </span><br>
+                        <span style="color: #0f172a; font-weight: 600;">${announcement.staff_name ? announcement.staff_name : 'Unknown'}</span>
+                    </div>
+
                     ${announcement.expiry_date ? `
                         <div style="background: #DBEAFE; padding: 1rem; border-radius: 8px; border: 1px solid #BAE6FD; margin-bottom: 1rem;">
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -1570,7 +1587,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                             </div>
                         </div>
                     ` : ''}
-                    
+
                     ${announcement.image_path ? `
                         <div style="margin-bottom: 1rem;">
                             <img src="${announcement.image_path}" 
@@ -1579,7 +1596,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                  onclick="openImageModal('${announcement.image_path}')">
                         </div>
                     ` : ''}
-                    
+
                     <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; border: 1px solid #e5e7eb; line-height: 1.6; color: #374151; white-space: pre-line;">
                         ${announcement.message || 'No message provided'}
                     </div>
