@@ -1140,63 +1140,65 @@ function getTimeAgo($datetime)
                                             $badge = '';
                                             $priorityBadge = '';
                                             $priority = strtolower($announcement['priority']);
+                                            $greenColor = 'style="color: #16A34A;"';
                                             $highBg = 'style="background-color: #e6bcbc; color: #8b2323;"';
+                                            $mediumBg = 'style="background-color: #FD88024D; color: #FD8802"';
                                             if ((isset($announcement['announcement_type']) && $announcement['announcement_type'] === 'lab_result') || (isset($announcement['announcement_category']) && $announcement['announcement_category'] === 'lab_result')) {
-                                                $badge = '<span class="px-2 py-1 rounded bg-green-600 text-white font-semibold text-sm">Lab Result</span>';
+                                                $badge = '<span class="px-4 py-2 rounded bg-first-card font-medium text-lg" '.$greenColor.'>Lab Result</span>';
                                                 if ($priority === 'high') {
-                                                    $priorityBadge = '<span class="px-2 py-1 rounded font-semibold text-sm ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
                                                 } elseif ($priority === 'medium') {
-                                                    $priorityBadge = '<span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800 font-semibold text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" '.$mediumBg.'>' . ucfirst($announcement['priority']) . '</span>';
                                                 } else {
-                                                    $priorityBadge = '<span class="px-2 py-1 rounded bg-blue-100 text-blue-600 font-semibold text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-medium text-lg ml-2">' . ucfirst($announcement['priority']) . '</span>';
                                                 }
                                             } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'public') {
-                                                $badge = '<span class="px-2 py-1 rounded bg-blue-600 text-white font-semibold text-sm">For All Resident</span>';
+                                                $badge = '<span class="px-4 py-2 rounded bg-second-card text-[#2563EB] font-medium text-lg">For All Resident</span>';
                                                 if ($priority === 'high') {
-                                                    $priorityBadge = '<span class="px-2 py-1 rounded font-semibold text-sm ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
                                                 } elseif ($priority === 'medium') {
-                                                    $priorityBadge = '<span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800 font-semibold text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" '.$mediumBg.'>' . ucfirst($announcement['priority']) . '</span>';
                                                 } else {
-                                                    $priorityBadge = '<span class="px-2 py-1 rounded bg-blue-100 text-blue-600 font-semibold text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-medium text-lg ml-2">' . ucfirst($announcement['priority']) . '</span>';
                                                 }
                                             } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'specific') {
-                                                $badge = '<span class="px-2 py-1 rounded bg-blue-600 text-white font-semibold text-sm">For Specific Resident</span>';
+                                                $badge = '<span class="px-4 py-2 rounded bg-second-card text-[#2563EB] font-medium text-lg">For Specific Resident</span>';
                                                 if ($priority === 'high') {
-                                                    $priorityBadge = '<span class="px-2 py-0.5 rounded font-semibold text-sm ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
                                                 } elseif ($priority === 'medium') {
-                                                    $priorityBadge = '<span class="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 font-semibold text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" '.$mediumBg.'>' . ucfirst($announcement['priority']) . '</span>';
                                                 } else {
-                                                    $priorityBadge = '<span class="px-2 py-0.5 rounded bg-blue-100 text-blue-600 font-semibold text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-blue-600 font-medium text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
                                                 }
                                             }
                                             // Prepare staff display for new layout
                                             $staffPosition = !empty($announcement['staff_position']) ? htmlspecialchars($announcement['staff_position']) : '';
                                             $staffName = !empty($announcement['staff_name']) ? htmlspecialchars($announcement['staff_name']) : '';
                                             ?>
-                                            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow mb-3 announcement-item <?= $index >= 3 ? 'opacity-0 h-0 overflow-hidden' : '' ?>"
+                                            <div class="border border-gray-200 rounded-lg p-4  mb-3 announcement-item <?= $index >= 3 ? 'opacity-0 h-0 overflow-hidden' : '' ?>"
                                                 data-announcement-id="<?= htmlspecialchars($announcement['id']) ?>">
-                                                <div class="flex justify-between items-start mb-2 w-full">
+                                                <div class="flex justify-between items-start w-full">
                                                     <div class="flex gap-2 items-center">
                                                         <?= $badge ?>         <?= $priorityBadge ?>
                                                     </div>
-                                                    <div class="flex flex-col items-end">
-                                                        <span class="text-xs text-gray-500 font-medium mb-0.5">Date Posted
+                                                    <div class="flex flex-col items-start">
+                                                        <span class="text-base font-semibold text-gray-600 mb-0.5">Date Posted
                                                             :</span>
                                                         <span
-                                                            class="inline-block px-3 py-1 rounded bg-gray-200 text-gray-700 text-sm font-semibold"
+                                                            class="inline-block px-4 py-2 rounded bg-gray-200 text-gray-500 text-lg font-semibold"
                                                             style="margin-top:2px;"><?= date('F d, Y', strtotime($announcement['post_date'])) ?></span>
                                                     </div>
                                                 </div>
                                                 <div class="flex items-center gap-2 mb-0.5 mt-1">
-                                                    <span class="text-xs text-gray-500 font-medium">Posted By :</span>
+                                                    <span class="text-base text-gray-400 font-medium">Posted By :</span>
                                                     <?php if ($staffPosition): ?>
                                                         <span
-                                                            class="inline-block px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold text-xs ml-0.5 align-middle"
+                                                            class="inline-block items-center py-0.5 rounded font-medium text-base ml-0.5 align-middle"
                                                             style="margin-left:4px;"><?= $staffPosition ?></span>
                                                     <?php endif; ?>
                                                 </div>
                                                 <?php if ($staffName): ?>
-                                                    <div class="text-base text-gray-800 font-medium mt-0.5 mb-0"><?= $staffName ?>
+                                                    <div class="text-xl text-gray-800 font-medium mt-0.5 mb-0"><?= $staffName ?>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
