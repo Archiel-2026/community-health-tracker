@@ -562,7 +562,6 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             background: #FEF3C7;
             color: #FD8802;
             text-align: center;
-            font-size: medium;
             border-color: #FDE68A;
         }
 
@@ -637,34 +636,34 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            border-radius: 9999px;
+            font-weight: 500;
             border: 1px solid;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 0.95rem;
+            /* font-size: 0.95rem; */
         }
 
         .btn-accept {
-            background: white;
-            color: #10B981;
-            border-color: #10B981;
+            background: #10B981;
+            color: #FFFFFF;
+            /* border-color: #10B981; */
         }
 
         .btn-accept:hover {
-            background: #D1FAE5;
+            background: #0ca06f;
             transform: translateY(-2px);
         }
 
         .btn-dismiss {
-            background: white;
-            color: #6b7280;
+            background: rgba(0, 0, 0, 0.4);
+            color: rgba(255, 255, 255, 0.5);
             border-color: #e5e7eb;
         }
 
         .btn-dismiss:hover {
-            background: #f3f4f6;
+            background: rgba(0, 0, 0, 0.6);
             transform: translateY(-2px);
         }
 
@@ -1263,6 +1262,12 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                                         </div>
                                                     <?php else: ?>
                                                         <span class="badge badge-pending mt-1">
+                                                            <svg class="w-6 h-6" viewBox="0 0 15 15" fill="none"
+                                                                xmlns="http://www.w3.org/2000/svg">
+                                                                <path
+                                                                    d="M12.3748 11.5172L8.17886 7.5L12.3748 3.48281C12.3772 3.48013 12.3797 3.47759 12.3824 3.4752C12.5134 3.34409 12.6026 3.17708 12.6388 2.99528C12.6749 2.81348 12.6563 2.62505 12.5854 2.45379C12.5145 2.28254 12.3944 2.13616 12.2403 2.03314C12.0862 1.93012 11.905 1.87509 11.7197 1.875H3.28218C3.09688 1.8752 2.91579 1.93032 2.76178 2.03338C2.60778 2.13644 2.48778 2.28283 2.41693 2.45406C2.34608 2.62529 2.32757 2.81368 2.36372 2.99542C2.39988 3.17717 2.48909 3.34412 2.62007 3.4752L2.62711 3.48281L6.823 7.5L2.62711 11.5172L2.62007 11.5248C2.48909 11.6559 2.39988 11.8228 2.36372 12.0046C2.32757 12.1863 2.34608 12.3747 2.41693 12.5459C2.48778 12.7172 2.60778 12.8636 2.76178 12.9666C2.91579 13.0697 3.09688 13.1248 3.28218 13.125H11.7197C11.9051 13.125 12.0863 13.0701 12.2405 12.9671C12.3947 12.8641 12.5149 12.7178 12.5859 12.5465C12.6569 12.3752 12.6755 12.1867 12.6394 12.0049C12.6033 11.823 12.514 11.656 12.383 11.5248C12.3801 11.5224 12.3773 11.5199 12.3748 11.5172ZM11.7197 2.8125L7.50093 6.85078L3.28218 2.8125H11.7197ZM3.28218 12.1875L7.50093 8.14922L11.7197 12.1875H3.28218Z"
+                                                                    fill="#FD8802" />
+                                                            </svg>
                                                             Pending
                                                         </span>
                                                     <?php endif; ?>
@@ -1406,8 +1411,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                             </div>
 
                             <div class="stat-icon">
-                                <svg viewBox="0 0 50 50" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
+                                <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path
                                         d="M40.625 6.25H9.375C8.5462 6.25 7.75134 6.57924 7.16529 7.16529C6.57924 7.75134 6.25 8.5462 6.25 9.375V40.625C6.25 41.4538 6.57924 42.2487 7.16529 42.8347C7.75134 43.4208 8.5462 43.75 9.375 43.75H40.625C41.4538 43.75 42.2487 43.4208 42.8347 42.8347C43.4208 42.2487 43.75 41.4538 43.75 40.625V9.375C43.75 8.5462 43.4208 7.75134 42.8347 7.16529C42.2487 6.57924 41.4538 6.25 40.625 6.25ZM40.625 40.625H9.375V9.375H40.625V40.625ZM32.3555 19.8555L27.209 25L32.3555 30.1445C32.5006 30.2897 32.6158 30.462 32.6944 30.6517C32.7729 30.8414 32.8134 31.0447 32.8134 31.25C32.8134 31.4553 32.7729 31.6586 32.6944 31.8483C32.6158 32.038 32.5006 32.2103 32.3555 32.3555C32.2103 32.5006 32.038 32.6158 31.8483 32.6944C31.6586 32.7729 31.4553 32.8134 31.25 32.8134C31.0447 32.8134 30.8414 32.7729 30.6517 32.6944C30.462 32.6158 30.2897 32.5006 30.1445 32.3555L25 27.209L19.8555 32.3555C19.7103 32.5006 19.538 32.6158 19.3483 32.6944C19.1586 32.7729 18.9553 32.8134 18.75 32.8134C18.5447 32.8134 18.3414 32.7729 18.1517 32.6944C17.962 32.6158 17.7897 32.5006 17.6445 32.3555C17.4994 32.2103 17.3842 32.038 17.3056 31.8483C17.2271 31.6586 17.1866 31.4553 17.1866 31.25C17.1866 31.0447 17.2271 30.8414 17.3056 30.6517C17.3842 30.462 17.4994 30.2897 17.6445 30.1445L22.791 25L17.6445 19.8555C17.3513 19.5623 17.1866 19.1646 17.1866 18.75C17.1866 18.3354 17.3513 17.9377 17.6445 17.6445C17.9377 17.3513 18.3354 17.1866 18.75 17.1866C19.1646 17.1866 19.5623 17.3513 19.8555 17.6445L25 22.791L30.1445 17.6445C30.2897 17.4994 30.462 17.3842 30.6517 17.3056C30.8414 17.2271 31.0447 17.1866 31.25 17.1866C31.4553 17.1866 31.6586 17.2271 31.8483 17.3056C32.038 17.3842 32.2103 17.4994 32.3555 17.6445C32.5006 17.7897 32.6158 17.962 32.6944 18.1517C32.7729 18.3414 32.8134 18.5447 32.8134 18.75C32.8134 18.9553 32.7729 19.1586 32.6944 19.3483C32.6158 19.538 32.5006 19.7103 32.3555 19.8555Z"
                                         fill="black" fill-opacity="0.5" />
@@ -1547,8 +1551,6 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
             });
 
             let content = `
@@ -1556,37 +1558,40 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                     <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; text-align: center;">
                         <h3 style="font-size: 1.3rem; font-weight: 500; color: #111827; ">${announcement.title || 'Announcement'}</h3>
                         <div style="background: rgba(16, 185, 129, 0.3); padding: 0.5rem 0.7rem; border-radius: 0.5rem; display: flex; gap: 1rem; font-size: 1.2rem;">
-                            <span style="color: #10B981;">${postDate}</span>
+                            <span style="color: #10B981;">Date Posted: ${postDate}</span>
                         </div>
                     </div>
 
-                    <div style="margin-bottom: 1rem; text-align: left;">
-                        <span style="font-weight: 500; color: #374151;">Posted by:</span>
-                        <span style="
-                            display: inline-block;
-                            background: #cce6ff;
-                            color: #3390e6;
-                            border-radius: 999px;
-                            padding: 0.15em 1em;
-                            font-weight: 500;
-                            font-size: 1em;
-                            margin-left: 0.5em;
-                            margin-bottom: 0.2em;">
-                            ${announcement.staff_position ? announcement.staff_position : 'Staff'}
-                        </span><br>
-                        <span style="color: #0f172a; font-weight: 600;">${announcement.staff_name ? announcement.staff_name : 'Unknown'}</span>
-                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; text-align: left;">
+                        <div>
+                            <span style="font-weight: 300; color: #374151;">Posted by:</span>
+                            <span style="
+                                display: inline-block;
+                                background: #cce6ff;
+                                color: #3390e6;
+                                border-radius: 999px;
+                                padding: 0.15em 1em;
+                                font-weight: 500;
+                                font-size: 1em;
+                                margin-left: 0.5em;
+                                margin-bottom: 0.2em;">
+                                ${announcement.staff_position ? announcement.staff_position : 'Staff'}
+                            </span><br>
+                            <span style="color: #0f172a; font-size: 1.2em; font-weight: 500;">${announcement.staff_name ? announcement.staff_name : 'Unknown'}</span>
+                        </div>
 
-                    ${announcement.expiry_date ? `
-                        <div style="background: #DBEAFE; padding: 1rem; border-radius: 8px; border: 1px solid #BAE6FD; margin-bottom: 1rem;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <i class="fas fa-clock" style="color: #0369A1;"></i>
-                                <div>
-                                    <p style="font-weight: 600; color: #0C4A6E; margin: 0;">Expires: ${new Date(announcement.expiry_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                        <div>
+                            ${announcement.expiry_date ? `
+                                <div style="background: #DBEAFE; padding: 0.5rem 0.7rem; border-radius: 8px; margin-bottom: 1rem;">
+                                    <div style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.75rem;">
+                                        <p style="font-weight: 500; color: #3C96E1; margin: 0;">Expiration Date: ${new Date(announcement.expiry_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            ` : ''}
                         </div>
-                    ` : ''}
+                    </div>
+
+                    
 
                     ${announcement.image_path ? `
                         <div style="margin-bottom: 1rem;">
@@ -1597,52 +1602,85 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                         </div>
                     ` : ''}
 
-                    <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; border: 1px solid #e5e7eb; line-height: 1.6; color: #374151; white-space: pre-line;">
+                    <div style="background: #f9fafb; padding: 1.5rem 1.5rem; border-radius: 8px; border: 1px solid #e5e7eb; line-height: 1.6; color: #000000; font-size: 1rem">
                         ${announcement.message || 'No message provided'}
                     </div>
-            `;
+                    `;
 
             if (announcement.user_status === 'accepted') {
                 content += `
-                    <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #D1FAE5; border-radius: 8px; border: 1px solid #A7F3D0; margin-top: 1rem;">
-                        <i class="fas fa-check-circle" style="color: #059669; font-size: 1.25rem;"></i>
-                        <div>
-                            <p style="font-weight: 600; color: #065F46; margin: 0;">Accepted</p>
-                        </div>
-                    </div>
-                `;
+                    <div style="
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        padding: 0.5rem 1rem;
+                        background: #D1FAE5;
+                        border-radius: 9999px;
+                        margin-top: 1rem;
+                    ">
+                        <svg class="w-8 h-8" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14.2456 8.06695C14.3066 8.1279 14.355 8.20028 14.388 8.27994C14.421 8.35961 14.438 8.44501 14.438 8.53125C14.438 8.61749 14.421 8.70289 14.388 8.78255C14.355 8.86222 14.3066 8.9346 14.2456 8.99555L9.6518 13.5893C9.59085 13.6503 9.51848 13.6987 9.43881 13.7317C9.35914 13.7648 9.27374 13.7818 9.1875 13.7818C9.10126 13.7818 9.01587 13.7648 8.9362 13.7317C8.85653 13.6987 8.78415 13.6503 8.72321 13.5893L6.75446 11.6205C6.63132 11.4974 6.56214 11.3304 6.56214 11.1562C6.56214 10.9821 6.63132 10.8151 6.75446 10.692C6.8776 10.5688 7.04461 10.4996 7.21875 10.4996C7.3929 10.4996 7.55991 10.5688 7.68305 10.692L9.1875 12.1972L13.317 8.06695C13.3779 8.00594 13.4503 7.95753 13.5299 7.92451C13.6096 7.89148 13.695 7.87448 13.7813 7.87448C13.8675 7.87448 13.9529 7.89148 14.0326 7.92451C14.1122 7.95753 14.1846 8.00594 14.2456 8.06695ZM19.0313 10.5C19.0313 12.1873 18.5309 13.8368 17.5935 15.2397C16.6561 16.6427 15.3237 17.7361 13.7648 18.3818C12.2059 19.0276 10.4905 19.1965 8.83564 18.8673C7.18074 18.5381 5.66062 17.7256 4.4675 16.5325C3.27438 15.3394 2.46186 13.8193 2.13268 12.1644C1.8035 10.5095 1.97245 8.79411 2.61816 7.23523C3.26387 5.67635 4.35734 4.34395 5.76029 3.40652C7.16325 2.4691 8.81268 1.96875 10.5 1.96875C12.7619 1.97114 14.9305 2.87073 16.5299 4.47013C18.1293 6.06954 19.0289 8.2381 19.0313 10.5ZM17.7188 10.5C17.7188 9.07227 17.2954 7.67659 16.5022 6.48948C15.709 5.30236 14.5816 4.37711 13.2625 3.83074C11.9434 3.28437 10.492 3.14142 9.09169 3.41996C7.69139 3.69849 6.40514 4.38601 5.39558 5.39557C4.38602 6.40513 3.6985 7.69139 3.41996 9.09169C3.14142 10.492 3.28438 11.9434 3.83075 13.2625C4.37712 14.5815 5.30236 15.709 6.48948 16.5022C7.6766 17.2954 9.07227 17.7187 10.5 17.7187C12.4139 17.7166 14.2487 16.9553 15.602 15.602C16.9553 14.2487 17.7166 12.4139 17.7188 10.5Z" fill="#10B981"/>
+                        </svg>
+
+                        <span style="
+                            font-weight: 500;
+                            color: #10B981;
+                            line-height: 1;
+                        ">
+                            Accepted
+                        </span>
+                    </div>`;
+
             } else if (announcement.user_status === 'dismissed') {
                 content += `
-                    <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #F3F4F6; border-radius: 8px; border: 1px solid #E5E7EB; margin-top: 1rem;">
-                        <i class="fas fa-times-circle" style="color: #6b7280; font-size: 1.25rem;"></i>
-                        <div>
-                            <p style="font-weight: 600; color: #374151; margin: 0;">Dismissed</p>
-                        </div>
-                    </div>
-                `;
+                    <div style="
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.5rem;
+                        padding: 0.5rem 1rem;
+                        background: #F3F4F6;
+                        border-radius: 9999px;
+                        margin-top: 1rem;
+                    ">
+                        <svg class="w-8 h-8" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10.5 1.75C15.3326 1.75 19.25 5.66738 19.25 10.5C19.25 15.3326 15.3326 19.25 10.5 19.25C5.66738 19.25 1.75 15.3326 1.75 10.5C1.75 5.66738 5.66738 1.75 10.5 1.75ZM13.5887 7.41125L13.5153 7.34738C13.4038 7.26496 13.269 7.21997 13.1304 7.21887C12.9917 7.21777 12.8563 7.26061 12.7435 7.34125L12.6613 7.41125L10.5 9.57163L8.33875 7.41037L8.26525 7.34738C8.15375 7.26496 8.01902 7.21997 7.88037 7.21887C7.74172 7.21777 7.60629 7.26061 7.4935 7.34125L7.41125 7.41125L7.34738 7.48475C7.26496 7.59625 7.21997 7.73098 7.21887 7.86963C7.21777 8.00828 7.26061 8.14371 7.34125 8.2565L7.41125 8.33875L9.57163 10.5L7.41037 12.6613L7.34738 12.7347C7.26496 12.8462 7.21997 12.981 7.21887 13.1196C7.21777 13.2583 7.26061 13.3937 7.34125 13.5065L7.41125 13.5887L7.48475 13.6526C7.59625 13.735 7.73098 13.78 7.86963 13.7811C8.00828 13.7822 8.14371 13.7394 8.2565 13.6587L8.33875 13.5887L10.5 11.4284L12.6613 13.5896L12.7347 13.6526C12.8462 13.735 12.981 13.78 13.1196 13.7811C13.2583 13.7822 13.3937 13.7394 13.5065 13.6587L13.5887 13.5887L13.6526 13.5153C13.735 13.4038 13.78 13.269 13.7811 13.1304C13.7822 12.9917 13.7394 12.8563 13.6587 12.7435L13.5887 12.6613L11.4284 10.5L13.5896 8.33875L13.6526 8.26525C13.735 8.15375 13.78 8.01902 13.7811 7.88037C13.7822 7.74172 13.7394 7.60629 13.6587 7.4935L13.5887 7.41125Z" fill="black" fill-opacity="0.5"/>
+                        </svg>
+                        <span style="
+                            font-weight: 500;
+                            color: #374151;
+                            line-height: 1;
+                        ">
+                            Dismissed
+                        </span>
+                    </div>`;
             } else {
                 content += `
-                    <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-                        <form method="POST" action="" style="flex: 1;">
-                            <input type="hidden" name="announcement_id" value="${announcement.id}">
-                            <button type="submit" name="respond_to_announcement" value="accepted" 
-                                    class="btn-response btn-accept" style="width: 100%;">
-                                <i class="fas fa-check-circle"></i>
-                                Accept
-                            </button>
-                        </form>
-                        <form method="POST" action="" style="flex: 1;">
-                            <input type="hidden" name="announcement_id" value="${announcement.id}">
-                            <button type="submit" name="respond_to_announcement" value="dismissed" 
-                                    class="btn-response btn-dismiss" style="width: 100%;">
-                                <i class="fas fa-times-circle"></i>
-                                Dismiss
-                            </button>
-                        </form>
-                    </div>
-                `;
+                    <form method="POST" action="">
+                        <div class="flex flex-col md:flex-row mt-4 gap-4">
+                            <div>
+                                <input type="hidden" name="announcement_id" value="${announcement.id}">
+                                <button type="submit" name="respond_to_announcement" value="accepted" 
+                                        class="btn-response btn-accept">
+                                    <svg class="h-8 w-8" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M14.2456 8.06695C14.3066 8.1279 14.355 8.20028 14.388 8.27994C14.421 8.35961 14.438 8.44501 14.438 8.53125C14.438 8.61749 14.421 8.70289 14.388 8.78255C14.355 8.86222 14.3066 8.9346 14.2456 8.99555L9.6518 13.5893C9.59085 13.6503 9.51848 13.6987 9.43881 13.7317C9.35914 13.7648 9.27374 13.7818 9.1875 13.7818C9.10126 13.7818 9.01587 13.7648 8.9362 13.7317C8.85653 13.6987 8.78415 13.6503 8.72321 13.5893L6.75446 11.6205C6.63132 11.4974 6.56214 11.3304 6.56214 11.1562C6.56214 10.9821 6.63132 10.8151 6.75446 10.692C6.8776 10.5688 7.04461 10.4996 7.21875 10.4996C7.3929 10.4996 7.55991 10.5688 7.68305 10.692L9.1875 12.1972L13.317 8.06695C13.3779 8.00594 13.4503 7.95753 13.5299 7.92451C13.6096 7.89148 13.695 7.87448 13.7813 7.87448C13.8675 7.87448 13.9529 7.89148 14.0326 7.92451C14.1122 7.95753 14.1846 8.00594 14.2456 8.06695ZM19.0313 10.5C19.0313 12.1873 18.5309 13.8368 17.5935 15.2397C16.6561 16.6427 15.3237 17.7361 13.7648 18.3818C12.2059 19.0276 10.4905 19.1965 8.83564 18.8673C7.18074 18.5381 5.66062 17.7256 4.4675 16.5325C3.27438 15.3394 2.46186 13.8193 2.13268 12.1644C1.8035 10.5095 1.97245 8.79411 2.61816 7.23523C3.26387 5.67635 4.35734 4.34395 5.76029 3.40652C7.16325 2.4691 8.81268 1.96875 10.5 1.96875C12.7619 1.97114 14.9305 2.87073 16.5299 4.47013C18.1293 6.06954 19.0289 8.2381 19.0313 10.5ZM17.7188 10.5C17.7188 9.07227 17.2954 7.67659 16.5022 6.48948C15.709 5.30236 14.5816 4.37711 13.2625 3.83074C11.9434 3.28437 10.492 3.14142 9.09169 3.41996C7.69139 3.69849 6.40514 4.38601 5.39558 5.39557C4.38602 6.40513 3.6985 7.69139 3.41996 9.09169C3.14142 10.492 3.28438 11.9434 3.83075 13.2625C4.37712 14.5815 5.30236 15.709 6.48948 16.5022C7.6766 17.2954 9.07227 17.7187 10.5 17.7187C12.4139 17.7166 14.2487 16.9553 15.602 15.602C16.9553 14.2487 17.7166 12.4139 17.7188 10.5Z" fill="white"/>
+                                    </svg>
+                                    Accept
+                                </button>
+                            </div>
+                            <div>
+                                <input type="hidden" name="announcement_id" value="${announcement.id}">
+                                <button type="submit" name="respond_to_announcement" value="dismissed" 
+                                        class="btn-response btn-dismiss">
+                                    <svg class="h-8 w-8" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10.5 1.75C15.3326 1.75 19.25 5.66738 19.25 10.5C19.25 15.3326 15.3326 19.25 10.5 19.25C5.66738 19.25 1.75 15.3326 1.75 10.5C1.75 5.66738 5.66738 1.75 10.5 1.75ZM13.5887 7.41125L13.5153 7.34738C13.4038 7.26496 13.269 7.21997 13.1304 7.21887C12.9917 7.21777 12.8563 7.26061 12.7435 7.34125L12.6613 7.41125L10.5 9.57163L8.33875 7.41037L8.26525 7.34738C8.15375 7.26496 8.01902 7.21997 7.88037 7.21887C7.74172 7.21777 7.60629 7.26061 7.4935 7.34125L7.41125 7.41125L7.34738 7.48475C7.26496 7.59625 7.21997 7.73098 7.21887 7.86963C7.21777 8.00828 7.26061 8.14371 7.34125 8.2565L7.41125 8.33875L9.57163 10.5L7.41037 12.6613L7.34738 12.7347C7.26496 12.8462 7.21997 12.981 7.21887 13.1196C7.21777 13.2583 7.26061 13.3937 7.34125 13.5065L7.41125 13.5887L7.48475 13.6526C7.59625 13.735 7.73098 13.78 7.86963 13.7811C8.00828 13.7822 8.14371 13.7394 8.2565 13.6587L8.33875 13.5887L10.5 11.4284L12.6613 13.5896L12.7347 13.6526C12.8462 13.735 12.981 13.78 13.1196 13.7811C13.2583 13.7822 13.3937 13.7394 13.5065 13.6587L13.5887 13.5887L13.6526 13.5153C13.735 13.4038 13.78 13.269 13.7811 13.1304C13.7822 12.9917 13.7394 12.8563 13.6587 12.7435L13.5887 12.6613L11.4284 10.5L13.5896 8.33875L13.6526 8.26525C13.735 8.15375 13.78 8.01902 13.7811 7.88037C13.7822 7.74172 13.7394 7.60629 13.6587 7.4935L13.5887 7.41125Z" fill="white" fill-opacity="0.5"/>
+                                    </svg>
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
+                    </form>`;
             }
-
             content += `</div>`;
 
             modalContent.innerHTML = content;
