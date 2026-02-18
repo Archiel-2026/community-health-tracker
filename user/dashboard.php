@@ -418,7 +418,7 @@ function getTimeAgo($datetime)
         transition: all 0.3s ease;
         border: 1px solid #e5e7eb;
         min-height: 250px;
-        margin-bottom: 8px;
+        /* margin-bottom: 8px; */
         display: flex;
         flex-direction: column;
         /* justify-content: center; */
@@ -680,7 +680,9 @@ function getTimeAgo($datetime)
         background: rgba(147, 51, 234, 0.3);
     }
 
-    .bg-g
+    .bg-lab-result {
+        background-color: #16A34A;
+    }
 
     /* Personal Information Styles */
     .personal-info-item {
@@ -745,7 +747,7 @@ function getTimeAgo($datetime)
 
     /* Ensure all content is visible with top padding */
     .content-visible {
-        padding-top: 25px;
+        /* padding-top: 25px; */
         min-height: 100vh;
     }
 
@@ -879,7 +881,7 @@ function getTimeAgo($datetime)
                     <!-- Consultations Card -->
                     <div class="stats-card">
                         <div>
-                            <div class="flex items-center justify-between mb-12">
+                            <div class="flex items-center justify-between">
                                 <div class="stats-icon-container bg-first-card">
                                     <svg width="72" height="72" viewBox="0 0 66 66" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -896,7 +898,7 @@ function getTimeAgo($datetime)
                                     </p>
                                 </div>
                             </div>
-                            <div>
+                            <div class="mt-20">
                                 <h3 class="text-2xl font-semibold text-gray-700 mb-1">Consultations</h3>
                                 <p class="text-md text-gray-400">Consultations Visits</p>
                             </div>
@@ -906,7 +908,7 @@ function getTimeAgo($datetime)
                     <!-- Announcements Card -->
                     <div class="stats-card">
                         <div>
-                            <div class="flex items-center justify-between mb-12">
+                            <div class="flex items-center justify-between">
                                 <div class="stats-icon-container bg-second-card">
                                     <svg width="72" height="72" viewBox="0 0 66 66" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -923,7 +925,7 @@ function getTimeAgo($datetime)
                                     </p>
                                 </div>
                             </div>
-                            <div>
+                            <div class="mt-20">
                                 <h3 class="text-2xl font-semibold text-gray-700 mb-1">Announcements</h3>
                                 <p class="text-base text-gray-400">Active announcements</p>
                             </div>
@@ -933,7 +935,7 @@ function getTimeAgo($datetime)
                     <!-- Lab Results Card -->
                     <div class="stats-card">
                         <div>
-                            <div class="flex items-center justify-between mb-12">
+                            <div class="flex items-center justify-between">
                                 <div class="stats-icon-container bg-third-card">
                                     <svg width="44" height="44" viewBox="0 0 44 44" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -948,7 +950,7 @@ function getTimeAgo($datetime)
                                     </p>
                                 </div>
                             </div>
-                            <div>
+                            <div class="mt-20">
                                 <h3 class="text-2xl font-semibold text-gray-700 mb-1">Lab Results</h3>
                                 <p class="text-base text-gray-400">Available results</p>
                             </div>
@@ -963,7 +965,8 @@ function getTimeAgo($datetime)
                         <div class="chart-content-wrapper">
                             <div class="flex items-center justify-between mb-5">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 md:w-12 md:h-12 bg-first-card rounded-lg flex items-center justify-center ">
+                                    <div
+                                        class="w-10 h-10 md:w-12 md:h-12 bg-first-card rounded-lg flex items-center justify-center ">
                                         <svg class="w-10 h-10" viewBox="0 0 30 30" fill="none"
                                             xmlns="http://www.w3.org/2000/svg">
                                             <path
@@ -983,8 +986,15 @@ function getTimeAgo($datetime)
                             <div class="space-y-4 flex-1 overflow-auto">
                                 <?php if (empty($consultationNotes)): ?>
                                     <div class="text-center py-10 flex flex-col justify-center items-center h-full">
-                                        <i class="fas fa-file-medical-alt text-4xl text-gray-300 mb-3"></i>
-                                        <p class="text-gray-500 text-lg">No consultation notes found.</p>
+                                        <svg width="70" height="70" class="mb-4" viewBox="0 0 70 70" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M24.0625 26.25C24.0625 25.6698 24.293 25.1134 24.7032 24.7032C25.1134 24.293 25.6698 24.0625 26.25 24.0625H43.75C44.3302 24.0625 44.8866 24.293 45.2968 24.7032C45.707 25.1134 45.9375 25.6698 45.9375 26.25C45.9375 26.8302 45.707 27.3866 45.2968 27.7968C44.8866 28.207 44.3302 28.4375 43.75 28.4375H26.25C25.6698 28.4375 25.1134 28.207 24.7032 27.7968C24.293 27.3866 24.0625 26.8302 24.0625 26.25ZM26.25 37.1875H43.75C44.3302 37.1875 44.8866 36.957 45.2968 36.5468C45.707 36.1366 45.9375 35.5802 45.9375 35C45.9375 34.4198 45.707 33.8634 45.2968 33.4532C44.8866 33.043 44.3302 32.8125 43.75 32.8125H26.25C25.6698 32.8125 25.1134 33.043 24.7032 33.4532C24.293 33.8634 24.0625 34.4198 24.0625 35C24.0625 35.5802 24.293 36.1366 24.7032 36.5468C25.1134 36.957 25.6698 37.1875 26.25 37.1875ZM35 41.5625H26.25C25.6698 41.5625 25.1134 41.793 24.7032 42.2032C24.293 42.6134 24.0625 43.1698 24.0625 43.75C24.0625 44.3302 24.293 44.8866 24.7032 45.2968C25.1134 45.707 25.6698 45.9375 26.25 45.9375H35C35.5802 45.9375 36.1366 45.707 36.5468 45.2968C36.957 44.8866 37.1875 44.3302 37.1875 43.75C37.1875 43.1698 36.957 42.6134 36.5468 42.2032C36.1366 41.793 35.5802 41.5625 35 41.5625ZM61.25 13.125V42.8449C61.2518 43.4197 61.1394 43.989 60.9193 44.52C60.6991 45.0509 60.3756 45.5327 59.9676 45.9375L45.9375 59.9676C45.5327 60.3756 45.0509 60.6991 44.52 60.9193C43.989 61.1394 43.4197 61.2518 42.8449 61.25H13.125C11.9647 61.25 10.8519 60.7891 10.0314 59.9686C9.21094 59.1481 8.75 58.0353 8.75 56.875V13.125C8.75 11.9647 9.21094 10.8519 10.0314 10.0314C10.8519 9.21094 11.9647 8.75 13.125 8.75H56.875C58.0353 8.75 59.1481 9.21094 59.9686 10.0314C60.7891 10.8519 61.25 11.9647 61.25 13.125ZM13.125 56.875H41.5625V43.75C41.5625 43.1698 41.793 42.6134 42.2032 42.2032C42.6134 41.793 43.1698 41.5625 43.75 41.5625H56.875V13.125H13.125V56.875ZM45.9375 45.9375V53.7852L53.7824 45.9375H45.9375Z"
+                                                fill="black" fill-opacity="0.3" />
+                                        </svg>
+                                        <h3 class="text-gray-500 font-semibold text-xl mb-4">No consultation notes yet</h3>
+                                        <p class="text-gray-500 text-lg">Consultation note missing. Visit health center for
+                                            consultation.</p>
                                     </div>
                                 <?php else: ?>
                                     <?php
@@ -1018,7 +1028,7 @@ function getTimeAgo($datetime)
                     </div>
 
                     <!-- RIGHT: 60% - Announcements and Lab Results -->
-                    <div class="chart-container-two w-full md:flex-[0_0_58.5%]">
+                    <div class="chart-container-two w-full md:flex-[0_0_60%]">
                         <div class="chart-content-wrapper">
                             <!-- Lab Results Section (if any) -->
                             <?php if (!empty($labAnnouncements)): ?>
@@ -1123,9 +1133,15 @@ function getTimeAgo($datetime)
 
                                     if (empty($generalAnnouncements)):
                                         ?>
-                                        <div class="h-full flex flex-col justify-center items-center py-8">
-                                            <i class="fas fa-bullhorn text-4xl text-gray-300 mb-3"></i>
-                                            <p class="text-gray-500 text-lg">No announcements yet.</p>
+                                        <div class="text-center py-10 flex flex-col justify-center items-center h-full">
+                                            <svg width="70" height="70" class="mb-4" viewBox="0 0 70 70" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M67.8125 32.8131C67.8089 29.3332 66.4249 25.9969 63.9643 23.5363C61.5037 21.0757 58.1674 19.6917 54.6875 19.6881H43.8047C43.009 19.6416 29.143 18.6654 15.9387 7.5912C15.301 7.05568 14.5238 6.71325 13.6983 6.60414C12.8728 6.49502 12.0333 6.62375 11.2784 6.9752C10.5235 7.32666 9.88464 7.88624 9.43676 8.58821C8.98888 9.29018 8.75063 10.1054 8.75 10.9381V54.6881C8.75011 55.521 8.98799 56.3366 9.43566 57.039C9.88334 57.7413 10.5222 58.3013 11.2772 58.6531C12.0322 59.0049 12.8719 59.1339 13.6976 59.0248C14.5234 58.9158 15.3009 58.5734 15.9387 58.0377C26.2664 49.3752 36.9934 46.8924 41.5625 46.1978V54.8713C41.5616 55.5922 41.7388 56.3022 42.0785 56.9381C42.4181 57.574 42.9097 58.1161 43.5094 58.5162L46.5172 60.5205C47.0986 60.9085 47.7644 61.1516 48.4591 61.2294C49.1537 61.3072 49.8568 61.2174 50.5097 60.9676C51.1625 60.7178 51.7459 60.3152 52.2111 59.7935C52.6763 59.2719 53.0098 58.6464 53.1836 57.9693L56.402 45.8396C59.5594 45.4195 62.4569 43.8671 64.5557 41.4711C66.6545 39.075 67.8118 35.9984 67.8125 32.8131ZM13.125 54.6689V10.9381C24.8309 20.7572 36.8129 23.2428 41.5625 23.8553V41.76C36.8184 42.3834 24.8391 44.8635 13.125 54.6689ZM48.9453 56.8564V56.8865L45.9375 54.8822V45.9381H51.8438L48.9453 56.8564ZM54.6875 41.5631H45.9375V24.0631H54.6875C57.0081 24.0631 59.2337 24.985 60.8747 26.6259C62.5156 28.2668 63.4375 30.4924 63.4375 32.8131C63.4375 35.1337 62.5156 37.3593 60.8747 39.0003C59.2337 40.6412 57.0081 41.5631 54.6875 41.5631Z"
+                                                    fill="black" fill-opacity="0.3" />
+                                            </svg>
+                                            <h3 class="text-gray-500 font-semibold text-xl mb-4">No announcements posted yet</h3>
+                                            <p class="text-gray-500 text-lg">No announcements are currently available.</p>
                                         </div>
                                     <?php else: ?>
                                         <?php
@@ -1140,35 +1156,35 @@ function getTimeAgo($datetime)
                                             $badge = '';
                                             $priorityBadge = '';
                                             $priority = strtolower($announcement['priority']);
-                                            $greenColor = 'style="color: #16A34A;"';
+                                            $greenColor = 'style="color: #FFFFFF;"';
                                             $highBg = 'style="background-color: #e6bcbc; color: #8b2323;"';
                                             $mediumBg = 'style="background-color: #FD88024D; color: #FD8802"';
                                             if ((isset($announcement['announcement_type']) && $announcement['announcement_type'] === 'lab_result') || (isset($announcement['announcement_category']) && $announcement['announcement_category'] === 'lab_result')) {
-                                                $badge = '<span class="px-4 py-2 rounded bg-first-card font-medium text-lg" '.$greenColor.'>Lab Result</span>';
+                                                $badge = '<span class="px-4 py-2 rounded bg-lab-result font-semibold text-base" ' . $greenColor . '>Lab Result</span>';
                                                 if ($priority === 'high') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
                                                 } elseif ($priority === 'medium') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" '.$mediumBg.'>' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base" ' . $mediumBg . '>' . ucfirst($announcement['priority']) . '</span>';
                                                 } else {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-medium text-lg ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-semibold text-base">' . ucfirst($announcement['priority']) . '</span>';
                                                 }
                                             } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'public') {
-                                                $badge = '<span class="px-4 py-2 rounded bg-second-card text-[#2563EB] font-medium text-lg">For All Resident</span>';
+                                                $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For All Resident</span>';
                                                 if ($priority === 'high') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
                                                 } elseif ($priority === 'medium') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" '.$mediumBg.'>' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $mediumBg . '>' . ucfirst($announcement['priority']) . '</span>';
                                                 } else {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-medium text-lg ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-semibold text-base ml-2">' . ucfirst($announcement['priority']) . '</span>';
                                                 }
                                             } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'specific') {
-                                                $badge = '<span class="px-4 py-2 rounded bg-second-card text-[#2563EB] font-medium text-lg">For Specific Resident</span>';
+                                                $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For Specific Resident</span>';
                                                 if ($priority === 'high') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
                                                 } elseif ($priority === 'medium') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-medium text-lg ml-2" '.$mediumBg.'>' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $mediumBg . '>' . ucfirst($announcement['priority']) . '</span>';
                                                 } else {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-blue-600 font-medium text-sm ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-blue-600 font-semibold text-base ml-2">' . ucfirst($announcement['priority']) . '</span>';
                                                 }
                                             }
                                             // Prepare staff display for new layout
@@ -1182,10 +1198,10 @@ function getTimeAgo($datetime)
                                                         <?= $badge ?>         <?= $priorityBadge ?>
                                                     </div>
                                                     <div class="flex flex-col items-start">
-                                                        <span class="text-base font-semibold text-gray-600 mb-0.5">Date Posted
+                                                        <span class="text-sm text-gray-600 font-semibold mb-0.5">Date Posted
                                                             :</span>
                                                         <span
-                                                            class="inline-block px-4 py-2 rounded bg-gray-200 text-gray-500 text-lg font-semibold"
+                                                            class="inline-block px-4 py-2 rounded bg-gray-200 text-gray-500 text-base font-semibold"
                                                             style="margin-top:2px;"><?= date('F d, Y', strtotime($announcement['post_date'])) ?></span>
                                                     </div>
                                                 </div>
@@ -1198,7 +1214,7 @@ function getTimeAgo($datetime)
                                                     <?php endif; ?>
                                                 </div>
                                                 <?php if ($staffName): ?>
-                                                    <div class="text-xl text-gray-800 font-medium mt-0.5 mb-0"><?= $staffName ?>
+                                                    <div class="text-lg text-gray-800 font-medium mt-0.5 mb-0"><?= $staffName ?>
                                                     </div>
                                                 <?php endif; ?>
                                             </div>
