@@ -1,5 +1,32 @@
 <?php
+// Ensure the 'updated_at' column exists in sitio1_staff before update
+function ensureStaffUpdatedAtColumn($pdo) {
+    $result = $pdo->query("SHOW COLUMNS FROM sitio1_staff LIKE 'updated_at'");
+    if ($result->rowCount() === 0) {
+        $pdo->exec("ALTER TABLE sitio1_staff ADD COLUMN updated_at DATETIME NULL DEFAULT NULL AFTER created_at");
+    }
+}
+// --- Secure session and security headers ---
 require_once __DIR__ . '/../includes/auth.php';
+
+// Set secure session cookie params (if not already set in php.ini)
+if (PHP_VERSION_ID >= 70300 && session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
+// Security headers
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('X-XSS-Protection: 1; mode=block');
+
 // --- Auto-logout for resident users after 10 minutes of inactivity ---
 if (isUser()) {
     $now = time();
@@ -18,12 +45,71 @@ if (isUser()) {
         }
     }
 }
+
 require_once __DIR__ . '/../includes/header.php';
+
+// Ensure the sitio1_activity_log table exists before any log insert
+if (!function_exists('ensureActivityLogTable')) {
+    function ensureActivityLogTable($pdo) {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS sitio1_activity_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT DEFAULT NULL,
+            action VARCHAR(100) NOT NULL,
+            details TEXT,
+            ip_address VARCHAR(45),
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+    }
+}
+// ============================================================================
+// Account Management - Barangay Luz Health Center
+// This file handles staff and resident account management, including:
+// - Password changes and resets
+// - Account creation and status toggling
+// - Manual linking of resident and patient records
+// - Security, validation, and error handling
+// ============================================================================
+// --- Security and session management ---
+// --- CSRF token generation and validation ---
+// --- Main POST handler for all account management actions ---
+// --- Helper for error message and redirect (DRY principle) ---
+// --- Staff password change with current password verification ---
+// --- Resident password change with current password verification ---
+// --- Staff password reset by admin (no current password required) ---
+// --- Resident password reset by admin (no current password required) ---
+// --- Staff account creation ---
+// --- Resident account creation (no automatic patient record creation) ---
+// --- Resident status toggle (approve, decline, suspend) ---
+// --- Staff status toggle (activate, deactivate) ---
+// --- Staff deletion with dependency checks and reassignment ---
+// --- Function to manually link resident account to patient records ---
+// --- Function to get unlinked residents (accounts without patient records) ---
+// --- Function to get unlinked patient records (without user accounts) ---
+// --- Data loading for staff and resident accounts, and unlinked records ---
+// --- HTML and UI rendering starts here ---
+// Helper for error message and redirect
+function setErrorAndRedirect($msg, $type = 'error', $redirect = 'manage_accounts.php') {
+    $_SESSION['message'] = $msg;
+    $_SESSION['message_type'] = $type;
+    header('Location: ' . $redirect);
+    exit();
+}
 
 redirectIfNotLoggedIn();
 if (!isAdmin()) {
     header('Location: /community-health-tracker/');
     exit();
+}
+
+// Regenerate session ID on login for security (should be in login logic, but double check here)
+if (!isset($_SESSION['session_regenerated'])) {
+    session_regenerate_id(true);
+    $_SESSION['session_regenerated'] = true;
+}
+
+// CSRF token generation
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 global $pdo;
@@ -93,30 +179,39 @@ if (isset($_GET['link_resident'])) {
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF token validation
+    if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $_SESSION['message'] = 'Invalid or missing CSRF token. Please try again.';
+        $_SESSION['message_type'] = 'error';
+        header('Location: manage_accounts.php');
+        exit();
+    }
     // Handle staff password change with current password verification
     if (isset($_POST['change_staff_password'])) {
-        $staffId = intval($_POST['staff_id']);
-        $currentPassword = trim($_POST['current_password']);
-        $newPassword = trim($_POST['new_password']);
-        $confirmPassword = trim($_POST['confirm_password']);
-        
-        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
-            $_SESSION['message'] = 'All password fields are required.';
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
+        // Sanitize and validate input
+        $staffId = filter_var($_POST['staff_id'], FILTER_VALIDATE_INT);
+        $currentPassword = trim($_POST['current_password'] ?? '');
+        $newPassword = trim($_POST['new_password'] ?? '');
+        $confirmPassword = trim($_POST['confirm_password'] ?? '');
+
+        // Validate required fields
+        if (!$staffId || empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+            setErrorAndRedirect('All password fields are required.');
         }
-        
+
+        // Password length check
+        if (strlen($newPassword) < 6) {
+            setErrorAndRedirect('New password must be at least 6 characters long.');
+        }
+
+        // Password match check
         if ($newPassword !== $confirmPassword) {
-            $_SESSION['message'] = 'New passwords do not match.';
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
+            setErrorAndRedirect('New passwords do not match.');
         }
         
         try {
             // Get staff current password
-            $stmt = $pdo->prepare("SELECT id, password FROM sitio1_staff WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, password, full_name FROM sitio1_staff WHERE id = ?");
             $stmt->execute([$staffId]);
             $staff = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -135,12 +230,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
             
+            // Check if new password is same as old
+            if (password_verify($newPassword, $staff['password'])) {
+                $_SESSION['message'] = 'New password must be different from current password.';
+                $_SESSION['message_type'] = 'error';
+                header('Location: manage_accounts.php');
+                exit();
+            }
+            
             // Update password
+            ensureStaffUpdatedAtColumn($pdo);
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("UPDATE sitio1_staff SET password = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE sitio1_staff SET password = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$hashedPassword, $staffId]);
             
-            $_SESSION['message'] = 'Staff password changed successfully!';
+            // Log the password change
+            ensureActivityLogTable($pdo);
+            $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+            $logStmt->execute([$_SESSION['user_id'], 'password_change', 'Changed password for staff: ' . $staff['full_name'], $_SERVER['REMOTE_ADDR']]);
+            
+            $_SESSION['message'] = 'Staff password changed successfully for ' . htmlspecialchars($staff['full_name']) . '!';
             $_SESSION['message_type'] = 'success';
             header('Location: manage_accounts.php');
             exit();
@@ -154,28 +263,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     // Handle resident password change with current password verification
     elseif (isset($_POST['change_resident_password'])) {
-        $residentId = intval($_POST['resident_id']);
-        $currentPassword = trim($_POST['current_password']);
-        $newPassword = trim($_POST['new_password']);
-        $confirmPassword = trim($_POST['confirm_password']);
-        
-        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
-            $_SESSION['message'] = 'All password fields are required.';
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
+        // Sanitize and validate input
+        $residentId = filter_var($_POST['resident_id'], FILTER_VALIDATE_INT);
+        $currentPassword = trim($_POST['current_password'] ?? '');
+        $newPassword = trim($_POST['new_password'] ?? '');
+        $confirmPassword = trim($_POST['confirm_password'] ?? '');
+
+        // Validate required fields
+        if (!$residentId || empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+            setErrorAndRedirect('All password fields are required.');
         }
-        
+
+        // Password length check
+        if (strlen($newPassword) < 6) {
+            setErrorAndRedirect('New password must be at least 6 characters long.');
+        }
+
+        // Password match check
         if ($newPassword !== $confirmPassword) {
-            $_SESSION['message'] = 'New passwords do not match.';
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
+            setErrorAndRedirect('New passwords do not match.');
         }
         
         try {
             // Get resident current password
-            $stmt = $pdo->prepare("SELECT id, password FROM sitio1_users WHERE id = ? AND role = 'patient'");
+            $stmt = $pdo->prepare("SELECT id, password, full_name FROM sitio1_users WHERE id = ? AND role = 'patient'");
             $stmt->execute([$residentId]);
             $resident = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -194,12 +305,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
             
+            // Check if new password is same as old
+            if (password_verify($newPassword, $resident['password'])) {
+                $_SESSION['message'] = 'New password must be different from current password.';
+                $_SESSION['message_type'] = 'error';
+                header('Location: manage_accounts.php');
+                exit();
+            }
+            
             // Update password
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("UPDATE sitio1_users SET password = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE sitio1_users SET password = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$hashedPassword, $residentId]);
             
-            $_SESSION['message'] = 'Resident password changed successfully!';
+            // Log the password change
+            ensureActivityLogTable($pdo);
+            $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+            $logStmt->execute([$_SESSION['user_id'], 'password_change', 'Changed password for resident: ' . $resident['full_name'], $_SERVER['REMOTE_ADDR']]);
+            
+            $_SESSION['message'] = 'Resident password changed successfully for ' . htmlspecialchars($resident['full_name']) . '!';
             $_SESSION['message_type'] = 'success';
             header('Location: manage_accounts.php');
             exit();
@@ -211,18 +335,125 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
     }
+    // Handle staff password reset by admin (no current password required)
+    elseif (isset($_POST['reset_staff_password'])) {
+        $staffId = filter_var($_POST['staff_id'], FILTER_VALIDATE_INT);
+        $newPassword = trim($_POST['new_password'] ?? '');
+        $confirmPassword = trim($_POST['confirm_password'] ?? '');
+
+        if (!$staffId || empty($newPassword) || empty($confirmPassword)) {
+            setErrorAndRedirect('New password is required.');
+        }
+
+        if (strlen($newPassword) < 6) {
+            setErrorAndRedirect('Password must be at least 6 characters long.');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            setErrorAndRedirect('Passwords do not match.');
+        }
+        
+        try {
+            // Verify staff exists
+            $stmt = $pdo->prepare("SELECT id, full_name FROM sitio1_staff WHERE id = ?");
+            $stmt->execute([$staffId]);
+            $staff = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$staff) {
+                $_SESSION['message'] = 'Staff not found.';
+                $_SESSION['message_type'] = 'error';
+                header('Location: manage_accounts.php');
+                exit();
+            }
+            
+            // Update password
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("UPDATE sitio1_staff SET password = ?, updated_at = NOW() WHERE id = ?");
+            $stmt->execute([$hashedPassword, $staffId]);
+            
+            // Log the password reset
+            ensureActivityLogTable($pdo);
+            $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+            $logStmt->execute([$_SESSION['user_id'], 'password_reset', 'Reset password for staff: ' . $staff['full_name'], $_SERVER['REMOTE_ADDR']]);
+            
+            $_SESSION['message'] = 'Staff password reset successfully for ' . htmlspecialchars($staff['full_name']) . '! New password: ' . htmlspecialchars($newPassword);
+            $_SESSION['message_type'] = 'success';
+            header('Location: manage_accounts.php');
+            exit();
+            
+        } catch (PDOException $e) {
+            $_SESSION['message'] = 'Error resetting password: ' . $e->getMessage();
+            $_SESSION['message_type'] = 'error';
+            header('Location: manage_accounts.php');
+            exit();
+        }
+    }
+    // Handle resident password reset (admin reset without current password)
+    elseif (isset($_POST['reset_resident_password'])) {
+        $residentId = filter_var($_POST['resident_id'], FILTER_VALIDATE_INT);
+        $newPassword = trim($_POST['new_password'] ?? '');
+        $confirmPassword = trim($_POST['confirm_password'] ?? '');
+
+        if (!$residentId || empty($newPassword) || empty($confirmPassword)) {
+            setErrorAndRedirect('New password is required.');
+        }
+
+        if (strlen($newPassword) < 6) {
+            setErrorAndRedirect('Password must be at least 6 characters long.');
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            setErrorAndRedirect('Passwords do not match.');
+        }
+        
+        try {
+            // Verify resident exists
+            $stmt = $pdo->prepare("SELECT id, full_name FROM sitio1_users WHERE id = ? AND role = 'patient'");
+            $stmt->execute([$residentId]);
+            $resident = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$resident) {
+                $_SESSION['message'] = 'Resident not found.';
+                $_SESSION['message_type'] = 'error';
+                header('Location: manage_accounts.php');
+                exit();
+            }
+            
+            // Update password
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("UPDATE sitio1_users SET password = ?, updated_at = NOW() WHERE id = ?");
+            $stmt->execute([$hashedPassword, $residentId]);
+            
+            // Log the password reset
+            ensureActivityLogTable($pdo);
+            $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+            $logStmt->execute([$_SESSION['user_id'], 'password_reset', 'Reset password for resident: ' . $resident['full_name'], $_SERVER['REMOTE_ADDR']]);
+            
+            $_SESSION['message'] = 'Resident password reset successfully for ' . htmlspecialchars($resident['full_name']) . '! New password: ' . htmlspecialchars($newPassword);
+            $_SESSION['message_type'] = 'success';
+            header('Location: manage_accounts.php');
+            exit();
+            
+        } catch (PDOException $e) {
+            $_SESSION['message'] = 'Error resetting password: ' . $e->getMessage();
+            $_SESSION['message_type'] = 'error';
+            header('Location: manage_accounts.php');
+            exit();
+        }
+    }
     // Handle staff account creation
     elseif (isset($_POST['create_staff'])) {
-        $username = trim($_POST['username']);
-        $password = trim($_POST['password']);
-        $fullName = trim($_POST['full_name']);
+        // Sanitize and validate input
+        $username = trim($_POST['username'] ?? '');
+        $password = trim($_POST['password'] ?? '');
+        $fullName = trim($_POST['full_name'] ?? '');
         $position = trim($_POST['position'] ?? '');
         $specialization = trim($_POST['specialization'] ?? '');
         $license_number = trim($_POST['license_number'] ?? '');
-        
+
         // Default work days: Monday to Friday working, Saturday-Sunday off
         $work_days = '1111100';
-        
+
         if (!empty($username) && !empty($password) && !empty($fullName) && !empty($position)) {
             try {
                 // Check if username already exists
@@ -236,9 +467,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("INSERT INTO sitio1_staff (username, password, full_name, position, specialization, license_number, work_days, created_by, status, is_active) 
-                                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 1)");
+                $stmt = $pdo->prepare("INSERT INTO sitio1_staff (username, password, full_name, position, specialization, license_number, work_days, created_by, status, is_active, created_at) 
+                                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, NOW())");
                 $stmt->execute([$username, $hashedPassword, $fullName, $position, $specialization, $license_number, $work_days, $_SESSION['user_id']]);
+                
+                // Log the account creation
+                $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+                $logStmt->execute([$_SESSION['user_id'], 'staff_created', 'Created staff account: ' . $fullName, $_SERVER['REMOTE_ADDR']]);
                 
                 $_SESSION['message'] = 'Staff account created successfully! Password: ' . htmlspecialchars($password);
                 $_SESSION['message_type'] = 'success';
@@ -264,27 +499,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = trim($_POST['username'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $password = trim($_POST['password'] ?? '');
-        
+
         // 📱 OPTIONAL FIELDS
         $phone = trim($_POST['phone'] ?? '');
         $dateOfBirth = trim($_POST['date_of_birth'] ?? '');
         $gender = trim($_POST['gender'] ?? '');
         $sitio = trim($_POST['sitio'] ?? '');
-        
+
         // Validate required fields
         if (empty($fullName) || empty($email) || empty($password)) {
-            $_SESSION['message'] = 'Full name, email and password are required.';
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
+            setErrorAndRedirect('Full name, email and password are required.');
         }
-        
+
+        // Validate password length
+        if (strlen($password) < 6) {
+            setErrorAndRedirect('Password must be at least 6 characters long.');
+        }
+
         // Validate email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $_SESSION['message'] = 'Please enter a valid email address.';
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
+            setErrorAndRedirect('Please enter a valid email address.');
         }
         
         // Generate username if not provided
@@ -358,11 +592,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $uniqueNumber = 'RES' . date('Ymd') . str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
             }
             
-            // Generate Patient Record UID (will be used when linking later)
-            $patientRecordUID = 'PAT-' . date('Ymd') . '-' . strtoupper(substr($fullName, 0, 3)) . '-' . mt_rand(1000, 9999);
-            
             // Insert user WITHOUT linking to any patient record
-            // Account will remain unlinked until admin manually links it
             $stmt = $pdo->prepare("INSERT INTO sitio1_users 
                 (username, email, password, full_name, date_of_birth, age, gender, sitio, contact, 
                  approved, status, role, unique_number, verification_method, id_verified, 
@@ -386,8 +616,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $residentUserId = $pdo->lastInsertId();
             
-            // ✅ **NO PATIENT RECORD CREATION - ACCOUNT STANDS ALONE**
-            // Patient record will be linked later via manual linking
+            // Log the account creation
+            $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+            $logStmt->execute([$_SESSION['user_id'], 'resident_created', 'Created resident account: ' . $fullName, $_SERVER['REMOTE_ADDR']]);
             
             // Commit transaction
             $pdo->commit();
@@ -406,54 +637,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
     }
-    // Handle resident password reset (admin reset without current password)
-    elseif (isset($_POST['reset_resident_password'])) {
-        $residentId = intval($_POST['resident_id']);
-        $newPassword = trim($_POST['new_password']);
-        $confirmPassword = trim($_POST['confirm_password']);
-        
-        if (empty($newPassword)) {
-            $_SESSION['message'] = 'New password is required.';
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
-        }
-        
-        if ($newPassword !== $confirmPassword) {
-            $_SESSION['message'] = 'Passwords do not match.';
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
-        }
-        
-        try {
-            // Verify resident exists
-            $stmt = $pdo->prepare("SELECT id FROM sitio1_users WHERE id = ? AND role = 'patient'");
-            $stmt->execute([$residentId]);
-            if (!$stmt->fetch()) {
-                $_SESSION['message'] = 'Resident not found.';
-                $_SESSION['message_type'] = 'error';
-                header('Location: manage_accounts.php');
-                exit();
-            }
-            
-            // Update password
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("UPDATE sitio1_users SET password = ? WHERE id = ?");
-            $stmt->execute([$hashedPassword, $residentId]);
-            
-            $_SESSION['message'] = 'Resident password reset successfully! New password: ' . htmlspecialchars($newPassword);
-            $_SESSION['message_type'] = 'success';
-            header('Location: manage_accounts.php');
-            exit();
-            
-        } catch (PDOException $e) {
-            $_SESSION['message'] = 'Error resetting password: ' . $e->getMessage();
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
-        }
-    }
     // Handle resident status toggle
     elseif (isset($_POST['toggle_resident_status'])) {
         $residentId = intval($_POST['resident_id']);
@@ -463,8 +646,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $newStatus = ($action === 'approve') ? 'approved' : ($action === 'decline' ? 'declined' : 'suspended');
                 
-                $stmt = $pdo->prepare("UPDATE sitio1_users SET status = ? WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE sitio1_users SET status = ?, updated_at = NOW() WHERE id = ?");
                 $stmt->execute([$newStatus, $residentId]);
+                
+                // Get resident name for log
+                $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_users WHERE id = ?");
+                $nameStmt->execute([$residentId]);
+                $residentName = $nameStmt->fetchColumn();
+                
+                // Log the status change
+                $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+                $logStmt->execute([$_SESSION['user_id'], 'resident_status_change', ucfirst($action) . 'd resident: ' . $residentName, $_SERVER['REMOTE_ADDR']]);
                 
                 $_SESSION['message'] = 'Resident account ' . $action . 'd successfully!';
                 $_SESSION['message_type'] = 'success';
@@ -487,8 +679,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $newStatus = ($action === 'activate') ? 'active' : 'inactive';
                 $isActive = ($action === 'activate') ? 1 : 0;
-                $stmt = $pdo->prepare("UPDATE sitio1_staff SET status = ?, is_active = ? WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE sitio1_staff SET status = ?, is_active = ?, updated_at = NOW() WHERE id = ?");
                 $stmt->execute([$newStatus, $isActive, $staffId]);
+                
+                // Get staff name for log
+                $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
+                $nameStmt->execute([$staffId]);
+                $staffName = $nameStmt->fetchColumn();
+                
+                // Log the status change
+                $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+                $logStmt->execute([$_SESSION['user_id'], 'staff_status_change', ucfirst($action) . 'd staff: ' . $staffName, $_SERVER['REMOTE_ADDR']]);
                 
                 $_SESSION['message'] = 'Staff account ' . $action . 'd successfully!';
                 $_SESSION['message_type'] = 'success';
@@ -507,6 +708,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $staffId = intval($_POST['staff_id']);
         
         try {
+            // Get staff name for log
+            $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
+            $nameStmt->execute([$staffId]);
+            $staffName = $nameStmt->fetchColumn();
+            
             // Check for dependencies
             $dependencies = [];
             
@@ -559,27 +765,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 try {
                     if ($deleteAction === 'reassign' && $reassignTo > 0) {
+                        // Get reassign staff name for log
+                        $reassignStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
+                        $reassignStmt->execute([$reassignTo]);
+                        $reassignName = $reassignStmt->fetchColumn();
+                        
                         // Reassign appointments
-                        $stmt = $pdo->prepare("UPDATE sitio1_appointments SET staff_id = ? WHERE staff_id = ?");
+                        $stmt = $pdo->prepare("UPDATE sitio1_appointments SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$reassignTo, $staffId]);
                         
                         // Reassign consultations
-                        $stmt = $pdo->prepare("UPDATE sitio1_consultations SET staff_id = ? WHERE staff_id = ?");
+                        $stmt = $pdo->prepare("UPDATE sitio1_consultations SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$reassignTo, $staffId]);
                         
                         // Reassign patient records
-                        $stmt = $pdo->prepare("UPDATE sitio1_patients SET added_by = ? WHERE added_by = ?");
+                        $stmt = $pdo->prepare("UPDATE sitio1_patients SET added_by = ?, updated_at = NOW() WHERE added_by = ?");
                         $stmt->execute([$reassignTo, $staffId]);
                         
                         // Reassign prescriptions
-                        $stmt = $pdo->prepare("UPDATE sitio1_prescriptions SET staff_id = ? WHERE staff_id = ?");
+                        $stmt = $pdo->prepare("UPDATE sitio1_prescriptions SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$reassignTo, $staffId]);
                         
                         // Set announcements to NULL
-                        $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = NULL WHERE staff_id = ?");
+                        $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = NULL, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$staffId]);
                         
-                        $_SESSION['message'] = 'Staff account deleted and records reassigned successfully!';
+                        // Log the reassignment
+                        $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+                        $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' and reassigned records to: ' . $reassignName, $_SERVER['REMOTE_ADDR']]);
+                        
+                        $_SESSION['message'] = 'Staff account deleted and records reassigned to ' . htmlspecialchars($reassignName) . ' successfully!';
                     } else {
                         // Delete dependent records
                         $stmt = $pdo->prepare("DELETE FROM sitio1_appointments WHERE staff_id = ?");
@@ -588,14 +803,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt = $pdo->prepare("DELETE FROM sitio1_consultations WHERE staff_id = ?");
                         $stmt->execute([$staffId]);
                         
-                        $stmt = $pdo->prepare("UPDATE sitio1_patients SET added_by = NULL WHERE added_by = ?");
+                        $stmt = $pdo->prepare("UPDATE sitio1_patients SET added_by = NULL, updated_at = NOW() WHERE added_by = ?");
                         $stmt->execute([$staffId]);
                         
                         $stmt = $pdo->prepare("DELETE FROM sitio1_prescriptions WHERE staff_id = ?");
                         $stmt->execute([$staffId]);
                         
-                        $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = NULL WHERE staff_id = ?");
+                        $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = NULL, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$staffId]);
+                        
+                        // Log the deletion
+                        $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+                        $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' and all associated records', $_SERVER['REMOTE_ADDR']]);
                         
                         $_SESSION['message'] = 'Staff account and associated records deleted successfully!';
                     }
@@ -615,6 +834,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // No dependencies, delete directly
                 $stmt = $pdo->prepare("DELETE FROM sitio1_staff WHERE id = ?");
                 $stmt->execute([$staffId]);
+                
+                // Log the deletion
+                $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+                $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' (no dependencies)', $_SERVER['REMOTE_ADDR']]);
                 
                 $_SESSION['message'] = 'Staff account deleted successfully!';
                 $_SESSION['message_type'] = 'success';
@@ -680,11 +903,20 @@ function manuallyLinkToPatientRecord($pdo, $residentUserId, $patientId, $patient
         
         if ($userUidColumnExists) {
             // Update user record with patient_record_uid
-            $stmt = $pdo->prepare("UPDATE sitio1_users SET patient_record_uid = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE sitio1_users SET patient_record_uid = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$patientRecordUID, $residentUserId]);
         }
         
-        $resultMessage = '✅ Manually linked to patient: ' . htmlspecialchars($patient['full_name']);
+        // Get resident name for log
+        $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_users WHERE id = ?");
+        $nameStmt->execute([$residentUserId]);
+        $residentName = $nameStmt->fetchColumn();
+        
+        // Log the linking
+        $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+        $logStmt->execute([$_SESSION['user_id'], 'account_linking', 'Linked resident: ' . $residentName . ' to patient: ' . $patient['full_name'], $_SERVER['REMOTE_ADDR']]);
+        
+        $resultMessage = '✅ Successfully linked ' . htmlspecialchars($residentName) . ' to patient: ' . htmlspecialchars($patient['full_name']);
         if ($patientRecordUID) {
             $resultMessage .= ' (UID: ' . $patientRecordUID . ')';
         }
@@ -790,7 +1022,8 @@ try {
     // Unlinked patient records
     $unlinkedPatients = getUnlinkedPatients($pdo);
 } catch (PDOException $e) {
-    $_SESSION['message'] = 'Error loading data: ' . $e->getMessage();
+    error_log('Error loading data in manage_accounts.php: ' . $e->getMessage());
+    $_SESSION['message'] = 'A database error occurred while loading account data. Please try again later or contact support.';
     $_SESSION['message_type'] = 'error';
 }
 ?>
@@ -805,211 +1038,419 @@ try {
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
     <!-- Local Font Awesome for offline support -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
-            --primary: #3b82f6;
-            --primary-light: #60a5fa;
+            --primary: #2563eb;
             --primary-dark: #1d4ed8;
-            --primary-bg: #f0f9ff;
-            --primary-border: #bae6fd;
-            --success: #10b981;
-            --success-light: #34d399;
-            --success-dark: #059669;
+            --primary-light: #3b82f6;
+            --primary-bg: #eff6ff;
+            --secondary: #10b981;
+            --secondary-dark: #059669;
+            --secondary-light: #34d399;
+            --secondary-bg: #ecfdf5;
             --warning: #f59e0b;
+            --warning-dark: #d97706;
             --warning-light: #fbbf24;
+            --warning-bg: #fffbeb;
             --danger: #ef4444;
+            --danger-dark: #dc2626;
             --danger-light: #f87171;
+            --danger-bg: #fef2f2;
             --gray-50: #f9fafb;
             --gray-100: #f3f4f6;
             --gray-200: #e5e7eb;
             --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
             --gray-600: #4b5563;
             --gray-700: #374151;
             --gray-800: #1f2937;
             --gray-900: #111827;
         }
-        
+
         body {
-            background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #f9fafb 100%);
             min-height: 100vh;
-            line-height: 1.5;
         }
-        
-        /* Enhanced Header */
-        .main-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Consistent Card Design */
-        .card {
+
+        /* Modern Card Design */
+        .modern-card {
             background: white;
-            border-radius: 16px;
-            border: 1px solid var(--gray-200);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        
-        .card:hover {
-            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.08);
+
+        .modern-card:hover {
+            box-shadow: 0 20px 40px -12px rgba(37, 99, 235, 0.2);
         }
-        
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-bg) 0%, #e0f2fe 100%);
-            border-bottom: 1px solid var(--primary-border);
-            padding: 1.5rem 2rem;
+
+        /* Glassmorphism Effect */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        
-        /* Consistent Button Design */
-        .btn {
-            padding: 0.625rem 1.5rem;
-            border-radius: 10px;
+
+        /* Modern Button Styles */
+        .btn-modern {
+            padding: 0.625rem 1.25rem;
+            border-radius: 12px;
             font-weight: 600;
             font-size: 0.875rem;
             transition: all 0.2s;
-            border: none;
-            cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            min-height: 42px;
+            border: none;
+            cursor: pointer;
         }
-        
-        .btn-primary {
+
+        .btn-modern-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
         }
-        
-        .btn-primary:hover:not(:disabled) {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, #1e40af 100%);
+
+        .btn-modern-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #1e3a8a 100%);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
+            box-shadow: 0 8px 20px -8px var(--primary);
         }
-        
-        .btn-success {
-            background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+
+        .btn-modern-secondary {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
             color: white;
         }
-        
-        .btn-success:hover:not(:disabled) {
-            background: linear-gradient(135deg, var(--success-dark) 0%, #047857 100%);
+
+        .btn-modern-secondary:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--secondary-dark) 0%, #047857 100%);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
+            box-shadow: 0 8px 20px -8px var(--secondary);
         }
-        
-        .btn-warning {
-            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+
+        .btn-modern-warning {
+            background: linear-gradient(135deg, var(--warning) 0%, var(--warning-dark) 100%);
             color: white;
         }
-        
-        .btn-warning:hover:not(:disabled) {
-            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+
+        .btn-modern-warning:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--warning-dark) 0%, #b45309 100%);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25);
+            box-shadow: 0 8px 20px -8px var(--warning);
         }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+
+        .btn-modern-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
             color: white;
         }
-        
-        .btn-danger:hover:not(:disabled) {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1b 100%);
+
+        .btn-modern-danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--danger-dark) 0%, #b91c1b 100%);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.25);
+            box-shadow: 0 8px 20px -8px var(--danger);
         }
-        
-        .btn-outline {
+
+        .btn-modern-outline {
             background: white;
-            border: 2px solid var(--gray-300);
+            border: 2px solid var(--gray-200);
             color: var(--gray-700);
         }
-        
-        .btn-outline:hover {
+
+        .btn-modern-outline:hover:not(:disabled) {
             background: var(--gray-50);
-            border-color: var(--gray-400);
+            border-color: var(--gray-300);
+            transform: translateY(-2px);
         }
-        
-        .btn:disabled {
+
+        .btn-modern:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
         }
-        
-        /* Consistent Tabs */
-        .tabs-container {
+
+        /* Modern Tabs */
+        .modern-tabs {
+            display: flex;
+            gap: 0.5rem;
             background: white;
+            padding: 0.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            flex-wrap: wrap;
+        }
+
+        .modern-tab {
+            padding: 0.75rem 1.5rem;
             border-radius: 12px;
-            padding: 0.75rem;
-            border: 1px solid var(--gray-200);
-            margin-bottom: 2rem;
-        }
-        
-        .tab-btn {
-            padding: 0.75rem 1.75rem;
-            border-radius: 10px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-            background: transparent;
+            font-size: 0.875rem;
             color: var(--gray-600);
+            transition: all 0.2s;
+            cursor: pointer;
+            background: transparent;
+            border: none;
         }
-        
-        .tab-btn.active {
+
+        .modern-tab.active {
             background: var(--primary-bg);
             color: var(--primary);
-            border-color: var(--primary);
         }
-        
-        .tab-btn:hover:not(.active) {
+
+        .modern-tab:hover:not(.active) {
             background: var(--gray-50);
             color: var(--gray-800);
         }
-        
-        /* Consistent Form Elements */
-        .form-group {
-            margin-bottom: 1.5rem;
+
+        /* Modern Form Elements */
+        .modern-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 14px;
+            font-size: 0.9375rem;
+            transition: all 0.2s;
+            background: white;
         }
-        
-        .form-label {
+
+        .modern-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .modern-input.error {
+            border-color: var(--danger);
+        }
+
+        .modern-label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
-            color: var(--gray-800);
             font-size: 0.875rem;
+            color: var(--gray-700);
         }
-        
-        .form-input {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border: 2px solid var(--gray-300);
-            border-radius: 10px;
-            font-size: 0.9375rem;
-            transition: all 0.3s;
+
+        /* Modern Badges */
+        .modern-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .badge-success {
+            background: var(--secondary-bg);
+            color: var(--secondary-dark);
+            border: 1px solid #a7f3d0;
+        }
+
+        .badge-warning {
+            background: var(--warning-bg);
+            color: var(--warning-dark);
+            border: 1px solid #fde68a;
+        }
+
+        .badge-danger {
+            background: var(--danger-bg);
+            color: var(--danger-dark);
+            border: 1px solid #fecaca;
+        }
+
+        .badge-info {
+            background: var(--primary-bg);
+            color: var(--primary-dark);
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Modern Stats Card */
+        .stat-card-modern {
             background: white;
-            color: var(--gray-800);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.08);
         }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
         }
-        
-        .form-input:read-only {
-            background-color: var(--gray-50);
-            cursor: not-allowed;
+
+        .stat-content h3 {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
         }
-        
-        /* Password Toggle */
-        .password-container {
+
+        .stat-content .number {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            line-height: 1.2;
+        }
+
+        /* Account Cards */
+        .account-card-modern {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid var(--gray-200);
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .account-card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .account-card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 30px -12px rgba(37, 99, 235, 0.15);
+            border-color: transparent;
+        }
+
+        .account-card-modern:hover::before {
+            opacity: 1;
+        }
+
+        /* Modern Modal */
+        .modern-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modern-modal.show {
+            display: flex;
+        }
+
+        .modern-modal-content {
+            background: white;
+            border-radius: 28px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            background: white;
+            border-radius: 16px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 300px;
+            max-width: 400px;
+            border-left: 4px solid;
+            animation: toastSlideIn 0.3s ease;
+        }
+
+        .toast.success {
+            border-left-color: var(--secondary);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast.success .toast-icon {
+            background: var(--secondary-bg);
+            color: var(--secondary-dark);
+        }
+
+        .toast.error .toast-icon {
+            background: var(--danger-bg);
+            color: var(--danger-dark);
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Password Field Container */
+        .password-field {
             position: relative;
         }
-        
+
         .password-toggle {
             position: absolute;
             right: 12px;
@@ -1017,421 +1458,132 @@ try {
             transform: translateY(-50%);
             background: none;
             border: none;
-            cursor: pointer;
-            color: var(--gray-500);
-            padding: 6px;
-            border-radius: 6px;
-        }
-        
-        .password-toggle:hover {
-            background: var(--gray-100);
-            color: var(--gray-700);
-        }
-        
-        .password-container .form-input {
-            padding-right: 46px;
-        }
-        
-        /* Account Cards */
-        .account-card {
-            background: white;
-            border-radius: 14px;
-            border: 1px solid var(--gray-200);
-            overflow: hidden;
-            transition: all 0.3s;
-            padding: 1.5rem;
-        }
-        
-        .account-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-            border-color: var(--primary-border);
-        }
-        
-        /* Stats Cards */
-        .stat-card {
-            background: white;
-            border-radius: 14px;
-            padding: 1.5rem;
-            border: 1px solid var(--gray-200);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-        
-        .stat-card h3 {
-            color: var(--gray-600);
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .stat-card .number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-            line-height: 1;
-        }
-        
-        /* Consistent Modals */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(6px);
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-        
-        .modal.show {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            width: 100%;
-            max-width: 520px;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            border: 1px solid var(--gray-200);
-            animation: modalSlideIn 0.3s ease-out;
-        }
-        
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Consistent Badges */
-        .badge {
-            padding: 0.375rem 0.875rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-            letter-spacing: 0.02em;
-        }
-        
-        .badge-success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        
-        .badge-warning {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fde68a;
-        }
-        
-        .badge-error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-        
-        .badge-info {
-            background: #dbeafe;
-            color: #1e40af;
-            border: 1px solid #bfdbfe;
-        }
-        
-        /* Manual Linking Styles */
-        .link-section {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f7fa 100%);
-            border: 1px solid #bae6fd;
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .link-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        @media (max-width: 1024px) {
-            .link-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .link-list {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid var(--gray-200);
-            border-radius: 12px;
-            padding: 0.75rem;
-            background: white;
-        }
-        
-        .link-item {
-            padding: 1rem;
-            border-bottom: 1px solid var(--gray-100);
-            cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 8px;
-        }
-        
-        .link-item:hover {
-            background: var(--gray-50);
-        }
-        
-        .link-item.selected {
-            background: var(--primary-bg);
-            border-left: 3px solid var(--primary);
-        }
-        
-        /* Message Modal */
-        .message-modal {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            min-width: 300px;
-            max-width: 500px;
-            height: auto;
-            transform: translateX(120%);
-            transition: transform 0.3s ease-in-out;
-            pointer-events: none;
-        }
-        
-        .message-modal.show {
-            transform: translateX(0);
-            pointer-events: auto;
-        }
-        
-        .message-content {
-            background: white;
-            border-radius: 12px;
-            padding: 1.25rem 1.5rem;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-            border: 2px solid transparent;
-            animation: slideInRight 0.3s ease-out;
-        }
-        
-        .message-content.success {
-            border-color: var(--success);
-            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-        }
-        
-        .message-content.error {
-            border-color: var(--danger);
-            background: linear-gradient(135deg, #fef2f2 0%, #fef2f2 100%);
-        }
-        
-        .message-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-        
-        .message-icon {
-            font-size: 1.25rem;
-            margin-right: 0.75rem;
-            flex-shrink: 0;
-        }
-        
-        .message-icon.success {
-            color: var(--success);
-        }
-        
-        .message-icon.error {
-            color: var(--danger);
-        }
-        
-        .message-title {
-            font-weight: 700;
-            font-size: 1rem;
-            color: var(--gray-900);
-        }
-        
-        .message-body {
-            color: var(--gray-700);
-            font-size: 0.9375rem;
-            line-height: 1.5;
-        }
-        
-        .message-close {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: none;
-            border: none;
             color: var(--gray-400);
             cursor: pointer;
-            font-size: 0.9rem;
             padding: 4px;
-            width: 24px;
-            height: 24px;
+            transition: color 0.2s;
+        }
+
+        .password-toggle:hover {
+            color: var(--gray-600);
+        }
+
+        /* Password Strength Indicator */
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            background: var(--gray-200);
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .strength-weak {
+            background: var(--danger);
+            width: 33.33%;
+        }
+
+        .strength-medium {
+            background: var(--warning);
+            width: 66.66%;
+        }
+
+        .strength-strong {
+            background: var(--secondary);
+            width: 100%;
+        }
+
+        /* Validation Message */
+        .validation-message {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
             display: flex;
             align-items: center;
-            justify-content: center;
-            border-radius: 6px;
+            gap: 0.25rem;
         }
-        
-        .message-close:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--gray-600);
+
+        .validation-message.success {
+            color: var(--secondary-dark);
         }
-        
-        @keyframes slideInRight {
-            from {
-                transform: translateX(120%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+
+        .validation-message.error {
+            color: var(--danger-dark);
         }
-        
-        /* Progress Bar */
-        .message-progress {
-            height: 4px;
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 2px;
-            margin-top: 0.75rem;
-            overflow: hidden;
-            position: relative;
+
+        /* Linking Cards */
+        .link-card {
+            border: 2px solid var(--gray-200);
+            border-radius: 20px;
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
         }
-        
-        .message-progress-bar {
-            height: 100%;
-            width: 100%;
-            border-radius: 2px;
-            transition: width 3s linear;
-        }
-        
-        .message-progress-bar.success {
-            background: var(--success);
-        }
-        
-        .message-progress-bar.error {
-            background: var(--danger);
-        }
-        
-        /* Selection Styles */
-        .resident-card.selected {
-            border-color: var(--primary) !important;
+
+        .link-card:hover {
+            border-color: var(--primary);
             background: var(--primary-bg);
-            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
             transform: translateY(-2px);
         }
-        
-        .patient-card.selected {
-            border-color: var(--success) !important;
-            background: #f0fdf4;
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
-            transform: translateY(-2px);
+
+        .link-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-bg);
+            box-shadow: 0 10px 25px -8px var(--primary);
         }
-        
-        /* Consistent Spacing */
-        .section-spacing {
-            margin-bottom: 2.5rem;
+
+        .link-card.patient.selected {
+            border-color: var(--secondary);
+            background: var(--secondary-bg);
         }
-        
-        .grid-spacing {
+
+        /* Modern Grid Layout */
+        .modern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1.5rem;
         }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-            
-            .grid-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .tabs-container {
-                flex-direction: column;
-            }
-            
-            .tab-btn {
-                width: 100%;
-                text-align: center;
-            }
-            
-            .link-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .message-modal {
-                width: calc(100% - 40px) !important;
-                right: 20px;
-                left: 20px;
-                max-width: none;
-            }
-            
-            .account-card {
-                padding: 1.25rem;
-            }
-            
-            .modal-content {
-                padding: 1.5rem;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
+
+        /* Section Headers */
+        .section-header {
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
-        
-        /* Visual Hierarchy */
-        .page-title {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--gray-900);
-            line-height: 1.2;
-        }
-        
-        .page-subtitle {
-            font-size: 1rem;
-            color: var(--gray-600);
-            margin-top: 0.5rem;
-        }
-        
-        .section-title {
+
+        .section-title-modern {
             font-size: 1.5rem;
             font-weight: 700;
             color: var(--gray-900);
-            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
-        
-        .subsection-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--gray-800);
-            margin-bottom: 1rem;
+
+        .section-title-modern i {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-bg) 0%, #dbeafe 100%);
+            color: var(--primary);
         }
-        
-        /* Animation for section transitions */
-        .fade-in {
-            animation: fadeIn 0.5s ease-out;
+
+        /* Animation Classes */
+        .fade-enter {
+            animation: fadeIn 0.5s ease;
         }
-        
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -1442,53 +1594,44 @@ try {
                 transform: translateY(0);
             }
         }
-        
-        /* Loading states */
-        .loading {
-            position: relative;
-            pointer-events: none;
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .modern-tabs {
+                flex-direction: column;
+            }
+            
+            .modern-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .toast {
+                min-width: auto;
+                width: calc(100vw - 40px);
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
-        
-        .loading::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            margin: -10px 0 0 -10px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Focus states for accessibility */
-        .focusable:focus {
-            outline: 2px solid var(--primary);
-            outline-offset: 2px;
-        }
-        
-        /* Custom scrollbar */
+
+        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
-        
+
         ::-webkit-scrollbar-track {
             background: var(--gray-100);
             border-radius: 4px;
         }
-        
+
         ::-webkit-scrollbar-thumb {
             background: var(--gray-300);
             border-radius: 4px;
         }
-        
+
         ::-webkit-scrollbar-thumb:hover {
             background: var(--gray-400);
         }
@@ -1496,205 +1639,216 @@ try {
 </head>
 <body class="min-h-screen">
     <?php require_once __DIR__ . '/../includes/header.php'; ?>
-    
-    <!-- Message Modal -->
-    <?php if (isset($_SESSION['message']) && ($_SESSION['message_type'] ?? 'success') === 'success'): ?>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <?php if (isset($_SESSION['message'])): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            showMessageModal(<?= json_encode($_SESSION['message']) ?>, 'success');
+            showToast(<?= json_encode($_SESSION['message']) ?>, <?= json_encode($_SESSION['message_type'] ?? 'success') ?>);
         });
     </script>
-    <?php unset($_SESSION['message']); unset($_SESSION['message_type']); ?>
-    <?php endif; ?>
-    
-    <main class="container mx-auto px-4 py-8 mt-16">
-        <!-- Page Header -->
-        <div class="section-spacing">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                <div>
-                    <h1 class="page-title">Account Management</h1>
-                    <p class="page-subtitle">Manage staff and resident accounts with patient record linking</p>
-                </div>
-                <div class="flex flex-wrap gap-3">
-                    <div class="stat-card">
+    <?php 
+        unset($_SESSION['message']);
+        unset($_SESSION['message_type']);
+    endif; 
+    ?>
+
+    <main class="container mx-auto px-4 py-8 mt-16 max-w-7xl">
+        <!-- Modern Header -->
+        <div class="section-header">
+            <div class="section-title-modern">
+                <i class="fas fa-users-cog"></i>
+                <span>Account Management</span>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <div class="stat-card-modern">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: var(--primary);">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="stat-content">
                         <h3>Active Staff</h3>
                         <div class="number"><?= count($activeStaff) ?></div>
                     </div>
-                    <div class="stat-card">
+                </div>
+                <div class="stat-card-modern">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: var(--secondary);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
                         <h3>Residents</h3>
                         <div class="number"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></div>
                     </div>
-                    <?php if (count($unlinkedResidents) > 0): ?>
-                    <div class="stat-card">
-                        <h3>Unlinked</h3>
-                        <div class="number text-warning"><?= count($unlinkedResidents) ?></div>
-                    </div>
-                    <?php endif; ?>
                 </div>
-            </div>
-        </div>
-
-        <!-- Main Tabs -->
-        <div class="tabs-container">
-            <div class="flex flex-wrap gap-2">
-                <button class="tab-btn active focusable" onclick="showSection('staff')" id="staff-tab" aria-selected="true" aria-controls="staff-section">
-                    <i class="fas fa-user-md mr-2"></i> Staff Management
-                    <span class="badge badge-info ml-2"><?= count($activeStaff) + count($inactiveStaff) ?></span>
-                </button>
-                <button class="tab-btn focusable" onclick="showSection('resident')" id="resident-tab" aria-selected="false" aria-controls="resident-section">
-                    <i class="fas fa-users mr-2"></i> Resident Management
-                    <span class="badge badge-success ml-2"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></span>
-                </button>
-                <?php if (count($unlinkedResidents) > 0 || count($unlinkedPatients) > 0): ?>
-                <button class="tab-btn focusable" onclick="showSection('linking')" id="linking-tab" aria-selected="false" aria-controls="linking-section">
-                    <i class="fas fa-link mr-2"></i> Manual Linking
-                    <span class="badge badge-warning ml-2"><?= count($unlinkedResidents) + count($unlinkedPatients) ?></span>
-                </button>
+                <?php if (count($unlinkedResidents) > 0): ?>
+                <div class="stat-card-modern">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); color: var(--warning);">
+                        <i class="fas fa-unlink"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Unlinked</h3>
+                        <div class="number"><?= count($unlinkedResidents) ?></div>
+                    </div>
+                </div>
                 <?php endif; ?>
             </div>
         </div>
 
-        <!-- Staff Management Section -->
-        <section id="staff-section" class="fade-in section-spacing" aria-labelledby="staff-tab">
+        <!-- Modern Tabs -->
+        <div class="modern-tabs mb-8">
+            <button class="modern-tab active" onclick="switchTab('staff')" id="staffTab">
+                <i class="fas fa-user-md mr-2"></i>
+                Staff Management
+                <span class="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs"><?= count($activeStaff) + count($inactiveStaff) ?></span>
+            </button>
+            <button class="modern-tab" onclick="switchTab('resident')" id="residentTab">
+                <i class="fas fa-users mr-2"></i>
+                Resident Management
+                <span class="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></span>
+            </button>
+            <?php if (count($unlinkedResidents) > 0 || count($unlinkedPatients) > 0): ?>
+            <button class="modern-tab" onclick="switchTab('linking')" id="linkingTab">
+                <i class="fas fa-link mr-2"></i>
+                Manual Linking
+                <span class="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs"><?= count($unlinkedResidents) + count($unlinkedPatients) ?></span>
+            </button>
+            <?php endif; ?>
+        </div>
+
+        <!-- Staff Section -->
+        <div id="staffSection" class="tab-section">
             <!-- Create Staff Form -->
-            <div class="card mb-10">
-                <div class="card-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-user-plus mr-3 text-primary"></i>
-                        Create New Staff Account
-                    </h2>
-                    <p class="text-gray-600 mt-1">Add healthcare staff members to the system</p>
-                </div>
+            <div class="modern-card p-8 mb-8">
+                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-plus-circle text-primary"></i>
+                    Create New Staff Account
+                </h2>
                 
-                <div class="p-6">
-                    <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="form-group">
-                            <label class="form-label">Username <span class="text-red-500">*</span></label>
-                            <input type="text" name="username" required class="form-input" placeholder="Enter username">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Password <span class="text-red-500">*</span></label>
-                            <div class="password-container">
-                                <input type="password" name="password" required id="staff-password" class="form-input" placeholder="Enter password">
-                                <button type="button" class="password-toggle" onclick="togglePassword('staff-password')" aria-label="Show password">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            <p class="text-sm text-gray-500 mt-2">Password will be visible for reference</p>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Full Name <span class="text-red-500">*</span></label>
-                            <input type="text" name="full_name" required class="form-input" placeholder="Enter full name">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Position <span class="text-red-500">*</span></label>
-                            <select name="position" required class="form-input">
-                                <option value="">Select Position</option>
-                                <option value="Nurse">Nurse</option>
-                                <option value="Midwife">Midwife</option>
-                                <option value="Doctor">Doctor</option>
-                                <option value="Encoder">Encoder</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Specialization</label>
-                            <input type="text" name="specialization" class="form-input" placeholder="e.g., Pediatrics, OB-GYN, General Medicine">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">License Number</label>
-                            <input type="text" name="license_number" class="form-input" placeholder="Enter license number (if applicable)">
-                        </div>
-                        
-                        <div class="md:col-span-2">
-                            <button type="submit" name="create_staff" class="btn btn-primary px-8 py-3">
-                                <i class="fas fa-user-plus mr-2"></i> Create Staff Account
+                <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                    <div>
+                        <label class="modern-label">Username <span class="text-danger">*</span></label>
+                        <input type="text" name="username" required class="modern-input" placeholder="Enter username">
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Password <span class="text-danger">*</span></label>
+                        <div class="password-field">
+                            <input type="text" name="password" required id="staff-password" class="modern-input" value="<?= bin2hex(random_bytes(4)) ?>">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('staff-password')">
+                                <i class="fas fa-eye"></i>
                             </button>
                         </div>
-                    </form>
-                </div>
+                        <div class="password-strength">
+                            <div class="password-strength-bar strength-strong"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="full_name" required class="modern-input" placeholder="Enter full name">
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Position <span class="text-danger">*</span></label>
+                        <select name="position" required class="modern-input">
+                            <option value="">Select Position</option>
+                            <option value="Nurse">Nurse</option>
+                            <option value="Midwife">Midwife</option>
+                            <option value="Doctor">Doctor</option>
+                            <option value="Encoder">Encoder</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Specialization</label>
+                        <input type="text" name="specialization" class="modern-input" placeholder="e.g., Pediatrics">
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">License Number</label>
+                        <input type="text" name="license_number" class="modern-input" placeholder="Enter license number">
+                    </div>
+                    
+                    <div class="md:col-span-2 lg:col-span-3">
+                        <button type="submit" name="create_staff" class="btn-modern btn-modern-primary px-8">
+                            <i class="fas fa-user-plus"></i>
+                            Create Staff Account
+                        </button>
+                    </div>
+                </form>
             </div>
-            
-            <!-- Staff Account Management -->
-            <div class="mb-6">
-                <div class="tabs-container inline-flex">
-                    <button class="tab-btn active" onclick="showStaffTab('active')">
-                        <i class="fas fa-check-circle mr-2"></i>
-                        Active Staff (<?= count($activeStaff) ?>)
-                    </button>
-                    <button class="tab-btn" onclick="showStaffTab('inactive')">
-                        <i class="fas fa-pause-circle mr-2"></i>
-                        Inactive Staff (<?= count($inactiveStaff) ?>)
-                    </button>
-                </div>
+
+            <!-- Staff Tabs -->
+            <div class="modern-tabs mb-6">
+                <button class="modern-tab active" onclick="showStaffTab('active')" id="activeStaffTab">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Active (<?= count($activeStaff) ?>)
+                </button>
+                <button class="modern-tab" onclick="showStaffTab('inactive')" id="inactiveStaffTab">
+                    <i class="fas fa-pause-circle mr-2"></i>
+                    Inactive (<?= count($inactiveStaff) ?>)
+                </button>
             </div>
-            
-            <!-- Active Staff Tab -->
-            <div id="active-staff-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing">
+
+            <!-- Active Staff Grid -->
+            <div id="activeStaffGrid" class="modern-grid">
                 <?php if (empty($activeStaff)): ?>
                     <div class="col-span-full text-center py-12">
-                        <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                            <i class="fas fa-user-md text-2xl text-gray-400"></i>
+                        <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-user-md text-3xl text-gray-400"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-700 mb-2">No active staff accounts</h3>
                         <p class="text-gray-500">Create your first staff account above</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($activeStaff as $staff): ?>
-                        <div class="account-card">
+                        <div class="account-card-modern">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($staff['full_name']) ?></h3>
-                                    <p class="text-primary text-sm font-medium">@<?= htmlspecialchars($staff['username']) ?></p>
+                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($staff['full_name']) ?></h3>
+                                    <p class="text-sm text-primary">@<?= htmlspecialchars($staff['username']) ?></p>
                                 </div>
-                                <span class="badge badge-success">Active</span>
+                                <span class="modern-badge badge-success">Active</span>
                             </div>
                             
-                            <div class="space-y-3 mb-6">
+                            <div class="space-y-2 mb-6">
                                 <?php if ($staff['position']): ?>
                                     <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-briefcase text-gray-400 mr-3 w-5"></i>
+                                        <i class="fas fa-briefcase w-5 text-gray-400"></i>
                                         <?= htmlspecialchars($staff['position']) ?>
                                     </div>
                                 <?php endif; ?>
                                 
                                 <?php if ($staff['specialization']): ?>
                                     <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-stethoscope text-gray-400 mr-3 w-5"></i>
+                                        <i class="fas fa-stethoscope w-5 text-gray-400"></i>
                                         <?= htmlspecialchars($staff['specialization']) ?>
                                     </div>
                                 <?php endif; ?>
                                 
-                                <?php if ($staff['license_number']): ?>
-                                    <div class="flex items-center text-sm text-gray-500">
-                                        <i class="fas fa-id-card text-gray-400 mr-3 w-5"></i>
-                                        <?= htmlspecialchars($staff['license_number']) ?>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <div class="flex items-center text-sm text-gray-400">
-                                    <i class="fas fa-calendar-alt mr-3 w-5"></i>
+                                <div class="flex items-center text-xs text-gray-400">
+                                    <i class="fas fa-calendar-alt w-5"></i>
                                     Added <?= date('M j, Y', strtotime($staff['created_at'])) ?>
                                 </div>
                             </div>
                             
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="showChangeStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
-                                        class="btn btn-outline flex-1 min-w-[120px]">
-                                    <i class="fas fa-key mr-2"></i> Change Password
+                            <div class="flex gap-2">
+                                <button onclick="openStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
+                                        class="btn-modern btn-modern-outline flex-1">
+                                    <i class="fas fa-key"></i>
+                                    Change Password
                                 </button>
                                 
-                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                <form method="POST" action="" class="flex-1">
                                     <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
                                     <input type="hidden" name="action" value="deactivate">
                                     <button type="submit" name="toggle_staff_status" 
-                                            class="btn btn-warning w-full"
+                                            class="btn-modern btn-modern-warning w-full"
                                             onclick="return confirm('Deactivate this staff account?')">
-                                        <i class="fas fa-pause mr-2"></i> Deactivate
+                                        <i class="fas fa-pause"></i>
+                                        Deactivate
                                     </button>
                                 </form>
                             </div>
@@ -1702,277 +1856,252 @@ try {
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-            
-            <!-- Inactive Staff Tab -->
-            <div id="inactive-staff-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing" style="display: none;">
+
+            <!-- Inactive Staff Grid -->
+            <div id="inactiveStaffGrid" class="modern-grid" style="display: none;">
                 <?php if (empty($inactiveStaff)): ?>
                     <div class="col-span-full text-center py-12">
-                        <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                            <i class="fas fa-user-slash text-2xl text-gray-400"></i>
+                        <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-user-slash text-3xl text-gray-400"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-700 mb-2">No inactive staff accounts</h3>
                         <p class="text-gray-500">All staff accounts are currently active</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($inactiveStaff as $staff): ?>
-                        <div class="account-card">
+                        <div class="account-card-modern">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($staff['full_name']) ?></h3>
-                                    <p class="text-gray-500 text-sm font-medium">@<?= htmlspecialchars($staff['username']) ?></p>
+                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($staff['full_name']) ?></h3>
+                                    <p class="text-sm text-gray-500">@<?= htmlspecialchars($staff['username']) ?></p>
                                 </div>
-                                <span class="badge badge-error">Inactive</span>
+                                <span class="modern-badge badge-danger">Inactive</span>
                             </div>
                             
-                            <div class="space-y-3 mb-6">
+                            <div class="space-y-2 mb-6">
                                 <?php if ($staff['position']): ?>
                                     <div class="flex items-center text-sm text-gray-500">
-                                        <i class="fas fa-briefcase text-gray-400 mr-3 w-5"></i>
+                                        <i class="fas fa-briefcase w-5 text-gray-400"></i>
                                         <?= htmlspecialchars($staff['position']) ?>
                                     </div>
                                 <?php endif; ?>
                                 
-                                <div class="flex items-center text-sm text-gray-400">
-                                    <i class="fas fa-calendar-alt mr-3 w-5"></i>
+                                <div class="flex items-center text-xs text-gray-400">
+                                    <i class="fas fa-calendar-alt w-5"></i>
                                     Added <?= date('M j, Y', strtotime($staff['created_at'])) ?>
                                 </div>
                             </div>
                             
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="showChangeStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
-                                        class="btn btn-outline flex-1 min-w-[120px]">
-                                    <i class="fas fa-key mr-2"></i> Change Password
+                            <div class="flex gap-2">
+                                <button onclick="openStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
+                                        class="btn-modern btn-modern-outline flex-1">
+                                    <i class="fas fa-key"></i>
+                                    Change Password
                                 </button>
                                 
-                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                <form method="POST" action="" class="flex-1">
                                     <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
                                     <input type="hidden" name="action" value="activate">
                                     <button type="submit" name="toggle_staff_status" 
-                                            class="btn btn-success w-full"
-                                            onclick="return confirm('Reactivate this account?')">
-                                        <i class="fas fa-play mr-2"></i> Activate
+                                            class="btn-modern btn-modern-secondary w-full">
+                                        <i class="fas fa-play"></i>
+                                        Activate
                                     </button>
                                 </form>
                                 
-                                <button onclick="showDeleteModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
-                                        class="btn btn-danger flex-1 min-w-[120px]">
-                                    <i class="fas fa-trash mr-2"></i> Delete
+                                <button onclick="openDeleteModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
+                                        class="btn-modern btn-modern-danger">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-        </section>
+        </div>
 
-        <!-- Resident Management Section -->
-        <section id="resident-section" class="fade-in section-spacing" style="display: none;" aria-labelledby="resident-tab">
+        <!-- Resident Section -->
+        <div id="residentSection" class="tab-section" style="display: none;">
             <!-- Create Resident Form -->
-            <div class="card mb-10">
-                <div class="card-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-user-plus mr-3 text-success"></i>
-                        Create New Resident Account
-                    </h2>
-                    <p class="text-gray-600 mt-1">Create resident accounts for patient record linking</p>
-                </div>
+            <div class="modern-card p-8 mb-8">
+                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-plus-circle text-secondary"></i>
+                    Create New Resident Account
+                </h2>
                 
-                <div class="p-6">
-                    <form method="POST" action="" id="resident-form" class="space-y-8">
-                        <!-- Basic Information -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="form-group">
-                                <label class="form-label">Full Name <span class="text-red-500">*</span></label>
-                                <input type="text" name="full_name" required class="form-input" placeholder="e.g. Juan Dela Cruz">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Email Address <span class="text-red-500">*</span></label>
-                                <input type="email" name="email" required class="form-input" placeholder="juan@example.com">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Username</label>
-                                <input type="text" name="username" class="form-input" placeholder="Leave blank for auto-generation">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Password <span class="text-red-500">*</span></label>
-                                <div class="password-container">
-                                    <input type="password" name="password" required id="resident-password" class="form-input" placeholder="••••••••">
-                                    <button type="button" class="password-toggle" onclick="togglePassword('resident-password')" aria-label="Show password">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                                <p class="text-sm text-gray-500 mt-2">Password will be visible for reference</p>
-                            </div>
+                <form method="POST" action="" id="residentForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                    <div>
+                        <label class="modern-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="full_name" required class="modern-input" placeholder="e.g., Juan Dela Cruz">
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" name="email" required class="modern-input" placeholder="juan@example.com">
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Username</label>
+                        <input type="text" name="username" class="modern-input" placeholder="Auto-generated from email">
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Password <span class="text-danger">*</span></label>
+                        <div class="password-field">
+                            <input type="text" name="password" required id="resident-password" class="modern-input" value="<?= bin2hex(random_bytes(4)) ?>">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('resident-password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
-                        
-                        <!-- Additional Information -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="form-group">
-                                <label class="form-label">Phone Number</label>
-                                <input type="tel" name="phone" class="form-input" placeholder="+63 912 345 6789">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Date of Birth</label>
-                                <input type="date" name="date_of_birth" id="date-of-birth" onchange="calculateAge()" class="form-input">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Gender</label>
-                                <select name="gender" id="gender" class="form-input">
-                                    <option value="">Select Gender</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
+                        <div class="password-strength">
+                            <div class="password-strength-bar strength-strong"></div>
                         </div>
-                        
-                        <!-- Sitio -->
-                        <div class="form-group">
-                            <label class="form-label">Sitio</label>
-                            <select name="sitio" id="sitio" class="form-input">
-                                <option value="">Select Sitio</option>
-                                <option value="Kalinao">Kalinao</option>
-                                <option value="Nangka">Nangka</option>
-                                <option value="Lubi">Lubi</option>
-                                <option value="Sta. Cruz">Sta. Cruz</option>
-                                <option value="Regla">Regla</option>
-                                <option value="Abellana">Abellana</option>
-                                <option value="Sto.niño l">Sto.niño l</option>
-                                <option value="Sto.niño ll">Sto.niño ll</option>
-                                <option value="Sto.niño lll">Sto.niño lll</option>
-                                <option value="Zapatera">Zapatera</option>
-                                <option value="Mabuhay">Mabuhay</option>
-                                <option value="San Vicente">San Vicente</option>
-                                <option value="City Central">City Central</option>
-                                <option value="San. Antonio">San. Antonio</option>
-                                <option value="San Roque">San Roque</option>
-                                <option value="Others">Others</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Age Display -->
-                        <div id="age-display" class="hidden">
-                            <div class="inline-flex items-center px-3 py-1 bg-gray-100 rounded-full">
-                                <span class="text-sm font-medium text-gray-700">Age: <span id="calculated-age">0</span> years</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Information Note -->
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div class="flex">
-                                <i class="fas fa-info-circle text-blue-500 text-lg mt-0.5 mr-3"></i>
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Phone</label>
+                        <input type="tel" name="phone" class="modern-input" placeholder="+63 912 345 6789">
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Date of Birth</label>
+                        <input type="date" name="date_of_birth" id="dob" class="modern-input" onchange="calculateAge()">
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Gender</label>
+                        <select name="gender" id="gender" class="modern-input">
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="modern-label">Sitio</label>
+                        <select name="sitio" class="modern-input">
+                            <option value="">Select Sitio</option>
+                            <option value="Kalinao">Kalinao</option>
+                            <option value="Nangka">Nangka</option>
+                            <option value="Lubi">Lubi</option>
+                            <option value="Sta. Cruz">Sta. Cruz</option>
+                            <option value="Regla">Regla</option>
+                            <option value="Abellana">Abellana</option>
+                            <option value="Sto.niño l">Sto.niño l</option>
+                            <option value="Sto.niño ll">Sto.niño ll</option>
+                            <option value="Sto.niño lll">Sto.niño lll</option>
+                            <option value="Zapatera">Zapatera</option>
+                            <option value="Mabuhay">Mabuhay</option>
+                            <option value="San Vicente">San Vicente</option>
+                            <option value="City Central">City Central</option>
+                            <option value="San. Antonio">San. Antonio</option>
+                            <option value="San Roque">San Roque</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                    
+                    <div class="lg:col-span-3">
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-info-circle text-blue-500 mt-1"></i>
                                 <div>
                                     <p class="font-medium text-blue-800 mb-1">Important Information</p>
                                     <p class="text-sm text-blue-600">
-                                        This account will be created without a patient record. 
-                                        To link this account to a patient record, go to the 
-                                        <span class="font-semibold">"Manual Linking"</span> tab after creating the account.
-                                        Patient records are added separately by admin staff.
+                                        Account will be created without a patient record. 
+                                        Use the Manual Linking tab to connect this account to a patient record.
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Submit Button -->
-                        <div class="pt-4 border-t border-gray-200">
-                            <button type="submit" name="create_resident" class="btn btn-success px-8 py-3">
-                                <i class="fas fa-plus-circle mr-2"></i> Create Resident Account
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    
+                    <div class="lg:col-span-3">
+                        <button type="submit" name="create_resident" class="btn-modern btn-modern-secondary px-8">
+                            <i class="fas fa-user-plus"></i>
+                            Create Resident Account
+                        </button>
+                    </div>
+                </form>
             </div>
-            
-            <!-- Resident Account Management -->
-            <div class="mb-6">
-                <div class="tabs-container inline-flex flex-wrap">
-                    <button class="tab-btn active" onclick="showResidentTab('pending')">
-                        <i class="fas fa-clock mr-2"></i>
-                        Pending (<?= count($pendingResidents) ?>)
-                    </button>
-                    <button class="tab-btn" onclick="showResidentTab('approved')">
-                        <i class="fas fa-check-circle mr-2"></i>
-                        Approved (<?= count($approvedResidents) ?>)
-                    </button>
-                    <button class="tab-btn" onclick="showResidentTab('declined')">
-                        <i class="fas fa-times-circle mr-2"></i>
-                        Declined (<?= count($declinedResidents) ?>)
-                    </button>
-                    <?php if (count($unlinkedResidents) > 0): ?>
-                    <button class="tab-btn" onclick="showResidentTab('unlinked')">
-                        <i class="fas fa-unlink mr-2"></i>
-                        Unlinked (<?= count($unlinkedResidents) ?>)
-                    </button>
-                    <?php endif; ?>
-                </div>
+
+            <!-- Resident Tabs -->
+            <div class="modern-tabs mb-6 flex-wrap">
+                <button class="modern-tab active" onclick="showResidentTab('pending')" id="pendingResidentTab">
+                    <i class="fas fa-clock mr-2"></i>
+                    Pending (<?= count($pendingResidents) ?>)
+                </button>
+                <button class="modern-tab" onclick="showResidentTab('approved')" id="approvedResidentTab">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Approved (<?= count($approvedResidents) ?>)
+                </button>
+                <button class="modern-tab" onclick="showResidentTab('declined')" id="declinedResidentTab">
+                    <i class="fas fa-times-circle mr-2"></i>
+                    Declined (<?= count($declinedResidents) ?>)
+                </button>
+                <?php if (count($unlinkedResidents) > 0): ?>
+                <button class="modern-tab" onclick="showResidentTab('unlinked')" id="unlinkedResidentTab">
+                    <i class="fas fa-unlink mr-2"></i>
+                    Unlinked (<?= count($unlinkedResidents) ?>)
+                </button>
+                <?php endif; ?>
             </div>
-            
-            <!-- Pending Residents Tab -->
-            <div id="pending-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing">
+
+            <!-- Pending Residents Grid -->
+            <div id="pendingResidentGrid" class="modern-grid">
                 <?php if (empty($pendingResidents)): ?>
                     <div class="col-span-full text-center py-12">
-                        <div class="inline-flex items-center justify-center w-16 h-16 bg-yellow-50 rounded-full mb-4">
-                            <i class="fas fa-clock text-2xl text-yellow-400"></i>
+                        <div class="w-20 h-20 mx-auto bg-yellow-50 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-clock text-3xl text-yellow-400"></i>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No pending resident accounts</h3>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No pending residents</h3>
                         <p class="text-gray-500">All applications have been processed</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($pendingResidents as $resident): ?>
-                        <div class="account-card">
-                            <div class="text-center mb-6">
-                                <div class="w-16 h-16 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <i class="fas fa-user text-xl"></i>
+                        <div class="account-card-modern">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                    <p class="text-sm text-gray-500">@<?= htmlspecialchars($resident['username']) ?></p>
                                 </div>
-                                <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                <p class="text-gray-500 text-sm font-medium">@<?= htmlspecialchars($resident['username']) ?></p>
+                                <span class="modern-badge badge-warning">Pending</span>
                             </div>
                             
-                            <div class="space-y-3 mb-6">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i class="fas fa-envelope text-gray-400 mr-3 w-5"></i>
+                            <div class="space-y-2 mb-6">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-envelope w-5 text-gray-400"></i>
                                     <?= htmlspecialchars($resident['email']) ?>
                                 </div>
-                                
                                 <?php if ($resident['sitio']): ?>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-map-marker-alt text-gray-400 mr-3 w-5"></i>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-map-marker-alt w-5 text-gray-400"></i>
                                         <?= htmlspecialchars($resident['sitio']) ?>
                                     </div>
                                 <?php endif; ?>
-                                
-                                <?php if ($resident['age'] > 0): ?>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-user text-gray-400 mr-3 w-5"></i>
-                                        Age: <?= htmlspecialchars($resident['age']) ?> years
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <div class="flex items-center text-sm text-gray-400">
-                                    <i class="fas fa-calendar-plus text-gray-400 mr-3 w-5"></i>
+                                <div class="flex items-center text-xs text-gray-400">
+                                    <i class="fas fa-calendar-plus w-5"></i>
                                     Applied <?= date('M j, Y', strtotime($resident['created_at'])) ?>
                                 </div>
                             </div>
                             
-                            <div class="flex flex-wrap gap-2">
-                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                            <div class="flex gap-2">
+                                <form method="POST" action="" class="flex-1">
                                     <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
                                     <input type="hidden" name="action" value="approve">
-                                    <button type="submit" name="toggle_resident_status" class="btn btn-success w-full">
-                                        <i class="fas fa-check mr-2"></i> Approve
+                                    <button type="submit" name="toggle_resident_status" class="btn-modern btn-modern-secondary w-full">
+                                        <i class="fas fa-check"></i>
+                                        Approve
                                     </button>
                                 </form>
                                 
-                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                <form method="POST" action="" class="flex-1">
                                     <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
                                     <input type="hidden" name="action" value="decline">
-                                    <button type="submit" name="toggle_resident_status" class="btn btn-danger w-full">
-                                        <i class="fas fa-times mr-2"></i> Decline
+                                    <button type="submit" name="toggle_resident_status" class="btn-modern btn-modern-danger w-full">
+                                        <i class="fas fa-times"></i>
+                                        Decline
                                     </button>
                                 </form>
                             </div>
@@ -1980,134 +2109,124 @@ try {
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-            
-            <!-- Approved Residents Tab -->
-            <div id="approved-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing" style="display: none;">
+
+            <!-- Approved Residents Grid -->
+            <div id="approvedResidentGrid" class="modern-grid" style="display: none;">
                 <?php if (empty($approvedResidents)): ?>
                     <div class="col-span-full text-center py-12">
-                        <div class="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
-                            <i class="fas fa-check-circle text-2xl text-green-400"></i>
+                        <div class="w-20 h-20 mx-auto bg-green-50 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-check-circle text-3xl text-green-400"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-700 mb-2">No approved residents</h3>
-                        <p class="text-gray-500">Approve some pending accounts to see them here</p>
+                        <p class="text-gray-500">Approve pending accounts to see them here</p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($approvedResidents as $resident): ?>
-                        <div class="account-card">
+                    <?php foreach ($approvedResidents as $resident): 
+                        $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
+                        $stmt->execute([$resident['id']]);
+                        $hasPatientRecord = $stmt->fetch();
+                    ?>
+                        <div class="account-card-modern">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                    <p class="text-success text-sm font-medium">@<?= htmlspecialchars($resident['username']) ?></p>
+                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                    <p class="text-sm text-secondary">@<?= htmlspecialchars($resident['username']) ?></p>
                                 </div>
-                                <span class="badge badge-success">Approved</span>
+                                <div class="flex flex-col gap-1">
+                                    <?php if (!$hasPatientRecord): ?>
+                                        <span class="modern-badge badge-warning">Unlinked</span>
+                                    <?php else: ?>
+                                        <span class="modern-badge badge-success">Linked</span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                             
-                            <?php 
-                            // Check if account has linked patient record
-                            $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
-                            $stmt->execute([$resident['id']]);
-                            $hasPatientRecord = $stmt->fetch();
-                            ?>
-                            
-                            <?php if (!$hasPatientRecord): ?>
-                            <span class="badge badge-warning mb-4">Unlinked Account</span>
-                            <?php else: ?>
-                            <span class="badge badge-info mb-4">Linked Account</span>
-                            <?php endif; ?>
-                            
-                            <div class="space-y-3 mb-6">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i class="fas fa-envelope text-gray-400 mr-3 w-5"></i>
+                            <div class="space-y-2 mb-6">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-envelope w-5 text-gray-400"></i>
                                     <?= htmlspecialchars($resident['email']) ?>
                                 </div>
-                                
                                 <?php if ($resident['contact']): ?>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-phone text-gray-400 mr-3 w-5"></i>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-phone w-5 text-gray-400"></i>
                                         <?= htmlspecialchars($resident['contact']) ?>
                                     </div>
                                 <?php endif; ?>
-                                
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-id-card text-gray-400 mr-3 w-5"></i>
+                                <div class="flex items-center text-xs text-gray-400">
+                                    <i class="fas fa-id-card w-5"></i>
                                     ID: <?= htmlspecialchars($resident['unique_number']) ?>
                                 </div>
                             </div>
                             
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="showChangeResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
-                                        class="btn btn-outline flex-1 min-w-[120px]">
-                                    <i class="fas fa-key mr-2"></i> Change Password
+                            <div class="flex gap-2">
+                                <button onclick="openResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
+                                        class="btn-modern btn-modern-outline flex-1">
+                                    <i class="fas fa-key"></i>
+                                    Change Password
                                 </button>
                                 
-                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                                <form method="POST" action="" class="flex-1">
                                     <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
                                     <input type="hidden" name="action" value="suspend">
                                     <button type="submit" name="toggle_resident_status" 
-                                            class="btn btn-warning w-full"
+                                            class="btn-modern btn-modern-warning w-full"
                                             onclick="return confirm('Suspend this account?')">
-                                        <i class="fas fa-pause mr-2"></i> Suspend
+                                        <i class="fas fa-pause"></i>
+                                        Suspend
                                     </button>
                                 </form>
                                 
                                 <?php if (!$hasPatientRecord): ?>
-                                <a href="?section=linking&focus_resident=<?= $resident['id'] ?>" 
-                                   class="btn btn-outline flex-1 min-w-[120px] text-center">
-                                    <i class="fas fa-link mr-2"></i> Link Record
-                                </a>
+                                <button onclick="switchToLinking(<?= $resident['id'] ?>)"
+                                        class="btn-modern btn-modern-primary">
+                                    <i class="fas fa-link"></i>
+                                </button>
                                 <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-            
-            <!-- Declined Residents Tab -->
-            <div id="declined-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing" style="display: none;">
+
+            <!-- Declined Residents Grid -->
+            <div id="declinedResidentGrid" class="modern-grid" style="display: none;">
                 <?php if (empty($declinedResidents)): ?>
                     <div class="col-span-full text-center py-12">
-                        <div class="inline-flex items-center justify-center w-16 h-16 bg-red-50 rounded-full mb-4">
-                            <i class="fas fa-times-circle text-2xl text-red-400"></i>
+                        <div class="w-20 h-20 mx-auto bg-red-50 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-times-circle text-3xl text-red-400"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-700 mb-2">No declined residents</h3>
-                        <p class="text-gray-500">No resident applications have been declined</p>
+                        <p class="text-gray-500">No applications have been declined</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($declinedResidents as $resident): ?>
-                        <div class="account-card">
+                        <div class="account-card-modern">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                    <p class="text-gray-500 text-sm font-medium">@<?= htmlspecialchars($resident['username']) ?></p>
+                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                    <p class="text-sm text-gray-500">@<?= htmlspecialchars($resident['username']) ?></p>
                                 </div>
-                                <span class="badge badge-error">Declined</span>
+                                <span class="modern-badge badge-danger">Declined</span>
                             </div>
                             
-                            <div class="space-y-3 mb-6">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i class="fas fa-envelope text-gray-400 mr-3 w-5"></i>
+                            <div class="space-y-2 mb-6">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-envelope w-5 text-gray-400"></i>
                                     <?= htmlspecialchars($resident['email']) ?>
                                 </div>
-                                
-                                <div class="flex items-center text-sm text-gray-400">
-                                    <i class="fas fa-calendar-times text-gray-400 mr-3 w-5"></i>
+                                <div class="flex items-center text-xs text-gray-400">
+                                    <i class="fas fa-calendar-times w-5"></i>
                                     Declined <?= date('M j, Y', strtotime($resident['updated_at'])) ?>
                                 </div>
                             </div>
                             
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="showChangeResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
-                                        class="btn btn-outline flex-1 min-w-[120px]">
-                                    <i class="fas fa-key mr-2"></i> Change Password
-                                </button>
-                                
-                                <form method="POST" action="" class="flex-1 min-w-[120px]">
+                            <div class="flex gap-2">
+                                <form method="POST" action="" class="flex-1">
                                     <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
                                     <input type="hidden" name="action" value="approve">
-                                    <button type="submit" name="toggle_resident_status" 
-                                            class="btn btn-success w-full"
-                                            onclick="return confirm('Approve this declined account?')">
-                                        <i class="fas fa-check mr-2"></i> Approve
+                                    <button type="submit" name="toggle_resident_status" class="btn-modern btn-modern-secondary w-full">
+                                        <i class="fas fa-check"></i>
+                                        Approve
                                     </button>
                                 </form>
                             </div>
@@ -2115,625 +2234,427 @@ try {
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-            
-            <!-- Unlinked Residents Tab -->
-            <div id="unlinked-residents-tab" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-spacing" style="display: none;">
+
+            <!-- Unlinked Residents Grid -->
+            <div id="unlinkedResidentGrid" class="modern-grid" style="display: none;">
                 <?php if (empty($unlinkedResidents)): ?>
                     <div class="col-span-full text-center py-12">
-                        <div class="inline-flex items-center justify-center w-16 h-16 bg-orange-50 rounded-full mb-4">
-                            <i class="fas fa-unlink text-2xl text-orange-400"></i>
+                        <div class="w-20 h-20 mx-auto bg-orange-50 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-link text-3xl text-orange-400"></i>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-700 mb-2">All accounts are linked!</h3>
-                        <p class="text-gray-500">All resident accounts have patient records linked</p>
+                        <p class="text-gray-500">All resident accounts have patient records</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($unlinkedResidents as $resident): ?>
-                        <div class="account-card">
+                        <div class="account-card-modern">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                    <p class="text-warning text-sm font-medium">@<?= htmlspecialchars($resident['username']) ?></p>
+                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                    <p class="text-sm text-warning">@<?= htmlspecialchars($resident['username']) ?></p>
                                 </div>
-                                <span class="badge badge-warning">Unlinked</span>
+                                <span class="modern-badge badge-warning">Unlinked</span>
                             </div>
                             
-                            <div class="space-y-3 mb-6">
-                                <div class="flex items-center text-sm text-gray-600">
-                                    <i class="fas fa-envelope text-gray-400 mr-3 w-5"></i>
+                            <div class="space-y-2 mb-6">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-envelope w-5 text-gray-400"></i>
                                     <?= htmlspecialchars($resident['email']) ?>
                                 </div>
-                                
                                 <?php if ($resident['age'] > 0): ?>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-user text-gray-400 mr-3 w-5"></i>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-user w-5 text-gray-400"></i>
                                         Age: <?= htmlspecialchars($resident['age']) ?> years
                                     </div>
                                 <?php endif; ?>
-                                
                                 <?php if ($resident['sitio']): ?>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-map-marker-alt text-gray-400 mr-3 w-5"></i>
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-map-marker-alt w-5 text-gray-400"></i>
                                         <?= htmlspecialchars($resident['sitio']) ?>
                                     </div>
                                 <?php endif; ?>
                             </div>
                             
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="showChangeResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
-                                        class="btn btn-outline flex-1 min-w-[120px]">
-                                    <i class="fas fa-key mr-2"></i> Change Password
+                            <div class="flex gap-2">
+                                <button onclick="openResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
+                                        class="btn-modern btn-modern-outline flex-1">
+                                    <i class="fas fa-key"></i>
+                                    Change Password
                                 </button>
                                 
-                                <a href="?section=linking&focus_resident=<?= $resident['id'] ?>" 
-                                   class="btn btn-primary flex-1 min-w-[120px] text-center">
-                                    <i class="fas fa-link mr-2"></i> Link Record
-                                </a>
+                                <button onclick="switchToLinking(<?= $resident['id'] ?>)"
+                                        class="btn-modern btn-modern-primary flex-1">
+                                    <i class="fas fa-link"></i>
+                                    Link Record
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-        </section>
+        </div>
 
-        <!-- Manual Linking Section -->
-        <section id="linking-section" class="fade-in" style="display: none;" aria-labelledby="linking-tab">
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-link mr-3 text-purple-600"></i>
-                        Manual Account-Patient Linking
-                    </h2>
-                    <p class="text-gray-600 mt-1">Link resident accounts to existing patient records</p>
-                </div>
-                
-                <div class="p-6">
-                    <?php if (count($unlinkedResidents) === 0 && count($unlinkedPatients) === 0): ?>
-                        <div class="text-center py-12">
-                            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-50 rounded-full mb-4">
-                                <i class="fas fa-check-circle text-2xl text-green-400"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-700 mb-2">All accounts are properly linked!</h3>
-                            <p class="text-gray-500">No manual linking needed at this time.</p>
+        <!-- Linking Section -->
+        <div id="linkingSection" class="tab-section" style="display: none;">
+            <div class="modern-card p-8">
+                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-link text-purple-600"></i>
+                    Manual Account-Patient Linking
+                </h2>
+
+                <?php if (count($unlinkedResidents) === 0 && count($unlinkedPatients) === 0): ?>
+                    <div class="text-center py-12">
+                        <div class="w-20 h-20 mx-auto bg-green-50 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-check-circle text-3xl text-green-400"></i>
                         </div>
-                    <?php else: ?>
-                        <!-- Link Section -->
-                        <div class="mb-8">
-                            <h3 class="subsection-title mb-6">
-                                <i class="fas fa-handshake text-blue-600 mr-2"></i>
-                                Link Accounts to Patient Records
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">All accounts are properly linked!</h3>
+                        <p class="text-gray-500">No manual linking needed at this time.</p>
+                    </div>
+                <?php else: ?>
+                    <!-- Linking Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <!-- Unlinked Residents Column -->
+                        <div>
+                            <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                                <i class="fas fa-user-circle text-blue-500"></i>
+                                Unlinked Residents
+                                <span class="modern-badge badge-info"><?= count($unlinkedResidents) ?></span>
                             </h3>
                             
-                            <!-- Grid Layout -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                                <!-- Unlinked Residents Column -->
-                                <div>
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h4 class="font-semibold text-gray-700 text-base">
-                                            <i class="fas fa-user-circle text-blue-500 mr-2"></i>
-                                            Unlinked Resident Accounts
-                                            <span class="badge badge-info ml-2"><?= count($unlinkedResidents) ?></span>
-                                        </h4>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="resident-grid">
-                                        <?php foreach ($unlinkedResidents as $resident): ?>
-                                            <div class="account-card resident-card cursor-pointer"
-                                                 data-resident-id="<?= $resident['id'] ?>"
-                                                 onclick="selectResidentCard(this, <?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', '<?= htmlspecialchars($resident['email']) ?>', '<?= htmlspecialchars($resident['sitio'] ?? '') ?>', <?= $resident['age'] ?? 0 ?>)">
-                                                <div class="flex items-start gap-3">
-                                                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                                        <i class="fas fa-user text-blue-500"></i>
-                                                    </div>
-                                                    <div class="flex-1 min-w-0">
-                                                        <div class="font-semibold text-gray-800 truncate"><?= htmlspecialchars($resident['full_name']) ?></div>
-                                                        <div class="text-xs text-gray-500 truncate mt-1">
-                                                            <?= htmlspecialchars($resident['email']) ?>
-                                                        </div>
-                                                        <div class="flex items-center gap-2 mt-2">
-                                                            <?php if ($resident['sitio']): ?>
-                                                                <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
-                                                                    <i class="fas fa-map-marker-alt text-xs"></i>
-                                                                    <?= htmlspecialchars($resident['sitio']) ?>
-                                                                </span>
-                                                            <?php endif; ?>
-                                                            <?php if ($resident['age'] > 0): ?>
-                                                                <span class="text-xs text-gray-600">Age: <?= htmlspecialchars($resident['age']) ?></span>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                                
-                                <!-- Unlinked Patients Column -->
-                                <div>
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h4 class="font-semibold text-gray-700 text-base">
-                                            <i class="fas fa-file-medical text-green-500 mr-2"></i>
-                                            Unlinked Patient Records
-                                            <span class="badge badge-success ml-2"><?= count($unlinkedPatients) ?></span>
-                                        </h4>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="patient-grid">
-                                        <?php foreach ($unlinkedPatients as $patient): ?>
-                                            <div class="account-card patient-card cursor-pointer"
-                                                 data-patient-id="<?= $patient['id'] ?>"
-                                                 onclick="selectPatientCard(this, <?= $patient['id'] ?>, '<?= htmlspecialchars($patient['full_name']) ?>', <?= $patient['age'] ?? 0 ?>, '<?= htmlspecialchars($patient['gender'] ?? '') ?>', '<?= htmlspecialchars($patient['sitio'] ?? '') ?>')">
-                                                <div class="flex items-start gap-3">
-                                                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                                                        <i class="fas fa-file-medical text-green-500"></i>
-                                                    </div>
-                                                    <div class="flex-1 min-w-0">
-                                                        <div class="font-semibold text-gray-800 truncate"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                                        <div class="flex flex-wrap gap-2 mt-2">
-                                                            <?php if ($patient['age']): ?>
-                                                                <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
-                                                                    <i class="fas fa-birthday-cake text-xs"></i>
-                                                                    <?= htmlspecialchars($patient['age']) ?> yrs
-                                                                </span>
-                                                            <?php endif; ?>
-                                                            <?php if ($patient['gender']): ?>
-                                                                <span class="inline-flex items-center gap-1 text-xs text-gray-600 bg-gray-100 rounded-full px-2 py-1">
-                                                                    <i class="fas fa-venus-mars text-xs"></i>
-                                                                    <?= htmlspecialchars($patient['gender']) ?>
-                                                                </span>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Selected Items Panel -->
-                            <div class="bg-gradient-to-r from-blue-50 to-green-50 border-2 border-blue-200 rounded-lg p-6 mb-6 shadow-sm" id="selected-items-panel" style="display: none;">
-                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                                            <i class="fas fa-handshake text-blue-600 text-lg"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-gray-800 text-lg">Ready to Link</h4>
-                                            <p class="text-sm text-gray-600">Selected items for linking</p>
-                                        </div>
-                                    </div>
-                                    <button type="button" 
-                                            class="btn btn-outline"
-                                            onclick="clearLinkingSelection()">
-                                        <i class="fas fa-times mr-2"></i> Clear Selection
-                                    </button>
-                                </div>
-                                
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <!-- Selected Resident Card -->
-                                    <div class="bg-white rounded-xl border-2 border-blue-200 p-4" id="selected-resident-card">
-                                        <div class="flex items-center gap-3 mb-3">
+                            <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                                <?php foreach ($unlinkedResidents as $resident): ?>
+                                    <div class="link-card" onclick="selectResident(<?= $resident['id'] ?>, this)" data-resident-id="<?= $resident['id'] ?>">
+                                        <div class="flex items-start gap-3">
                                             <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                                                 <i class="fas fa-user text-blue-500"></i>
                                             </div>
                                             <div class="flex-1">
-                                                <h5 class="font-semibold text-gray-700 text-sm">Selected Resident</h5>
-                                                <div class="text-gray-800 font-medium text-base" id="selected-resident-name">No resident selected</div>
+                                                <div class="font-semibold"><?= htmlspecialchars($resident['full_name']) ?></div>
+                                                <div class="text-sm text-gray-500"><?= htmlspecialchars($resident['email']) ?></div>
+                                                <div class="flex gap-2 mt-2">
+                                                    <?php if ($resident['sitio']): ?>
+                                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                                                            <?= htmlspecialchars($resident['sitio']) ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                    <?php if ($resident['age'] > 0): ?>
+                                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                                                            Age: <?= htmlspecialchars($resident['age']) ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
-                                            <div class="badge badge-info">
-                                                Account
-                                            </div>
-                                        </div>
-                                        <div class="text-xs text-gray-500" id="selected-resident-details">
-                                            Select a resident account from the left panel
                                         </div>
                                     </div>
-                                    
-                                    <!-- Selected Patient Card -->
-                                    <div class="bg-white rounded-xl border-2 border-green-200 p-4" id="selected-patient-card">
-                                        <div class="flex items-center gap-3 mb-3">
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <!-- Unlinked Patients Column -->
+                        <div>
+                            <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                                <i class="fas fa-file-medical text-green-500"></i>
+                                Unlinked Patient Records
+                                <span class="modern-badge badge-success"><?= count($unlinkedPatients) ?></span>
+                            </h3>
+                            
+                            <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                                <?php foreach ($unlinkedPatients as $patient): ?>
+                                    <div class="link-card patient" onclick="selectPatient(<?= $patient['id'] ?>, this)" data-patient-id="<?= $patient['id'] ?>">
+                                        <div class="flex items-start gap-3">
                                             <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
                                                 <i class="fas fa-file-medical text-green-500"></i>
                                             </div>
                                             <div class="flex-1">
-                                                <h5 class="font-semibold text-gray-700 text-sm">Selected Patient Record</h5>
-                                                <div class="text-gray-800 font-medium text-base" id="selected-patient-name">No patient selected</div>
+                                                <div class="font-semibold"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                                <div class="flex gap-2 mt-2">
+                                                    <?php if ($patient['age']): ?>
+                                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                                                            Age: <?= htmlspecialchars($patient['age']) ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                    <?php if ($patient['gender']): ?>
+                                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                                                            <?= htmlspecialchars($patient['gender']) ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
-                                            <div class="badge badge-success">
-                                                Record
-                                            </div>
-                                        </div>
-                                        <div class="text-xs text-gray-500" id="selected-patient-details">
-                                            Select a patient record from the right panel
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-6 pt-6 border-t border-gray-200">
-                                    <button type="button" 
-                                            class="btn btn-primary w-full md:w-auto"
-                                            id="link-action-button" 
-                                            onclick="performLinking()" 
-                                            disabled>
-                                        <i class="fas fa-link mr-2"></i>
-                                        <span id="link-button-text">Select Both Items</span>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <input type="hidden" id="selected-resident-id" value="0">
-                            <input type="hidden" id="selected-patient-id" value="0">
-                        </div>
-                        
-                        <!-- Information Section -->
-                        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-lg p-5">
-                            <div class="flex items-start gap-4">
-                                <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-info-circle text-yellow-500 text-lg"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-yellow-800 mb-3">How This Works:</h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="flex items-start gap-2">
-                                            <div class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm font-bold mt-0.5">
-                                                1
-                                            </div>
-                                            <p class="text-sm text-yellow-700">Create resident accounts (no patient records initially)</p>
-                                        </div>
-                                        <div class="flex items-start gap-2">
-                                            <div class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm font-bold mt-0.5">
-                                                2
-                                            </div>
-                                            <p class="text-sm text-yellow-700">Add patient records separately through patient management</p>
-                                        </div>
-                                        <div class="flex items-start gap-2">
-                                            <div class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm font-bold mt-0.5">
-                                                3
-                                            </div>
-                                            <p class="text-sm text-yellow-700">Link accounts to records here (one account = one record)</p>
-                                        </div>
-                                        <div class="flex items-start gap-2">
-                                            <div class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm font-bold mt-0.5">
-                                                4
-                                            </div>
-                                            <p class="text-sm text-yellow-700">Residents can view medical history after linking</p>
                                         </div>
                                     </div>
-                                </div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
-                    <?php endif; ?>
-                </div>
+                    </div>
+
+                    <!-- Selected Items Panel -->
+                    <div id="selectedPanel" class="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-6 border-2 border-blue-200" style="display: none;">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-semibold flex items-center gap-2">
+                                <i class="fas fa-handshake text-blue-600"></i>
+                                Ready to Link
+                            </h4>
+                            <button onclick="clearSelection()" class="text-sm text-gray-600 hover:text-gray-800">
+                                <i class="fas fa-times mr-1"></i> Clear
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div class="bg-white rounded-xl p-4 border-2 border-blue-200">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i class="fas fa-user text-blue-500"></i>
+                                    <span class="font-medium" id="selectedResidentName">No resident selected</span>
+                                </div>
+                                <div class="text-sm text-gray-500" id="selectedResidentDetails"></div>
+                            </div>
+
+                            <div class="bg-white rounded-xl p-4 border-2 border-green-200">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <i class="fas fa-file-medical text-green-500"></i>
+                                    <span class="font-medium" id="selectedPatientName">No patient selected</span>
+                                </div>
+                                <div class="text-sm text-gray-500" id="selectedPatientDetails"></div>
+                            </div>
+                        </div>
+
+                        <button onclick="performLinking()" id="linkButton" disabled
+                                class="btn-modern btn-modern-primary w-full md:w-auto px-8">
+                            <i class="fas fa-link mr-2"></i>
+                            Link Accounts
+                        </button>
+                    </div>
+
+                    <input type="hidden" id="selectedResidentId" value="0">
+                    <input type="hidden" id="selectedPatientId" value="0">
+                <?php endif; ?>
             </div>
-        </section>
+        </div>
     </main>
 
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-red-600"></i>
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-gray-800">Delete Staff Account</h3>
-                    <p class="text-gray-600 text-sm mt-1" id="delete-message"></p>
-                </div>
-            </div>
+    <!-- Delete Modal -->
+    <div class="modern-modal" id="deleteModal">
+        <div class="modern-modal-content">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle text-danger"></i>
+                Delete Staff Account
+            </h3>
             
-            <form method="POST" action="" id="delete-form">
-                <input type="hidden" name="staff_id" id="delete-staff-id">
+            <p class="text-gray-600 mb-6" id="deleteMessage"></p>
+            
+            <form method="POST" action="" id="deleteForm">
+                <input type="hidden" name="staff_id" id="deleteStaffId">
                 
                 <div class="mb-6">
-                    <label class="block font-semibold text-gray-700 mb-3">Handle Dependent Records:</label>
+                    <label class="modern-label">Handle Dependent Records:</label>
                     
                     <div class="space-y-3">
-                        <label class="flex items-start p-3 border rounded-lg hover:bg-blue-50 cursor-pointer transition-colors">
+                        <label class="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-blue-50">
                             <input type="radio" name="delete_action" value="reassign" checked class="mt-1 mr-3">
                             <div class="flex-1">
-                                <span class="font-medium text-gray-700">Reassign to another staff</span>
-                                <select name="reassign_to" class="form-input mt-2" required>
-                                    <option value="">Select staff member</option>
+                                <span class="font-medium">Reassign to another staff</span>
+                                <select name="reassign_to" class="modern-input mt-2">
+                                    <option value="">Select staff</option>
                                     <?php foreach ($allStaff as $staff): ?>
                                         <?php if ($staff['id'] != $_SESSION['user_id']): ?>
-                                            <option value="<?= $staff['id'] ?>"><?= htmlspecialchars($staff['full_name']) ?> (@<?= htmlspecialchars($staff['username']) ?>)</option>
+                                            <option value="<?= $staff['id'] ?>">
+                                                <?= htmlspecialchars($staff['full_name']) ?>
+                                            </option>
                                         <?php endif; ?>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                         </label>
                         
-                        <label class="flex items-start p-3 border rounded-lg hover:bg-red-50 cursor-pointer transition-colors">
+                        <label class="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-red-50">
                             <input type="radio" name="delete_action" value="delete" class="mt-1 mr-3">
                             <div class="flex-1">
-                                <span class="font-medium text-red-600">Delete all associated records</span>
-                                <p class="text-sm text-red-500 mt-1">Warning: This action cannot be undone</p>
+                                <span class="font-medium text-danger">Delete all associated records</span>
+                                <p class="text-sm text-danger mt-1">Warning: This action cannot be undone</p>
                             </div>
                         </label>
                     </div>
                 </div>
                 
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeDeleteModal()" class="btn btn-outline">
-                        <i class="fas fa-times mr-2"></i> Cancel
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeDeleteModal()" class="btn-modern btn-modern-outline flex-1">
+                        Cancel
                     </button>
-                    <button type="submit" name="hard_delete" class="btn btn-danger">
-                        <i class="fas fa-trash mr-2"></i> Delete Account
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Change Staff Password Modal -->
-    <div id="changeStaffPasswordModal" class="modal">
-        <div class="modal-content max-w-md">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-key text-blue-600 text-lg"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800">Change Staff Password</h3>
-                        <p class="text-gray-600 text-sm mt-1">Update staff member's password securely</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeChangeStaffPasswordModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            
-            <form method="POST" action="" id="change-staff-password-form" onsubmit="return validateStaffPasswordForm()">
-                <input type="hidden" name="staff_id" id="change-staff-id">
-                
-                <!-- Staff Info Display -->
-                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 mb-6">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-user-md text-blue-600"></i>
-                        <div>
-                            <p class="text-xs text-blue-600 font-semibold uppercase tracking-wide">Staff Member</p>
-                            <p class="text-lg font-bold text-gray-800" id="change-staff-name"></p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Current Password -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-lock mr-2 text-gray-400"></i>
-                        Current Password <span class="text-red-500">*</span>
-                    </label>
-                    <div class="password-container">
-                        <input type="password" name="current_password" required 
-                               id="staff-current-password"
-                               class="form-input" 
-                               placeholder="Enter current password"
-                               oninput="checkPasswordMatch('staff')">
-                        <button type="button" class="password-toggle" onclick="togglePassword('staff-current-password')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- New Password -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-key mr-2 text-gray-400"></i>
-                        New Password <span class="text-red-500">*</span>
-                    </label>
-                    <div class="password-container">
-                        <input type="password" name="new_password" required 
-                               id="staff-new-password"
-                               class="form-input" 
-                               placeholder="Enter new password"
-                               minlength="6"
-                               oninput="checkPasswordMatch('staff')">
-                        <button type="button" class="password-toggle" onclick="togglePassword('staff-new-password')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Confirm Password -->
-                <div class="form-group mb-8">
-                    <label class="form-label">
-                        <i class="fas fa-check-double mr-2 text-gray-400"></i>
-                        Confirm New Password <span class="text-red-500">*</span>
-                    </label>
-                    <div class="password-container">
-                        <input type="password" name="confirm_password" required 
-                               id="staff-confirm-password"
-                               class="form-input" 
-                               placeholder="Confirm new password"
-                               minlength="6"
-                               oninput="checkPasswordMatch('staff')">
-                        <button type="button" class="password-toggle" onclick="togglePassword('staff-confirm-password')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <div id="staff-password-match-message" class="text-sm mt-2 hidden"></div>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="flex gap-3 pt-4 border-t border-gray-200">
-                    <button type="button" onclick="closeChangeStaffPasswordModal()" class="btn btn-outline flex-1">
-                        <i class="fas fa-times mr-2"></i> Cancel
-                    </button>
-                    <button type="submit" name="change_staff_password" class="btn btn-primary flex-1">
-                        <i class="fas fa-save mr-2"></i> Update Password
+                    <button type="submit" name="hard_delete" class="btn-modern btn-modern-danger flex-1">
+                        Delete Account
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Change Resident Password Modal -->
-    <div id="changeResidentPasswordModal" class="modal">
-        <div class="modal-content max-w-md">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-key text-green-600 text-lg"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800">Change Resident Password</h3>
-                        <p class="text-gray-600 text-sm mt-1">Update resident account password securely</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeChangeResidentPasswordModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+    <!-- Staff Password Modal -->
+    <div class="modern-modal" id="staffPasswordModal">
+        <div class="modern-modal-content">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-key text-primary"></i>
+                Change Staff Password
+            </h3>
+            
+            <div class="bg-blue-50 rounded-xl p-4 mb-6">
+                <p class="font-medium" id="staffPasswordName"></p>
             </div>
             
-            <form method="POST" action="" id="change-resident-password-form" onsubmit="return validateResidentPasswordForm()">
-                <input type="hidden" name="resident_id" id="change-resident-id">
+            <form method="POST" action="" id="staffPasswordForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                <input type="hidden" name="staff_id" id="staffPasswordId">
                 
-                <!-- Resident Info Display -->
-                <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4 mb-6">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-user text-green-600"></i>
-                        <div>
-                            <p class="text-xs text-green-600 font-semibold uppercase tracking-wide">Resident</p>
-                            <p class="text-lg font-bold text-gray-800" id="change-resident-name"></p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Current Password -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-lock mr-2 text-gray-400"></i>
-                        Current Password <span class="text-red-500">*</span>
-                    </label>
-                    <div class="password-container">
-                        <input type="password" name="current_password" required 
-                               id="resident-current-password"
-                               class="form-input" 
-                               placeholder="Enter current password"
-                               oninput="checkPasswordMatch('resident')">
-                        <button type="button" class="password-toggle" onclick="togglePassword('resident-current-password')">
+                <div class="mb-4">
+                    <label class="modern-label">Current Password</label>
+                    <div class="password-field">
+                        <input type="password" name="current_password" id="staffCurrentPass" required class="modern-input">
+                        <button type="button" class="password-toggle" onclick="togglePasswordField('staffCurrentPass')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 
-                <!-- New Password -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-key mr-2 text-gray-400"></i>
-                        New Password <span class="text-red-500">*</span>
-                    </label>
-                    <div class="password-container">
-                        <input type="password" name="new_password" required 
-                               id="resident-new-password"
-                               class="form-input" 
-                               placeholder="Enter new password"
-                               minlength="6"
-                               oninput="checkPasswordMatch('resident')">
-                        <button type="button" class="password-toggle" onclick="togglePassword('resident-new-password')">
+                <div class="mb-4">
+                    <label class="modern-label">New Password</label>
+                    <div class="password-field">
+                        <input type="password" name="new_password" id="staffNewPass" required class="modern-input" minlength="6" oninput="checkStaffPasswordStrength()">
+                        <button type="button" class="password-toggle" onclick="togglePasswordField('staffNewPass')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="staffPasswordStrength"></div>
+                    </div>
                 </div>
                 
-                <!-- Confirm Password -->
-                <div class="form-group mb-8">
-                    <label class="form-label">
-                        <i class="fas fa-check-double mr-2 text-gray-400"></i>
-                        Confirm New Password <span class="text-red-500">*</span>
-                    </label>
-                    <div class="password-container">
-                        <input type="password" name="confirm_password" required 
-                               id="resident-confirm-password"
-                               class="form-input" 
-                               placeholder="Confirm new password"
-                               minlength="6"
-                               oninput="checkPasswordMatch('resident')">
-                        <button type="button" class="password-toggle" onclick="togglePassword('resident-confirm-password')">
+                <div class="mb-4">
+                    <label class="modern-label">Confirm Password</label>
+                    <div class="password-field">
+                        <input type="password" name="confirm_password" id="staffConfirmPass" required class="modern-input" minlength="6" oninput="checkStaffPasswordMatch()">
+                        <button type="button" class="password-toggle" onclick="togglePasswordField('staffConfirmPass')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <div id="resident-password-match-message" class="text-sm mt-2 hidden"></div>
+                    <div id="staffPassMessage" class="validation-message"></div>
                 </div>
                 
-                <!-- Action Buttons -->
-                <div class="flex gap-3 pt-4 border-t border-gray-200">
-                    <button type="button" onclick="closeChangeResidentPasswordModal()" class="btn btn-outline flex-1">
-                        <i class="fas fa-times mr-2"></i> Cancel
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeStaffPasswordModal()" class="btn-modern btn-modern-outline flex-1">
+                        Cancel
                     </button>
-                    <button type="submit" name="change_resident_password" class="btn btn-success flex-1">
-                        <i class="fas fa-save mr-2"></i> Update Password
+                    <button type="submit" name="change_staff_password" class="btn-modern btn-modern-primary flex-1">
+                        Update Password
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Reset Password Modal (Admin Reset - No Current Password) -->
-    <div id="resetPasswordModal" class="modal">
-        <div class="modal-content max-w-md">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-key text-red-600 text-lg"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800">Reset Resident Password</h3>
-                        <p class="text-gray-600 text-sm mt-1">Admin password reset (no current password required)</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeResetModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+    <!-- Resident Password Modal -->
+    <div class="modern-modal" id="residentPasswordModal">
+        <div class="modern-modal-content">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-key text-secondary"></i>
+                Change Resident Password
+            </h3>
+            
+            <div class="bg-green-50 rounded-xl p-4 mb-6">
+                <p class="font-medium" id="residentPasswordName"></p>
             </div>
             
-            <form method="POST" action="" id="reset-password-form">
-                <input type="hidden" name="resident_id" id="reset-resident-id">
+            <form method="POST" action="" id="residentPasswordForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                <input type="hidden" name="resident_id" id="residentPasswordId">
                 
-                <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 mb-6">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-user text-red-600"></i>
-                        <div>
-                            <p class="text-xs text-red-600 font-semibold uppercase tracking-wide">Resident</p>
-                            <p class="text-lg font-bold text-gray-800" id="reset-resident-name"></p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">New Password <span class="text-red-500">*</span></label>
-                    <div class="password-container">
-                        <input type="password" name="new_password" required 
-                               id="reset-new-password"
-                               class="form-input" 
-                               placeholder="Enter new password"
-                               minlength="6">
-                        <button type="button" class="password-toggle" onclick="togglePassword('reset-new-password')">
+                <div class="mb-4">
+                    <label class="modern-label">Current Password</label>
+                    <div class="password-field">
+                        <input type="password" name="current_password" id="residentCurrentPass" required class="modern-input">
+                        <button type="button" class="password-toggle" onclick="togglePasswordField('residentCurrentPass')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 
-                <div class="form-group mb-8">
-                    <label class="form-label">Confirm Password <span class="text-red-500">*</span></label>
-                    <div class="password-container">
-                        <input type="password" name="confirm_password" required 
-                               id="reset-confirm-password"
-                               class="form-input" 
-                               placeholder="Confirm new password"
-                               minlength="6">
-                        <button type="button" class="password-toggle" onclick="togglePassword('reset-confirm-password')">
+                <div class="mb-4">
+                    <label class="modern-label">New Password</label>
+                    <div class="password-field">
+                        <input type="password" name="new_password" id="residentNewPass" required class="modern-input" minlength="6" oninput="checkResidentPasswordStrength()">
+                        <button type="button" class="password-toggle" onclick="togglePasswordField('residentNewPass')">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="residentPasswordStrength"></div>
+                    </div>
                 </div>
                 
-                <div class="flex gap-3 pt-4 border-t border-gray-200">
-                    <button type="button" onclick="closeResetModal()" class="btn btn-outline flex-1">
-                        <i class="fas fa-times mr-2"></i> Cancel
+                <div class="mb-4">
+                    <label class="modern-label">Confirm Password</label>
+                    <div class="password-field">
+                        <input type="password" name="confirm_password" id="residentConfirmPass" required class="modern-input" minlength="6" oninput="checkResidentPasswordMatch()">
+                        <button type="button" class="password-toggle" onclick="togglePasswordField('residentConfirmPass')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div id="residentPassMessage" class="validation-message"></div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeResidentPasswordModal()" class="btn-modern btn-modern-outline flex-1">
+                        Cancel
                     </button>
-                    <button type="submit" name="reset_resident_password" class="btn btn-danger flex-1">
-                        <i class="fas fa-redo mr-2"></i> Reset Password
+                    <button type="submit" name="change_resident_password" class="btn-modern btn-modern-secondary flex-1">
+                        Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal (Admin Reset) -->
+    <div class="modern-modal" id="resetPasswordModal">
+        <div class="modern-modal-content">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-redo-alt text-warning"></i>
+                Reset Password
+            </h3>
+            
+            <div class="bg-yellow-50 rounded-xl p-4 mb-6" id="resetInfo">
+                <p class="font-medium" id="resetName"></p>
+                <p class="text-sm text-yellow-600 mt-1">Admin password reset (no current password required)</p>
+            </div>
+            
+            <form method="POST" action="" id="resetPasswordForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                <input type="hidden" name="resident_id" id="resetId">
+                <input type="hidden" name="staff_id" id="resetStaffId">
+                
+                <div class="mb-4">
+                    <label class="modern-label">New Password</label>
+                    <div class="password-field">
+                        <input type="password" name="new_password" id="resetNewPass" required class="modern-input" minlength="6">
+                        <button type="button" class="password-toggle" onclick="togglePasswordField('resetNewPass')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="modern-label">Confirm Password</label>
+                    <div class="password-field">
+                        <input type="password" name="confirm_password" id="resetConfirmPass" required class="modern-input" minlength="6">
+                        <button type="button" class="password-toggle" onclick="togglePasswordField('resetConfirmPass')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeResetModal()" class="btn-modern btn-modern-outline flex-1">
+                        Cancel
+                    </button>
+                    <button type="submit" name="reset_resident_password" class="btn-modern btn-modern-warning flex-1" id="resetSubmit">
+                        Reset Password
                     </button>
                 </div>
             </form>
@@ -2741,618 +2662,428 @@ try {
     </div>
 
     <script>
-        // ===== GLOBAL VARIABLES =====
-        let selectedResidentId = 0;
-        let selectedPatientId = 0;
+        // ===== TOAST NOTIFICATIONS =====
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                </div>
+                <div class="flex-1">${message}</div>
+                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
 
-        // ===== PASSWORD TOGGLE FUNCTION =====
-        function togglePassword(inputId) {
-            const input = document.getElementById(inputId);
-            const toggleButton = input.parentElement.querySelector('.password-toggle');
+        // ===== PASSWORD FUNCTIONS =====
+        function togglePasswordVisibility(id) {
+            const input = document.getElementById(id);
+            const icon = input.parentElement.querySelector('.password-toggle i');
             
             if (input.type === 'password') {
                 input.type = 'text';
-                toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
-                toggleButton.setAttribute('aria-label', 'Hide password');
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
             } else {
                 input.type = 'password';
-                toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
-                toggleButton.setAttribute('aria-label', 'Show password');
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
             }
         }
-        
-        // ===== PASSWORD VALIDATION FUNCTIONS =====
-        function validateStaffPasswordForm() {
-            const currentPassword = document.getElementById('staff-current-password').value;
-            const newPassword = document.getElementById('staff-new-password').value;
-            const confirmPassword = document.getElementById('staff-confirm-password').value;
+
+        function togglePasswordField(id) {
+            const input = document.getElementById(id);
+            const icon = input.parentElement.querySelector('.password-toggle i');
             
-            // Validate all fields filled
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                showMessageModal('All password fields are required.', 'error');
-                return false;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
             }
-            
-            // Validate minimum length
-            if (newPassword.length < 6) {
-                showMessageModal('New password must be at least 6 characters long.', 'error');
-                return false;
-            }
-            
-            // Validate passwords match
-            if (newPassword !== confirmPassword) {
-                showMessageModal('New passwords do not match. Please try again.', 'error');
-                return false;
-            }
-            
-            // Validate new password is different from current
-            if (currentPassword === newPassword) {
-                showMessageModal('New password must be different from current password.', 'error');
-                return false;
-            }
-            
-            return true;
         }
-        
-        function validateResidentPasswordForm() {
-            const currentPassword = document.getElementById('resident-current-password').value;
-            const newPassword = document.getElementById('resident-new-password').value;
-            const confirmPassword = document.getElementById('resident-confirm-password').value;
+
+        function checkPasswordStrength(password) {
+            let strength = 0;
             
-            // Validate all fields filled
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                showMessageModal('All password fields are required.', 'error');
-                return false;
-            }
+            if (password.length >= 6) strength++;
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
             
-            // Validate minimum length
-            if (newPassword.length < 6) {
-                showMessageModal('New password must be at least 6 characters long.', 'error');
-                return false;
-            }
-            
-            // Validate passwords match
-            if (newPassword !== confirmPassword) {
-                showMessageModal('New passwords do not match. Please try again.', 'error');
-                return false;
-            }
-            
-            // Validate new password is different from current
-            if (currentPassword === newPassword) {
-                showMessageModal('New password must be different from current password.', 'error');
-                return false;
-            }
-            
-            return true;
+            return Math.min(strength, 3);
         }
-        
-        // ===== REAL-TIME PASSWORD MATCH VALIDATION =====
-        function checkPasswordMatch(type) {
-            const newPasswordId = type === 'staff' ? 'staff-new-password' : 'resident-new-password';
-            const confirmPasswordId = type === 'staff' ? 'staff-confirm-password' : 'resident-confirm-password';
-            const messageId = type === 'staff' ? 'staff-password-match-message' : 'resident-password-match-message';
+
+        function updatePasswordStrengthBar(strength, elementId) {
+            const bar = document.getElementById(elementId);
+            if (!bar) return;
             
-            const newPassword = document.getElementById(newPasswordId).value;
-            const confirmPassword = document.getElementById(confirmPasswordId).value;
-            const message = document.getElementById(messageId);
+            bar.className = 'password-strength-bar';
             
-            if (confirmPassword.length === 0) {
-                message.classList.add('hidden');
+            if (strength === 1) {
+                bar.classList.add('strength-weak');
+            } else if (strength === 2) {
+                bar.classList.add('strength-medium');
+            } else if (strength >= 3) {
+                bar.classList.add('strength-strong');
+            }
+        }
+
+        function checkStaffPasswordStrength() {
+            const password = document.getElementById('staffNewPass').value;
+            const strength = checkPasswordStrength(password);
+            updatePasswordStrengthBar(strength, 'staffPasswordStrength');
+            checkStaffPasswordMatch();
+        }
+
+        function checkResidentPasswordStrength() {
+            const password = document.getElementById('residentNewPass').value;
+            const strength = checkPasswordStrength(password);
+            updatePasswordStrengthBar(strength, 'residentPasswordStrength');
+            checkResidentPasswordMatch();
+        }
+
+        function checkStaffPasswordMatch() {
+            const newPass = document.getElementById('staffNewPass').value;
+            const confirmPass = document.getElementById('staffConfirmPass').value;
+            const messageEl = document.getElementById('staffPassMessage');
+            
+            if (confirmPass.length === 0) {
+                messageEl.innerHTML = '';
                 return;
             }
             
-            message.classList.remove('hidden');
-            
-            if (newPassword === confirmPassword) {
-                message.className = 'text-sm mt-2 text-green-600 flex items-center gap-2';
-                message.innerHTML = '<i class="fas fa-check-circle"></i> Passwords match!';
+            if (newPass === confirmPass) {
+                messageEl.innerHTML = '<i class="fas fa-check-circle"></i> Passwords match';
+                messageEl.className = 'validation-message success';
             } else {
-                message.className = 'text-sm mt-2 text-red-600 flex items-center gap-2';
-                message.innerHTML = '<i class="fas fa-exclamation-circle"></i> Passwords do not match';
+                messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Passwords do not match';
+                messageEl.className = 'validation-message error';
             }
         }
-        
+
+        function checkResidentPasswordMatch() {
+            const newPass = document.getElementById('residentNewPass').value;
+            const confirmPass = document.getElementById('residentConfirmPass').value;
+            const messageEl = document.getElementById('residentPassMessage');
+            
+            if (confirmPass.length === 0) {
+                messageEl.innerHTML = '';
+                return;
+            }
+            
+            if (newPass === confirmPass) {
+                messageEl.innerHTML = '<i class="fas fa-check-circle"></i> Passwords match';
+                messageEl.className = 'validation-message success';
+            } else {
+                messageEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Passwords do not match';
+                messageEl.className = 'validation-message error';
+            }
+        }
+
+        // ===== STAFF PASSWORD MODAL =====
+        function openStaffPasswordModal(staffId, staffName) {
+            document.getElementById('staffPasswordId').value = staffId;
+            document.getElementById('staffPasswordName').innerHTML = staffName;
+            document.getElementById('staffPasswordModal').classList.add('show');
+            
+            // Reset form
+            document.getElementById('staffPasswordForm').reset();
+            document.getElementById('staffPassMessage').innerHTML = '';
+            document.getElementById('staffPasswordStrength').className = 'password-strength-bar';
+        }
+
+        function closeStaffPasswordModal() {
+            document.getElementById('staffPasswordModal').classList.remove('show');
+        }
+
+        // ===== RESIDENT PASSWORD MODAL =====
+        function openResidentPasswordModal(residentId, residentName) {
+            document.getElementById('residentPasswordId').value = residentId;
+            document.getElementById('residentPasswordName').innerHTML = residentName;
+            document.getElementById('residentPasswordModal').classList.add('show');
+            
+            // Reset form
+            document.getElementById('residentPasswordForm').reset();
+            document.getElementById('residentPassMessage').innerHTML = '';
+            document.getElementById('residentPasswordStrength').className = 'password-strength-bar';
+        }
+
+        function closeResidentPasswordModal() {
+            document.getElementById('residentPasswordModal').classList.remove('show');
+        }
+
+        // ===== RESET PASSWORD MODAL =====
+        function openResetModal(userId, userName, type) {
+            document.getElementById('resetPasswordModal').classList.add('show');
+            document.getElementById('resetName').innerHTML = userName;
+            
+            if (type === 'resident') {
+                document.getElementById('resetId').value = userId;
+                document.getElementById('resetStaffId').value = '';
+                document.getElementById('resetSubmit').name = 'reset_resident_password';
+            } else {
+                document.getElementById('resetStaffId').value = userId;
+                document.getElementById('resetId').value = '';
+                document.getElementById('resetSubmit').name = 'reset_staff_password';
+            }
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetPasswordModal').classList.remove('show');
+            document.getElementById('resetPasswordForm').reset();
+        }
+
+        // ===== DELETE MODAL =====
+        function openDeleteModal(staffId, staffName) {
+            document.getElementById('deleteStaffId').value = staffId;
+            document.getElementById('deleteMessage').innerHTML = `Are you sure you want to delete <strong>${staffName}</strong>? This action will affect associated records.`;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            document.getElementById('deleteForm').reset();
+        }
+
+        // ===== TAB SWITCHING =====
+        function switchTab(tab) {
+            // Hide all sections
+            document.getElementById('staffSection').style.display = 'none';
+            document.getElementById('residentSection').style.display = 'none';
+            if (document.getElementById('linkingSection')) {
+                document.getElementById('linkingSection').style.display = 'none';
+            }
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.modern-tab').forEach(t => t.classList.remove('active'));
+            
+            // Show selected section and activate tab
+            if (tab === 'staff') {
+                document.getElementById('staffSection').style.display = 'block';
+                document.getElementById('staffTab').classList.add('active');
+            } else if (tab === 'resident') {
+                document.getElementById('residentSection').style.display = 'block';
+                document.getElementById('residentTab').classList.add('active');
+            } else if (tab === 'linking') {
+                document.getElementById('linkingSection').style.display = 'block';
+                document.getElementById('linkingTab').classList.add('active');
+            }
+        }
+
+        function showStaffTab(tab) {
+            document.getElementById('activeStaffGrid').style.display = tab === 'active' ? 'grid' : 'none';
+            document.getElementById('inactiveStaffGrid').style.display = tab === 'inactive' ? 'grid' : 'none';
+            
+            document.getElementById('activeStaffTab').classList.toggle('active', tab === 'active');
+            document.getElementById('inactiveStaffTab').classList.toggle('active', tab === 'inactive');
+        }
+
+        function showResidentTab(tab) {
+            const tabs = ['pending', 'approved', 'declined', 'unlinked'];
+            tabs.forEach(t => {
+                const grid = document.getElementById(t + 'ResidentGrid');
+                if (grid) grid.style.display = 'none';
+            });
+            
+            const selectedGrid = document.getElementById(tab + 'ResidentGrid');
+            if (selectedGrid) selectedGrid.style.display = 'grid';
+            
+            document.querySelectorAll('#residentSection .modern-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab + 'ResidentTab').classList.add('active');
+        }
+
         // ===== AGE CALCULATION =====
         function calculateAge() {
-            const dobInput = document.getElementById('date-of-birth');
-            const ageDisplay = document.getElementById('age-display');
-            const calculatedAge = document.getElementById('calculated-age');
+            const dob = document.getElementById('dob').value;
+            if (!dob) return;
             
-            if (!dobInput.value) {
-                ageDisplay.classList.add('hidden');
-                return;
-            }
-            
-            const dob = new Date(dobInput.value);
+            const birthDate = new Date(dob);
             const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
             
-            if (dob > today) {
-                showMessageModal('Date of birth cannot be in the future', 'error');
-                dobInput.value = '';
-                ageDisplay.classList.add('hidden');
-                return;
-            }
-            
-            let age = today.getFullYear() - dob.getFullYear();
-            const monthDiff = today.getMonth() - dob.getMonth();
-            
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
                 age--;
             }
             
             if (age < 0 || age > 120) {
-                showMessageModal('Please enter a valid date of birth (age 0-120)', 'error');
-                dobInput.value = '';
-                ageDisplay.classList.add('hidden');
-                return;
-            }
-            
-            calculatedAge.textContent = age;
-            ageDisplay.classList.remove('hidden');
-        }
-        
-        // ===== MESSAGE MODAL =====
-        function showMessageModal(message, type = 'success') {
-            const modal = document.getElementById('messageModal');
-            if (!modal) {
-                // Create modal if it doesn't exist
-                createMessageModal(message, type);
-                return;
-            }
-            
-            // Update content
-            const content = modal.querySelector('.message-content');
-            const icon = modal.querySelector('.message-icon');
-            const title = modal.querySelector('.message-title');
-            const body = modal.querySelector('.message-body');
-            const progressBar = document.getElementById('messageProgressBar');
-            
-            content.className = 'message-content ' + type;
-            icon.className = 'message-icon ' + type + ' fas ' + (type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle');
-            title.className = 'message-title';
-            title.textContent = type === 'error' ? 'Error' : 'Success';
-            body.textContent = message;
-            
-            // Set dynamic width class based on message length
-            const msgLength = message.length;
-            let widthClass = 'short';
-            if (msgLength < 50) widthClass = 'short';
-            else if (msgLength < 80) widthClass = 'medium';
-            else if (msgLength < 120) widthClass = 'long';
-            else if (msgLength < 160) widthClass = 'extra-long';
-            else widthClass = 'max';
-            
-            modal.className = 'message-modal ' + widthClass;
-            
-            // Reset progress bar
-            if (progressBar) {
-                progressBar.style.width = '100%';
-                progressBar.style.transition = 'none';
-                void progressBar.offsetWidth; // Trigger reflow
-                progressBar.style.transition = 'width 3s linear';
-                progressBar.style.width = '0%';
-            }
-            
-            // Show modal
-            modal.classList.add('show');
-            
-            // Auto-hide after 3 seconds
-            setTimeout(() => {
-                closeMessageModal();
-            }, 3000);
-        }
-        
-        function createMessageModal(message, type) {
-            const modal = document.createElement('div');
-            modal.id = 'messageModal';
-            modal.className = 'message-modal';
-            
-            // Calculate width class
-            const msgLength = message.length;
-            let widthClass = 'short';
-            if (msgLength < 50) widthClass = 'short';
-            else if (msgLength < 80) widthClass = 'medium';
-            else if (msgLength < 120) widthClass = 'long';
-            else if (msgLength < 160) widthClass = 'extra-long';
-            else widthClass = 'max';
-            
-            modal.className = 'message-modal ' + widthClass;
-            
-            modal.innerHTML = `
-                <div class="message-content ${type}">
-                    <button class="message-close" onclick="closeMessageModal()" aria-label="Close message">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <div class="message-header">
-                        <i class="message-icon ${type} fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
-                        <span class="message-title">
-                            ${type === 'error' ? 'Error' : 'Success'}
-                        </span>
-                    </div>
-                    <div class="message-body">
-                        ${message}
-                    </div>
-                    <div class="message-progress">
-                        <div class="message-progress-bar ${type}" id="messageProgressBar"></div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Reset progress bar
-            const progressBar = document.getElementById('messageProgressBar');
-            if (progressBar) {
-                progressBar.style.width = '100%';
-                progressBar.style.transition = 'none';
-                void progressBar.offsetWidth; // Trigger reflow
-                progressBar.style.transition = 'width 3s linear';
-                progressBar.style.width = '0%';
-            }
-            
-            // Show modal
-            setTimeout(() => {
-                modal.classList.add('show');
-            }, 10);
-            
-            // Auto-hide after 3 seconds
-            setTimeout(() => {
-                closeMessageModal();
-            }, 3000);
-        }
-        
-        function closeMessageModal() {
-            const modal = document.getElementById('messageModal');
-            if (modal) {
-                modal.classList.remove('show');
-                // Remove from DOM after animation
-                setTimeout(() => {
-                    if (modal.parentNode) {
-                        modal.parentNode.removeChild(modal);
-                    }
-                }, 300);
+                showToast('Please enter a valid date of birth', 'error');
+                document.getElementById('dob').value = '';
             }
         }
-        
-        // ===== TAB MANAGEMENT =====
-        function showSection(section) {
-            // Hide all sections
-            document.getElementById('staff-section').style.display = 'none';
-            document.getElementById('resident-section').style.display = 'none';
-            document.getElementById('linking-section').style.display = 'none';
-            
-            // Remove active class from all main tabs
-            document.querySelectorAll('.tabs-container .tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-                btn.setAttribute('aria-selected', 'false');
-            });
-            
-            // Show selected section
-            document.getElementById(section + '-section').style.display = 'block';
-            
-            // Add active class to clicked tab
-            event.currentTarget.classList.add('active');
-            event.currentTarget.setAttribute('aria-selected', 'true');
-            
-            // If switching to linking tab, check if we need to focus on a specific resident
-            if (section === 'linking' && window.location.search.includes('focus_resident=')) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const residentId = urlParams.get('focus_resident');
-                if (residentId) {
-                    setTimeout(() => {
-                        const residentCard = document.querySelector(`[data-resident-id="${residentId}"]`);
-                        if (residentCard) {
-                            residentCard.click();
-                            residentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }, 300);
-                }
-            }
-        }
-        
-        function showStaffTab(tab) {
-            // Hide all staff tabs
-            document.getElementById('active-staff-tab').style.display = 'none';
-            document.getElementById('inactive-staff-tab').style.display = 'none';
-            
-            // Remove active class from all buttons
-            document.querySelectorAll('#staff-section .tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(tab + '-staff-tab').style.display = 'grid';
-            
-            // Add active class to clicked button
-            event.target.classList.add('active');
-        }
-        
-        function showResidentTab(tab) {
-            // Hide all resident tabs
-            const tabs = ['pending', 'approved', 'declined', 'unlinked'];
-            tabs.forEach(t => {
-                const element = document.getElementById(t + '-residents-tab');
-                if (element) element.style.display = 'none';
-            });
-            
-            // Remove active class from all buttons
-            document.querySelectorAll('#resident-section .tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Show selected tab
-            const selectedTab = document.getElementById(tab + '-residents-tab');
-            if (selectedTab) selectedTab.style.display = 'grid';
-            
-            // Add active class to clicked button
-            event.target.classList.add('active');
-        }
-        
-        // ===== MODAL FUNCTIONS =====
-        function showDeleteModal(staffId, staffName) {
-            const modal = document.getElementById('deleteModal');
-            if (modal) {
-                document.getElementById('delete-staff-id').value = staffId;
-                document.getElementById('delete-message').textContent = 
-                    `Are you sure you want to delete "${staffName}"? This action will affect associated records.`;
-                modal.classList.add('show');
-            }
-        }
-        
-        function closeDeleteModal() {
-            const modal = document.getElementById('deleteModal');
-            if (modal) {
-                modal.classList.remove('show');
-                document.getElementById('delete-form').reset();
-            }
-        }
-        
-        function showChangeStaffPasswordModal(staffId, staffName) {
-            const modal = document.getElementById('changeStaffPasswordModal');
-            if (modal) {
-                document.getElementById('change-staff-id').value = staffId;
-                document.getElementById('change-staff-name').textContent = staffName;
-                modal.classList.add('show');
-            }
-        }
-        
-        function closeChangeStaffPasswordModal() {
-            const modal = document.getElementById('changeStaffPasswordModal');
-            if (modal) {
-                modal.classList.remove('show');
-                document.getElementById('change-staff-password-form').reset();
-                const message = document.getElementById('staff-password-match-message');
-                if (message) message.classList.add('hidden');
-            }
-        }
-        
-        function showChangeResidentPasswordModal(residentId, residentName) {
-            const modal = document.getElementById('changeResidentPasswordModal');
-            if (modal) {
-                document.getElementById('change-resident-id').value = residentId;
-                document.getElementById('change-resident-name').textContent = residentName;
-                modal.classList.add('show');
-            }
-        }
-        
-        function closeChangeResidentPasswordModal() {
-            const modal = document.getElementById('changeResidentPasswordModal');
-            if (modal) {
-                modal.classList.remove('show');
-                document.getElementById('change-resident-password-form').reset();
-                const message = document.getElementById('resident-password-match-message');
-                if (message) message.classList.add('hidden');
-            }
-        }
-        
-        function showResetPasswordModal(residentId, residentName) {
-            const modal = document.getElementById('resetPasswordModal');
-            if (modal) {
-                document.getElementById('reset-resident-id').value = residentId;
-                document.getElementById('reset-resident-name').textContent = residentName;
-                modal.classList.add('show');
-            }
-        }
-        
-        function closeResetModal() {
-            const modal = document.getElementById('resetPasswordModal');
-            if (modal) {
-                modal.classList.remove('show');
-                document.getElementById('reset-password-form').reset();
-            }
-        }
-        
-        // Close modals on outside click
-        window.onclick = function(event) {
-            const modals = [
-                'deleteModal',
-                'changeStaffPasswordModal',
-                'changeResidentPasswordModal',
-                'resetPasswordModal'
-            ];
-            
-            modals.forEach(modalId => {
-                const modal = document.getElementById(modalId);
-                if (modal && event.target === modal) {
-                    if (modalId === 'deleteModal') closeDeleteModal();
-                    if (modalId === 'changeStaffPasswordModal') closeChangeStaffPasswordModal();
-                    if (modalId === 'changeResidentPasswordModal') closeChangeResidentPasswordModal();
-                    if (modalId === 'resetPasswordModal') closeResetModal();
-                }
-            });
-        }
-        
+
         // ===== LINKING FUNCTIONS =====
-        function selectResidentCard(element, residentId, residentName, email, sitio, age) {
-            // Remove previous selection from resident cards
-            document.querySelectorAll('.resident-card').forEach(card => {
+        let selectedResidentId = 0;
+        let selectedPatientId = 0;
+
+        function selectResident(id, element) {
+            // Remove selection from all resident cards
+            document.querySelectorAll('.link-card').forEach(card => {
                 card.classList.remove('selected');
             });
             
-            // Add selection
+            // Add selection to clicked card
             element.classList.add('selected');
-            selectedResidentId = residentId;
-            document.getElementById('selected-resident-id').value = residentId;
+            selectedResidentId = id;
+            document.getElementById('selectedResidentId').value = id;
             
-            // Update display
-            document.getElementById('selected-resident-name').textContent = residentName;
-            document.getElementById('selected-resident-details').innerHTML = `
-                <div class="mb-1"><i class="fas fa-envelope text-xs text-gray-400 mr-2"></i>${email || 'No email'}</div>
-                <div class="mb-1"><i class="fas fa-map-marker-alt text-xs text-gray-400 mr-2"></i>${sitio || 'Not specified'}</div>
-                <div><i class="fas fa-user text-xs text-gray-400 mr-2"></i>Age: ${age > 0 ? age : 'Not specified'}</div>
+            // Update selected panel
+            const name = element.querySelector('.font-semibold').textContent;
+            const email = element.querySelector('.text-sm.text-gray-500')?.textContent || '';
+            const details = element.querySelector('.flex.gap-2')?.innerHTML || '';
+            
+            document.getElementById('selectedResidentName').textContent = name;
+            document.getElementById('selectedResidentDetails').innerHTML = `
+                <div>${email}</div>
+                <div class="flex gap-2 mt-2">${details}</div>
             `;
             
-            // Show selected items panel
-            document.getElementById('selected-items-panel').style.display = 'block';
-            
-            // Enable link button if both selected
+            document.getElementById('selectedPanel').style.display = 'block';
             updateLinkButton();
         }
-        
-        function selectPatientCard(element, patientId, patientName, age, gender, sitio) {
-            // Remove previous selection from patient cards
-            document.querySelectorAll('.patient-card').forEach(card => {
+
+        function selectPatient(id, element) {
+            // Remove selection from all patient cards
+            document.querySelectorAll('.link-card.patient').forEach(card => {
                 card.classList.remove('selected');
             });
             
-            // Add selection
+            // Add selection to clicked card
             element.classList.add('selected');
-            selectedPatientId = patientId;
-            document.getElementById('selected-patient-id').value = patientId;
+            selectedPatientId = id;
+            document.getElementById('selectedPatientId').value = id;
             
-            // Update display
-            document.getElementById('selected-patient-name').textContent = patientName;
-            document.getElementById('selected-patient-details').innerHTML = `
-                <div class="mb-1"><i class="fas fa-id-badge text-xs text-gray-400 mr-2"></i>Record ID: ${patientId}</div>
-                <div class="mb-1"><i class="fas fa-venus-mars text-xs text-gray-400 mr-2"></i>${gender || 'Not specified'}</div>
-                <div><i class="fas fa-map-marker-alt text-xs text-gray-400 mr-2"></i>${sitio || 'Not specified'}</div>
-                ${age > 0 ? '<div><i class="fas fa-birthday-cake text-xs text-gray-400 mr-2"></i>Age: ' + age + ' years</div>' : ''}
+            // Update selected panel
+            const name = element.querySelector('.font-semibold').textContent;
+            const details = element.querySelector('.flex.gap-2')?.innerHTML || '';
+            
+            document.getElementById('selectedPatientName').textContent = name;
+            document.getElementById('selectedPatientDetails').innerHTML = `
+                <div class="flex gap-2 mt-2">${details}</div>
             `;
             
-            // Show selected items panel
-            document.getElementById('selected-items-panel').style.display = 'block';
-            
-            // Enable link button if both selected
+            document.getElementById('selectedPanel').style.display = 'block';
             updateLinkButton();
         }
-        
+
         function updateLinkButton() {
-            const linkButton = document.getElementById('link-action-button');
-            const linkButtonText = document.getElementById('link-button-text');
-            
-            if (selectedResidentId > 0 && selectedPatientId > 0) {
-                linkButton.disabled = false;
-                linkButtonText.textContent = 'Link Accounts Now';
-            } else {
-                linkButton.disabled = true;
-                linkButtonText.textContent = 'Select Both Items';
+            const linkButton = document.getElementById('linkButton');
+            if (linkButton) {
+                linkButton.disabled = !(selectedResidentId > 0 && selectedPatientId > 0);
             }
         }
-        
-        function clearLinkingSelection() {
-            // Clear selections
+
+        function clearSelection() {
             selectedResidentId = 0;
             selectedPatientId = 0;
-            document.getElementById('selected-resident-id').value = '0';
-            document.getElementById('selected-patient-id').value = '0';
+            document.getElementById('selectedResidentId').value = '0';
+            document.getElementById('selectedPatientId').value = '0';
             
-            // Remove selection classes
-            document.querySelectorAll('.resident-card, .patient-card').forEach(card => {
+            document.querySelectorAll('.link-card').forEach(card => {
                 card.classList.remove('selected');
             });
             
-            // Reset displays
-            document.getElementById('selected-resident-name').textContent = 'No resident selected';
-            document.getElementById('selected-resident-details').innerHTML = 'Select a resident account from the left panel';
-            document.getElementById('selected-patient-name').textContent = 'No patient selected';
-            document.getElementById('selected-patient-details').innerHTML = 'Select a patient record from the right panel';
-            
-            // Hide selected items panel
-            document.getElementById('selected-items-panel').style.display = 'none';
-            
-            // Reset link button
-            updateLinkButton();
+            document.getElementById('selectedPanel').style.display = 'none';
         }
-        
+
         function performLinking() {
             if (selectedResidentId === 0 || selectedPatientId === 0) {
-                showMessageModal('Please select both a resident account and a patient record.', 'error');
+                showToast('Please select both a resident and a patient record', 'error');
                 return;
             }
             
-            if (confirm('Are you sure you want to link these accounts?\n\n✓ Resident will be able to view their medical history\n✓ One-to-one linking ensured\n✓ Cannot be undone without admin access')) {
-                // Show loading
-                const linkButton = document.getElementById('link-action-button');
-                const linkButtonText = document.getElementById('link-button-text');
-                linkButtonText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Linking...';
-                linkButton.disabled = true;
-                
-                // Perform linking
+            if (confirm('Are you sure you want to link these accounts?')) {
                 window.location.href = `?link_resident=1&resident_id=${selectedResidentId}&patient_id=${selectedPatientId}`;
             }
         }
-        
-        // ===== INITIALIZATION =====
+
+        function switchToLinking(residentId) {
+            switchTab('linking');
+            document.getElementById('staffTab').classList.remove('active');
+            document.getElementById('residentTab').classList.remove('active');
+            document.getElementById('linkingTab').classList.add('active');
+            
+            // Highlight the resident card
+            setTimeout(() => {
+                const residentCard = document.querySelector(`[data-resident-id="${residentId}"]`);
+                if (residentCard) {
+                    residentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    selectResident(residentId, residentCard);
+                }
+            }, 300);
+        }
+
+        // ===== AUTO-GENERATE USERNAME FROM EMAIL =====
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-generate username from email
             const emailInput = document.querySelector('input[name="email"]');
             const usernameInput = document.querySelector('input[name="username"]');
             
             if (emailInput && usernameInput) {
                 emailInput.addEventListener('blur', function() {
                     if (!usernameInput.value && this.value) {
-                        const username = this.value.split('@')[0];
-                        usernameInput.value = username;
+                        usernameInput.value = this.value.split('@')[0];
                     }
                 });
             }
             
-            // Check URL for section parameter
+            // Check URL parameters
             const urlParams = new URLSearchParams(window.location.search);
-            const section = urlParams.get('section');
-            
-            if (section === 'linking') {
-                // Switch to linking tab
-                const linkingTab = document.getElementById('linking-tab');
-                if (linkingTab) {
-                    showSection('linking');
-                    document.getElementById('staff-tab').classList.remove('active');
-                    document.getElementById('resident-tab').classList.remove('active');
-                    linkingTab.classList.add('active');
-                }
+            if (urlParams.get('section') === 'linking') {
+                switchTab('linking');
             }
-            
-            // Make passwords visible by default for better UX
-            setTimeout(() => {
-                const staffPassword = document.getElementById('staff-password');
-                if (staffPassword) {
-                    staffPassword.type = 'text';
-                    const toggleBtn = staffPassword.parentElement.querySelector('.password-toggle');
-                    if (toggleBtn) {
-                        toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
-                    }
-                }
-                
-                const residentPassword = document.getElementById('resident-password');
-                if (residentPassword) {
-                    residentPassword.type = 'text';
-                    const toggleBtn = residentPassword.parentElement.querySelector('.password-toggle');
-                    if (toggleBtn) {
-                        toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
-                    }
-                }
-            }, 100);
         });
-        
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Escape key closes modals
-            if (e.key === 'Escape') {
-                closeDeleteModal();
-                closeChangeStaffPasswordModal();
-                closeChangeResidentPasswordModal();
-                closeResetModal();
-                closeMessageModal();
+
+        // ===== CLOSE MODALS ON OUTSIDE CLICK =====
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modern-modal')) {
+                event.target.classList.remove('show');
+            }
+        }
+
+        // ===== PASSWORD FORM SUBMISSION VALIDATION =====
+        document.getElementById('staffPasswordForm')?.addEventListener('submit', function(e) {
+            const newPass = document.getElementById('staffNewPass').value;
+            const confirmPass = document.getElementById('staffConfirmPass').value;
+            
+            if (newPass !== confirmPass) {
+                e.preventDefault();
+                showToast('Passwords do not match!', 'error');
+            }
+        });
+
+        document.getElementById('residentPasswordForm')?.addEventListener('submit', function(e) {
+            const newPass = document.getElementById('residentNewPass').value;
+            const confirmPass = document.getElementById('residentConfirmPass').value;
+            
+            if (newPass !== confirmPass) {
+                e.preventDefault();
+                showToast('Passwords do not match!', 'error');
+            }
+        });
+
+        document.getElementById('resetPasswordForm')?.addEventListener('submit', function(e) {
+            const newPass = document.getElementById('resetNewPass').value;
+            const confirmPass = document.getElementById('resetConfirmPass').value;
+            
+            if (newPass !== confirmPass) {
+                e.preventDefault();
+                showToast('Passwords do not match!', 'error');
             }
         });
     </script>

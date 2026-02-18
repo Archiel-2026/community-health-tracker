@@ -1,23 +1,23 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 // --- Auto-logout for resident users after 10 minutes of inactivity ---
-if (isUser()) {
-    $now = time();
-    if (!isset($_SESSION['last_action'])) {
-        $_SESSION['last_action'] = $now;
-    } else {
-        $inactive = $now - $_SESSION['last_action'];
-        if ($inactive >= 600) { // 10 minutes = 600 seconds
-            // Destroy session and redirect to resident landing page
-            session_unset();
-            session_destroy();
-            header('Location: /community-health-tracker/index.php');
-            exit();
-        } else {
-            $_SESSION['last_action'] = $now;
-        }
-    }
-}
+// if (isUser()) {
+//     $now = time();
+//     if (!isset($_SESSION['last_action'])) {
+//         $_SESSION['last_action'] = $now;
+//     } else {
+//         $inactive = $now - $_SESSION['last_action'];
+//         if ($inactive >= 600) { // 10 minutes = 600 seconds
+//             // Destroy session and redirect to resident landing page
+//             session_unset();
+//             session_destroy();
+//             header('Location: /community-health-tracker/index.php');
+//             exit();
+//         } else {
+//             $_SESSION['last_action'] = $now;
+//         }
+//     }
+// }
 require_once __DIR__ . '/../includes/header.php';
 
 redirectIfNotLoggedIn();
@@ -1080,73 +1080,52 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                     }
                                 }
                                 ?>
-                                <div
-                                    class="rounded-xl bg-white px-4 py-6 flex flex-col justify-between min-h-[180px] border border-gray-200 w-full">
+                                <div class="rounded-xl bg-white px-4 py-6 flex flex-col min-h-[180px] border border-gray-200 w-full">
                                     <div class="flex gap-4 justify-between">
-                                        <!-- LEFT -->
-                                        <style>
-                                            .bg-color {
-                                                background: rgba(242, 196, 80, 0.3);
-                                                border-radius: 9999px;
-                                            }
-
-                                            .text-color {
-                                                color: #F2C450;
-                                            }
-
-                                            .bg-emerald {
-                                                background-color: rgb(177, 243, 212);
-                                            }
-                                        </style>
+                                        <!-- LEFT: Consultation Info -->
                                         <div class="flex flex-col gap-4">
-                                            <div class="bg-color flex gap-6 rounded-md px-2 py-1">
-                                                <span class="items-center text-color text-base font-medium">
+                                            <div class="flex items-center mb-2">
+                                                <span class="consultation-header-group px-3 py-1 rounded-full text-base font-semibold flex items-center gap-2">
                                                     Consultation
+                                                    <span class="consultation-count-number bg-white text-yellow-600 font-bold rounded-full w-7 h-7 flex items-center justify-center ml-2 text-base" style="border:1px solid #F2C450;">
+                                                        <?php echo $consultationIndex; ?>
+                                                    </span>
                                                 </span>
-                                                <p
-                                                    class="bg-white rounded-full w-7 h-7 flex text-md items-center justify-center">
-                                                    <?php echo $consultationIndex; ?>
-                                                </p>
                                             </div>
-
-                                            <div class="flex flex-col">
-                                                <div class="text-gray-500 text-base mb-1 text-left">
-                                                    Consultation on :
-                                                </div>
-                                                <div class="text-lg font-semibold mb-3 tracking-wide leading-tight text-left">
+                                            <div class="mb-2">
+                                                <span class="text-gray-500 text-base">Consultation on :</span><br>
+                                                <span class="text-lg font-semibold tracking-wide leading-tight">
                                                     <?php echo date('F d, Y', strtotime($note['consultation_date'] ?? 'now')); ?>
-                                                </div>
+                                                </span>
                                             </div>
                                             <div>
-                                                <div class="text-gray-500 text-base mb-1 text-left">
-                                                    Doctor Assigned :
-                                                </div>
-
-                                                <div class="text-lg font-medium tracking-wide leading-tight text-left">
-                                                    <?php echo htmlspecialchars($note['doctor_name']); ?>
-                                                </div>
+                                                <span class="text-gray-500 text-base">Doctor Assigned :</span><br>
+                                                <span class="doctor-name-auto-shrink text-lg font-medium tracking-wide leading-tight">
+                                                    <span style="
+                                                        display: inline-block;
+                                                        max-width: 180px;
+                                                        min-width: 80px;
+                                                        white-space: nowrap;
+                                                        overflow: hidden;
+                                                        text-overflow: ellipsis;
+                                                        font-size: clamp(0.85rem, 2vw, 1.125rem);
+                                                        vertical-align: middle;
+                                                    ">
+                                                        <?php echo htmlspecialchars($note['doctor_name']); ?>
+                                                    </span>
+                                                </span>
                                             </div>
                                         </div>
-
-                                        <!-- RIGHT -->
+                                        <!-- RIGHT: Next Consultation & Button -->
                                         <div class="flex flex-col items-end justify-between">
                                             <div>
-                                                <!-- Next Consultation -->
                                                 <?php if (!empty($note['next_consultation_date'])): ?>
-                                                    <div class="flex flex-col">
-                                                        <span class="text-gray-500 text-sm mb-1">
-                                                            Next Consultation
-                                                        </span>
-
-                                                        <span
-                                                            class="block w-full px-2 py-1.5 rounded-md bg-emerald text-emerald-600 font-medium text-base">
-                                                            <?php echo date('F d, Y', strtotime($note['next_consultation_date'])); ?>
-                                                        </span>
-                                                    </div>
+                                                    <span class="text-gray-500 text-sm mb-1 block">Next Consultation</span>
+                                                    <span class="block px-3 py-1 rounded-md bg-emerald-100 text-emerald-700 font-medium text-base" style="background-color:#B1F3D4;color:#059669;">
+                                                        <?php echo date('F d, Y', strtotime($note['next_consultation_date'])); ?>
+                                                    </span>
                                                 <?php endif; ?>
                                             </div>
-
-                                            <!-- Button -->
                                             <div class="flex justify-end mt-auto">
                                                 <button
                                                     onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)"
@@ -1938,7 +1917,55 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                         @media print {
                             body { padding: 20px; }
                         }
-                    </style>
+                    .consultation-header-group {
+                        background: #FEF3C7;
+                        color: #F2C450;
+                        border-radius: 9999px;
+                        font-size: 1rem;
+                        font-weight: 600;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        padding: 0.5rem 1.25rem;
+                    }
+                    .consultation-count-number {
+                        background: #fff;
+                        color: #F2C450;
+                        border-radius: 9999px;
+                        width: 1.75rem;
+                        height: 1.75rem;
+                        min-width: 1.75rem;
+                        min-height: 1.75rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1rem;
+                        font-weight: 700;
+                        margin-left: 0.5rem;
+                        border: 1px solid #F2C450;
+                    }
+                    .doctor-name-auto-shrink {
+                        max-width: 180px;
+                        min-width: 80px;
+                        display: inline-block;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        font-size: 1.125rem;
+                        vertical-align: middle;
+                    }
+                    @media (max-width: 640px) {
+                        .doctor-name-auto-shrink {
+                            max-width: 120px;
+                            min-width: 60px;
+                            font-size: 1rem;
+                        }
+                    }
+                    @supports (font-size: clamp(0.85rem, 2vw, 1.125rem)) {
+                        .doctor-name-auto-shrink {
+                            font-size: clamp(0.85rem, 2vw, 1.125rem);
+                        }
+                    }
                 </head>
                 <body>
                     <div class="header">

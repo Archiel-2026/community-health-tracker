@@ -8,23 +8,14 @@ require_once __DIR__ . '/../vendor/autoload.php'; // PhpSpreadsheet
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
+require_once __DIR__ . '/generate_full_report.php';
 if (!isStaff() && !isAdmin()) {
     http_response_code(403);
     echo 'Access denied';
     exit();
 }
-
-$reportData = null;
-// Use the same logic as generate_full_report.php
-ob_start();
-include __DIR__ . '/generate_full_report.php';
-$output = ob_get_clean();
-$json = json_decode($output, true);
-if (!$json || empty($json['data'])) {
-    echo 'Failed to generate report.';
-    exit();
-}
-$reportData = $json['data'];
+$pdo = $GLOBALS['pdo'];
+$reportData = generate_health_report($pdo);
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
@@ -46,14 +37,28 @@ function writeSection($sheet, &$row, $title, $data) {
             $sheet->setCellValue('A'.$row, $label);
             $sheet->getStyle('A'.$row)->getFont()->setBold(true);
             $row++;
-            foreach ($value as $k => $v) {
-                $sheet->setCellValue('B'.$row, $k);
-                $sheet->setCellValue('C'.$row, $v);
+            if (empty($value)) {
+                $sheet->setCellValue('B'.$row, '(None)');
                 $row++;
+            } else {
+                foreach ($value as $k => $v) {
+                    $sheet->setCellValue('B'.$row, $k);
+                    if (is_array($v)) {
+                        $formatted = [];
+                        foreach ($v as $subk => $subv) {
+                            $formatted[] = $subk . ': ' . $subv;
+                        }
+                        $sheet->setCellValue('C'.$row, $formatted ? implode("\n", $formatted) : '(None)');
+                        $sheet->getStyle('C'.$row)->getAlignment()->setWrapText(true);
+                    } else {
+                        $sheet->setCellValue('C'.$row, ($v === '' || $v === null) ? '(None)' : $v);
+                    }
+                    $row++;
+                }
             }
         } else {
             $sheet->setCellValue('B'.$row, $label);
-            $sheet->setCellValue('C'.$row, $value);
+            $sheet->setCellValue('C'.$row, ($value === '' || $value === null) ? '(None)' : $value);
             $row++;
         }
     }

@@ -3,23 +3,23 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 // --- Auto-logout for resident users after 1 hour of inactivity ---
-if (isUser()) {
-    $now = time();
-    if (!isset($_SESSION['last_action'])) {
-        $_SESSION['last_action'] = $now;
-    } else {
-        $inactive = $now - $_SESSION['last_action'];
-        if ($inactive >= 600) { // 10 minutes = 600 seconds
-            // Destroy session and redirect to resident landing page
-            session_unset();
-            session_destroy();
-            header('Location: /community-health-tracker/index.php');
-            exit();
-        } else {
-            $_SESSION['last_action'] = $now;
-        }
-    }
-}
+// if (isUser()) {
+//     $now = time();
+//     if (!isset($_SESSION['last_action'])) {
+//         $_SESSION['last_action'] = $now;
+//     } else {
+//         $inactive = $now - $_SESSION['last_action'];
+//         if ($inactive >= 600) { // 10 minutes = 600 seconds
+//             // Destroy session and redirect to resident landing page
+//             session_unset();
+//             session_destroy();
+//             header('Location: /community-health-tracker/index.php');
+//             exit();
+//         } else {
+//             $_SESSION['last_action'] = $now;
+//         }
+//     }
+// }
 
 require_once __DIR__ . '/../includes/header.php';
 

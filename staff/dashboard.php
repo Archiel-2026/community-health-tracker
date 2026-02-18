@@ -1,6 +1,5 @@
+
 <?php
-
-
 require_once __DIR__ . '/../includes/auth.php';
 // --- Auto-logout for staff after 1 hour of inactivity ---
 if (isStaff()) {
@@ -1246,17 +1245,42 @@ $recordsPerPage = 5;
             <h2 class="text-2xl font-semibold mb-6 text-blue-700">Comprehensive Health Report</h2>
             <div id="fullReportContent">
                 <div class="flex gap-2 mb-4">
-                    <button onclick="generateFullReport()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center"><i class="fas fa-sync-alt mr-2"></i> Generate Full Report</button>
-                    <button onclick="printFullReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center"><i class="fas fa-print mr-2"></i> Print</button>
-                    <button onclick="exportFullReport('pdf')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium flex items-center"><i class="fas fa-file-pdf mr-2"></i> Export PDF</button>
-                    <button onclick="exportFullReport('excel')" class="px-4 py-2 bg-yellow-600 text-gray-900 rounded-lg hover:bg-yellow-500 transition font-medium flex items-center"><i class="fas fa-file-excel mr-2"></i> Export Excel</button>
+                    <button onclick="generateFullReportModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center"><i class="fas fa-sync-alt mr-2"></i> Generate Full Report</button>
+                </div>
+                <!-- Modal for Full Report Display -->
+                <div id="fullReportModal" class="modal-overlay hidden">
+                    <div class="modal-container modal-desktop cht-document-modal" style="max-width:1000px;min-width:350px;">
+                        <div class="modal-header">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-xl font-semibold text-gray-900">
+                                    <i class="fas fa-file-alt mr-2 text-blue-600"></i>
+                                    Generated Comprehensive Health Report
+                                </h3>
+                                <button type="button" onclick="closeFullReportModal()" class="text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+                            <div id="fullReportModalContent"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="flex flex-wrap gap-2 justify-end">
+                                <button onclick="printFullReport()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center"><i class="fas fa-print mr-2"></i> Print</button>
+                                <button onclick="exportFullReport('pdf')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium flex items-center"><i class="fas fa-file-pdf mr-2"></i> Export PDF</button>
+                                <button onclick="exportFullReport('excel')" class="px-4 py-2 bg-yellow-600 text-gray-900 rounded-lg hover:bg-yellow-500 transition font-medium flex items-center"><i class="fas fa-file-excel mr-2"></i> Export Excel</button>
+                                <button type="button" onclick="closeFullReportModal()" class="px-6 py-3 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400 transition font-medium"><i class="fas fa-times mr-2"></i> Close</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div id="fullReportResult" class="mt-4"></div>
             </div>
             <script>
             let lastReportHtml = '';
-            function generateFullReport() {
-                const resultDiv = document.getElementById('fullReportResult');
+            function generateFullReportModal() {
+                const modal = document.getElementById('fullReportModal');
+                const modalContent = document.getElementById('fullReportModalContent');
                 // Show loading overlay
                 let loader = document.getElementById('reportLoadingOverlay');
                 if (!loader) {
@@ -1287,14 +1311,16 @@ $recordsPerPage = 5;
                     `;
                 }
                 loader.style.display = 'flex';
-                resultDiv.innerHTML = '';
+                modalContent.innerHTML = '';
                 const startTime = Date.now();
                 fetch('./generate_full_report.php')
                     .then(async res => {
                         if (res.status === 403) {
                             setTimeout(() => {
                                 loader.style.display = 'none';
-                                resultDiv.innerHTML = '<div class="text-red-600">Access denied. Please log in as staff to generate the report.</div>';
+                                modalContent.innerHTML = '<div class="text-red-600">Access denied. Please log in as staff to generate the report.</div>';
+                                modal.classList.remove('hidden');
+                                modal.classList.add('active');
                             }, Math.max(0, 3000 - (Date.now() - startTime)));
                             return;
                         }
@@ -1304,7 +1330,9 @@ $recordsPerPage = 5;
                         } catch (e) {
                             setTimeout(() => {
                                 loader.style.display = 'none';
-                                resultDiv.innerHTML = '<div class="text-red-600">Invalid response from report generator.</div>';
+                                modalContent.innerHTML = '<div class="text-red-600">Invalid response from report generator.</div>';
+                                modal.classList.remove('hidden');
+                                modal.classList.add('active');
                             }, Math.max(0, 3000 - (Date.now() - startTime)));
                             return;
                         }
@@ -1325,19 +1353,23 @@ $recordsPerPage = 5;
                                 loader.style.display = 'none';
                                 if (data.success) {
                                     lastReportHtml = renderFullReport(data.data);
-                                    resultDiv.innerHTML = lastReportHtml;
+                                    modalContent.innerHTML = lastReportHtml;
                                 } else if (data.error) {
-                                    resultDiv.innerHTML = `<div class='text-red-600'>${data.error}</div>`;
+                                    modalContent.innerHTML = `<div class='text-red-600'>${data.error}</div>`;
                                 } else {
-                                    resultDiv.innerHTML = '<div class="text-red-600">Failed to generate report.</div>';
+                                    modalContent.innerHTML = '<div class="text-red-600">Failed to generate report.</div>';
                                 }
+                                modal.classList.remove('hidden');
+                                modal.classList.add('active');
                             }, 1000);
                         }, Math.max(0, 3000 - (Date.now() - startTime)));
                     })
                     .catch(() => {
                         setTimeout(() => {
                             loader.style.display = 'none';
-                            resultDiv.innerHTML = '<div class="text-red-600">Failed to connect to report generator.</div>';
+                            modalContent.innerHTML = '<div class="text-red-600">Failed to connect to report generator.</div>';
+                            modal.classList.remove('hidden');
+                            modal.classList.add('active');
                         }, Math.max(0, 3000 - (Date.now() - startTime)));
                     });
                         }
@@ -1380,35 +1412,108 @@ $recordsPerPage = 5;
                 let html = '';
                 // Add custom CSS for report backgrounds
                 html += `<style>
+                                .cht-report-table {
+                                    width: 100%;
+                                    border-collapse: collapse;
+                                    margin-bottom: 2rem;
+                                }
+                                .cht-report-table th, .cht-report-table td {
+                                    border: 1.5px solid #cbd5e1;
+                                    padding: 0.7em 1em;
+                                    text-align: left;
+                                    vertical-align: top;
+                                }
+                                .cht-report-table th {
+                                    background: #f1f5f9;
+                                    font-weight: 700;
+                                    color: #1e293b;
+                                    width: 220px;
+                                }
+                                .cht-report-table tr:not(:last-child) td {
+                                    border-bottom: 1.5px solid #cbd5e1;
+                                }
+                                .cht-report-section-title {
+                                    margin-top: 2.2rem;
+                                }
                 .cht-report-container {
-                    max-width: 1400px;
+                    max-width: 900px;
                     margin: 0 auto;
                     font-family: 'Segoe UI', Arial, sans-serif;
-                    background: #f8fafc;
-                    padding: 3.5rem 0 3rem 0;
+                    background: #fff;
+                    padding: 2.5rem 2.5rem 2rem 2.5rem;
+                    border: 2.5px solid #1e293b;
+                    border-radius: 1.2rem;
+                    box-shadow: 0 8px 32px rgba(30,41,59,0.18), 0 1.5px 8px rgba(30,41,59,0.10);
+                    position: relative;
+                }
+                .cht-report-container:before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    border-radius: 1.2rem;
+                    pointer-events: none;
+                    border: 1.5px dashed #64748b;
+                    z-index: 1;
+                }
+                .cht-document-modal {
+                    background: #f1f5f9;
+                    border: 2.5px solid #1e293b;
+                    border-radius: 1.5rem;
+                    box-shadow: 0 12px 40px rgba(30,41,59,0.18), 0 2px 12px rgba(30,41,59,0.10);
+                    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+                }
+                .cht-report-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 0.5rem;
+                }
+                .cht-report-header img {
+                    height: 65px;
+                    width: 65px;
+                    object-fit: contain;
+                    border-radius: 10px;
+                    background: #fff;
+                    border: 1px solid #cbd5e1;
+                }
+                .cht-report-govinfo {
+                    flex: 1;
+                    text-align: center;
+                    font-size: 1.05rem;
+                    color: #22223b;
+                    font-weight: 500;
+                    line-height: 1.3;
+                }
+                .cht-report-titlebar {
+                    text-align: center;
+                    margin-bottom: 1.2rem;
+                }
+                .cht-report-titlebar .cht-report-section-title {
+                    color: #b91c1c;
+                    font-size: 1.15rem;
+                    font-weight: 700;
+                    letter-spacing: 0.04em;
+                    margin-bottom: 0.2rem;
                 }
                 .cht-section-card {
                     background: #fff;
-                    border-radius: 1.1rem;
-                    /* box-shadow removed for no container shadow */
-                    padding: 2.7rem 3.2rem;
-                    margin-bottom: 3.2rem;
-                }
-                .cht-section-card:not(:last-child) {
-                    margin-bottom: 3.2rem;
+                    border-radius: 0.7rem;
+                    border: 1.5px solid #cbd5e1;
+                    padding: 2.2rem 2.2rem;
+                    margin-bottom: 2.2rem;
                 }
                 .cht-section-title {
                     color: #1e293b;
-                    font-size: 1.7rem;
+                    font-size: 1.2rem;
                     font-weight: 700;
-                    margin-bottom: 1.5rem;
+                    margin-bottom: 1.1rem;
                     letter-spacing: 0.01em;
                     display: flex;
                     align-items: center;
                     gap: 0.7em;
                 }
                 .cht-section-title i {
-                    font-size: 1.3em;
+                    font-size: 1.1em;
                     color: #64748b;
                 }
                 .cht-report-list {
@@ -1417,83 +1522,133 @@ $recordsPerPage = 5;
                     list-style: none;
                 }
                 .cht-report-list > li {
-                    margin-bottom: 1.1em;
-                    font-size: 1.13em;
+                    margin-bottom: 0.8em;
+                    font-size: 1.05em;
                 }
                 .cht-report-list ul {
                     margin-left: 2em;
-                    margin-top: 0.4em;
+                    margin-top: 0.3em;
                 }
                 .cht-label {
                     background: #f1f5f9;
                     color: #22223b;
                     border-radius: 0.4em;
-                    padding: 0.18em 0.85em;
-                    font-size: 1em;
+                    padding: 0.13em 0.7em;
+                    font-size: 0.98em;
                     font-weight: 600;
-                    margin-right: 0.6em;
+                    margin-right: 0.5em;
                 }
                 .cht-report-list b {
                     color: #1e293b;
                     font-weight: 700;
                 }
                 @media (max-width: 900px) {
-                    .cht-section-card { padding: 1.2rem 0.7rem; }
-                    .cht-report-container { padding: 1.2rem 0; }
+                    .cht-section-card { padding: 1rem 0.4rem; }
+                    .cht-report-container { padding: 0.7rem 0; }
                 }
                 </style>`;
-                html += `<div class='cht-report-container'><div class='cht-section-card'>`;
+                html += `<div class='cht-report-container'>`;
+                // Header with two logos and centered info
+                html += `<div class='cht-report-header'>
+                    <img src='asssets/images/Luz.jpg' alt='Barangay Luz Logo' style='height:75px;width:75px;object-fit:contain;border-radius:12px;background:#fff;border:2px solid #cbd5e1;box-shadow:0 2px 8px rgba(30,41,59,0.10);margin-right:1.5rem;'>
+                    <div class='cht-report-govinfo'>
+                        Republic of the Philippines<br>
+                        Province of Occidental Mindoro<br>
+                        Municipality of [Your City/Town]<br>
+                        Barangay Luz Health Center
+                    </div>
+                    <img src='asssets/images/DOH.webp' alt='City Health Logo'>
+                </div>`;
+                html += `<div class='cht-report-titlebar'>
+                    <div class='cht-report-section-title'>OFFICE OF THE CITY HEALTH</div>
+                    <div style='font-size:1.05rem;color:#22223b;font-weight:600;'>Comprehensive Health Report</div>
+                </div>`;
+                html += `<div class='cht-section-card'>`;
 
                 // Resident Demographics
                 let d = data.resident_demographics;
-                html += `<div class='cht-section-title'><i class='fas fa-users'></i> Resident Demographics</div><ul class='cht-report-list'>`;
-                if (typeof d.total_registered !== 'undefined') html += `<li><span class='cht-label'>Total Registered Residents</span> <b>${d.total_registered}</b></li>`;
-                if (typeof d.new_registrations !== 'undefined') html += `<li><span class='cht-label'>New Registrations This Period</span> <b>${d.new_registrations}</b></li>`;
-                if (d.age_distribution) html += `<li><span class='cht-label'>Age Distribution</span><ul><li>Children (0–12): <b>${d.age_distribution.children}</b></li><li>Adolescents (13–19): <b>${d.age_distribution.adolescents}</b></li><li>Adults (20–59): <b>${d.age_distribution.adults}</b></li><li>Seniors (60+): <b>${d.age_distribution.seniors}</b></li></ul></li>`;
-                if (d.sex_distribution) html += `<li><span class='cht-label'>Sex Distribution</span><ul><li>Male: <b>${d.sex_distribution.Male||0}</b></li><li>Female: <b>${d.sex_distribution.Female||0}</b></li></ul></li>`;
-                html += `</ul>`;
+                html += `<div class='cht-section-title'><i class='fas fa-users'></i> Resident Demographics</div>`;
+                html += `<table class='cht-report-table'>`;
+                if (typeof d.total_registered !== 'undefined') html += `<tr><th>Total Registered Residents</th><td>${d.total_registered}</td></tr>`;
+                if (typeof d.new_registrations !== 'undefined') html += `<tr><th>New Registrations This Period</th><td>${d.new_registrations}</td></tr>`;
+                if (d.age_distribution) html += `<tr><th>Age Distribution</th><td>
+                    <ul style='margin:0;padding-left:1.2em;'>
+                        <li>Children (0–12): <b>${d.age_distribution.children}</b></li>
+                        <li>Adolescents (13–19): <b>${d.age_distribution.adolescents}</b></li>
+                        <li>Adults (20–59): <b>${d.age_distribution.adults}</b></li>
+                        <li>Seniors (60+): <b>${d.age_distribution.seniors}</b></li>
+                    </ul>
+                </td></tr>`;
+                if (d.sex_distribution) html += `<tr><th>Sex Distribution</th><td>
+                    <ul style='margin:0;padding-left:1.2em;'>
+                        <li>Male: <b>${d.sex_distribution.Male||0}</b></li>
+                        <li>Female: <b>${d.sex_distribution.Female||0}</b></li>
+                    </ul>
+                </td></tr>`;
+                html += `</table>`;
 
                 // Medical Information Summary
                 let m = data.medical_summary;
-                html += `<div class='cht-section-title'><i class='fas fa-notes-medical'></i> Medical Information Summary</div><ul class='cht-report-list'>`;
-                if (m.common_conditions) html += `<li><span class='cht-label'>Common Conditions Recorded</span><ul><li>Hypertension: <b>${m.common_conditions.hypertension}</b></li><li>Diabetes: <b>${m.common_conditions.diabetes}</b></li><li>Tuberculosis: <b>${m.common_conditions.tuberculosis}</b></li><li>Other: <b>${Object.keys(m.common_conditions.other).map(k=>k+': '+m.common_conditions.other[k]).join(', ')}</b></li></ul></li>`;
-                if (typeof m.fully_immunized_children !== 'undefined' || m.vaccines_administered) html += `<li><span class='cht-label'>Immunization Coverage</span><ul>` + (typeof m.fully_immunized_children !== 'undefined' ? `<li>Fully Immunized Children: <b>${m.fully_immunized_children}</b></li>` : '') + (m.vaccines_administered ? `<li>Vaccines Administered (by type): <b>${Object.keys(m.vaccines_administered).map(k=>k+': '+m.vaccines_administered[k]).join(', ')}</b></li>` : '') + `</ul></li>`;
-                html += `</ul>`;
+                html += `<div class='cht-section-title'><i class='fas fa-notes-medical'></i> Medical Information Summary</div>`;
+                html += `<table class='cht-report-table'>`;
+                if (m.common_conditions) html += `<tr><th>Common Conditions Recorded</th><td>
+                    <ul style='margin:0;padding-left:1.2em;'>
+                        <li>Hypertension: <b>${m.common_conditions.hypertension}</b></li>
+                        <li>Diabetes: <b>${m.common_conditions.diabetes}</b></li>
+                        <li>Tuberculosis: <b>${m.common_conditions.tuberculosis}</b></li>
+                        <li>Other: <b>${Object.keys(m.common_conditions.other).map(k=>k+': '+m.common_conditions.other[k]).join(', ')}</b></li>
+                    </ul>
+                </td></tr>`;
+                if (typeof m.fully_immunized_children !== 'undefined' || m.vaccines_administered) html += `<tr><th>Immunization Coverage</th><td>
+                    <ul style='margin:0;padding-left:1.2em;'>
+                        ${typeof m.fully_immunized_children !== 'undefined' ? `<li>Fully Immunized Children: <b>${m.fully_immunized_children}</b></li>` : ''}
+                        ${m.vaccines_administered ? `<li>Vaccines Administered (by type): <b>${Object.keys(m.vaccines_administered).map(k=>k+': '+m.vaccines_administered[k]).join(', ')}</b></li>` : ''}
+                    </ul>
+                </td></tr>`;
+                html += `</table>`;
 
                 // Consultation Records
                 let c = data.consultation_records;
-                html += `<div class='cht-section-title'><i class='fas fa-stethoscope'></i> Consultation Records</div><ul class='cht-report-list'>`;
-                if (typeof c.total_consultations !== 'undefined') html += `<li><span class='cht-label'>Total Consultations</span> <b>${c.total_consultations}</b></li>`;
-                if (c.consultations_by_type) html += `<li><span class='cht-label'>Consultations by Type</span> <b>${Object.keys(c.consultations_by_type).map(k=>k+': '+c.consultations_by_type[k]).join(', ')}</b></li>`;
-                if (c.top_reasons) html += `<li><span class='cht-label'>Top Reasons for Consultation</span> <b>${Object.keys(c.top_reasons).map(k=>k+': '+c.top_reasons[k]).join(', ')}</b></li>`;
-                if (c.referrals_made) html += `<li><span class='cht-label'>Referrals Made</span> <b>${Object.keys(c.referrals_made).map(k=>k+': '+c.referrals_made[k]).join(', ')}</b></li>`;
-                html += `</ul>`;
+                html += `<div class='cht-section-title'><i class='fas fa-stethoscope'></i> Consultation Records</div>`;
+                html += `<table class='cht-report-table'>`;
+                if (typeof c.total_consultations !== 'undefined') html += `<tr><th>Total Consultations</th><td>${c.total_consultations}</td></tr>`;
+                if (c.consultations_by_type) html += `<tr><th>Consultations by Type</th><td>${Object.keys(c.consultations_by_type).map(k=>k+': '+c.consultations_by_type[k]).join(', ')}</td></tr>`;
+                if (c.top_reasons) html += `<tr><th>Top Reasons for Consultation</th><td>${Object.keys(c.top_reasons).map(k=>k+': '+c.top_reasons[k]).join(', ')}</td></tr>`;
+                if (c.referrals_made) html += `<tr><th>Referrals Made</th><td>${Object.keys(c.referrals_made).map(k=>k+': '+c.referrals_made[k]).join(', ')}</td></tr>`;
+                html += `</table>`;
 
                 // Doctor’s Notes & Case Summaries
                 let dn = data.doctor_notes;
-                html += `<div class='cht-section-title'><i class='fas fa-user-md'></i> Doctor’s Notes & Case Summaries</div><ul class='cht-report-list'>`;
-                if (dn.diagnoses) html += `<li><span class='cht-label'>Summary of Diagnoses</span> <b>${Object.keys(dn.diagnoses).map(k=>k+': '+dn.diagnoses[k]).join(', ')}</b></li>`;
-                if (dn.treatments) html += `<li><span class='cht-label'>Treatments Provided</span> <b>${Object.keys(dn.treatments).map(k=>k+': '+dn.treatments[k]).join(', ')}</b></li>`;
-                html += `<li>Cases Requiring City Health Department Attention: <b>${Object.keys(dn.cases_for_city_health).map(k=>k+': '+dn.cases_for_city_health[k]).join(', ')}</b></li>`;
-                html += `</ul>`;
+                html += `<div class='cht-section-title'><i class='fas fa-user-md'></i> Doctor’s Notes & Case Summaries</div>`;
+                html += `<table class='cht-report-table'>`;
+                if (dn.diagnoses) html += `<tr><th>Summary of Diagnoses</th><td>${Object.keys(dn.diagnoses).map(k=>k+': '+dn.diagnoses[k]).join(', ')}</td></tr>`;
+                if (dn.treatments) html += `<tr><th>Treatments Provided</th><td>${Object.keys(dn.treatments).map(k=>k+': '+dn.treatments[k]).join(', ')}</td></tr>`;
+                html += `<tr><th>Cases Requiring City Health Department Attention</th><td>${Object.keys(dn.cases_for_city_health).map(k=>k+': '+dn.cases_for_city_health[k]).join(', ')}</td></tr>`;
+                html += `</table>`;
                 html += `<h3 class='text-lg font-bold mb-2'>Public Health Indicators</h3>`;
                 let ph = data.public_health;
-                html += `<ul class='mb-4'>`;
-                html += `<li>Notifiable Diseases Reported: <b>${Object.keys(ph.notifiable).map(k=>k+': '+ph.notifiable[k]).join(', ')}</b></li>`;
-                html += `<li>Health Campaigns Conducted: <b>${ph.campaigns.map(c=>c.title+': '+c.details).join('; ')}</b></li>`;
-                html += `<li>Community Health Trends: <b>${Object.keys(ph.community_trends).map(k=>k+':'+Object.keys(ph.community_trends[k]).map(m=>m+':'+ph.community_trends[k][m]).join(', ')).join(' | ')}</b></li>`;
-                html += `</ul>`;
+                html += `<div class='cht-section-title'>Public Health Indicators</div>`;
+                html += `<table class='cht-report-table'>`;
+                html += `<tr><th>Notifiable Diseases Reported</th><td>${Object.keys(ph.notifiable).map(k=>k+': '+ph.notifiable[k]).join(', ')}</td></tr>`;
+                html += `<tr><th>Health Campaigns Conducted</th><td>${ph.campaigns.map(c=>c.title+': '+c.details).join('; ')}</td></tr>`;
+                html += `<tr><th>Community Health Trends</th><td>${Object.keys(ph.community_trends).map(k=>k+':'+Object.keys(ph.community_trends[k]).map(m=>m+':'+ph.community_trends[k][m]).join(', ')).join(' | ')}</td></tr>`;
+                html += `</table>`;
                 html += `<h3 class='text-lg font-bold mb-2'>Administrative Data</h3>`;
                 let a = data.admin;
-                html += `<ul class='mb-4'>`;
-                html += `<li>Average Patients per Doctor: <b>${a.avg_patients_per_doctor}</b></li>`;
-                html += `<li>Average Patients per Nurse: <b>${a.avg_patients_per_nurse}</b></li>`;
-                html += `<li>Medical Supplies Used/Needed: <b>${a.supplies}</b></li>`;
-                html += `<li>Challenges Encountered: <b>${a.challenges}</b></li>`;
-                html += `</ul>`;
+                html += `<div class='cht-section-title'>Administrative Data</div>`;
+                html += `<table class='cht-report-table'>`;
+                html += `<tr><th>Average Patients per Doctor</th><td>${a.avg_patients_per_doctor}</td></tr>`;
+                html += `<tr><th>Average Patients per Nurse</th><td>${a.avg_patients_per_nurse}</td></tr>`;
+                html += `<tr><th>Medical Supplies Used/Needed</th><td>${a.supplies}</td></tr>`;
+                html += `<tr><th>Challenges Encountered</th><td>${a.challenges}</td></tr>`;
+                html += `</table>`;
                 html += `<h3 class='text-lg font-bold mb-2'>Recommendations</h3>`;
-                html += `<div class='mb-4'>${data.recommendations}</div>`;
-                html += `<div class='mt-6 text-sm text-gray-600'>Prepared by: <b>${data.prepared_by}</b><br>Date: <b>${data.date}</b></div>`;
+                html += `<div class='cht-section-title'>Recommendations</div>`;
+                html += `<table class='cht-report-table'>`;
+                html += `<tr><th>Recommendations</th><td>${data.recommendations}</td></tr>`;
+                html += `<tr><th>Prepared by</th><td>${data.prepared_by}</td></tr>`;
+                html += `<tr><th>Date</th><td>${data.date}</td></tr>`;
+                html += `</table>`;
                 html += `</div></div>`;
                 return html;
             }
@@ -2760,6 +2915,14 @@ function initializeCharts() {
         });
     } catch (error) { console.error('Error initializing age distribution chart:', error); }
 }
+
+            function closeFullReportModal() {
+                const modal = document.getElementById('fullReportModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('active');
+                }
+            }
 </script>
 </body>
 </html>
