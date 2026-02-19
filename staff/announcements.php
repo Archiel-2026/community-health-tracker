@@ -1314,29 +1314,50 @@ try {
                                             <?= ucfirst($announcement['priority']) ?>
                                         </span>
                                         <div class="stats">
-                                            <?php if ($announcement['accepted_count'] > 0): ?>
-                                            <div class="stat-item">
-                                                <div class="stat-icon stat-accepted" title="Accepted">
-                                                    <i class="fas fa-check"></i>
+                                            <?php if ($announcement['audience_type'] === 'public'): ?>
+                                                <div class="stat-item">
+                                                    <div class="stat-icon stat-accepted" title="Accepted">
+                                                        <i class="fas fa-check"></i>
+                                                    </div>
+                                                    <span class="text-sm">Accepted (<?= $announcement['accepted_count'] ?>)</span>
                                                 </div>
-                                                <span class="text-sm">Accepted</span>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if ($announcement['dismissed_count'] > 0): ?>
-                                            <div class="stat-item">
-                                                <div class="stat-icon stat-dismissed" title="Dismissed">
-                                                    <i class="fas fa-times"></i>
+                                                <div class="stat-item">
+                                                    <div class="stat-icon stat-dismissed" title="Dismissed">
+                                                        <i class="fas fa-times"></i>
+                                                    </div>
+                                                    <span class="text-sm">Dismissed (<?= $announcement['dismissed_count'] ?>)</span>
                                                 </div>
-                                                <span class="text-sm">Dismissed</span>
-                                            </div>
-                                            <?php endif; ?>
-                                            <?php if ($announcement['pending_count'] > 0 && $announcement['accepted_count'] == 0 && $announcement['dismissed_count'] == 0): ?>
-                                            <div class="stat-item">
-                                                <div class="stat-icon stat-pending" title="Pending">
-                                                    <i class="fas fa-clock"></i>
+                                                <div class="stat-item">
+                                                    <div class="stat-icon stat-pending" title="Pending">
+                                                        <i class="fas fa-clock"></i>
+                                                    </div>
+                                                    <span class="text-sm">Pending (<?= $announcement['pending_count'] ?>)</span>
                                                 </div>
-                                                <span class="text-sm">Pending</span>
-                                            </div>
+                                            <?php else: ?>
+                                                <?php if ($announcement['accepted_count'] > 0): ?>
+                                                <div class="stat-item">
+                                                    <div class="stat-icon stat-accepted" title="Accepted">
+                                                        <i class="fas fa-check"></i>
+                                                    </div>
+                                                    <span class="text-sm">Accepted</span>
+                                                </div>
+                                                <?php endif; ?>
+                                                <?php if ($announcement['dismissed_count'] > 0): ?>
+                                                <div class="stat-item">
+                                                    <div class="stat-icon stat-dismissed" title="Dismissed">
+                                                        <i class="fas fa-times"></i>
+                                                    </div>
+                                                    <span class="text-sm">Dismissed</span>
+                                                </div>
+                                                <?php endif; ?>
+                                                <?php if ($announcement['pending_count'] > 0 && $announcement['accepted_count'] == 0 && $announcement['dismissed_count'] == 0): ?>
+                                                <div class="stat-item">
+                                                    <div class="stat-icon stat-pending" title="Pending">
+                                                        <i class="fas fa-clock"></i>
+                                                    </div>
+                                                    <span class="text-sm">Pending</span>
+                                                </div>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                         </div>
                                     </div>

@@ -923,6 +923,34 @@ $activeTab = $_GET['tab'] ?? 'consultations';
             min-height: 44px !important;
         }
     }
+    .consultation-header-group {
+    background: #FEF3C7;  /* yellow-100 */
+    color: #F2C450;        /* yellow-600 */
+    border-radius: 9999px;
+    font-size: 1rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+}
+
+.consultation-count-number {
+    background: #fff;
+    color: #F2C450;
+    border-radius: 9999px;
+    width: 1.75rem;
+    height: 1.75rem;
+    min-width: 1.75rem;
+    min-height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-left: 0.5rem;
+    border: 1px solid #F2C450;
+}
 </style>
 
 <div>
@@ -1083,20 +1111,19 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                 ?>
                                 <div
                                     class="rounded-xl bg-white px-4 py-6 flex flex-col min-h-[180px] border border-gray-200 w-full">
-                                    <div class="flex gap-4 justify-between">
-                                        <!-- LEFT: Consultation Info -->
-                                        <div class="flex flex-col gap-4">
-                                            <div class="flex items-center mb-2">
-                                                <span
-                                                    class="consultation-header-group px-3 py-1 rounded-full text-base font-semibold flex items-center gap-2">
-                                                    Consultation
-                                                    <span
-                                                        class="consultation-count-number bg-white text-yellow-600 font-bold rounded-full w-7 h-7 flex items-center justify-center ml-2 text-base"
-                                                        style="border:1px solid #F2C450;">
-                                                        <?php echo $consultationIndex; ?>
-                                                    </span>
-                                                </span>
-                                            </div>
+                                    <!-- In the consultations tab, replace the consultation header section -->
+<div class="flex gap-4 justify-between">
+    <!-- LEFT: Consultation Info -->
+    <div class="flex flex-col gap-4">
+        <div class="flex items-center">
+            <span class="consultation-header-group bg-yellow-100 text-yellow-600 rounded-full px-4 py-1.5 text-base font-semibold inline-flex items-center">
+                Consultation
+                <span class="consultation-count-number bg-white text-yellow-600 font-bold rounded-full w-7 h-7 flex items-center justify-center ml-2 text-base" style="border: 1px solid #F2C450;">
+                    <?php echo $consultationIndex; ?>
+                </span>
+            </span>
+        </div>
+        <!-- Rest of the consultation info... -->
                                             <div class="mb-2">
                                                 <span class="text-gray-500 text-base">Consultation on :</span><br>
                                                 <span class="text-lg font-semibold tracking-wide leading-tight">
@@ -1644,33 +1671,23 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     </div>
 
     <!-- Consultation Details Modal -->
-    <div id="consultationModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-[100] backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="px-8 py-6 sticky top-0 bg-white z-10">
-                <div class="flex justify-between border-b-2 border-gray-300 pb-2 items-start">
-                    <div>
-                        <h3 class="page-title text-xl sm:text-2xl mb-2" id="modalTitle"></h3>
-                        <p class="text-gray-600 text-sm font-500" id="modalSubtitle"></p>
-                    </div>
-                    <button onclick="closeModal()"
-                        class="hover:text-gray-600 transition-colors flex items-center justify-center hover:bg-gray-100 rounded-lg">
-                        <i class="fas fa-times icon-lg"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="px-8 sm:px-5 space-y-6" id="modalBody"></div>
-
-            <!-- <div
-                class="p-4 sm:p-8 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0">
-                <button onclick="closeModal()"
-                    class="px-5 py-3 sm:py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-600 text-sm order-2 sm:order-2">
-                    Close
+<div id="consultationModal"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-[100] backdrop-blur-sm">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="px-8 py-6 sticky top-0 bg-white z-10 border-b border-gray-100">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-semibold text-gray-900" id="modalTitle">Consultation Details</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
                 </button>
-            </div> -->
+            </div>
         </div>
+
+        <div class="px-8 py-6 space-y-6" id="modalBody"></div>
     </div>
+</div>
 
     <!-- Footer -->
     <!-- <footer class="mt-12 border-t bg-white">
