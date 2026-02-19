@@ -14,16 +14,16 @@ $profile_picture = null;
 if (isset($_SESSION['user']['id'])) {
     // Define paths for profile pictures
     $profile_dir = __DIR__ . '/../uploads/profiles/';
-    
+
     // Create directory if it doesn't exist
     if (!file_exists($profile_dir)) {
         mkdir($profile_dir, 0777, true);
     }
-    
+
     // Check for profile picture
     $user_id = $_SESSION['user']['id'];
     $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
-    
+
     foreach ($allowed_extensions as $ext) {
         $potential_file = $profile_dir . 'profile_' . $user_id . '.' . $ext;
         if (file_exists($potential_file)) {
@@ -53,85 +53,85 @@ if (isset($_SESSION['user']['id'])) {
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
-body,
-.sidebar,
-.nav-tab,
-.logout-btn,
-.time-display-container,
-.continue-btn,
-.complete-btn,
-.profile-upload-btn,
-.profile-remove-btn,
-.logout-cancel-btn,
-.logout-confirm-btn {
-    font-family: 'Poppins', sans-serif !important;
-}
-
-/* Smooth transition for sidebar */
-.sidebar {
-    transition: transform 0.3s ease-in-out;
-}
-
-.sidebar-hidden {
-    transform: translateX(-100%);
-}
-
-/* Optional: Add overlay for mobile */
-.overlay {
-    background: rgba(0, 0, 0, 0.5);
-    transition: opacity 0.3s ease-in-out;
-}
-
-.overlay-hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* Blinking colon animation */
-@keyframes blink {
-    0% {
-        opacity: 1;
+    body,
+    .sidebar,
+    .nav-tab,
+    .logout-btn,
+    .time-display-container,
+    .continue-btn,
+    .complete-btn,
+    .profile-upload-btn,
+    .profile-remove-btn,
+    .logout-cancel-btn,
+    .logout-confirm-btn {
+        font-family: 'Poppins', sans-serif !important;
     }
 
-    50% {
+    /* Smooth transition for sidebar */
+    .sidebar {
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .sidebar-hidden {
+        transform: translateX(-100%);
+    }
+
+    /* Optional: Add overlay for mobile */
+    .overlay {
+        background: rgba(0, 0, 0, 0.5);
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .overlay-hidden {
         opacity: 0;
+        pointer-events: none;
     }
 
-    100% {
-        opacity: 1;
+    /* Blinking colon animation */
+    @keyframes blink {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
     }
-}
 
-.blinking-colon {
-    animation: blink 1s infinite;
-}
+    .blinking-colon {
+        animation: blink 1s infinite;
+    }
 
-/* CLEAN: Simple Navigation Tab Styles */
-.nav-tab-container {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-}
+    /* CLEAN: Simple Navigation Tab Styles */
+    .nav-tab-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
 
-.nav-tab {
-    position: relative;
-    transition: all 0.3s ease;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.75rem;
-    font-weight: 600;
-    z-index: 1;
-    color: white !important;
-}
+    .nav-tab {
+        position: relative;
+        transition: all 0.3s ease;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        z-index: 1;
+        color: white !important;
+    }
 
-.nav-tab.active {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
-    color: white !important;
-}
+    .nav-tab.active {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        color: white !important;
+    }
 
-/* .nav-tab.active::after {
+    /* .nav-tab.active::after {
     content: '';
     position: absolute;
     bottom: -6px;
@@ -143,475 +143,16 @@ body,
     border-radius: 2px;
 } */
 
-.nav-tab:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-/* CLEAN: Simple Logout Button - UPDATED FOR FULL ROUND */
-.logout-btn {
-    background: #ef4444;
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px !important; /* Full round radius */
-    font-weight: 600;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    cursor: pointer;
-    border: none;
-    outline: none;
-}
-
-.logout-btn:hover {
-    background: #dc2626;
-    transform: translateY(-1px);
-}
-
-/* NEW: Improved time display containers - Horizontal layout */
-.time-display-container {
-    display: flex;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 0.6rem 1.2rem;
-    border-radius: 0.75rem;
-    margin-left: auto;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.staff-time-container {
-    background-color: rgba(255, 255, 255, 0.15);
-}
-
-.user-time-container {
-    background-color: rgba(255, 255, 255, 0.15);
-}
-
-.admin-time-container {
-    background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Add padding to nav containers */
-.staff-nav-container,
-.admin-nav-container,
-.user-nav-container {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-}
-
-/* NEW: Horizontal time display styles */
-.time-display-horizontal {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.date-display-horizontal {
-    display: flex;
-    align-items: center;
-    font-size: 0.9rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-}
-
-.time-display-main-horizontal {
-    display: flex;
-    align-items: center;
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    white-space: nowrap;
-}
-
-.time-separator {
-    height: 24px;
-    width: 1px;
-    background: rgba(255, 255, 255, 0.4);
-    margin: 0 0.5rem;
-}
-
-.time-zone {
-    font-size: 0.75rem;
-    margin-left: 0.25rem;
-    opacity: 0.9;
-    font-style: italic;
-    font-weight: 500;
-}
-
-/* Hidden refresh indicator */
-.refresh-indicator {
-    position: absolute;
-    width: 0;
-    height: 0;
-    overflow: hidden;
-    opacity: 0;
-}
-
-/* Form validation styles */
-.form-input:invalid {
-    border-color: #fca5a5;
-}
-
-.form-input:valid {
-    border-color: #74b4fdff;
-}
-
-/* Updated Registration Button Styles with Rounded XL Sides */
-.continue-btn, .complete-btn {
-    width: 100%;
-    border-radius: 9999px !important; /* rounded-full equivalent */
-    padding: 0.75rem 2.8rem !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    color: white !important;
-    transition: all 0.3s ease !important;
-    border: none !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    text-decoration: none !important; /* Remove underline for links */
-}
-
-/* First Registration Modal Button (Red) */
-.continue-btn {
-    background-color: #4A90E2 !important;
-}
-
-.continue-btn:hover {
-    background-color: #337ed3ff !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(252, 86, 108, 0.3) !important;
-}
-
-/* Complete Registration, Login, and Book Appointment Buttons (Warm Blue) */
-.complete-btn {
-    background-color: #4A90E2 !important;
-}
-
-.complete-btn:hover {
-    background-color: #357ABD !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3) !important;
-}
-
-.continue-btn:active, .complete-btn:active {
-    transform: scale(0.98) !important;
-}
-
-.continue-btn:disabled, .complete-btn:disabled {
-    cursor: not-allowed !important;
-    transform: none !important;
-    box-shadow: none !important;
-    opacity: 0.5 !important;
-}
-
-.continue-btn:disabled {
-    background-color: #4A90E2 !important;
-}
-
-.complete-btn:disabled {
-    background-color: #4A90E2 !important;
-}
-
-.continue-btn svg, .complete-btn svg {
-    width: 16px !important;
-    height: 16px !important;
-    margin-left: 8px !important;
-}
-
-.continue-btn:disabled:hover, .complete-btn:disabled:hover {
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-/* Logo image styles */
-.logo-image {
-    width: 65px;
-    height: 65px;
-    border-radius: 50%;
-    object-fit: cover;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Header title styles */
-.header-title-container {
-    display: flex;
-    flex-direction: column;
-}
-
-.barangay-text {
-    line-height: 1;
-    margin-bottom: 2px;
-    opacity: 0.9;
-}
-
-.main-title {
-    line-height: 1.2;
-}
-
-/* Profile section styles */
-.profile-section {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding-left: 1rem;
-    border-left: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-
-.profile-avatar {
-    background-color: #d1d5db;
-    height: 56px;
-    width: 56px;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    border: 3px solid #4A90E2; /* Smooth blue border */
-    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.10);
-}
-
-.profile-avatar:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.profile-avatar.has-image::after {
-    content: 'Change';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.profile-avatar.has-image:hover::after {
-    opacity: 1;
-}
-
-.profile-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.welcome-text {
-    color: white;
-    font-size: 0.875rem;
-}
-
-.username-text {
-    font-size: 0.75rem;
-}
-
-/* NEW: Enhanced Modal Styles */
-.modal-overlay {
-    background: rgba(0, 0, 0, 0.5);
-    transition: opacity 0.3s ease-in-out;
-}
-
-.modal-content {
-    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-    transform: scale(0.95);
-    opacity: 0;
-}
-
-.modal-content.open {
-    transform: scale(1);
-    opacity: 1;
-}
-
-.modal-close-btn {
-    transition: all 0.3s ease;
-    padding: 0.5rem;
-    border-radius: 50%;
-}
-
-.modal-close-btn:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-    transform: rotate(90deg);
-}
-
-/* Profile Picture Upload Modal */
-.profile-modal-content {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.profile-preview {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid rgba(74, 144, 226, 0.2);
-    margin: 0 auto 1.5rem;
-    display: block;
-    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
-}
-
-.profile-upload-btn {
-    background: rgba(74, 144, 226, 0.85);
-    color: white;
-    padding: 0.9rem 1.5rem;
-    border-radius: 30px;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    flex: 1;
-    white-space: nowrap;
-}
-
-.profile-upload-btn:hover {
-    background: rgba(74, 144, 226, 0.95);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
-}
-
-.profile-remove-btn {
-    background: rgba(74, 144, 226, 0.85);
-    color: white;
-    padding: 0.9rem 1.5rem;
-    border-radius: 30px;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    flex: 1;
-    white-space: nowrap;
-}
-
-.profile-remove-btn:hover {
-    background: rgba(74, 144, 226, 0.95);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
-}
-
-.profile-remove-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Logout Modal Styles */
-.logout-modal-content {
-    background: white;
-    border-radius: 0.75rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.logout-modal-buttons {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-}
-
-.logout-cancel-btn {
-    flex: 1;
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    border: 2px solid #d1d5db;
-    background: white;
-    color: #4b5563;
-    cursor: pointer;
-}
-
-.logout-cancel-btn:hover {
-    background: #f3f4f6;
-    border-color: #9ca3af;
-}
-
-.logout-confirm-btn {
-    flex: 1;
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    border: none;
-    background: #ef4444;
-    color: white;
-    cursor: pointer;
-}
-
-.logout-confirm-btn:hover {
-    background: #dc2626;
-    transform: translateY(-1px);
-}
-
-/* Add these new styles for disabled buttons */
-.continue-btn:disabled {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-.continue-btn:disabled:hover {
-    background-color: #4A90E2 !important;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-/* Responsive adjustments - Desktop and larger tablets */
-@media (min-width: 1025px) {
-    .staff-nav-container,
-    .user-nav-container,
-    .admin-nav-container {
-        flex-direction: row;
-        gap: 0;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .nav-tab {
-        position: relative;
-        transition: all 0.3s ease;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        z-index: 1;
-    }
-
-    .nav-tab.active {
-        background: rgba(255, 255, 255, 0.2);
-        transform: translateY(-1px);
-    }
-
     .nav-tab:hover:not(.active) {
         background: rgba(255, 255, 255, 0.1);
     }
 
+    /* CLEAN: Simple Logout Button - UPDATED FOR FULL ROUND */
     .logout-btn {
         background: #ef4444;
         padding: 0.75rem 1.5rem;
         border-radius: 9999px !important;
+        /* Full round radius */
         font-weight: 600;
         transition: all 0.3s ease;
         display: flex;
@@ -628,226 +169,696 @@ body,
         transform: translateY(-1px);
     }
 
+    /* NEW: Improved time display containers - Horizontal layout */
     .time-display-container {
-        margin-left: auto;
-        align-self: auto;
-        display: flex !important;
-    }
-
-    .nav-tab-container {
-        justify-content: flex-start;
-        flex-wrap: nowrap;
-    }
-
-    .search-input {
-        width: 200px;
-    }
-}
-
-/* Tablet view (768px to 1024px) */
-@media (min-width: 769px) and (max-width: 1024px) {
-    .staff-nav-container,
-    .user-nav-container,
-    .admin-nav-container {
-        flex-direction: row;
-        gap: 0;
+        display: flex;
         align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 0.6rem 1.2rem;
+        border-radius: 0.75rem;
+        margin-left: auto;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .time-display-container {
-        display: flex !important;
-        width: 100%;
-        margin-top: 0.5rem;
+    .staff-time-container {
+        background-color: rgba(255, 255, 255, 0.15);
     }
 
-    .nav-tab-container {
-        flex-wrap: wrap;
-        justify-content: center;
+    .user-time-container {
+        background-color: rgba(255, 255, 255, 0.15);
     }
 
-    .search-input {
-        width: 180px;
+    .admin-time-container {
+        background-color: rgba(255, 255, 255, 0.15);
     }
-}
 
-@media (max-width: 768px) {
-    .time-display-container {
-        display: none;
+    /* Add padding to nav containers */
+    .staff-nav-container,
+    .admin-nav-container,
+    .user-nav-container {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    /* NEW: Horizontal time display styles */
+    .time-display-horizontal {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
     }
 
     .date-display-horizontal {
-        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
     }
 
     .time-display-main-horizontal {
-        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        white-space: nowrap;
     }
 
-    .nav-tab {
-        padding: 0.6rem 1.2rem;
-        font-size: 0.9rem;
-    }
-
-    .logout-btn {
-        display: none !important;
+    .time-separator {
+        height: 24px;
+        width: 1px;
+        background: rgba(255, 255, 255, 0.4);
+        margin: 0 0.5rem;
     }
 
     .time-zone {
         font-size: 0.75rem;
         margin-left: 0.25rem;
         opacity: 0.9;
-        font-family: 'Poppins', sans-serif;
+        font-style: italic;
         font-weight: 500;
-        display: none;
     }
 
+    /* Hidden refresh indicator */
+    .refresh-indicator {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+    }
+
+    /* Form validation styles */
+    .form-input:invalid {
+        border-color: #fca5a5;
+    }
+
+    .form-input:valid {
+        border-color: #74b4fdff;
+    }
+
+    /* Updated Registration Button Styles with Rounded XL Sides */
+    .continue-btn,
+    .complete-btn {
+        width: 100%;
+        border-radius: 9999px !important;
+        /* rounded-full equivalent */
+        padding: 0.75rem 2.8rem !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        color: white !important;
+        transition: all 0.3s ease !important;
+        border: none !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        text-decoration: none !important;
+        /* Remove underline for links */
+    }
+
+    /* First Registration Modal Button (Red) */
+    .continue-btn {
+        background-color: #4A90E2 !important;
+    }
+
+    .continue-btn:hover {
+        background-color: #337ed3ff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px rgba(252, 86, 108, 0.3) !important;
+    }
+
+    /* Complete Registration, Login, and Book Appointment Buttons (Warm Blue) */
+    .complete-btn {
+        background-color: #4A90E2 !important;
+    }
+
+    .complete-btn:hover {
+        background-color: #357ABD !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3) !important;
+    }
+
+    .continue-btn:active,
+    .complete-btn:active {
+        transform: scale(0.98) !important;
+    }
+
+    .continue-btn:disabled,
+    .complete-btn:disabled {
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+        opacity: 0.5 !important;
+    }
+
+    .continue-btn:disabled {
+        background-color: #4A90E2 !important;
+    }
+
+    .complete-btn:disabled {
+        background-color: #4A90E2 !important;
+    }
+
+    .continue-btn svg,
+    .complete-btn svg {
+        width: 16px !important;
+        height: 16px !important;
+        margin-left: 8px !important;
+    }
+
+    .continue-btn:disabled:hover,
+    .complete-btn:disabled:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Logo image styles */
     .logo-image {
-        width: 50px;
-        height: 50px;
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    .main-title {
-        font-size: 1.25rem;
-    }
-
-    .search-input {
-        width: 180px;
-    }
-
-    .profile-section {
-        padding-left: 0.5rem;
-    }
-
-    .profile-avatar {
-        height: 40px;
-        width: 40px;
-    }
-}
-
-@media (max-width: 640px) {
-    .time-display-horizontal {
+    /* Header title styles */
+    .header-title-container {
+        display: flex;
         flex-direction: column;
-        gap: 0.2rem;
-    }
-
-    .time-separator {
-        display: none;
-    }
-
-    .date-display-horizontal {
-        font-size: 0.75rem;
-    }
-
-    .time-display-main-horizontal {
-        font-size: 0.85rem;
-    }
-
-    .nav-tab-container {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .nav-tab {
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
-    }
-
-    .logo-image {
-        width: 45px;
-        height: 45px;
     }
 
     .barangay-text {
-        font-size: 0.75rem;
+        line-height: 1;
+        margin-bottom: 2px;
+        opacity: 0.9;
     }
 
     .main-title {
-        font-size: 1.1rem;
+        line-height: 1.2;
     }
 
-    .search-input {
-        width: 150px;
-        font-size: 0.875rem;
+    /* Profile section styles */
+    .profile-section {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-left: 1rem;
+        border-left: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+
+    .profile-avatar {
+        background-color: #d1d5db;
+        height: 56px;
+        width: 56px;
+        border-radius: 50%;
+        background-size: cover;
+        background-position: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        border: 3px solid #4A90E2;
+        /* Smooth blue border */
+        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.10);
+    }
+
+    .profile-avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-avatar.has-image::after {
+        content: 'Change';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .profile-avatar.has-image:hover::after {
+        opacity: 1;
     }
 
     .profile-info {
-        display: none;
-    }
-}
-
-@media (min-width: 769px) {
-    .time-display-container {
-        display: flex !important;
-    }
-
-    .nav-tab-container {
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-    }
-
-    .profile-section {
-        display: flex !important;
-    }
-
-    .logout-btn {
-        display: flex !important;
-    }
-
-    .profile-avatar {
-        height: 56px;
-        width: 56px;
-    }
-
-    .user-nav-section {
-        display: flex !important;
-        align-items: center;
-        gap: 1.25rem;
-        flex-wrap: nowrap;
-    }
-}
-
-@media (min-width: 1025px) {
-    .desktop-nav-content {
-        display: block !important;
-    }
-}
-
-/* Small Mobile Adjustments (iPhone 5/SE etc) */
-@media (max-width: 400px) {
-    .main-title {
-        font-size: 0.9rem !important;
-        white-space: normal;
-        line-height: 1.2;
-    }
-    
-    .barangay-text {
-        font-size: 0.7rem !important;
-    }
-
-    .logo-image {
-        width: 36px !important;
-        height: 36px !important;
-    }
-
-    .nav-tab {
-        padding: 0.4rem 0.8rem !important;
-        font-size: 0.75rem !important;
-    }
-
-    .nav-connection {
-        flex: 1 1 auto;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: flex-start;
     }
 
-    .nav-connection .nav-tab {
-        width: 100%;
-        text-align: center;
+    .welcome-text {
+        color: white;
+        font-size: 0.875rem;
+    }
+
+    .username-text {
+        font-size: 0.75rem;
+    }
+
+    /* NEW: Enhanced Modal Styles */
+    .modal-overlay {
+        background: rgba(0, 0, 0, 0.5);
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .modal-content {
+        transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    .modal-content.open {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    .modal-close-btn {
+        transition: all 0.3s ease;
+        padding: 0.5rem;
+        border-radius: 50%;
+    }
+
+    .modal-close-btn:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+        transform: rotate(90deg);
+    }
+
+    /* Profile Picture Upload Modal */
+    .profile-modal-content {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .profile-preview {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(74, 144, 226, 0.2);
+        margin: 0 auto 1.5rem;
+        display: block;
+        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
+    }
+
+    .profile-upload-btn {
+        background: rgba(74, 144, 226, 0.85);
+        color: white;
+        padding: 0.9rem 1.5rem;
+        border-radius: 30px;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        flex: 1;
         white-space: nowrap;
     }
-}
+
+    .profile-upload-btn:hover {
+        background: rgba(74, 144, 226, 0.95);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+    }
+
+    .profile-remove-btn {
+        background: rgba(74, 144, 226, 0.85);
+        color: white;
+        padding: 0.9rem 1.5rem;
+        border-radius: 30px;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        flex: 1;
+        white-space: nowrap;
+    }
+
+    .profile-remove-btn:hover {
+        background: rgba(74, 144, 226, 0.95);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+    }
+
+    .profile-remove-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Logout Modal Styles */
+    .logout-modal-content {
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .logout-modal-buttons {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .logout-cancel-btn {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 2px solid #d1d5db;
+        background: white;
+        color: #4b5563;
+        cursor: pointer;
+    }
+
+    .logout-cancel-btn:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+    }
+
+    .logout-confirm-btn {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        background: #ef4444;
+        color: white;
+        cursor: pointer;
+    }
+
+    .logout-confirm-btn:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+    }
+
+    /* Add these new styles for disabled buttons */
+    .continue-btn:disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .continue-btn:disabled:hover {
+        background-color: #4A90E2 !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Responsive adjustments - Desktop and larger tablets */
+    @media (min-width: 1025px) {
+
+        .staff-nav-container,
+        .user-nav-container,
+        .admin-nav-container {
+            flex-direction: row;
+            gap: 0;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-tab {
+            position: relative;
+            transition: all 0.3s ease;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        .nav-tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .time-display-container {
+            margin-left: auto;
+            align-self: auto;
+            display: flex !important;
+        }
+
+        .nav-tab-container {
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+        }
+
+        .search-input {
+            width: 200px;
+        }
+    }
+
+    /* Tablet view (768px to 1024px) */
+    @media (min-width: 769px) and (max-width: 1024px) {
+
+        .staff-nav-container,
+        .user-nav-container,
+        .admin-nav-container {
+            flex-direction: row;
+            gap: 0;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .time-display-container {
+            display: flex !important;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .nav-tab-container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .search-input {
+            width: 180px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .time-display-container {
+            display: none;
+        }
+
+        .date-display-horizontal {
+            font-size: 0.8rem;
+        }
+
+        .time-display-main-horizontal {
+            font-size: 0.9rem;
+        }
+
+        .nav-tab {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn {
+            display: none !important;
+        }
+
+        .time-zone {
+            font-size: 0.75rem;
+            margin-left: 0.25rem;
+            opacity: 0.9;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            display: none;
+        }
+
+        .logo-image {
+            width: 50px;
+            height: 50px;
+        }
+
+        .main-title {
+            font-size: 1.25rem;
+        }
+
+        .search-input {
+            width: 180px;
+        }
+
+        .profile-section {
+            padding-left: 0.5rem;
+        }
+
+        .profile-avatar {
+            height: 40px;
+            width: 40px;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .time-display-horizontal {
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .time-separator {
+            display: none;
+        }
+
+        .date-display-horizontal {
+            font-size: 0.75rem;
+        }
+
+        .time-display-main-horizontal {
+            font-size: 0.85rem;
+        }
+
+        .nav-tab-container {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .logo-image {
+            width: 45px;
+            height: 45px;
+        }
+
+        .barangay-text {
+            font-size: 0.75rem;
+        }
+
+        .main-title {
+            font-size: 1.1rem;
+        }
+
+        .search-input {
+            width: 150px;
+            font-size: 0.875rem;
+        }
+
+        .profile-info {
+            display: none;
+        }
+    }
+
+    @media (min-width: 769px) {
+        .time-display-container {
+            display: flex !important;
+        }
+
+        .nav-tab-container {
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+        }
+
+        .profile-section {
+            display: flex !important;
+        }
+
+        .logout-btn {
+            display: flex !important;
+        }
+
+        .profile-avatar {
+            height: 56px;
+            width: 56px;
+        }
+
+        .user-nav-section {
+            display: flex !important;
+            align-items: center;
+            gap: 1.25rem;
+            flex-wrap: nowrap;
+        }
+    }
+
+    @media (min-width: 1025px) {
+        .desktop-nav-content {
+            display: block !important;
+        }
+    }
+
+    /* Small Mobile Adjustments (iPhone 5/SE etc) */
+    @media (max-width: 400px) {
+        .main-title {
+            font-size: 0.9rem !important;
+            white-space: normal;
+            line-height: 1.2;
+        }
+
+        .barangay-text {
+            font-size: 0.7rem !important;
+        }
+
+        .logo-image {
+            width: 36px !important;
+            height: 36px !important;
+        }
+
+        .nav-tab {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.75rem !important;
+        }
+
+        .nav-connection {
+            flex: 1 1 auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .nav-connection .nav-tab {
+            width: 100%;
+            text-align: center;
+            white-space: nowrap;
+        }
+    }
 </style>
 
 <body class="bg-[#F8F8F8]">
@@ -858,8 +869,7 @@ body,
                 <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
-                            class="logo-image">
+                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="logo-image">
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
                             <div class="barangay-text">Barangay Luz</div>
@@ -870,16 +880,17 @@ body,
                     <div class="flex items-center space-x-4 md:space-x-10">
                         <!-- Search Bar - Hidden on mobile -->
                         <div class="search-container hidden md:block">
-                            
+
                         </div>
-                        
+
                         <!-- Profile Section - Hidden on mobile -->
                         <div class="profile-section hidden md:flex gap-4">
                             <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
-                                 style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
-                                 onclick="openProfileModal('admin')">
+                                style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
+                                onclick="openProfileModal('admin')">
                                 <?php if (!$profile_picture): ?>
-                                    <i class="fas fa-user-circle text-2xl text-gray-400 absolute inset-0 flex items-center justify-center"></i>
+                                    <i
+                                        class="fas fa-user-circle text-2xl text-gray-400 absolute inset-0 flex items-center justify-center"></i>
                                 <?php endif; ?>
                             </div>
                             <div class="profile-info">
@@ -887,22 +898,25 @@ body,
                                 <span class="username-text"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                             </div>
                         </div>
-                        
+
                         <!-- Enhanced Logout Button - Hidden on mobile -->
                         <button type="button" onclick="showLogoutModal('admin')" class="logout-btn hidden md:block">
                             <span>Logout</span>
                         </button>
 
                         <!-- Hamburger Menu Button - Visible only on mobile -->
-                        <button type="button" onclick="toggleAdminMenu()" class="md:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
+                        <button type="button" onclick="toggleAdminMenu()"
+                            class="md:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
                             <i class="fas fa-bars text-2xl"></i>
                         </button>
                     </div>
                 </div>
 
                 <div class="bg-[#2B7CC9] py-2 md:py-3">
-                    <div class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 admin-nav-container">
-                        <div class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
+                    <div
+                        class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 admin-nav-container">
+                        <div
+                            class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
                                 <a href="../admin/dashboard.php"
                                     class="nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
@@ -947,38 +961,50 @@ body,
                 <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
-                            class="logo-image">
+                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="logo-image">
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
-                            <div class="barangay-text">Barangay Luz</div>
-                            <a href="/community-health-tracker/" class="main-title">Health Center Staff Panel</a>
+                            <div class="barangay-text text-lg font-semibold">Barangay Luz</div>
+                            <a href="/community-health-tracker/" class="main-title font-light">Health Center Staff Panel</a>
                         </div>
+                    </div>
+
+                    <!-- Desktop Nav Content - Hidden on mobile and tablet -->
+                    <div class="hidden lg:block desktop-nav-content">
+                        <ul class="flex flex-row space-x-12 font-light">
+                            <li class="hover:text-[#F0F0F0] cursor-pointer">Terms & Conditions</li>
+                            <li class="hover:text-[#F0F0F0] cursor-pointer">Contact Us</li>
+                            <li class="hover:text-[#F0F0F0] cursor-pointer">Frequently Asked Questions</li>
+                        </ul>
                     </div>
 
                     <div class="flex items-center space-x-4 md:space-x-10">
                         <div class="hidden md:flex items-center gap-4 user-nav-section">
                             <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
-                                 style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
-                                 onclick="openProfileModal('staff')">
-                                
+                                style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
+                                onclick="openProfileModal('staff')">
+
                             </div>
-                            <span class="font-medium">Welcome, <?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
+                            <span class="font-medium">Welcome Staff,
+                                <?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>
-                        <button type="button" onclick="showLogoutModal('staff')" class="logout-btn hidden md:block bg-white text-[#3C96E1] hover:bg-[#2B7CC9] hover:text-white">
-                            <span>Logout</span>
+                        <button type="button" onclick="showLogoutModal('staff')"
+                            class="logout-btn hidden md:block bg-[#FF5555] text-[#FFFFFF] hover:bg-[#FF5555] hover:text-white">
+                            <span class="font-medium">Signout</span>
                         </button>
 
                         <!-- Hamburger Menu Button - Visible only on mobile -->
-                        <button type="button" onclick="toggleStaffMenu()" class="md:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
+                        <button type="button" onclick="toggleStaffMenu()"
+                            class="md:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
                             <i class="fas fa-bars text-2xl"></i>
                         </button>
                     </div>
                 </div>
 
                 <div class="bg-[#2B7CC9] py-2 md:py-3">
-                    <div class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 staff-nav-container">
-                        <div class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
+                    <div class="px-8 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 staff-nav-container">
+                        <div
+                            class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
                                 <a href="/community-health-tracker/staff/dashboard.php"
                                     class="nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
@@ -1003,12 +1029,25 @@ body,
                         <div class="time-display-container staff-time-container w-full md:w-auto">
                             <div class="time-display-horizontal">
                                 <div class="date-display-horizontal">
-                                    <i class="fas fa-calendar-day mr-2"></i>
+                                    <svg class="h-6 w-6 mr-2 items-center" viewBox="0 0 16 16" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M1.3335 5.9987C1.3335 4.74136 1.3335 4.11336 1.72416 3.7227C2.11483 3.33203 2.74283 3.33203 4.00016 3.33203H12.0002C13.2575 3.33203 13.8855 3.33203 14.2762 3.7227C14.6668 4.11336 14.6668 4.74136 14.6668 5.9987C14.6668 6.3127 14.6668 6.47003 14.5695 6.56803C14.4715 6.66536 14.3135 6.66536 14.0002 6.66536H2.00016C1.68616 6.66536 1.52883 6.66536 1.43083 6.56803C1.3335 6.47003 1.3335 6.31203 1.3335 5.9987ZM1.3335 11.9987C1.3335 13.256 1.3335 13.884 1.72416 14.2747C2.11483 14.6654 2.74283 14.6654 4.00016 14.6654H12.0002C13.2575 14.6654 13.8855 14.6654 14.2762 14.2747C14.6668 13.884 14.6668 13.256 14.6668 11.9987V8.66536C14.6668 8.35136 14.6668 8.19403 14.5695 8.09603C14.4715 7.9987 14.3135 7.9987 14.0002 7.9987H2.00016C1.68616 7.9987 1.52883 7.9987 1.43083 8.09603C1.3335 8.19403 1.3335 8.35203 1.3335 8.66536V11.9987Z"
+                                            fill="white" />
+                                        <path
+                                            d="M3.66699 4V2C3.66699 1.44772 4.11471 1 4.66699 1C5.21928 1 5.66699 1.44772 5.66699 2V4C5.66699 4.55228 5.21928 5 4.66699 5C4.11471 5 3.66699 4.55228 3.66699 4ZM10.334 4V2C10.334 1.44772 10.7817 1 11.334 1C11.8861 1.00018 12.334 1.44782 12.334 2V4C12.334 4.55218 11.8861 4.99982 11.334 5C10.7817 5 10.334 4.55228 10.334 4Z"
+                                            fill="#0080B7" />
+                                    </svg>
                                     <span id="staff-ph-date"><?php echo date('M j, Y'); ?></span>
                                 </div>
                                 <div class="time-separator"></div>
                                 <div class="time-display-main-horizontal">
-                                    <i class="fas fa-clock mr-2"></i>
+                                    <svg class="h-6 w-6 mr-2" viewBox="0 0 16 16" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M7.99984 15.3346C3.94984 15.3346 0.666504 12.0513 0.666504 8.0013C0.666504 3.9513 3.94984 0.667969 7.99984 0.667969C12.0498 0.667969 15.3332 3.9513 15.3332 8.0013C15.3332 12.0513 12.0498 15.3346 7.99984 15.3346ZM8.6665 3.66797H7.33317V8.2773L9.99984 10.944L10.9425 10.0013L8.6665 7.7253V3.66797Z"
+                                            fill="white" />
+                                    </svg>
                                     <span id="staff-ph-hours"><?php echo date('h'); ?></span>
                                     <span class="blinking-colon">:</span>
                                     <span id="staff-ph-minutes"><?php echo date('i'); ?></span>
@@ -1029,8 +1068,7 @@ body,
                 <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
-                            class="logo-image">
+                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="logo-image">
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
                             <div class="barangay-text text-lg font-semibold">Barangay Luz</div>
@@ -1050,27 +1088,31 @@ body,
                     <div class="flex items-center space-x-4 md:space-x-10">
                         <div class="hidden md:flex items-center gap-4 user-nav-section">
                             <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
-                                 style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
-                                 onclick="openProfileModal('user')">
-                                
+                                style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
+                                onclick="openProfileModal('user')">
+
                             </div>
                             <span class="font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>
                         <!-- Enhanced Logout Button - Hidden on mobile -->
-                        <button type="button" onclick="showLogoutModal('user')" class="logout-btn hidden md:block text-[#FFFFFF] hover:bg-[#2B7CC9] hover:text-white">
+                        <button type="button" onclick="showLogoutModal('user')"
+                            class="logout-btn hidden md:block text-[#FFFFFF] hover:bg-[#2B7CC9] hover:text-white">
                             <span>Signout</span>
                         </button>
 
                         <!-- Hamburger Menu Button - Visible on mobile and tablet -->
-                        <button type="button" onclick="toggleUserMenu()" class="lg:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
+                        <button type="button" onclick="toggleUserMenu()"
+                            class="lg:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
                             <i class="fas fa-bars text-2xl"></i>
                         </button>
                     </div>
                 </div>
 
                 <div class="bg-[#2B7CC9] py-2 md:py-3">
-                    <div class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 user-nav-container">
-                        <div class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
+                    <div
+                        class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 user-nav-container">
+                        <div
+                            class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
                                 <a href="dashboard.php"
                                     class="nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
@@ -1116,8 +1158,10 @@ body,
             </nav>
 
             <!-- User Mobile Menu Modal -->
-            <div id="userMobileMenu" class="fixed inset-0 hidden z-[60] h-full w-full bg-white flex-col items-center justify-center">
-                <div class="relative w-full h-full p-8 flex flex-col items-center justify-center modal-content user-mobile-menu-content">
+            <div id="userMobileMenu"
+                class="fixed inset-0 hidden z-[60] h-full w-full bg-white flex-col items-center justify-center">
+                <div
+                    class="relative w-full h-full p-8 flex flex-col items-center justify-center modal-content user-mobile-menu-content">
                     <!-- Close Button -->
                     <button onclick="closeUserMenu()"
                         class="modal-close-btn absolute top-6 right-6 text-black hover:text-gray-600 z-10 transition-transform transform hover:rotate-90">
@@ -1129,8 +1173,7 @@ body,
 
                     <!-- Logo Section -->
                     <div class="flex flex-col items-center mb-8">
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" 
-                             class="w-24 h-24 mb-4 object-cover">
+                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="w-24 h-24 mb-4 object-cover">
                         <div class="text-center">
                             <h2 class="text-lg font-bold text-gray-900">Barangay Luz</h2>
                             <p class="text-sm font-medium text-gray-900 mt-1">Resident Consultation Portal</p>
@@ -1142,20 +1185,24 @@ body,
 
                     <!-- Mobile Menu Items - Centered with pill buttons -->
                     <div class="flex flex-col items-center space-y-6 mb-12 w-full max-w-xs">
-                        <button class="w-full py-3 bg-[#CFE2F3] text-[#3C96E1] rounded-full hover:bg-blue-200 transition font-medium text-sm border-none shadow-sm">
+                        <button
+                            class="w-full py-3 bg-[#CFE2F3] text-[#3C96E1] rounded-full hover:bg-blue-200 transition font-medium text-sm border-none shadow-sm">
                             Terms & Conditions
                         </button>
-                        <button class="w-full py-3 bg-[#CFE2F3] text-[#3C96E1] rounded-full hover:bg-blue-200 transition font-medium text-sm border-none shadow-sm">
+                        <button
+                            class="w-full py-3 bg-[#CFE2F3] text-[#3C96E1] rounded-full hover:bg-blue-200 transition font-medium text-sm border-none shadow-sm">
                             Contact Us
                         </button>
-                        <button class="w-full py-3 bg-[#CFE2F3] text-[#3C96E1] rounded-full hover:bg-blue-200 transition font-medium text-sm border-none shadow-sm">
+                        <button
+                            class="w-full py-3 bg-[#CFE2F3] text-[#3C96E1] rounded-full hover:bg-blue-200 transition font-medium text-sm border-none shadow-sm">
                             Frequently Asked Questions
                         </button>
                     </div>
 
                     <!-- Logout Button -->
                     <div class="flex justify-center w-full max-w-xs">
-                        <button type="button" onclick="showLogoutModal('user'); closeUserMenu();" class="w-48 py-3 bg-[#E03E3E] text-white rounded-full hover:bg-red-700 transition font-medium shadow-md">
+                        <button type="button" onclick="showLogoutModal('user'); closeUserMenu();"
+                            class="w-48 py-3 bg-[#E03E3E] text-white rounded-full hover:bg-red-700 transition font-medium shadow-md">
                             Logout
                         </button>
                     </div>
@@ -1163,8 +1210,10 @@ body,
             </div>
 
             <!-- Admin Mobile Menu Modal -->
-            <div id="adminMobileMenu" class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-start pt-8">
-                <div class="relative bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-4 modal-content admin-mobile-menu-content">
+            <div id="adminMobileMenu"
+                class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-start pt-8">
+                <div
+                    class="relative bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-4 modal-content admin-mobile-menu-content">
                     <!-- Close Button -->
                     <button onclick="closeAdminMenu()"
                         class="modal-close-btn absolute top-4 right-4 text-gray-600 hover:text-gray-800 z-10">
@@ -1176,8 +1225,8 @@ body,
 
                     <!-- Logo Section -->
                     <div class="flex justify-center mb-6">
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" 
-                             class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
+                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
+                            class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
                     </div>
 
                     <!-- Branding -->
@@ -1192,10 +1241,11 @@ body,
                     <!-- Admin Profile Section -->
                     <div class="text-center mb-6 pb-6 border-b border-gray-200">
                         <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?> mx-auto mb-3"
-                             style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>; width: 60px; height: 60px;"
-                             onclick="openProfileModal('admin'); closeAdminMenu();">
+                            style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>; width: 60px; height: 60px;"
+                            onclick="openProfileModal('admin'); closeAdminMenu();">
                             <?php if (!$profile_picture): ?>
-                                <i class="fas fa-user-circle text-3xl text-gray-400 absolute inset-0 flex items-center justify-center"></i>
+                                <i
+                                    class="fas fa-user-circle text-3xl text-gray-400 absolute inset-0 flex items-center justify-center"></i>
                             <?php endif; ?>
                         </div>
                         <p class="text-gray-800 font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></p>
@@ -1204,7 +1254,8 @@ body,
 
                     <!-- Logout Button -->
                     <div class="flex justify-center">
-                        <button type="button" onclick="showLogoutModal('admin'); closeAdminMenu();" class="px-8 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium">
+                        <button type="button" onclick="showLogoutModal('admin'); closeAdminMenu();"
+                            class="px-8 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium">
                             Logout
                         </button>
                     </div>
@@ -1212,8 +1263,10 @@ body,
             </div>
 
             <!-- Staff Mobile Menu Modal -->
-            <div id="staffMobileMenu" class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-start pt-8">
-                <div class="relative bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-4 modal-content staff-mobile-menu-content">
+            <div id="staffMobileMenu"
+                class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-start pt-8">
+                <div
+                    class="relative bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-4 modal-content staff-mobile-menu-content">
                     <!-- Close Button -->
                     <button onclick="closeStaffMenu()"
                         class="modal-close-btn absolute top-4 right-4 text-gray-600 hover:text-gray-800 z-10">
@@ -1225,8 +1278,8 @@ body,
 
                     <!-- Logo Section -->
                     <div class="flex justify-center mb-6">
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" 
-                             class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
+                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
+                            class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
                     </div>
 
                     <!-- Branding -->
@@ -1241,10 +1294,11 @@ body,
                     <!-- Staff Profile Section -->
                     <div class="text-center mb-6 pb-6 border-b border-gray-200">
                         <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?> mx-auto mb-3"
-                             style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>; width: 60px; height: 60px;"
-                             onclick="openProfileModal('staff'); closeStaffMenu();">
+                            style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>; width: 60px; height: 60px;"
+                            onclick="openProfileModal('staff'); closeStaffMenu();">
                             <?php if (!$profile_picture): ?>
-                                <i class="fas fa-user-circle text-3xl text-white absolute inset-0 flex items-center justify-center"></i>
+                                <i
+                                    class="fas fa-user-circle text-3xl text-white absolute inset-0 flex items-center justify-center"></i>
                             <?php endif; ?>
                         </div>
                         <p class="text-gray-800 font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></p>
@@ -1253,7 +1307,8 @@ body,
 
                     <!-- Logout Button -->
                     <div class="flex justify-center">
-                        <button type="button" onclick="showLogoutModal('staff'); closeStaffMenu();" class="px-8 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium">
+                        <button type="button" onclick="showLogoutModal('staff'); closeStaffMenu();"
+                            class="px-8 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium">
                             Logout
                         </button>
                     </div>
@@ -1310,7 +1365,7 @@ body,
         </head>
 
         <body>
-            
+
 
             <style>
                 /* Mobile menu styles */
@@ -1353,8 +1408,10 @@ body,
             </script>
 
             <!-- Login Modal Only -->
-            <div id="loginModal" class="fixed inset-0 hidden z-50 h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
-                <div class="relative bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto modal-content">
+            <div id="loginModal"
+                class="fixed inset-0 hidden z-50 h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
+                <div
+                    class="relative bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto modal-content">
                     <!-- Close Button -->
                     <button onclick="closeModal()"
                         class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
@@ -1366,8 +1423,8 @@ body,
 
                     <!-- Logo at the top -->
                     <div class="flex justify-center mb-6 mx-4">
-                        <img src="./asssets/images/Luz.jpg" alt="Barangay Luz Logo" 
-                             class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
+                        <img src="./asssets/images/Luz.jpg" alt="Barangay Luz Logo"
+                            class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
                     </div>
 
                     <!-- Main Title -->
@@ -1378,7 +1435,8 @@ body,
                     <!-- Instruction Text -->
                     <div class="flex flex-col items-center mb-8 mx-4">
                         <p class="text-sm text-center text-gray-600 max-w-md leading-relaxed">
-                            Please log in with your authorized account to access health records, appointments, and other health services.
+                            Please log in with your authorized account to access health records, appointments, and other
+                            health services.
                         </p>
                     </div>
 
@@ -1388,17 +1446,21 @@ body,
                         <div class="space-y-6 mx-4">
                             <!-- Username -->
                             <div>
-                                <label for="login-username" class="block text-sm font-medium text-gray-700 mb-2">Username <span class="text-red-500">*</span></label>
+                                <label for="login-username" class="block text-sm font-medium text-gray-700 mb-2">Username
+                                    <span class="text-red-500">*</span></label>
                                 <input type="text" name="username" id="login-username" placeholder="Enter Username"
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3C96E1] form-input" required />
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3C96E1] form-input"
+                                    required />
                             </div>
 
                             <!-- Password -->
                             <div>
-                                <label for="login-password" class="block text-sm font-medium text-gray-700 mb-2">Password <span class="text-red-500">*</span></label>
+                                <label for="login-password" class="block text-sm font-medium text-gray-700 mb-2">Password
+                                    <span class="text-red-500">*</span></label>
                                 <div class="relative">
                                     <input id="login-password" name="password" type="password" placeholder="Password"
-                                        class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3C96E1] form-input" required />
+                                        class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3C96E1] form-input"
+                                        required />
                                     <button type="button" onclick="toggleLoginPassword()"
                                         class="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500">
                                         <i id="login-eyeIcon" class="fas fa-eye"></i>
@@ -1406,7 +1468,7 @@ body,
                                 </div>
                             </div>
 
-                            
+
 
                             <!-- Login Button -->
                             <div class="mt-8">
@@ -1418,7 +1480,8 @@ body,
 
                             <!-- Registration Notice -->
                             <div class="text-center text-sm text-gray-600 mt-6">
-                                <p>New residents need to register at the Barangay Health Center to obtain login credentials.</p>
+                                <p>New residents need to register at the Barangay Health Center to obtain login credentials.
+                                </p>
                             </div>
                         </div>
                     </form>
@@ -1428,8 +1491,10 @@ body,
         <?php endif; ?>
 
         <!-- Profile Picture Upload Modal -->
-        <div id="profileModal" class="fixed inset-0 hidden z-[70] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
-            <div class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md mx-auto modal-content profile-modal-content">
+        <div id="profileModal"
+            class="fixed inset-0 hidden z-[70] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
+            <div
+                class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md mx-auto modal-content profile-modal-content">
                 <!-- Close Button -->
                 <button onclick="closeProfileModal()"
                     class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
@@ -1447,21 +1512,22 @@ body,
 
                 <!-- Current Profile Picture Preview -->
                 <div class="mb-6">
-                    <img id="profilePreview" src="<?php echo $profile_picture ?: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZDFkNWRiIi8+PHBhdGggZD0iTTEyIDExYTIgMiAwIDEgMCAwLTQgMiAyIDAgMCAwIDAgNHoiIGZpbGw9IiM5Y2EzYWYiLz48cGF0aCBkPSJNMTIgMTVhNCA0IDAgMCAwLTQgNGg4YTQgNCAwIDAgMC00LTR6IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+' ?>"
-                         alt="Profile Preview" class="profile-preview">
+                    <img id="profilePreview"
+                        src="<?php echo $profile_picture ?: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZDFkNWRiIi8+PHBhdGggZD0iTTEyIDExYTIgMiAwIDEgMCAwLTQgMiAyIDAgMCAwIDAgNHoiIGZpbGw9IiM5Y2EzYWYiLz48cGF0aCBkPSJNMTIgMTVhNCA0IDAgMCAwLTQgNGg4YTQgNCAwIDAgMC00LTR6IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+' ?>"
+                        alt="Profile Preview" class="profile-preview">
                 </div>
 
                 <!-- Upload Form -->
                 <form id="profileUploadForm" enctype="multipart/form-data" class="space-y-4">
-                    <input type="hidden" name="user_id" value="<?php echo isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : '' ?>">
+                    <input type="hidden" name="user_id"
+                        value="<?php echo isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : '' ?>">
                     <input type="hidden" name="user_type" id="profileUserType" value="">
-                    
+
                     <div>
                         <label for="profile_image" class="block text-sm font-medium text-gray-700 mb-2">
                             Choose Profile Picture
                         </label>
-                        <input type="file" id="profile_image" name="profile_image" 
-                            accept=".jpg,.jpeg,.png,.gif"
+                        <input type="file" id="profile_image" name="profile_image" accept=".jpg,.jpeg,.png,.gif"
                             class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3C96E1] text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                         <p class="text-xs text-gray-500 mt-2">Max file size: 2MB (JPEG, PNG, GIF)</p>
                         <div id="profileUploadError" class="text-xs text-red-500 mt-2 hidden"></div>
@@ -1469,7 +1535,7 @@ body,
 
                     <!-- Action Buttons -->
                     <div class="flex gap-3 mt-6" style="gap: 5px;">
-                        <button type="button" onclick="removeProfilePicture()" 
+                        <button type="button" onclick="removeProfilePicture()"
                             class="profile-remove-btn <?php echo !$profile_picture ? 'opacity-50 cursor-not-allowed' : '' ?>"
                             <?php echo !$profile_picture ? 'disabled' : '' ?>>
                             <i class="fas fa-trash-alt"></i>
@@ -1491,8 +1557,10 @@ body,
         </div>
 
         <!-- Logout Confirmation Modal -->
-        <div id="logoutModal" class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
-            <div class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md mx-auto modal-content logout-modal-content">
+        <div id="logoutModal"
+            class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
+            <div
+                class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md mx-auto modal-content logout-modal-content">
                 <!-- Close Button -->
                 <button onclick="closeLogoutModal()"
                     class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
@@ -1505,8 +1573,10 @@ body,
                 <!-- Warning Icon -->
                 <div class="flex justify-center mb-4">
                     <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                     </div>
                 </div>
@@ -1551,10 +1621,10 @@ body,
                 const modalContent = modal.querySelector('.modal-content');
                 const userTypeInput = document.getElementById('profileUserType');
                 const profilePreview = document.getElementById('profilePreview');
-                
+
                 // Set user type for form submission
                 userTypeInput.value = userType;
-                
+
                 // Refresh the profile preview image with cache-buster to ensure fresh display
                 const currentSrc = profilePreview.src;
                 if (currentSrc && !currentSrc.includes('data:image/svg')) {
@@ -1562,15 +1632,15 @@ body,
                     const baseSrc = currentSrc.split('?')[0];
                     profilePreview.src = baseSrc + '?t=' + Date.now();
                 }
-                
+
                 modal.classList.remove("hidden");
                 modal.classList.add("flex");
-                
+
                 // Trigger animation
                 setTimeout(() => {
                     modalContent.classList.add('open');
                 }, 10);
-                
+
                 // Set focus to upload button for accessibility
                 setTimeout(() => {
                     document.querySelector('.profile-upload-btn').focus();
@@ -1581,9 +1651,9 @@ body,
             function closeProfileModal() {
                 const modal = document.getElementById("profileModal");
                 const modalContent = modal.querySelector('.modal-content');
-                
+
                 modalContent.classList.remove('open');
-                
+
                 // Wait for animation to complete before hiding
                 setTimeout(() => {
                     modal.classList.remove("flex");
@@ -1594,7 +1664,7 @@ body,
             // Function to show logout confirmation modal
             function showLogoutModal(userType) {
                 // Set the logout URL based on user type
-                switch(userType) {
+                switch (userType) {
                     case 'admin':
                         logoutUrl = '../auth/logout.php';
                         break;
@@ -1607,18 +1677,18 @@ body,
                     default:
                         logoutUrl = '../auth/logout.php';
                 }
-                
+
                 const modal = document.getElementById("logoutModal");
                 const modalContent = modal.querySelector('.modal-content');
-                
+
                 modal.classList.remove("hidden");
                 modal.classList.add("flex");
-                
+
                 // Trigger animation
                 setTimeout(() => {
                     modalContent.classList.add('open');
                 }, 10);
-                
+
                 // Set focus to cancel button for accessibility
                 setTimeout(() => {
                     document.querySelector('.logout-cancel-btn').focus();
@@ -1629,9 +1699,9 @@ body,
             function closeLogoutModal() {
                 const modal = document.getElementById("logoutModal");
                 const modalContent = modal.querySelector('.modal-content');
-                
+
                 modalContent.classList.remove('open');
-                
+
                 // Wait for animation to complete before hiding
                 setTimeout(() => {
                     modal.classList.remove("flex");
@@ -1769,11 +1839,11 @@ body,
             }
 
             // Close mobile menus when clicking outside
-            document.addEventListener('click', function(event) {
+            document.addEventListener('click', function (event) {
                 // Close user menu
                 const userMobileMenu = document.getElementById("userMobileMenu");
                 const userHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleUserMenu()"]');
-                
+
                 if (userMobileMenu && userHamburgerBtn &&
                     !userMobileMenu.contains(event.target) &&
                     !userHamburgerBtn.contains(event.target) &&
@@ -1784,7 +1854,7 @@ body,
                 // Close admin menu
                 const adminMobileMenu = document.getElementById("adminMobileMenu");
                 const adminHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleAdminMenu()"]');
-                
+
                 if (adminMobileMenu && adminHamburgerBtn &&
                     !adminMobileMenu.contains(event.target) &&
                     !adminHamburgerBtn.contains(event.target) &&
@@ -1795,7 +1865,7 @@ body,
                 // Close staff menu
                 const staffMobileMenu = document.getElementById("staffMobileMenu");
                 const staffHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleStaffMenu()"]');
-                
+
                 if (staffMobileMenu && staffHamburgerBtn &&
                     !staffMobileMenu.contains(event.target) &&
                     !staffHamburgerBtn.contains(event.target) &&
@@ -1805,13 +1875,13 @@ body,
             });
 
             // Handle logout confirmation
-            document.getElementById('confirmLogoutBtn').addEventListener('click', function() {
+            document.getElementById('confirmLogoutBtn').addEventListener('click', function () {
                 // Redirect to logout URL
                 window.location.href = logoutUrl;
             });
 
             // Profile picture upload functionality
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 const profileUploadForm = document.getElementById('profileUploadForm');
                 const profileImageInput = document.getElementById('profile_image');
                 const profilePreview = document.getElementById('profilePreview');
@@ -1820,7 +1890,7 @@ body,
                 const removeProfileBtn = document.querySelector('.profile-remove-btn');
 
                 // Preview image when file is selected
-                profileImageInput.addEventListener('change', function(e) {
+                profileImageInput.addEventListener('change', function (e) {
                     const file = e.target.files[0];
                     if (file) {
                         // Validate file size (2MB)
@@ -1845,7 +1915,7 @@ body,
 
                         // Create preview
                         const reader = new FileReader();
-                        reader.onload = function(e) {
+                        reader.onload = function (e) {
                             profilePreview.src = e.target.result;
                         }
                         reader.readAsDataURL(file);
@@ -1853,12 +1923,12 @@ body,
                 });
 
                 // Handle form submission
-                profileUploadForm.addEventListener('submit', function(e) {
+                profileUploadForm.addEventListener('submit', function (e) {
                     e.preventDefault();
-                    
+
                     const formData = new FormData(this);
                     const file = profileImageInput.files[0];
-                    
+
                     if (!file) {
                         profileUploadError.textContent = 'Please select a file to upload.';
                         profileUploadError.classList.remove('hidden');
@@ -1868,45 +1938,45 @@ body,
                     // Show loading indicator
                     profileLoading.classList.remove('hidden');
                     profileUploadForm.classList.add('opacity-50');
-                    
+
                     // Submit via AJAX
                     fetch('/community-health-tracker/auth/upload_profile.php', {
                         method: 'POST',
                         body: formData,
                         credentials: 'same-origin'
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Update profile picture in header
-                            updateProfilePicture(data.profile_url);
-                            
-                            // Show success message
-                            alert('Profile picture updated successfully!');
-                            // Reset file input so user can upload again
-                            profileImageInput.value = '';
-                            // Close modal
-                            closeProfileModal();
-                        } else {
-                            // Show error
-                            profileUploadError.textContent = data.message || 'Upload failed. Please try again.';
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update profile picture in header
+                                updateProfilePicture(data.profile_url);
+
+                                // Show success message
+                                alert('Profile picture updated successfully!');
+                                // Reset file input so user can upload again
+                                profileImageInput.value = '';
+                                // Close modal
+                                closeProfileModal();
+                            } else {
+                                // Show error
+                                profileUploadError.textContent = data.message || 'Upload failed. Please try again.';
+                                profileUploadError.classList.remove('hidden');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            profileUploadError.textContent = 'An error occurred. Please try again.';
                             profileUploadError.classList.remove('hidden');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        profileUploadError.textContent = 'An error occurred. Please try again.';
-                        profileUploadError.classList.remove('hidden');
-                    })
-                    .finally(() => {
-                        // Hide loading indicator
-                        profileLoading.classList.add('hidden');
-                        profileUploadForm.classList.remove('opacity-50');
-                    });
+                        })
+                        .finally(() => {
+                            // Hide loading indicator
+                            profileLoading.classList.add('hidden');
+                            profileUploadForm.classList.remove('opacity-50');
+                        });
                 });
 
                 // Remove profile picture
-                window.removeProfilePicture = function() {
+                window.removeProfilePicture = function () {
                     if (!confirm('Are you sure you want to remove your profile picture?')) {
                         return;
                     }
@@ -1919,40 +1989,40 @@ body,
                     // Show loading indicator
                     profileLoading.classList.remove('hidden');
                     profileUploadForm.classList.add('opacity-50');
-                    
+
                     fetch('/community-health-tracker/auth/upload_profile.php', {
                         method: 'POST',
                         body: formData,
                         credentials: 'same-origin'
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Update profile picture in header
-                            updateProfilePicture(null);
-                            
-                            // Reset preview to default
-                            profilePreview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZDFkNWRiIi8+PHBhdGggZD0iTTEyIDExYTIgMiAwIDEgMCAwLTQgMiAyIDAgMCAwIDAgNHoiIGZpbGw9IiM5Y2EzYWYiLz48cGF0aCBkPSJNMTIgMTVhNCA0IDAgMCAwLTQgNGg4YTQgNCAwIDAgMC00LTR6IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+';
-                            
-                            // Disable remove button
-                            removeProfileBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                            removeProfileBtn.disabled = true;
-                            
-                            // Show success message
-                            alert('Profile picture removed successfully!');
-                        } else {
-                            alert(data.message || 'Failed to remove profile picture.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
-                    })
-                    .finally(() => {
-                        // Hide loading indicator
-                        profileLoading.classList.add('hidden');
-                        profileUploadForm.classList.remove('opacity-50');
-                    });
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update profile picture in header
+                                updateProfilePicture(null);
+
+                                // Reset preview to default
+                                profilePreview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZDFkNWRiIi8+PHBhdGggZD0iTTEyIDExYTIgMiAwIDEgMCAwLTQgMiAyIDAgMCAwIDAgNHoiIGZpbGw9IiM5Y2EzYWYiLz48cGF0aCBkPSJNMTIgMTVhNCA0IDAgMCAwLTQgNGg4YTQgNCAwIDAgMC00LTR6IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+';
+
+                                // Disable remove button
+                                removeProfileBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                                removeProfileBtn.disabled = true;
+
+                                // Show success message
+                                alert('Profile picture removed successfully!');
+                            } else {
+                                alert(data.message || 'Failed to remove profile picture.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred. Please try again.');
+                        })
+                        .finally(() => {
+                            // Hide loading indicator
+                            profileLoading.classList.add('hidden');
+                            profileUploadForm.classList.remove('opacity-50');
+                        });
                 };
 
                 // Function to update profile picture in header
@@ -1980,7 +2050,7 @@ body,
                             }
                         }
                     });
-                    
+
                     // Also update the preview image in the modal if it exists
                     const profilePreview = document.getElementById('profilePreview');
                     if (profilePreview && cacheBustedUrl) {
@@ -1990,31 +2060,31 @@ body,
             });
 
             // Close modal when clicking outside
-            document.getElementById('profileModal')?.addEventListener('click', function(e) {
+            document.getElementById('profileModal')?.addEventListener('click', function (e) {
                 if (e.target === this) {
                     closeProfileModal();
                 }
             });
 
-            document.getElementById('logoutModal')?.addEventListener('click', function(e) {
+            document.getElementById('logoutModal')?.addEventListener('click', function (e) {
                 if (e.target === this) {
                     closeLogoutModal();
                 }
             });
 
             // Close modals with Escape key
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     const profileModal = document.getElementById('profileModal');
                     const logoutModal = document.getElementById('logoutModal');
-                    
+
                     if (!profileModal.classList.contains('hidden')) {
                         closeProfileModal();
                     } else if (!logoutModal.classList.contains('hidden')) {
                         closeLogoutModal();
                     }
                 }
-                
+
                 // Handle Enter key on confirm button
                 if (e.key === 'Enter' && document.activeElement.id === 'confirmLogoutBtn') {
                     document.getElementById('confirmLogoutBtn').click();
@@ -2184,10 +2254,10 @@ body,
             function openModal() {
                 const modal = document.getElementById("loginModal");
                 const modalContent = modal.querySelector('.modal-content');
-                
+
                 modal.classList.remove("hidden");
                 modal.classList.add("flex");
-                
+
                 // Trigger animation
                 setTimeout(() => {
                     modalContent.classList.add('open');
@@ -2197,7 +2267,7 @@ body,
             function closeModal() {
                 const modal = document.getElementById("loginModal");
                 const modalContent = modal.querySelector('.modal-content');
-                
+
                 // Reset file input and error on close
                 const profileImageInput = document.getElementById('profile_image');
                 const profileUploadError = document.getElementById('profileUploadError');
@@ -2227,20 +2297,20 @@ body,
             }
 
             // Close modal when clicking outside
-            document.getElementById('loginModal')?.addEventListener('click', function(e) {
+            document.getElementById('loginModal')?.addEventListener('click', function (e) {
                 if (e.target === this) {
                     closeModal();
                 }
             });
 
             // Close modal with Escape key
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
                     closeModal();
                 }
             });
         </script>
-        
+
     </body>
 
 </html>
