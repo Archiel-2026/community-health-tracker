@@ -74,6 +74,32 @@ $sheet->setCellValue('A'.$row, 'Prepared by: '.$reportData['prepared_by']);
 $row++;
 $sheet->setCellValue('A'.$row, 'Date: '.$reportData['date']);
 
+$ip = $_SERVER['REMOTE_ADDR'] ?? '';
+$ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+if (isset($_SESSION['user']['id']) && isset($_SESSION['user']['full_name'])) {
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            staff_id INT,
+            action_type VARCHAR(100),
+            related_id INT,
+            details JSON,
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            created_at DATETIME
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $stmt = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'export_bulk_excel', NULL, ?, ?, ?, NOW())");
+        $details = json_encode([
+            'full_name' => $_SESSION['user']['full_name'],
+            'record_count' => isset($reportData['resident_demographics']['total_patients']) ? $reportData['resident_demographics']['total_patients'] : '',
+            'export_type' => 'bulk_patient_records'
+        ]);
+        $stmt->execute([$_SESSION['user']['id'], $details, $ip, $ua]);
+    } catch (Exception $e) {
+        error_log('Export Excel log error: ' . $e->getMessage());
+    }
+}
+
 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 header('Content-Disposition: attachment;filename="Comprehensive_Health_Report.xlsx"');
 header('Cache-Control: max-age=0');

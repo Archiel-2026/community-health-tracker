@@ -9,6 +9,10 @@ if (isLoggedIn()) {
 // Fetch active announcements for landing page
 $announcements = [];
 $hasAnnouncements = false;
+// Fetch Medical Staff count
+$medicalStaffCount = 0;
+// Fetch Residents Served count
+$residentsServedCount = 0;
 try {
     $stmt = $pdo->prepare("SELECT title, message, priority, post_date, expiry_date, image_path 
                           FROM sitio1_announcements 
@@ -25,6 +29,19 @@ try {
     $stmt->execute();
     $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $hasAnnouncements = !empty($announcements);
+
+    // Get Medical Staff count
+    $stmtStaff = $pdo->query("SELECT COUNT(*) FROM sitio1_staff");
+    $medicalStaffCount = (int)$stmtStaff->fetchColumn();
+
+    // Get Residents Served count
+    $stmtPatients = $pdo->query("SELECT COUNT(*) FROM sitio1_patients");
+    $residentsServedCount = (int)$stmtPatients->fetchColumn();
+
+    // Get current month's consultation count
+    $stmtConsultations = $pdo->prepare("SELECT COUNT(*) FROM consultation_notes WHERE MONTH(consultation_date) = MONTH(CURRENT_DATE()) AND YEAR(consultation_date) = YEAR(CURRENT_DATE())");
+    $stmtConsultations->execute();
+    $monthlyConsultationCount = (int)$stmtConsultations->fetchColumn();
 } catch (PDOException $e) {
     // Silently fail - announcements are not critical for page load
     error_log("Error fetching announcements: " . $e->getMessage());
@@ -686,21 +703,21 @@ try {
                 <!-- Quick Stats -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center grid-spacing">
                     <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                        <div class="text-3xl font-bold mb-1">15+</div>
+                        <div class="text-3xl font-bold mb-1"><?= $medicalStaffCount ?></div>
                         <div class="text-blue-200 text-sm">Medical Staff</div>
                     </div>
                     <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                        <div class="text-3xl font-bold mb-1">5K+</div>
+                        <div class="text-3xl font-bold mb-1"><?= $residentsServedCount ?></div>
                         <div class="text-blue-200 text-sm">Residents Served</div>
                     </div>
                     <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                         <div class="text-3xl font-bold mb-1">28</div>
                         <div class="text-blue-200 text-sm">Years Service</div>
                     </div>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                        <div class="text-3xl font-bold mb-1">200+</div>
-                        <div class="text-blue-200 text-sm">Monthly Consultations</div>
-                    </div>
+                        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                            <div class="text-3xl font-bold mb-1"><?= $monthlyConsultationCount ?></div>
+                            <div class="text-blue-200 text-sm">Monthly Consultations</div>
+                        </div>
                 </div>
             </div>
         </section>
@@ -1094,11 +1111,6 @@ try {
                         </div>
                     </div>
 
-                    <!-- Forgot Password -->
-                    <div class="text-right mt-4">
-                        <a href="#" class="text-sm text-[#3C96E2] hover:underline">Forgot your password?</a>
-                    </div>
-
                     <!-- Login Button -->
                     <div class="mt-8">
                         <button type="submit"
@@ -1285,13 +1297,11 @@ try {
             
             modal.classList.remove("hidden");
             modal.classList.add("flex");
-            document.body.style.overflow = 'hidden';
-            
+            // Do not lock body scroll for login modal
             // Trigger animation
             setTimeout(() => {
                 modalContent.classList.add('open');
             }, 10);
-            
             // Set focus to username input for accessibility
             setTimeout(() => {
                 document.getElementById('login-username').focus();
@@ -1303,12 +1313,11 @@ try {
             const modalContent = modal.querySelector('.modal-content');
             
             modalContent.classList.remove('open');
-            
             // Wait for animation to complete before hiding
             setTimeout(() => {
                 modal.classList.remove("flex");
                 modal.classList.add("hidden");
-                document.body.style.overflow = 'auto';
+                // Do not change body scroll for login modal
             }, 300);
         }
 

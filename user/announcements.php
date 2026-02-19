@@ -73,7 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['respond_to_announceme
                     $stmt->execute([$userId, $announcementId, $status]);
                 }
 
-                $success = 'Response recorded successfully!';
+                if ($status === 'accepted') {
+                    $success = 'Announcement Accepted Successfully';
+                } elseif ($status === 'dismissed') {
+                    $success = 'Announcement Dismissed Successfully';
+                } else {
+                    $success = 'Response recorded successfully!';
+                }
             }
         } catch (PDOException $e) {
             $error = 'Error recording response: ' . $e->getMessage();
@@ -141,6 +147,147 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
 <html lang="en">
 
 <head>
+        <?php if (!empty($success)): ?>
+            <style>
+                .modal-success-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: rgba(0,0,0,0.25);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.4s cubic-bezier(.4,0,.2,1);
+                }
+                .modal-success-overlay.active {
+                    opacity: 1;
+                    pointer-events: auto;
+                }
+                .modal-success-box {
+                    background: #fff;
+                    color: #222;
+                    padding: 2.2rem 2.5rem 1.5rem 2.5rem;
+                    border-radius: 1rem;
+                    box-shadow: 0 8px 32px rgba(16,185,129,0.18);
+                    text-align: center;
+                    min-width: 340px;
+                    max-width: 95vw;
+                    animation: modalFadeIn 0.5s cubic-bezier(.4,0,.2,1);
+                    position: relative;
+                }
+                .modal-success-icon {
+                    margin-bottom: 1.1rem;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    width: 100%;
+                }
+                .modal-success-title {
+                    color: #1992d4;
+                    font-size: 1.35rem;
+                    font-weight: 600;
+                    margin-bottom: 0.5rem;
+                }
+                .modal-success-subtitle {
+                    color: #888;
+                    font-size: 1.05rem;
+                    margin-bottom: 1.5rem;
+                }
+                .modal-success-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.6em;
+                    background: #1992d4;
+                    color: #fff;
+                    border: none;
+                    border-radius: 2em;
+                    font-size: 1.1rem;
+                    font-weight: 500;
+                    padding: 0.7em 2.2em;
+                    margin: 0 auto 0.2em auto;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    box-shadow: 0 2px 8px rgba(25,146,212,0.10);
+                }
+                .modal-success-btn.dismissed {
+                    background: #111;
+                    color: #fff;
+                }
+                .modal-success-btn.dismissed:hover {
+                    background: #333;
+                }
+                .modal-success-btn:not(.dismissed):hover {
+                    background: #1273a6;
+                }
+                @keyframes modalFadeIn {
+                    from { transform: scale(0.95) translateY(30px); opacity: 0; }
+                    to { transform: scale(1) translateY(0); opacity: 1; }
+                }
+            </style>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var overlay = document.getElementById('success-modal-overlay');
+                    if (overlay) {
+                        setTimeout(function () {
+                            overlay.classList.add('active');
+                        }, 50);
+                        // Remove modal after 5s if not closed manually
+                        setTimeout(function () {
+                            if (overlay.classList.contains('active')) overlay.classList.remove('active');
+                        }, 5000);
+                    }
+                });
+                function closeSuccessModal() {
+                    var overlay = document.getElementById('success-modal-overlay');
+                    if (overlay) overlay.classList.remove('active');
+                }
+            </script>
+        <?php endif; ?>
+        <?php if (!empty($success)): ?>
+            <div id="success-modal-overlay" class="modal-success-overlay">
+                <div class="modal-success-box">
+                    <div class="modal-success-icon">
+                        <?php if (strpos($success, 'Dismissed') !== false): ?>
+                            <!-- Dismissed: Gray X icon -->
+                            <svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="27" cy="27" r="22" fill="#fff" stroke="#B0B0B0" stroke-width="3"/>
+                                <path d="M34 20L20 34" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+                                <path d="M20 20L34 34" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+                            </svg>
+                        <?php else: ?>
+                            <!-- Accepted: Blue check icon -->
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="4" width="40" height="40" rx="12" fill="#E6F6FB"/>
+                                <path d="M16 24L22 30L32 18" stroke="#1992d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="4" y="4" width="40" height="40" rx="12" stroke="#1992d4" stroke-width="2"/>
+                            </svg>
+                        <?php endif; ?>
+                    </div>
+                    <div class="modal-success-title">
+                        <?= htmlspecialchars($success) ?>
+                    </div>
+                    <div class="modal-success-subtitle">
+                        <?php if (strpos($success, 'Dismissed') !== false): ?>
+                            Your announcement has been dismissed and recorded successfully.
+                        <?php else: ?>
+                            Your response has been recorded successfully.
+                        <?php endif; ?>
+                    </div>
+                    <button class="modal-success-btn<?php if (strpos($success, 'Dismissed') !== false) echo ' dismissed'; ?>" onclick="closeSuccessModal()">
+                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
+                            <path d="M6 11L10 15L16 7" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Okay
+                    </button>
+                </div>
+            </div>
+        <?php endif; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barangay Luz - Community Announcements</title>

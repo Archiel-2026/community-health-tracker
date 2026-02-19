@@ -1406,10 +1406,7 @@ body,
                                 </div>
                             </div>
 
-                            <!-- Forgot Password -->
-                            <div class="text-right mt-4">
-                                <a href="#" class="text-sm text-[#3C96E2] hover:underline">Forgot your password?</a>
-                            </div>
+                            
 
                             <!-- Login Button -->
                             <div class="mt-8">

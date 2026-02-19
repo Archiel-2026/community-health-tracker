@@ -1314,24 +1314,30 @@ try {
                                             <?= ucfirst($announcement['priority']) ?>
                                         </span>
                                         <div class="stats">
+                                            <?php if ($announcement['accepted_count'] > 0): ?>
                                             <div class="stat-item">
                                                 <div class="stat-icon stat-accepted" title="Accepted">
                                                     <i class="fas fa-check"></i>
                                                 </div>
-                                                <span class="text-sm">Accepted: <?= $announcement['accepted_count'] ?></span>
+                                                <span class="text-sm">Accepted</span>
                                             </div>
-                                            <div class="stat-item">
-                                                <div class="stat-icon stat-pending" title="Pending">
-                                                    <i class="fas fa-clock"></i>
-                                                </div>
-                                                <span class="text-sm">Pending: <?= $announcement['pending_count'] ?></span>
-                                            </div>
+                                            <?php endif; ?>
+                                            <?php if ($announcement['dismissed_count'] > 0): ?>
                                             <div class="stat-item">
                                                 <div class="stat-icon stat-dismissed" title="Dismissed">
                                                     <i class="fas fa-times"></i>
                                                 </div>
-                                                <span class="text-sm">Dismissed: <?= $announcement['dismissed_count'] ?></span>
+                                                <span class="text-sm">Dismissed</span>
                                             </div>
+                                            <?php endif; ?>
+                                            <?php if ($announcement['pending_count'] > 0 && $announcement['accepted_count'] == 0 && $announcement['dismissed_count'] == 0): ?>
+                                            <div class="stat-item">
+                                                <div class="stat-icon stat-pending" title="Pending">
+                                                    <i class="fas fa-clock"></i>
+                                                </div>
+                                                <span class="text-sm">Pending</span>
+                                            </div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -2009,11 +2015,11 @@ try {
             display: flex; gap: 0.7em; margin-bottom: 1.5rem;
         }
         .cht-loader-bounce {
-            width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #2563eb 60%, #38bdf8 100%);
+            width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #60a5fa 40%, #2563eb 100%);
             animation: cht-bounce 1.1s infinite cubic-bezier(.68,-0.55,.27,1.55);
         }
-        .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #22c55e 60%, #bef264 100%); }
-        .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #f59e42 60%, #fbbf24 100%); }
+        .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #93c5fd 40%, #3b82f6 100%); }
+        .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #a5b4fc 40%, #6366f1 100%); }
         @keyframes cht-bounce {
             0%, 80%, 100% { transform: translateY(0); }
             40% { transform: translateY(-30px); }

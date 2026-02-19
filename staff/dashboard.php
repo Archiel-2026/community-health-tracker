@@ -441,6 +441,18 @@ try {
         ORDER BY month
     ");
     $analytics['patient_registration_trend'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Consultations per month (last 6 months)
+    $stmt = $pdo->query("
+        SELECT 
+            DATE_FORMAT(consultation_date, '%Y-%m') as month,
+            COUNT(*) as count
+        FROM consultation_notes
+        WHERE consultation_date >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        GROUP BY DATE_FORMAT(consultation_date, '%Y-%m')
+        ORDER BY month
+    ");
+    $analytics['consultations_per_month'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Get approval statistics
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM sitio1_users WHERE role = 'patient' AND approved = TRUE");
@@ -1247,6 +1259,28 @@ $recordsPerPage = 5;
                 <div class="flex gap-2 mb-4">
                     <button onclick="generateFullReportModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center"><i class="fas fa-sync-alt mr-2"></i> Generate Full Report</button>
                 </div>
+                <!-- Report Generation Logs Display -->
+                <div id="reportLogsSection" class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center"><i class="fas fa-history mr-2 text-blue-500"></i> Generate Report Logs</h3>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <button id="sortByDateBtn" class="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition">Sort by Date</button>
+                        <input type="date" id="filterDateInput" class="px-2 py-1 rounded border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-200 transition" style="height:36px;" />
+                        <button id="clearDateBtn" class="px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition" title="Clear date filter">✕</button>
+                        <button id="sortByNameBtn" class="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition">Sort A-Z</button>
+                    </div>
+                    <div id="reportLogsTableWrap">
+                        <div id="reportLogsLoading" class="flex flex-col items-center justify-center py-8">
+                            <div class="warmblue-wave-loader mb-3">
+                                <span class="wave-bar"></span>
+                                <span class="wave-bar"></span>
+                                <span class="wave-bar"></span>
+                                <span class="wave-bar"></span>
+                                <span class="wave-bar"></span>
+                            </div>
+                            <div class="text-warmblue text-base font-medium">Generating Reports... Please wait</div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Modal for Full Report Display -->
                 <div id="fullReportModal" class="modal-overlay hidden">
                     <div class="modal-container modal-desktop cht-document-modal" style="max-width:1000px;min-width:350px;">
@@ -1275,40 +1309,33 @@ $recordsPerPage = 5;
                     </div>
                 </div>
                 <div id="fullReportResult" class="mt-4"></div>
+                        <!-- Report Logs Script will be placed at the end of the file -->
             </div>
             <script>
             let lastReportHtml = '';
             function generateFullReportModal() {
                 const modal = document.getElementById('fullReportModal');
                 const modalContent = document.getElementById('fullReportModalContent');
-                // Show loading overlay
+                // Show loading overlay (match announcement loader)
                 let loader = document.getElementById('reportLoadingOverlay');
+                const loaderHTML = `
+                    <div class="cht-loader-bg">
+                        <div class="cht-loader-unique">
+                            <div class="cht-loader-bounce"></div>
+                            <div class="cht-loader-bounce"></div>
+                            <div class="cht-loader-bounce"></div>
+                        </div>
+                        <div class="cht-loader-text">Generating report, please wait...</div>
+                        <span class="mt-3 text-base text-slate-500 text-center" style="font-family: Poppins, Arial, Helvetica, sans-serif; font-weight: 400;">Please wait while we process your report.<br>Do not close or refresh this page.</span>
+                    </div>
+                `;
                 if (!loader) {
                     loader = document.createElement('div');
                     loader.id = 'reportLoadingOverlay';
-                    loader.innerHTML = `
-                        <div class="cht-loader-bg">
-                            <div class="cht-loader-unique">
-                                <div class="cht-loader-bounce"></div>
-                                <div class="cht-loader-bounce"></div>
-                                <div class="cht-loader-bounce"></div>
-                            </div>
-                            <div class="cht-loader-text">Generating report, please wait...</div>
-                        </div>
-                    `;
+                    loader.innerHTML = loaderHTML;
                     document.body.appendChild(loader);
                 } else {
-                    // Reset loader to initial state if reused
-                    loader.innerHTML = `
-                        <div class="cht-loader-bg">
-                            <div class="cht-loader-unique">
-                                <div class="cht-loader-bounce"></div>
-                                <div class="cht-loader-bounce"></div>
-                                <div class="cht-loader-bounce"></div>
-                            </div>
-                            <div class="cht-loader-text">Generating report, please wait...</div>
-                        </div>
-                    `;
+                    loader.innerHTML = loaderHTML;
                 }
                 loader.style.display = 'flex';
                 modalContent.innerHTML = '';
@@ -1341,11 +1368,21 @@ $recordsPerPage = 5;
                             loader.innerHTML = `
                                 <div class="cht-loader-bg">
                                     <div class="cht-loader-complete">
-                                        <svg width="60" height="60" viewBox="0 0 60 60">
-                                            <circle cx="30" cy="30" r="28" fill="#e0f2fe" stroke="#38bdf8" stroke-width="4"/>
-                                            <polyline points="18,32 28,42 44,22" fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <svg width="110" height="110" viewBox="0 0 110 110">
+                                            <defs>
+                                                <radialGradient id="warmBlueBg" cx="50%" cy="50%" r="50%">
+                                                    <stop offset="0%" stop-color="#e0e7ff"/>
+                                                    <stop offset="100%" stop-color="#60a5fa"/>
+                                                </radialGradient>
+                                                <linearGradient id="warmBlueStroke" x1="0" y1="0" x2="1" y2="1">
+                                                    <stop offset="0%" stop-color="#2563eb"/>
+                                                    <stop offset="100%" stop-color="#3b82f6"/>
+                                                </linearGradient>
+                                            </defs>
+                                            <circle cx="55" cy="55" r="50" fill="url(#warmBlueBg)" stroke="url(#warmBlueStroke)" stroke-width="8"/>
+                                            <polyline points="35,60 52,78 80,38" fill="none" stroke="#2563eb" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
-                                        <div class="cht-loader-complete-text">Generation Completed!</div>
+                                        <div class="cht-loader-complete-text" style="color:#2563eb;font-size:1.5rem;font-weight:500;">Generation Completed!</div>
                                     </div>
                                 </div>
                             `;
@@ -1385,11 +1422,11 @@ $recordsPerPage = 5;
                     display: flex; gap: 0.7em; margin-bottom: 1.5rem;
                 }
                 .cht-loader-bounce {
-                    width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #2563eb 60%, #38bdf8 100%);
+                    width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #60a5fa 40%, #2563eb 100%);
                     animation: cht-bounce 1.1s infinite cubic-bezier(.68,-0.55,.27,1.55);
                 }
-                .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #22c55e 60%, #bef264 100%); }
-                .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #f59e42 60%, #fbbf24 100%); }
+                .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #93c5fd 40%, #3b82f6 100%); }
+                .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #a5b4fc 40%, #6366f1 100%); }
                 @keyframes cht-bounce {
                     0%, 80%, 100% { transform: translateY(0); }
                     40% { transform: translateY(-30px); }
@@ -1404,7 +1441,8 @@ $recordsPerPage = 5;
                     display: block; margin-bottom: 0.7em;
                 }
                 .cht-loader-complete-text {
-                    color: #22c55e; font-size: 1.25rem; font-weight: 600; letter-spacing: 0.01em;
+                    color: #2563eb; font-size: 1.5rem; font-weight: 500; letter-spacing: 0.01em;
+                    text-align: center;
                 }
                 `;
                 document.head.appendChild(loaderStyles);
@@ -2748,39 +2786,55 @@ function initializeCharts() {
     Chart.getChart(healthIssuesCanvas)?.destroy();
     Chart.getChart(genderDistributionCanvas)?.destroy();
     Chart.getChart(ageDistributionCanvas)?.destroy();
-    // 1. Patient Records Trend (Line)
+    // 1. Patient Records Trend (Line) & Consultations per Month (Bar)
     try {
         const patientRegCtx = patientRegistrationCanvas.getContext('2d');
         let patientData = <?= json_encode($analytics['patient_registration_trend']) ?>;
-        // Sort by month ascending
-        patientData = patientData.sort((a, b) => a.month.localeCompare(b.month));
-        const patientLabels = patientData.map(item => {
-            const date = new Date(item.month + '-01');
+        let consultData = <?= json_encode($analytics['consultations_per_month']) ?>;
+        // Merge months for both datasets
+        let allMonths = Array.from(new Set([
+            ...patientData.map(item => item.month),
+            ...consultData.map(item => item.month)
+        ])).sort();
+        const patientLabels = allMonths.map(month => {
+            const date = new Date(month + '-01');
             return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         });
-        const patientValues = patientData.map(item => item.count);
+        const patientValues = allMonths.map(month => {
+            const found = patientData.find(item => item.month === month);
+            return found ? found.count : 0;
+        });
+        const consultValues = allMonths.map(month => {
+            const found = consultData.find(item => item.month === month);
+            return found ? found.count : 0;
+        });
         new Chart(patientRegCtx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: patientLabels,
-                datasets: [{
-                    label: 'New Records',
-                    data: patientValues,
-                    borderColor: '#6366F1',
-                    backgroundColor: 'rgba(99, 102, 241, 0.08)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#6366F1',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5
-                }]
+                datasets: [
+                    {
+                        label: 'New Patient Records',
+                        data: patientValues,
+                        backgroundColor: 'rgba(99, 102, 241, 0.25)',
+                        borderColor: '#6366F1',
+                        borderWidth: 2,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Consultations',
+                        data: consultValues,
+                        backgroundColor: 'rgba(16, 185, 129, 0.45)',
+                        borderColor: '#10B981',
+                        borderWidth: 2,
+                        borderRadius: 6
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { legend: { display: true } },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -2794,7 +2848,7 @@ function initializeCharts() {
                 }
             }
         });
-    } catch (error) { console.error('Error initializing patient registration chart:', error); }
+    } catch (error) { console.error('Error initializing patient registration/consultation chart:', error); }
     // 2. Health Issues Breakdown (Bar)
     try {
         const healthIssuesCtx = healthIssuesCanvas.getContext('2d');
@@ -2925,4 +2979,162 @@ function initializeCharts() {
             }
 </script>
 </body>
+<script>
+// Fetch and display report logs
+function fetchReportLogs() {
+    const wrap = document.getElementById('reportLogsTableWrap');
+    if (!wrap) return;
+    // Show custom loader
+    wrap.innerHTML = document.getElementById('reportLogsLoading') ? document.getElementById('reportLogsLoading').outerHTML : '';
+    fetch('./get_report_logs.php')
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                wrap.innerHTML = `<div class='text-red-600'>Failed to load logs: ${data.error}</div>`;
+                return;
+            }
+            if (!data.logs.length) {
+                wrap.innerHTML = '<div class="text-gray-500 text-sm">No report generation logs found.</div>';
+                return;
+            }
+            const logsPerPage = 6;
+            let currentPage = 1;
+            let sortMode = 'date'; // 'date' or 'name'
+            let filterDate = '';
+            let logs = [...data.logs];
+            function sortLogs() {
+                if (sortMode === 'date') {
+                    logs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                } else if (sortMode === 'name') {
+                    logs.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+                }
+            }
+            function filterLogsByDate(logsArr) {
+                if (!filterDate) return logsArr;
+                return logsArr.filter(log => {
+                    if (!log.created_at) return false;
+                    const logDate = new Date(log.created_at);
+                    const filter = new Date(filterDate);
+                    return logDate.getFullYear() === filter.getFullYear() &&
+                        logDate.getMonth() === filter.getMonth() &&
+                        logDate.getDate() === filter.getDate();
+                });
+            }
+            function renderLogs(page) {
+                sortLogs();
+                let filteredLogs = filterLogsByDate(logs);
+                const start = (page - 1) * logsPerPage;
+                const end = start + logsPerPage;
+                let html = `<div class='overflow-x-auto'><table class='min-w-full text-sm text-left border border-gray-200 rounded-lg'><thead><tr class='bg-blue-50 text-blue-900'><th class='py-2 px-3 border-b'>Date & Time</th><th class='py-2 px-3 border-b'>Staff Name</th><th class='py-2 px-3 border-b'>Type</th><th class='py-2 px-3 border-b'>Records</th></tr></thead><tbody>`;
+                for (const log of filteredLogs.slice(start, end)) {
+                    html += `<tr class='hover:bg-blue-50'>
+                        <td class='py-2 px-3 border-b whitespace-nowrap'>${log.created_at ? new Date(log.created_at).toLocaleString() : ''}</td>
+                        <td class='py-2 px-3 border-b'>${log.full_name || ''}</td>
+                        <td class='py-2 px-3 border-b'>${log.export_type === 'bulk_patient_records' ? (log.action_type === 'export_bulk_pdf' ? 'PDF' : 'Excel') : (log.export_type || log.action_type)}</td>
+                        <td class='py-2 px-3 border-b text-center'>${log.record_count || ''}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table></div>';
+                // Pagination controls
+                const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
+                if (totalPages > 1) {
+                    html += `<div class='flex justify-end mt-2'>`;
+                    for (let i = 1; i <= totalPages; i++) {
+                        html += `<button class='px-3 py-1 mx-1 rounded border ${i === page ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'}' onclick='window._renderReportLogsPage(${i})'>${i}</button>`;
+                    }
+                    html += `</div>`;
+                }
+                wrap.innerHTML = html;
+            }
+            window._renderReportLogsPage = function(page) {
+                currentPage = page;
+                renderLogs(currentPage);
+            };
+            // Attach sort and filter button events
+            setTimeout(() => {
+                const sortByDateBtn = document.getElementById('sortByDateBtn');
+                const sortByNameBtn = document.getElementById('sortByNameBtn');
+                const filterDateInput = document.getElementById('filterDateInput');
+                const clearDateBtn = document.getElementById('clearDateBtn');
+                if (sortByDateBtn) {
+                    sortByDateBtn.onclick = () => {
+                        sortMode = 'date';
+                        renderLogs(1);
+                    };
+                }
+                if (sortByNameBtn) {
+                    sortByNameBtn.onclick = () => {
+                        sortMode = 'name';
+                        renderLogs(1);
+                    };
+                }
+                if (filterDateInput) {
+                    filterDateInput.onchange = (e) => {
+                        filterDate = e.target.value;
+                        renderLogs(1);
+                    };
+                }
+                if (clearDateBtn) {
+                    clearDateBtn.onclick = () => {
+                        filterDate = '';
+                        if (filterDateInput) filterDateInput.value = '';
+                        renderLogs(1);
+                    };
+                }
+            }, 0);
+            renderLogs(currentPage);
+        })
+        .catch(() => {
+            wrap.innerHTML = '<div class="text-red-600">Failed to load logs.</div>';
+        });
+}
+// Auto-load logs on page load
+document.addEventListener('DOMContentLoaded', fetchReportLogs);
+</script>
+<style>
+    .warmblue-wave-loader {
+        display: flex;
+        align-items: flex-end;
+        height: 40px;
+        gap: 4px;
+    }
+    .warmblue-wave-loader .wave-bar {
+        display: inline-block;
+        width: 8px;
+        height: 18px;
+        background: linear-gradient(180deg, #60a5fa 60%, #3b82f6 100%);
+        border-radius: 4px 4px 12px 12px;
+        margin: 0 2px;
+        animation: warmblue-wave 1.2s infinite ease-in-out;
+    }
+    .warmblue-wave-loader .wave-bar:nth-child(1) {
+        animation-delay: 0s;
+    }
+    .warmblue-wave-loader .wave-bar:nth-child(2) {
+        animation-delay: 0.15s;
+    }
+    .warmblue-wave-loader .wave-bar:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+    .warmblue-wave-loader .wave-bar:nth-child(4) {
+        animation-delay: 0.45s;
+    }
+    .warmblue-wave-loader .wave-bar:nth-child(5) {
+        animation-delay: 0.6s;
+    }
+    @keyframes warmblue-wave {
+        0%, 100% {
+            height: 18px;
+            background: linear-gradient(180deg, #60a5fa 60%, #3b82f6 100%);
+        }
+        50% {
+            height: 36px;
+            background: linear-gradient(180deg, #3b82f6 60%, #60a5fa 100%);
+        }
+    }
+    .text-warmblue {
+        color: #3b82f6;
+    }
+</style>
+</script>
 </html>
