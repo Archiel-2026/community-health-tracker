@@ -147,147 +147,170 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
 <html lang="en">
 
 <head>
-        <?php if (!empty($success)): ?>
-            <style>
-                .modal-success-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    background: rgba(0,0,0,0.25);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 9999;
+    <?php if (!empty($success)): ?>
+        <style>
+            .modal-success-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.25);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.4s cubic-bezier(.4, 0, .2, 1);
+            }
+
+            .modal-success-overlay.active {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .modal-success-box {
+                background: #fff;
+                color: #222;
+                padding: 2.2rem 2.5rem 1.5rem 2.5rem;
+                border-radius: 1rem;
+                box-shadow: 0 8px 32px rgba(16, 185, 129, 0.18);
+                text-align: center;
+                min-width: 340px;
+                max-width: 95vw;
+                animation: modalFadeIn 0.5s cubic-bezier(.4, 0, .2, 1);
+                position: relative;
+            }
+
+            .modal-success-icon {
+                margin-bottom: 1.1rem;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+            }
+
+            .modal-success-title {
+                color: #1992d4;
+                font-size: 1.35rem;
+                font-weight: 400;
+                margin-bottom: 0.5rem;
+            }
+
+            .modal-success-subtitle {
+                color: #888;
+                font-weight: 400;
+                font-size: 1.10rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .modal-success-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                width: 100%;
+                gap: 0.6em;
+                background: #1992d4;
+                color: #fff;
+                border: none;
+                border-radius: 2em;
+                font-size: 1.1rem;
+                font-weight: 500;
+                padding: 0.7em 2.2em;
+                margin: 0 auto 0.2em auto;
+                cursor: pointer;
+                transition: background 0.2s;
+                box-shadow: 0 2px 8px rgba(25, 146, 212, 0.10);
+            }
+
+            .modal-success-btn.dismissed {
+                background: #111;
+                color: #fff;
+            }
+
+            .modal-success-btn.dismissed:hover {
+                background: #333;
+            }
+
+            .modal-success-btn:not(.dismissed):hover {
+                background: #1273a6;
+            }
+
+            @keyframes modalFadeIn {
+                from {
+                    transform: scale(0.95) translateY(30px);
                     opacity: 0;
-                    pointer-events: none;
-                    transition: opacity 0.4s cubic-bezier(.4,0,.2,1);
                 }
-                .modal-success-overlay.active {
+
+                to {
+                    transform: scale(1) translateY(0);
                     opacity: 1;
-                    pointer-events: auto;
                 }
-                .modal-success-box {
-                    background: #fff;
-                    color: #222;
-                    padding: 2.2rem 2.5rem 1.5rem 2.5rem;
-                    border-radius: 1rem;
-                    box-shadow: 0 8px 32px rgba(16,185,129,0.18);
-                    text-align: center;
-                    min-width: 340px;
-                    max-width: 95vw;
-                    animation: modalFadeIn 0.5s cubic-bezier(.4,0,.2,1);
-                    position: relative;
+            }
+        </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var overlay = document.getElementById('success-modal-overlay');
+                if (overlay) {
+                    setTimeout(function () {
+                        overlay.classList.add('active');
+                    }, 50);
+                    // Remove modal after 5s if not closed manually
+                    setTimeout(function () {
+                        if (overlay.classList.contains('active')) overlay.classList.remove('active');
+                    }, 5000);
                 }
-                .modal-success-icon {
-                    margin-bottom: 1.1rem;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    width: 100%;
-                }
-                .modal-success-title {
-                    color: #1992d4;
-                    font-size: 1.35rem;
-                    font-weight: 600;
-                    margin-bottom: 0.5rem;
-                }
-                .modal-success-subtitle {
-                    color: #888;
-                    font-size: 1.05rem;
-                    margin-bottom: 1.5rem;
-                }
-                .modal-success-btn {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.6em;
-                    background: #1992d4;
-                    color: #fff;
-                    border: none;
-                    border-radius: 2em;
-                    font-size: 1.1rem;
-                    font-weight: 500;
-                    padding: 0.7em 2.2em;
-                    margin: 0 auto 0.2em auto;
-                    cursor: pointer;
-                    transition: background 0.2s;
-                    box-shadow: 0 2px 8px rgba(25,146,212,0.10);
-                }
-                .modal-success-btn.dismissed {
-                    background: #111;
-                    color: #fff;
-                }
-                .modal-success-btn.dismissed:hover {
-                    background: #333;
-                }
-                .modal-success-btn:not(.dismissed):hover {
-                    background: #1273a6;
-                }
-                @keyframes modalFadeIn {
-                    from { transform: scale(0.95) translateY(30px); opacity: 0; }
-                    to { transform: scale(1) translateY(0); opacity: 1; }
-                }
-            </style>
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    var overlay = document.getElementById('success-modal-overlay');
-                    if (overlay) {
-                        setTimeout(function () {
-                            overlay.classList.add('active');
-                        }, 50);
-                        // Remove modal after 5s if not closed manually
-                        setTimeout(function () {
-                            if (overlay.classList.contains('active')) overlay.classList.remove('active');
-                        }, 5000);
-                    }
-                });
-                function closeSuccessModal() {
-                    var overlay = document.getElementById('success-modal-overlay');
-                    if (overlay) overlay.classList.remove('active');
-                }
-            </script>
-        <?php endif; ?>
-        <?php if (!empty($success)): ?>
-            <div id="success-modal-overlay" class="modal-success-overlay">
-                <div class="modal-success-box">
-                    <div class="modal-success-icon">
-                        <?php if (strpos($success, 'Dismissed') !== false): ?>
-                            <!-- Dismissed: Gray X icon -->
-                            <svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="27" cy="27" r="22" fill="#fff" stroke="#B0B0B0" stroke-width="3"/>
-                                <path d="M34 20L20 34" stroke="#888" stroke-width="3" stroke-linecap="round"/>
-                                <path d="M20 20L34 34" stroke="#888" stroke-width="3" stroke-linecap="round"/>
-                            </svg>
-                        <?php else: ?>
-                            <!-- Accepted: Blue check icon -->
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="4" y="4" width="40" height="40" rx="12" fill="#E6F6FB"/>
-                                <path d="M16 24L22 30L32 18" stroke="#1992d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                                <rect x="4" y="4" width="40" height="40" rx="12" stroke="#1992d4" stroke-width="2"/>
-                            </svg>
-                        <?php endif; ?>
-                    </div>
-                    <div class="modal-success-title">
-                        <?= htmlspecialchars($success) ?>
-                    </div>
-                    <div class="modal-success-subtitle">
-                        <?php if (strpos($success, 'Dismissed') !== false): ?>
-                            Your announcement has been dismissed and recorded successfully.
-                        <?php else: ?>
-                            Your response has been recorded successfully.
-                        <?php endif; ?>
-                    </div>
-                    <button class="modal-success-btn<?php if (strpos($success, 'Dismissed') !== false) echo ' dismissed'; ?>" onclick="closeSuccessModal()">
-                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
-                            <path d="M6 11L10 15L16 7" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            });
+            function closeSuccessModal() {
+                var overlay = document.getElementById('success-modal-overlay');
+                if (overlay) overlay.classList.remove('active');
+            }
+        </script>
+    <?php endif; ?>
+    <?php if (!empty($success)): ?>
+        <div id="success-modal-overlay" class="modal-success-overlay">
+            <div class="modal-success-box">
+                <div class="modal-success-icon">
+                    <?php if (strpos($success, 'Dismissed') !== false): ?>
+                        <!-- Dismissed: Gray X icon -->
+                        <svg class="w-20 h-20" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M38.8266 23.8266L32.6508 30L38.8266 36.1734C39.0008 36.3476 39.139 36.5545 39.2332 36.7821C39.3275 37.0097 39.3761 37.2536 39.3761 37.5C39.3761 37.7464 39.3275 37.9903 39.2332 38.2179C39.139 38.4455 39.0008 38.6524 38.8266 38.8266C38.6524 39.0008 38.4456 39.139 38.2179 39.2332C37.9903 39.3275 37.7464 39.376 37.5 39.376C37.2536 39.376 37.0097 39.3275 36.7821 39.2332C36.5545 39.139 36.3477 39.0008 36.1734 38.8266L30 32.6508L23.8266 38.8266C23.6524 39.0008 23.4456 39.139 23.2179 39.2332C22.9903 39.3275 22.7464 39.376 22.5 39.376C22.2536 39.376 22.0097 39.3275 21.7821 39.2332C21.5545 39.139 21.3477 39.0008 21.1734 38.8266C20.9992 38.6524 20.8611 38.4455 20.7668 38.2179C20.6725 37.9903 20.624 37.7464 20.624 37.5C20.624 37.2536 20.6725 37.0097 20.7668 36.7821C20.8611 36.5545 20.9992 36.3476 21.1734 36.1734L27.3492 30L21.1734 23.8266C20.8216 23.4747 20.624 22.9976 20.624 22.5C20.624 22.0024 20.8216 21.5253 21.1734 21.1734C21.5253 20.8216 22.0025 20.624 22.5 20.624C22.9976 20.624 23.4747 20.8216 23.8266 21.1734L30 27.3492L36.1734 21.1734C36.3477 20.9992 36.5545 20.861 36.7821 20.7668C37.0097 20.6725 37.2536 20.624 37.5 20.624C37.7464 20.624 37.9903 20.6725 38.2179 20.7668C38.4456 20.861 38.6524 20.9992 38.8266 21.1734C39.0008 21.3476 39.139 21.5545 39.2332 21.7821C39.3275 22.0097 39.3761 22.2536 39.3761 22.5C39.3761 22.7464 39.3275 22.9903 39.2332 23.2179C39.139 23.4455 39.0008 23.6524 38.8266 23.8266ZM54.375 30C54.375 34.8209 52.9454 39.5336 50.2671 43.542C47.5887 47.5505 43.7819 50.6747 39.3279 52.5196C34.874 54.3644 29.973 54.8472 25.2447 53.9066C20.5164 52.9661 16.1732 50.6446 12.7643 47.2357C9.35538 43.8268 7.03388 39.4836 6.09337 34.7553C5.15286 30.027 5.63556 25.126 7.48045 20.6721C9.32533 16.2181 12.4495 12.4113 16.458 9.73293C20.4664 7.05457 25.1791 5.625 30 5.625C36.4626 5.63182 42.6585 8.20209 47.2282 12.7718C51.7979 17.3415 54.3682 23.5374 54.375 30ZM50.625 30C50.625 25.9208 49.4154 21.9331 47.1491 18.5414C44.8828 15.1496 41.6616 12.506 37.8929 10.945C34.1241 9.38393 29.9771 8.97548 25.9763 9.7713C21.9754 10.5671 18.3004 12.5315 15.4159 15.4159C12.5315 18.3004 10.5671 21.9754 9.77131 25.9763C8.97549 29.9771 9.38394 34.1241 10.945 37.8928C12.5061 41.6616 15.1496 44.8828 18.5414 47.1491C21.9331 49.4154 25.9208 50.625 30 50.625C35.4682 50.6188 40.7106 48.4438 44.5772 44.5772C48.4438 40.7106 50.6188 35.4682 50.625 30Z"
+                                fill="black" fill-opacity="0.5" />
                         </svg>
-                        Okay
-                    </button>
+                    <?php else: ?>
+                        <!-- Accepted: Blue check icon -->
+                        <svg class="h-20 w-20" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M52.9359 24.0984C52.0523 23.175 51.1383 22.2234 50.7938 21.3867C50.475 20.6203 50.4562 19.35 50.4375 18.1195C50.4023 15.832 50.3648 13.2398 48.5625 11.4375C46.7602 9.63516 44.168 9.59766 41.8805 9.5625C40.65 9.54375 39.3797 9.525 38.6133 9.20625C37.7789 8.86172 36.825 7.94766 35.9016 7.06406C34.2844 5.51016 32.4469 3.75 30 3.75C27.5531 3.75 25.718 5.51016 24.0984 7.06406C23.175 7.94766 22.2234 8.86172 21.3867 9.20625C20.625 9.525 19.35 9.54375 18.1195 9.5625C15.832 9.59766 13.2398 9.63516 11.4375 11.4375C9.63516 13.2398 9.60938 15.832 9.5625 18.1195C9.54375 19.35 9.525 20.6203 9.20625 21.3867C8.86172 22.2211 7.94766 23.175 7.06406 24.0984C5.51016 25.7156 3.75 27.5531 3.75 30C3.75 32.4469 5.51016 34.282 7.06406 35.9016C7.94766 36.825 8.86172 37.7766 9.20625 38.6133C9.525 39.3797 9.54375 40.65 9.5625 41.8805C9.59766 44.168 9.63516 46.7602 11.4375 48.5625C13.2398 50.3648 15.832 50.4023 18.1195 50.4375C19.35 50.4562 20.6203 50.475 21.3867 50.7938C22.2211 51.1383 23.175 52.0523 24.0984 52.9359C25.7156 54.4898 27.5531 56.25 30 56.25C32.4469 56.25 34.282 54.4898 35.9016 52.9359C36.825 52.0523 37.7766 51.1383 38.6133 50.7938C39.3797 50.475 40.65 50.4562 41.8805 50.4375C44.168 50.4023 46.7602 50.3648 48.5625 48.5625C50.3648 46.7602 50.4023 44.168 50.4375 41.8805C50.4562 40.65 50.475 39.3797 50.7938 38.6133C51.1383 37.7789 52.0523 36.825 52.9359 35.9016C54.4898 34.2844 56.25 32.4469 56.25 30C56.25 27.5531 54.4898 25.718 52.9359 24.0984ZM50.2289 33.307C49.1063 34.4789 47.9437 35.6906 47.3273 37.1789C46.7367 38.6086 46.7109 40.2422 46.6875 41.8242C46.6641 43.4648 46.6383 45.1828 45.9094 45.9094C45.1805 46.6359 43.4742 46.6641 41.8242 46.6875C40.2422 46.7109 38.6086 46.7367 37.1789 47.3273C35.6906 47.9437 34.4789 49.1063 33.307 50.2289C32.1352 51.3516 30.9375 52.5 30 52.5C29.0625 52.5 27.8555 51.3469 26.693 50.2289C25.5305 49.1109 24.3094 47.9437 22.8211 47.3273C21.3914 46.7367 19.7578 46.7109 18.1758 46.6875C16.5352 46.6641 14.8172 46.6383 14.0906 45.9094C13.3641 45.1805 13.3359 43.4742 13.3125 41.8242C13.2891 40.2422 13.2633 38.6086 12.6727 37.1789C12.0562 35.6906 10.8937 34.4789 9.77109 33.307C8.64844 32.1352 7.5 30.9375 7.5 30C7.5 29.0625 8.65312 27.8555 9.77109 26.693C10.8891 25.5305 12.0562 24.3094 12.6727 22.8211C13.2633 21.3914 13.2891 19.7578 13.3125 18.1758C13.3359 16.5352 13.3617 14.8172 14.0906 14.0906C14.8195 13.3641 16.5258 13.3359 18.1758 13.3125C19.7578 13.2891 21.3914 13.2633 22.8211 12.6727C24.3094 12.0562 25.5211 10.8937 26.693 9.77109C27.8648 8.64844 29.0625 7.5 30 7.5C30.9375 7.5 32.1445 8.65312 33.307 9.77109C34.4695 10.8891 35.6906 12.0562 37.1789 12.6727C38.6086 13.2633 40.2422 13.2891 41.8242 13.3125C43.4648 13.3359 45.1828 13.3617 45.9094 14.0906C46.6359 14.8195 46.6641 16.5258 46.6875 18.1758C46.7109 19.7578 46.7367 21.3914 47.3273 22.8211C47.9437 24.3094 49.1063 25.5211 50.2289 26.693C51.3516 27.8648 52.5 29.0625 52.5 30C52.5 30.9375 51.3469 32.1445 50.2289 33.307ZM40.7016 23.0484C40.8759 23.2226 41.0142 23.4294 41.1086 23.657C41.2029 23.8846 41.2515 24.1286 41.2515 24.375C41.2515 24.6214 41.2029 24.8654 41.1086 25.093C41.0142 25.3206 40.8759 25.5274 40.7016 25.7016L27.5766 38.8266C27.4024 39.0009 27.1956 39.1392 26.968 39.2336C26.7404 39.3279 26.4964 39.3765 26.25 39.3765C26.0036 39.3765 25.7596 39.3279 25.532 39.2336C25.3044 39.1392 25.0976 39.0009 24.9234 38.8266L19.2984 33.2016C18.9466 32.8497 18.749 32.3726 18.749 31.875C18.749 31.3774 18.9466 30.9003 19.2984 30.5484C19.6503 30.1966 20.1274 29.999 20.625 29.999C21.1226 29.999 21.5997 30.1966 21.9516 30.5484L26.25 34.8492L38.0484 23.0484C38.2226 22.8741 38.4294 22.7358 38.657 22.6415C38.8846 22.5471 39.1286 22.4985 39.375 22.4985C39.6214 22.4985 39.8654 22.5471 40.093 22.6415C40.3206 22.7358 40.5274 22.8741 40.7016 23.0484Z"
+                                fill="#0080B7" />
+                        </svg>
+                    <?php endif; ?>
                 </div>
+                <div class="modal-success-title">
+                    <?= htmlspecialchars($success) ?>
+                </div>
+                <div class="modal-success-subtitle">
+                    <?php if (strpos($success, 'Dismissed') !== false): ?>
+                        Your announcement has been dismissed <br> and recorded successfully.
+                    <?php else: ?>
+                        Your announcement has been accepted and <br> recorded successfully.
+                    <?php endif; ?>
+                </div>
+                <button class="modal-success-btn<?php if (strpos($success, 'Dismissed') !== false)
+                    echo ' dismissed'; ?>" onclick="closeSuccessModal()">
+                    <svg class="h-8 w-8" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M18.4287 2.875L16.445 4.945L8.4525 12.9375L6.12375 10.695L4.05375 8.625L0 12.6787L2.07 14.7488L6.3825 19.0613L8.36625 21.1313L10.4363 19.0613L20.4988 8.99875L22.5688 6.92875L18.4287 2.875Z"
+                            fill="white" />
+                    </svg>
+                    Okay
+                </button>
             </div>
-        <?php endif; ?>
+        </div>
+    <?php endif; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barangay Luz - Community Announcements</title>
@@ -670,9 +693,9 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
         }
 
         .badge-medium {
-            background: #FEF3C7;
-            color: #92400E;
-            border-color: #FDE68A;
+            background: #FD88024D;
+            color: #FD8802;
+            /* border-color: #FDE68A; */
         }
 
         .badge-normal {
@@ -682,9 +705,9 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
         }
 
         .badge-lab-result {
-            background: #DBEAFE;
-            color: #0369A1;
-            border-color: #7DD3FC;
+            background: #00B837;
+            color: #FFFFFF;
+            /* border-color: #7DD3FC; */
         }
 
         .badge-simple {
@@ -706,7 +729,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
         }
 
         .badge-pending {
-            background: #FEF3C7;
+            background: #FD88024D;
             color: #FD8802;
             text-align: center;
             border-color: #FDE68A;
@@ -1379,9 +1402,9 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                             </div>
                                             <div class="announcement-badges">
                                                 <?php if (isset($announcement['audience_type']) && $announcement['audience_type'] === 'public'): ?>
-                                                    <span class="badge badge-normal">For All Residents</span>
+                                                    <span class="badge bg-[#2563EB] text-[#FFFFFF]">For All Residents</span>
                                                 <?php elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'specific'): ?>
-                                                    <span class="badge badge-normal">For Specific Resident</span>
+                                                    <span class="badge bg-[#2563EB] text-[#FFFFFF]">For Specific Resident</span>
                                                 <?php endif; ?>
                                                 <!-- PRIORITY -->
                                                 <span class="badge badge-<?= $announcement['priority'] ?>">
@@ -1599,9 +1622,9 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                             <span class="badge badge-lab-result">Lab Result</span>
                                         <?php else: ?>
                                             <?php if (isset($a['audience_type']) && $a['audience_type'] === 'public'): ?>
-                                                <span class="badge badge-normal">For All Residents</span>
+                                                <span class="badge bg-[#2563EB] text-[#FFFFFF]">For All Residents</span>
                                             <?php elseif (isset($a['audience_type']) && $a['audience_type'] === 'specific'): ?>
-                                                <span class="badge badge-normal">For Specific Resident</span>
+                                                <span class="badge bg-[#2563EB] text-[#FFFFFF]">For Specific Resident</span>
                                             <?php endif; ?>
                                         <?php endif; ?>
                                         <!-- PRIORITY -->
