@@ -1598,28 +1598,28 @@ try {
     }
 
     $stmt = $pdo->prepare($countQuery);
-    
+
     // Bind parameters for count query
     $paramIndex = 1;
     foreach ($countParams as $param) {
-        if (is_int($param) || ctype_digit((string)$param)) {
-            $stmt->bindValue($paramIndex, (int)$param, PDO::PARAM_INT);
+        if (is_int($param) || ctype_digit((string) $param)) {
+            $stmt->bindValue($paramIndex, (int) $param, PDO::PARAM_INT);
         } else {
             $stmt->bindValue($paramIndex, $param, PDO::PARAM_STR);
         }
         $paramIndex++;
     }
-    
+
     $stmt->execute();
     $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     $totalPages = max(1, ceil($totalRecords / $recordsPerPage));
-    
+
     // Ensure current page is within valid range
     if ($currentPage > $totalPages) {
         $currentPage = $totalPages;
         $offset = ($currentPage - 1) * $recordsPerPage;
     }
-    
+
 } catch (PDOException $e) {
     $error = "Error counting patient records: " . $e->getMessage();
     $totalRecords = 0;
@@ -1725,8 +1725,8 @@ try {
     // Bind parameters
     $paramIndex = 1;
     foreach ($selectParams as $param) {
-        if (is_int($param) || ctype_digit((string)$param)) {
-            $stmt->bindValue($paramIndex, (int)$param, PDO::PARAM_INT);
+        if (is_int($param) || ctype_digit((string) $param)) {
+            $stmt->bindValue($paramIndex, (int) $param, PDO::PARAM_INT);
         } else {
             $stmt->bindValue($paramIndex, $param, PDO::PARAM_STR);
         }
@@ -1735,9 +1735,9 @@ try {
 
     // Bind LIMIT and OFFSET as integers
     if ($limitNeeded) {
-        $stmt->bindValue($paramIndex, (int)$recordsPerPage, PDO::PARAM_INT);
+        $stmt->bindValue($paramIndex, (int) $recordsPerPage, PDO::PARAM_INT);
         $paramIndex++;
-        $stmt->bindValue($paramIndex, (int)$offset, PDO::PARAM_INT);
+        $stmt->bindValue($paramIndex, (int) $offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
@@ -1888,22 +1888,15 @@ if (!empty($searchTerm)) {
             border-collapse: collapse;
         }
 
-        .patient-table th,
         .patient-table td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
         }
 
-        .patient-table th {
-            background-color: #f8fafc;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .patient-table tr:hover {
+        /* .patient-table tr:hover {
             background-color: #f1f5f9;
-        }
+        } */
 
         .patient-id {
             font-weight: bold;
@@ -1911,29 +1904,29 @@ if (!empty($searchTerm)) {
         }
 
         .user-badge {
-            background-color: #e0e7ff;
-            color: #3730a3;
+            background-color: rgba(95, 48, 163, 0.2);
+            color: #5F30A3;
             display: inline-block;
-            padding: 0.25rem 0.5rem;
+            padding: 0.4rem 0.5rem;
             border-radius: 0.25rem;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 400;
         }
 
         .regular-badge {
-            background-color: #f0fdf4;
-            color: #065f46;
+            background-color: rgba(1, 199, 143, 0.2);
+            color: #00A978;
             display: inline-block;
-            padding: 0.25rem 0.5rem;
+            padding: 0.4rem 0.5rem;
             border-radius: 0.25rem;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 400;
         }
 
         .btn-export {
             background-color: #12AF03;
             color: #ffffffff;
-            border-radius: 30px;
+            border-radius: 6px;
             padding: 15px 25px;
             transition: all 0.3s ease;
             font-weight: 500;
@@ -1987,14 +1980,11 @@ if (!empty($searchTerm)) {
             background-color: #3498db;
             color: #ffffffff;
             border: 2px solid #3498db;
-            border-radius: 30px;
-            padding: 10px 20px;
+            border-radius: 6px;
+            padding: 10px 25px;
             transition: all 0.3s ease;
             font-weight: 500;
             min-height: 45px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .btn-view:hover {
@@ -2046,8 +2036,8 @@ if (!empty($searchTerm)) {
         .btn-primary {
             background-color: #3498db;
             color: #ffffffff;
-            border-radius: 30px;
-            padding: 15px 30px;
+            border-radius: 6px;
+            /* padding: 15px 30px; */
             transition: all 0.3s ease;
             font-weight: 500;
             min-height: 55px;
@@ -2060,7 +2050,6 @@ if (!empty($searchTerm)) {
         .btn-primary:hover {
             background-color: #55a3d8ff;
             color: #ffffffff;
-            transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
         }
 
@@ -2144,23 +2133,23 @@ if (!empty($searchTerm)) {
             align-items: center;
             justify-content: center;
             font-size: 18px;
-                                        width: 100%;
-                                        font-size: 1.1rem;
-                                        font-weight: 600;
-                                        color: #22223b;
-                                        background: #fff;
-                                        border: 2px solid #3C96E1;
-                                        border-radius: 8px;
-                                        height: 48px;
-                                        padding: 0 2.5rem 0 1.2rem;
-                                        appearance: none;
-                                        -webkit-appearance: none;
-                                        -moz-appearance: none;
-                                        box-shadow: none;
-                                        position: relative;
-                                        transition: border 0.2s, box-shadow 0.2s;
-                                        display: block;
-                                        line-height: 48px;
+            width: 100%;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #22223b;
+            background: #fff;
+            border: 2px solid #3C96E1;
+            border-radius: 8px;
+            height: 48px;
+            padding: 0 2.5rem 0 1.2rem;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            box-shadow: none;
+            position: relative;
+            transition: border 0.2s, box-shadow 0.2s;
+            display: block;
+            line-height: 48px;
             font-weight: 600;
             min-height: 60px;
             display: inline-flex;
@@ -2291,9 +2280,9 @@ if (!empty($searchTerm)) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 2rem;
-            padding: 1rem 0;
-            border-top: 1px solid #e2e8f0;
+            /* margin-top: 2rem; */
+            padding: 1.5rem 0;
+            /* border-top: 1px solid #e2e8f0; */
         }
 
         .pagination {
@@ -2311,37 +2300,33 @@ if (!empty($searchTerm)) {
             width: 3.5rem;
             height: 3.5rem;
             border-radius: 30px;
-            background-color: white;
-            border: 1px solid #3498db;
-            color: #4b5563;
+            background-color: #3498DB;
+            color: #FFFFFF;
             font-weight: 500;
             transition: all 0.3s ease;
             text-decoration: none;
         }
 
         .pagination-btn:hover {
-            background-color: #f0f9ff;
-            border-color: #3498db;
-            color: #374151;
+            background-color: #218dd5;
+            color: #FFFFFF;
         }
 
         .pagination-btn.active {
             background-color: white;
             color: #3498db;
+            font-size: 1.875rem;
             border: 2px solid #3498db;
-            font-weight: 600;
+            font-weight: 400;
         }
 
         .pagination-btn.disabled {
-            opacity: 0.5;
             cursor: not-allowed;
         }
 
         .pagination-btn.disabled:hover {
-            background-color: white;
-            color: #4b5563;
-            border-color: #3498db;
-            opacity: 0.5;
+            background-color: #218dd5;
+            color: #FFFFFF;
         }
 
         .pagination-actions {
@@ -2351,10 +2336,9 @@ if (!empty($searchTerm)) {
         }
 
         .btn-view-all {
-            background-color: white;
-            color: #3498db;
-            border: 2px solid #3498db;
-            border-radius: 30px;
+            background-color: #3498DB;
+            color: #FFFFFF;
+            border-radius: 6px;
             padding: 12px 24px;
             transition: all 0.3s ease;
             text-decoration: none;
@@ -2362,7 +2346,7 @@ if (!empty($searchTerm)) {
             align-items: center;
             font-weight: 500;
             min-height: 55px;
-            font-size: 16px;
+            font-size: 1.125rem;
         }
 
         .btn-view-all:hover {
@@ -2549,7 +2533,7 @@ if (!empty($searchTerm)) {
             border: 2px solid #55b2f0ff !important;
             background-color: white !important;
             transition: all 0.3s ease;
-            border-radius: 10px !important;
+            /* border-radius: 10px !important; */
             padding: 16px 20px 16px 55px !important;
             min-height: 55px !important;
             font-size: 16px;
@@ -2594,15 +2578,9 @@ if (!empty($searchTerm)) {
             pointer-events: none;
         }
 
-        .patient-table th {
-            background-color: #f0f9ff;
-            color: #2c3e50;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .patient-table tr:hover {
+        /* .patient-table tr:hover {
             background-color: #f8fafc;
-        }
+        } */
 
         .main-container {
             background-color: white;
@@ -3278,19 +3256,18 @@ if (!empty($searchTerm)) {
         }
 
         .patient-table thead {
-            background: #f8fafc;
             position: sticky;
             top: 0;
             z-index: 20;
         }
 
         .patient-table th {
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             text-align: left;
             font-weight: 600;
-            color: #374151;
+            font-size: 1.13rem;
+            color: #4B5563;
             border-bottom: 2px solid #e2e8f0;
-            background: #f8fafc;
         }
 
         .patient-table tbody tr {
@@ -3298,13 +3275,15 @@ if (!empty($searchTerm)) {
             transition: all 0.2s ease;
         }
 
-        .patient-table tbody tr:hover {
+        /* .patient-table tbody tr:hover {
             background: #f0f9ff;
-        }
+        } */
 
         .patient-table td {
             padding: 1rem;
-            color: #4b5563;
+            font-weight: 400;
+            font-size: 1rem;
+            color: #4B5563;
         }
 
         .checkbox-column input[type="checkbox"] {
@@ -3341,34 +3320,25 @@ if (!empty($searchTerm)) {
                 max-width: 96%;
             }
         }
-        
+
         .custom-select-filter {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-
-    height: 48px;
-    padding: 10px 55px 10px 18px;  
-    /* left padding for text */
-    /* right padding creates gap between text & arrow */
-
-    font-size: 18px;
-    font-weight: 500;
-
-    border: 2px solid #2F80ED;
-    border-radius: 10px;
-    background-color: #F5F5F5;
-
-    background-image: url('images/big-arrow.svg');
-    background-repeat: no-repeat;
-    background-position: right 18px center; 
-    /* space between arrow and right edge */
-    background-size: 22px;
-}
-
-
-
-        
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            /* padding: 15px 25px; */
+            /* left padding for text */
+            /* right padding creates gap between text & arrow */
+            font-size: 18px;
+            font-weight: 500;
+            border: 2px solid #2F80ED;
+            border-radius: 10px;
+            background-color: #F5F5F5;
+            background-image: url('images/big-arrow.svg');
+            background-repeat: no-repeat;
+            background-position: right 18px center;
+            /* space between arrow and right edge */
+            background-size: 22px;
+        }
     </style>
 </head>
 
@@ -3420,7 +3390,8 @@ if (!empty($searchTerm)) {
                     <!-- ...existing code... -->
                     </button>
                 </div>
-                <a href="deleted_patients.php" class="btn-archive rounded-md text-lg gap-2 inline-flex items-center px-6 py-3">
+                <a href="deleted_patients.php"
+                    class="btn-archive rounded-md text-lg gap-2 inline-flex items-center px-6 py-3">
                     <svg class="w-8 h-8 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path
                             d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z"
@@ -3470,7 +3441,7 @@ if (!empty($searchTerm)) {
                 <?php endif; ?>
 
                 <!-- Search Form -->
-                <form method="get" action="" class="mb-6 section-bg p-6">
+                <form method="get" action="" class="mb-6">
                     <input type="hidden" name="tab" value="patients-tab">
                     <?php if ($viewAll): ?>
                         <input type="hidden" name="view_all" value="true">
@@ -3482,32 +3453,159 @@ if (!empty($searchTerm)) {
                     <div class="search-form-container flex flex-wrap items-end gap-5">
                         <!-- Search Term Field with icon inside input -->
                         <div class="search-field-group flex-grow min-w-[250px]">
-                            <label for="search" class="block text-gray-700 mb-2 font-medium">
-                                Search Term
+                            <label for="search" class="block text-gray-700 text-xl mb-4 font-medium">
+                                Search Record
                             </label>
-                            <div class="flex gap-0">
-                                <div class="relative flex-grow">
-                                    <i
-                                        class="fa-solid fa-magnifying-glass absolute left-7 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none z-10"></i>
-                                    <input type="text" id="search" name="search"
-                                        value="<?= htmlspecialchars($searchTerm) ?>"
-                                        placeholder="<?= $searchBy === 'unique_number' ? 'Enter Patients Name...' : 'Search patients by name...' ?>"
-                                        class="search-input w-full pl-11 pr-4 py-2 rounded-l-lg border focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+                            <!-- SEARCH RECORD / EXPORT RECORDS / FILTER  -->
+                            <div
+                                class="flex flex-col md:flex-row border-b-2 pb-6 border-gray-300 justify-between items-center">
+                                <!-- LEFT CONTENT -->
+                                <div class="flex gap-4">
+                                    <div class="relative">
+                                        <i
+                                            class="fa-solid fa-magnifying-glass absolute left-7 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none z-10"></i>
+                                        <input type="text" id="search" name="search"
+                                            value="<?= htmlspecialchars($searchTerm) ?>"
+                                            placeholder="<?= $searchBy === 'unique_number' ? 'Enter Patients Name...' : 'Search patients by name...' ?>"
+                                            class="search-input w-full pl-10 py-3 px-16 text-base font-normal rounded-md focus:outline-none border border-[#3C96E1] focus:ring-2 focus:ring-blue-400 focus:border-blue-500">
+                                    </div>
+
+                                    <!-- Search Button -->
+                                    <div class="flex-shrink-0">
+                                        <?php if (empty($searchTerm)): ?>
+                                            <button type="submit" class="btn-primary inline-flex items-center py-3 px-10">
+                                                <!-- <i class="fas fa-search mr-2"></i>  -->
+                                                Search
+                                            </button>
+                                        <?php else: ?>
+                                            <a href="existing_info_patients.php<?= $manualSelectMode ? '?manual_select=true&tab=patients-tab' : '?tab=patients-tab' ?>"
+                                                class="btn-gray inline-flex items-center px-6 rounded-r-lg rounded-l-none">
+                                                <i class="fas fa-times mr-2"></i> Clear
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
 
-                                <!-- Search Button -->
-                                <div class="flex-shrink-0">
-                                    <?php if (empty($searchTerm)): ?>
-                                        <button type="submit"
-                                            class="btn-primary inline-flex items-center px-6 rounded-r-lg rounded-l-none">
-                                            <i class="fas fa-search mr-2"></i> Search
-                                        </button>
-                                    <?php else: ?>
-                                        <a href="existing_info_patients.php<?= $manualSelectMode ? '?manual_select=true&tab=patients-tab' : '?tab=patients-tab' ?>"
-                                            class="btn-gray inline-flex items-center px-6 rounded-r-lg rounded-l-none">
-                                            <i class="fas fa-times mr-2"></i> Clear
-                                        </a>
-                                    <?php endif; ?>
+                                <!-- RIGHT CONTENT -->
+                                <div class="flex items-center gap-6">
+                                    <!-- Export Records Button -->
+                                    <button type="button" onclick="openExportModal()"
+                                        class="btn-export inline-flex text-base items-center px-6"
+                                        style="background-color: #2ECC71;">
+                                        <svg class="h-6 w-6 mr-2" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M21 9.75C21 9.94891 20.921 10.1397 20.7803 10.2803C20.6397 10.421 20.4489 10.5 20.25 10.5C20.0511 10.5 19.8603 10.421 19.7197 10.2803C19.579 10.1397 19.5 9.94891 19.5 9.75V5.56125L13.2816 11.7806C13.1408 11.9214 12.95 12.0004 12.7509 12.0004C12.5519 12.0004 12.361 11.9214 12.2203 11.7806C12.0796 11.6399 12.0005 11.449 12.0005 11.25C12.0005 11.051 12.0796 10.8601 12.2203 10.7194L18.4387 4.5H14.25C14.0511 4.5 13.8603 4.42098 13.7197 4.28033C13.579 4.13968 13.5 3.94891 13.5 3.75C13.5 3.55109 13.579 3.36032 13.7197 3.21967C13.8603 3.07902 14.0511 3 14.25 3H20.25C20.4489 3 20.6397 3.07902 20.7803 3.21967C20.921 3.36032 21 3.55109 21 3.75V9.75ZM17.25 12C17.0511 12 16.8603 12.079 16.7197 12.2197C16.579 12.3603 16.5 12.5511 16.5 12.75V19.5H4.5V7.5H11.25C11.4489 7.5 11.6397 7.42098 11.7803 7.28033C11.921 7.13968 12 6.94891 12 6.75C12 6.55109 11.921 6.36032 11.7803 6.21967C11.6397 6.07902 11.4489 6 11.25 6H4.5C4.10218 6 3.72064 6.15804 3.43934 6.43934C3.15804 6.72064 3 7.10218 3 7.5V19.5C3 19.8978 3.15804 20.2794 3.43934 20.5607C3.72064 20.842 4.10218 21 4.5 21H16.5C16.8978 21 17.2794 20.842 17.5607 20.5607C17.842 20.2794 18 19.8978 18 19.5V12.75C18 12.5511 17.921 12.3603 17.7803 12.2197C17.6397 12.079 17.4489 12 17.25 12Z"
+                                                fill="white" />
+                                        </svg>
+                                        Export
+                                    </button>
+                                    <!-- Filter by Date Added/Timestamp -->
+                                    <form method="get" action="" class="flex items-center gap-2">
+                                        <input type="hidden" name="tab" value="patients-tab">
+                                        <?php if ($viewAll): ?>
+                                            <input type="hidden" name="view_all" value="true">
+                                        <?php endif; ?>
+                                        <?php if ($manualSelectMode): ?>
+                                            <input type="hidden" name="manual_select" value="true">
+                                        <?php endif; ?>
+                                        <select name="patient_type" onchange="this.form.submit()"
+                                            class="custom-select-filter">
+                                            <option value="all" <?= ($patientTypeFilter === 'all' || $patientTypeFilter === '' || !isset($patientTypeFilter)) ? 'selected' : '' ?>>All Patient Types</option>
+                                            <option value="registered" <?= $patientTypeFilter === 'registered' ? 'selected' : '' ?>>Registered Patient</option>
+                                            <option value="regular" <?= $patientTypeFilter === 'regular' ? 'selected' : '' ?>>
+                                                Regular Patient</option>
+                                        </select>
+                                        <select name="date_sort" onchange="this.form.submit()"
+                                            class="custom-select-filter ml-2">
+                                            <option value="desc" <?= (empty($_GET['date_sort']) || $_GET['date_sort'] === 'desc') ? 'selected' : '' ?>>Newest First</option>
+                                            <option value="asc" <?= (isset($_GET['date_sort']) && $_GET['date_sort'] === 'asc') ? 'selected' : '' ?>>Oldest First</option>
+                                        </select>
+                                        <input type="date" name="filter_date"
+                                            value="<?= isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : '' ?>"
+                                            class="custom-select-filter ml-2" onchange="this.form.submit()"
+                                            placeholder="Filter by Date">
+                                        <style>
+                                            .custom-select-filter {
+
+                                                /* Hide default browser arrow for select and keep only custom SVG arrow */
+                                                select.custom-select-filter {
+                                                    -webkit-appearance: none;
+                                                    -moz-appearance: none;
+                                                    appearance: none;
+                                                }
+
+                                                select.custom-select-filter::-ms-expand {
+                                                    display: none;
+                                                }
+
+                                                /* Hide default browser arrow for select and keep only custom SVG arrow */
+                                                select.custom-select-filter {
+                                                    -webkit-appearance: none;
+                                                    -moz-appearance: none;
+                                                    appearance: none;
+                                                    background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%2322233b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+                                                    background-repeat: no-repeat;
+                                                    background-position: right 2rem center;
+                                                    background-size: 1.5rem 1.5rem;
+                                                    padding-right: 4.5rem;
+                                                }
+
+                                                select.custom-select-filter::-ms-expand {
+                                                    display: none;
+                                                }
+
+                                                width: 100%;
+                                                font-size: 1rem;
+                                                font-weight: 500;
+                                                color: #22223b;
+                                                background: #fff;
+                                                border: 1px solid #3C96E1;
+                                                border-radius: 6px;
+                                                height: 48px;
+                                                padding: 0 3.5rem 0 1.5rem;
+                                            }
+
+                                            /* Remove custom arrow for date input */
+                                            input[type="date"].custom-select-filter {
+                                                background-image: none !important;
+                                                padding-right: 1.5rem;
+                                                appearance: none;
+                                                -webkit-appearance: none;
+                                                -moz-appearance: none;
+                                                box-shadow: 0 2px 8px 0 rgba(60, 150, 225, 0.08);
+                                                position: relative;
+                                                transition: border 0.2s, box-shadow 0.2s;
+                                                display: flex;
+                                                align-items: center;
+                                            }
+
+                                            .custom-select-filter:focus {
+                                                outline: none;
+                                                border: 2px solid #3C96E1;
+                                                box-shadow: 0 0 0 2px #60a5fa33;
+                                            }
+
+                                            .custom-select-filter::-ms-expand {
+                                                display: none;
+                                            }
+
+                                            /* Custom arrow */
+                                            /* Custom arrow for select filters only */
+                                            select.custom-select-filter {
+                                                background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%2322233b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+                                                background-repeat: no-repeat;
+                                                background-position: right 1.2rem center;
+                                                background-size: 1.5rem 1.5rem;
+                                                padding-right: 2.5rem;
+                                            }
+
+                                            select.custom-select-filter::-ms-expand {
+                                                display: none;
+                                            }
+                                        </style>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -3515,7 +3613,7 @@ if (!empty($searchTerm)) {
                 </form>
 
                 <?php if (!empty($searchTerm)): ?>
-                    <div class="section-bg overflow-hidden mb-6">
+                    <div class="overflow-hidden mb-6">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-medium text-secondary">Search Results for
                                 "<?= htmlspecialchars($searchTerm) ?>"</h3>
@@ -3527,15 +3625,14 @@ if (!empty($searchTerm)) {
                                 <p class="text-gray-500">No patients or users found matching your search.</p>
                             </div>
                         <?php else: ?>
-                            <!-- Display Patients Search Results -->
+                            <!-- PATIENT SEARCH RESULTS -->
                             <?php if (!empty($patients)): ?>
                                 <div class="p-4">
-                                    <h4 class="text-md font-medium text-secondary mb-3">Patient Records</h4>
                                     <div class="overflow-x-auto">
                                         <table class="patient-table">
                                             <thead>
                                                 <tr>
-                                                    <th>ID</th>
+                                                    <th>R.ID</th>
                                                     <th>Name</th>
                                                     <th>Date of Birth</th>
                                                     <th>Age</th>
@@ -3549,7 +3646,7 @@ if (!empty($searchTerm)) {
                                                     <?php if ($occupationExists): ?>
                                                         <th>Occupation</th>
                                                     <?php endif; ?>
-                                                    <th>Type</th>
+                                                    <th>Record Type</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
@@ -3592,7 +3689,7 @@ if (!empty($searchTerm)) {
                                 </div>
                             <?php endif; ?>
 
-                            <!-- Display Users Search Results -->
+                            <!-- USER SEARCH RESULT -->
                             <?php if (!empty($searchedUsers)): ?>
                                 <div class="p-4 border-t border-gray-200">
                                     <h4 class="text-md font-medium text-secondary mb-3">Registered Users</h4>
@@ -3600,7 +3697,7 @@ if (!empty($searchTerm)) {
                                         <table class="patient-table">
                                             <thead>
                                                 <tr>
-                                                    <th>ID</th>
+                                                    <th>R.ID</th>
                                                     <th>Name</th>
                                                     <th>Date of Birth</th>
                                                     <th>Age</th>
@@ -3614,7 +3711,7 @@ if (!empty($searchTerm)) {
                                                     <?php if ($occupationExists): ?>
                                                         <th>Occupation</th>
                                                     <?php endif; ?>
-                                                    <th>Type</th>
+                                                    <th>Record Type</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -3649,123 +3746,7 @@ if (!empty($searchTerm)) {
                 <?php endif; ?>
 
                 <?php if (empty($searchTerm)): ?>
-                    <div class="section-bg overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                            <div>
-                                <h3 class="text-lg font-medium text-secondary">
-                                    <?= $viewAll ? 'All Patient Records' : ($manualSelectMode ? 'Select Patients for Export' : 'Patient Records') ?>
-                                </h3>
-                                <p class="text-sm text-gray-500 mt-1">
-                                    <?php if ($viewAll): ?>
-                                        Showing all <?= count($allPatients) ?> records
-                                    <?php elseif ($manualSelectMode): ?>
-                                        Select patients to include in export
-                                    <?php else: ?>
-                                        Showing <?= count($allPatients) ?> of <?= $totalRecords ?> records
-                                    <?php endif; ?>
-                                </p>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <!-- Export Records Button -->
-                                <button type="button" onclick="openExportModal()"
-                                    class="btn-export inline-flex items-center px-6" style="background-color: #10b981;">
-                                    <i class="fas fa-download mr-2"></i>Export Records
-                                </button>
-                                <!-- Filter by Date Added/Timestamp -->
-                                <form method="get" action="" class="flex items-center gap-2">
-                                    <input type="hidden" name="tab" value="patients-tab">
-                                    <?php if ($viewAll): ?>
-                                        <input type="hidden" name="view_all" value="true">
-                                    <?php endif; ?>
-                                    <?php if ($manualSelectMode): ?>
-                                        <input type="hidden" name="manual_select" value="true">
-                                    <?php endif; ?>
-                                    <select name="patient_type" onchange="this.form.submit()" class="custom-select-filter">
-                                        <option value="all" <?= ($patientTypeFilter === 'all' || $patientTypeFilter === '' || !isset($patientTypeFilter)) ? 'selected' : '' ?>>All Patient Types</option>
-                                        <option value="registered" <?= $patientTypeFilter === 'registered' ? 'selected' : '' ?>>Registered Patient</option>
-                                        <option value="regular" <?= $patientTypeFilter === 'regular' ? 'selected' : '' ?>>Regular Patient</option>
-                                    </select>
-                                    <select name="date_sort" onchange="this.form.submit()" class="custom-select-filter ml-2">
-                                        <option value="desc" <?= (empty($_GET['date_sort']) || $_GET['date_sort'] === 'desc') ? 'selected' : '' ?>>Newest First</option>
-                                        <option value="asc" <?= (isset($_GET['date_sort']) && $_GET['date_sort'] === 'asc') ? 'selected' : '' ?>>Oldest First</option>
-                                    </select>
-                                    <input type="date" name="filter_date"
-                                        value="<?= isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : '' ?>"
-                                        class="custom-select-filter ml-2" onchange="this.form.submit()"
-                                        placeholder="Filter by Date">
-                                                                    <style>
-                                                                    .custom-select-filter {
-                                                                                                                                                /* Hide default browser arrow for select and keep only custom SVG arrow */
-                                                                                                                                                select.custom-select-filter {
-                                                                                                                                                    -webkit-appearance: none;
-                                                                                                                                                    -moz-appearance: none;
-                                                                                                                                                    appearance: none;
-                                                                                                                                                }
-                                                                                                                                                select.custom-select-filter::-ms-expand {
-                                                                                                                                                    display: none;
-                                                                                                                                                }
-                                                                                                            /* Hide default browser arrow for select and keep only custom SVG arrow */
-                                                                                                            select.custom-select-filter {
-                                                                                                                -webkit-appearance: none;
-                                                                                                                -moz-appearance: none;
-                                                                                                                appearance: none;
-                                                                                                                background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%2322233b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
-                                                                                                                background-repeat: no-repeat;
-                                                                                                                background-position: right 2rem center;
-                                                                                                                background-size: 1.5rem 1.5rem;
-                                                                                                                padding-right: 4.5rem;
-                                                                                                            }
-                                                                                                            select.custom-select-filter::-ms-expand {
-                                                                                                                display: none;
-                                                                                                            }
-                                                                        width: 100%;
-                                                                        font-size: 1rem;
-                                                                        font-weight: 500;
-                                                                        color: #22223b;
-                                                                        background: #fff;
-                                                                        border: 1px solid #3C96E1;
-                                                                        border-radius: 6px;
-                                                                        height: 48px;
-                                                                        padding: 0 3.5rem 0 1.5rem;
-                                                                                                            }
-                                                                                                            /* Remove custom arrow for date input */
-                                                                                                            input[type="date"].custom-select-filter {
-                                                                                                                background-image: none !important;
-                                                                                                                padding-right: 1.5rem;
-                                                                        appearance: none;
-                                                                        -webkit-appearance: none;
-                                                                        -moz-appearance: none;
-                                                                        box-shadow: 0 2px 8px 0 rgba(60,150,225,0.08);
-                                                                        position: relative;
-                                                                        transition: border 0.2s, box-shadow 0.2s;
-                                                                        display: flex;
-                                                                        align-items: center;
-                                                                    }
-                                                                    .custom-select-filter:focus {
-                                                                        outline: none;
-                                                                        border: 2px solid #3C96E1;
-                                                                        box-shadow: 0 0 0 2px #60a5fa33;
-                                                                    }
-                                                                    .custom-select-filter::-ms-expand {
-                                                                        display: none;
-                                                                    }
-                                                                    /* Custom arrow */
-                                                                    /* Custom arrow for select filters only */
-                                                                    select.custom-select-filter {
-                                                                        background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%2322233b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
-                                                                        background-repeat: no-repeat;
-                                                                        background-position: right 1.2rem center;
-                                                                        background-size: 1.5rem 1.5rem;
-                                                                        padding-right: 2.5rem;
-                                                                    }
-                                                                    select.custom-select-filter::-ms-expand {
-                                                                        display: none;
-                                                                    }
-                                                                    </style>
-                                </form>
-                            </div>
-                        </div>
-
+                    <div class="overflow-hidden">
                         <?php if (empty($allPatients)): ?>
                             <div class="text-center py-12 bg-gray-50 rounded-lg">
                                 <i class="fa-solid fa-bed text-6xl mb-4 text-gray-300"></i>
@@ -3778,6 +3759,8 @@ if (!empty($searchTerm)) {
                                 </div>
                             </div>
                         <?php else: ?>
+
+                            <!-- VIEW ALL PATIENT -->
                             <?php if ($viewAll || $manualSelectMode): ?>
                                 <div class="p-4">
                                     <?php if (!$manualSelectMode): ?>
@@ -3797,7 +3780,7 @@ if (!empty($searchTerm)) {
                                                                     onchange="toggleAllSelection(this)">
                                                             </th>
                                                         <?php endif; ?>
-                                                        <th>ID</th>
+                                                        <th>R.ID</th>
                                                         <th>Name</th>
                                                         <th>Date of Birth</th>
                                                         <th>Age</th>
@@ -3815,7 +3798,7 @@ if (!empty($searchTerm)) {
                                                         <th>BHW</th>
                                                         <th>4P's</th>
                                                         <th>Blood Type</th>
-                                                        <th>Type</th>
+                                                        <th>Record Type</th>
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
@@ -3878,11 +3861,13 @@ if (!empty($searchTerm)) {
                                     </div>
                                 </div>
                             <?php else: ?>
+
+                                <!-- ALL PATIENT TYPE -->
                                 <div class="overflow-x-auto">
                                     <table class="patient-table">
                                         <thead>
                                             <tr>
-                                                <th>ID</th>
+                                                <th>R.ID</th>
                                                 <th>Name</th>
                                                 <th>Date of Birth</th>
                                                 <th>Age</th>
@@ -3896,7 +3881,7 @@ if (!empty($searchTerm)) {
                                                 <?php if ($occupationExists): ?>
                                                     <th>Occupation</th>
                                                 <?php endif; ?>
-                                                <th>Type</th>
+                                                <th>Record Type</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -3927,12 +3912,24 @@ if (!empty($searchTerm)) {
                                                     <td>
                                                         <button onclick="openViewModal(<?= $patient['id'] ?>)"
                                                             class="btn-view inline-flex items-center mr-2">
-                                                            <i class="fas fa-eye mr-1"></i> View
+                                                            <svg class="w-8 h-8 mr-1 rounded-md" viewBox="0 0 24 24" stroke-width="2"
+                                                                xmlns="http://www.w3.org/2000/svg">
+                                                                <path
+                                                                    d="M23.1853 11.6962C23.1525 11.6222 22.3584 9.86062 20.5931 8.09531C18.2409 5.74312 15.27 4.5 12 4.5C8.72999 4.5 5.75905 5.74312 3.40687 8.09531C1.64155 9.86062 0.843741 11.625 0.814679 11.6962C0.772035 11.7922 0.75 11.896 0.75 12.0009C0.75 12.1059 0.772035 12.2097 0.814679 12.3056C0.847491 12.3797 1.64155 14.1403 3.40687 15.9056C5.75905 18.2569 8.72999 19.5 12 19.5C15.27 19.5 18.2409 18.2569 20.5931 15.9056C22.3584 14.1403 23.1525 12.3797 23.1853 12.3056C23.2279 12.2097 23.25 12.1059 23.25 12.0009C23.25 11.896 23.2279 11.7922 23.1853 11.6962ZM12 18C9.11437 18 6.59343 16.9509 4.50655 14.8828C3.65028 14.0313 2.92179 13.0603 2.34374 12C2.92164 10.9396 3.65014 9.9686 4.50655 9.11719C6.59343 7.04906 9.11437 6 12 6C14.8856 6 17.4066 7.04906 19.4934 9.11719C20.3514 9.9684 21.0815 10.9394 21.6609 12C20.985 13.2619 18.0403 18 12 18ZM12 7.5C11.11 7.5 10.2399 7.76392 9.49993 8.25839C8.7599 8.75285 8.18313 9.45566 7.84253 10.2779C7.50194 11.1002 7.41282 12.005 7.58646 12.8779C7.76009 13.7508 8.18867 14.5526 8.81801 15.182C9.44735 15.8113 10.2492 16.2399 11.1221 16.4135C11.995 16.5872 12.8998 16.4981 13.7221 16.1575C14.5443 15.8169 15.2471 15.2401 15.7416 14.5001C16.2361 13.76 16.5 12.89 16.5 12C16.4988 10.8069 16.0242 9.66303 15.1806 8.81939C14.337 7.97575 13.1931 7.50124 12 7.5ZM12 15C11.4066 15 10.8266 14.8241 10.3333 14.4944C9.83993 14.1648 9.45542 13.6962 9.22835 13.1481C9.00129 12.5999 8.94188 11.9967 9.05764 11.4147C9.17339 10.8328 9.45911 10.2982 9.87867 9.87868C10.2982 9.45912 10.8328 9.1734 11.4147 9.05764C11.9967 8.94189 12.5999 9.0013 13.148 9.22836C13.6962 9.45542 14.1648 9.83994 14.4944 10.3333C14.824 10.8266 15 11.4067 15 12C15 12.7956 14.6839 13.5587 14.1213 14.1213C13.5587 14.6839 12.7956 15 12 15Z"
+                                                                    fill="white" />
+                                                            </svg>
+                                                            View
                                                         </button>
                                                         <a href="?delete_patient=<?= $patient['id'] ?>"
-                                                            class="btn-archive inline-flex items-center"
+                                                            class="btn-archive py-3 rounded-md px-6 inline-flex items-center"
                                                             onclick="return confirm('Are you sure you want to archive this patient record?')">
-                                                            <i class="fas fa-trash-alt mr-1"></i> Archive
+                                                            <svg class="w-8 h-8 mr-1 rounded-md" viewBox="0 0 24 24" fill="none"
+                                                                xmlns="http://www.w3.org/2000/svg">
+                                                                <path
+                                                                    d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z"
+                                                                    fill="white" />
+                                                            </svg>
+                                                            Archive
                                                         </a>
                                                     </td>
                                                 </tr>
@@ -3942,56 +3939,84 @@ if (!empty($searchTerm)) {
                                 </div>
 
                                 <!-- Enhanced Pagination Container with preserved filters -->
-<div class="pagination-container">
-    <div class="pagination">
-        <?php
-        // Build query string for pagination links
-        $queryParams = [];
-        if (!empty($patientTypeFilter) && $patientTypeFilter !== 'all') {
-            $queryParams[] = 'patient_type=' . urlencode($patientTypeFilter);
-        }
-        if (!empty($_GET['filter_date'])) {
-            $queryParams[] = 'filter_date=' . urlencode($_GET['filter_date']);
-        }
-        if (!empty($_GET['date_sort'])) {
-            $queryParams[] = 'date_sort=' . urlencode($_GET['date_sort']);
-        }
-        $queryString = !empty($queryParams) ? '&' . implode('&', $queryParams) : '';
-        ?>
-        
-        <!-- Previous Button -->
-        <a href="?tab=patients-tab&page=<?= $currentPage - 1 ?><?= $queryString ?>"
-            class="pagination-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>">
-            <i class="fas fa-chevron-left"></i>
-        </a>
+                                <div class="pagination-container">
+                                    <style>
+                                        .bg-showing-paginate {
+                                            background-color: rgba(52, 152, 219, 0.3);
+                                            color: #3498DB;
+                                        }
+                                    </style>
+                                    <div class="bg-showing-paginate rounded-md px-6 py-3 items-center ">
+                                        <div>
+                                            <p class="text-lg text-[#3498DB] font-medium mt-1">
+                                                <?php if ($viewAll): ?>
+                                                    Showing all
+                                                    <?= count($allPatients) ?> records
+                                                <?php elseif ($manualSelectMode): ?>
+                                                    Select patients to include in export
+                                                <?php else: ?>
+                                                    Showing
+                                                    <?= count($allPatients) ?> of
+                                                    <?= $totalRecords ?> records
+                                                <?php endif; ?>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="pagination">
+                                        <?php
+                                        // Build query string for pagination links
+                                        $queryParams = [];
+                                        if (!empty($patientTypeFilter) && $patientTypeFilter !== 'all') {
+                                            $queryParams[] = 'patient_type=' . urlencode($patientTypeFilter);
+                                        }
+                                        if (!empty($_GET['filter_date'])) {
+                                            $queryParams[] = 'filter_date=' . urlencode($_GET['filter_date']);
+                                        }
+                                        if (!empty($_GET['date_sort'])) {
+                                            $queryParams[] = 'date_sort=' . urlencode($_GET['date_sort']);
+                                        }
+                                        $queryString = !empty($queryParams) ? '&' . implode('&', $queryParams) : '';
+                                        ?>
 
-        <!-- Page Numbers -->
-        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-            <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
-                <a href="?tab=patients-tab&page=<?= $i ?><?= $queryString ?>"
-                    class="pagination-btn <?= $i == $currentPage ? 'active' : '' ?>">
-                    <?= $i ?>
-                </a>
-            <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
-                <span class="pagination-btn disabled">...</span>
-            <?php endif; ?>
-        <?php endfor; ?>
+                                        <!-- Previous Button -->
+                                        <a href="?tab=patients-tab&page=<?= $currentPage - 1 ?><?= $queryString ?>"
+                                            class="pagination-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
 
-        <!-- Next Button -->
-        <a href="?tab=patients-tab&page=<?= $currentPage + 1 ?><?= $queryString ?>"
-            class="pagination-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
-            <i class="fas fa-chevron-right"></i>
-        </a>
-    </div>
+                                        <!-- Page Numbers -->
+                                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                            <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
+                                                <a href="?tab=patients-tab&page=<?= $i ?><?= $queryString ?>"
+                                                    class="pagination-btn <?= $i == $currentPage ? 'active' : '' ?>">
+                                                    <?= $i ?>
+                                                </a>
+                                            <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
+                                                <span class="pagination-btn disabled">...</span>
+                                            <?php endif; ?>
+                                        <?php endfor; ?>
 
-    <!-- Update the View All button in the header -->
-<div class="flex items-center gap-4">
-    <a href="?tab=patients-tab&view_all=true&patient_type=<?= urlencode($patientTypeFilter) ?><?= !empty($_GET['filter_date']) ? '&filter_date=' . urlencode($_GET['filter_date']) : '' ?><?= !empty($_GET['date_sort']) ? '&date_sort=' . urlencode($_GET['date_sort']) : '' ?>"
-        class="btn-view-all">
-        <i class="fas fa-list mr-2"></i>View All Patients
-    </a>
-</div>
-</div>
+                                        <!-- Next Button -->
+                                        <a href="?tab=patients-tab&page=<?= $currentPage + 1 ?><?= $queryString ?>"
+                                            class="pagination-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </div>
+
+                                    <!-- Update the View All button in the header -->
+                                    <div class="flex items-center gap-4">
+                                        <a href="?tab=patients-tab&view_all=true&patient_type=<?= urlencode($patientTypeFilter) ?><?= !empty($_GET['filter_date']) ? '&filter_date=' . urlencode($_GET['filter_date']) : '' ?><?= !empty($_GET['date_sort']) ? '&date_sort=' . urlencode($_GET['date_sort']) : '' ?>"
+                                            class="btn-view-all">
+                                            <svg class="w-8 h-8 mr-2" viewBox="0 0 27 27" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M9.28125 6.75C9.28125 6.52622 9.37014 6.31161 9.52838 6.15338C9.68661 5.99515 9.90122 5.90625 10.125 5.90625H22.7812C23.005 5.90625 23.2196 5.99515 23.3779 6.15338C23.5361 6.31161 23.625 6.52622 23.625 6.75C23.625 6.97378 23.5361 7.18839 23.3779 7.34662C23.2196 7.50486 23.005 7.59375 22.7812 7.59375H10.125C9.90122 7.59375 9.68661 7.50486 9.52838 7.34662C9.37014 7.18839 9.28125 6.97378 9.28125 6.75ZM22.7812 12.6562H10.125C9.90122 12.6562 9.68661 12.7451 9.52838 12.9034C9.37014 13.0616 9.28125 13.2762 9.28125 13.5C9.28125 13.7238 9.37014 13.9384 9.52838 14.0966C9.68661 14.2549 9.90122 14.3438 10.125 14.3438H22.7812C23.005 14.3438 23.2196 14.2549 23.3779 14.0966C23.5361 13.9384 23.625 13.7238 23.625 13.5C23.625 13.2762 23.5361 13.0616 23.3779 12.9034C23.2196 12.7451 23.005 12.6562 22.7812 12.6562ZM22.7812 19.4062H10.125C9.90122 19.4062 9.68661 19.4951 9.52838 19.6534C9.37014 19.8116 9.28125 20.0262 9.28125 20.25C9.28125 20.4738 9.37014 20.6884 9.52838 20.8466C9.68661 21.0049 9.90122 21.0938 10.125 21.0938H22.7812C23.005 21.0938 23.2196 21.0049 23.3779 20.8466C23.5361 20.6884 23.625 20.4738 23.625 20.25C23.625 20.0262 23.5361 19.8116 23.3779 19.6534C23.2196 19.4951 23.005 19.4062 22.7812 19.4062ZM5.90625 5.90625H4.21875C3.99497 5.90625 3.78036 5.99515 3.62213 6.15338C3.4639 6.31161 3.375 6.52622 3.375 6.75C3.375 6.97378 3.4639 7.18839 3.62213 7.34662C3.78036 7.50486 3.99497 7.59375 4.21875 7.59375H5.90625C6.13003 7.59375 6.34464 7.50486 6.50287 7.34662C6.6611 7.18839 6.75 6.97378 6.75 6.75C6.75 6.52622 6.6611 6.31161 6.50287 6.15338C6.34464 5.99515 6.13003 5.90625 5.90625 5.90625ZM5.90625 12.6562H4.21875C3.99497 12.6562 3.78036 12.7451 3.62213 12.9034C3.4639 13.0616 3.375 13.2762 3.375 13.5C3.375 13.7238 3.4639 13.9384 3.62213 14.0966C3.78036 14.2549 3.99497 14.3438 4.21875 14.3438H5.90625C6.13003 14.3438 6.34464 14.2549 6.50287 14.0966C6.6611 13.9384 6.75 13.7238 6.75 13.5C6.75 13.2762 6.6611 13.0616 6.50287 12.9034C6.34464 12.7451 6.13003 12.6562 5.90625 12.6562ZM5.90625 19.4062H4.21875C3.99497 19.4062 3.78036 19.4951 3.62213 19.6534C3.4639 19.8116 3.375 20.0262 3.375 20.25C3.375 20.4738 3.4639 20.6884 3.62213 20.8466C3.78036 21.0049 3.99497 21.0938 4.21875 21.0938H5.90625C6.13003 21.0938 6.34464 21.0049 6.50287 20.8466C6.6611 20.6884 6.75 20.4738 6.75 20.25C6.75 20.0262 6.6611 19.8116 6.50287 19.6534C6.34464 19.4951 6.13003 19.4062 5.90625 19.4062Z"
+                                                    fill="white" />
+                                            </svg>
+                                            View All Patients
+                                        </a>
+                                    </div>
+                                </div>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
