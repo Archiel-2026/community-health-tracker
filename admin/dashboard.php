@@ -2065,19 +2065,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                         <i class="fas fa-arrow-right text-purple-400"></i>
                     </a>
-                    <a href="approvals.php" class="icon-action-btn bg-amber-50 hover:bg-amber-100 border-amber-200"
-                        title="Pending Approvals">
-                        <div class="icon-action-icon bg-amber-100 text-amber-600">
-                            <i class="fas fa-user-clock"></i>
-                        </div>
-                        <div class="icon-action-content">
-                            <div class="icon-action-label">Pending Approvals</div>
-                            <div class="icon-action-desc"><?= intval($stats['total_pending_residents']) ?> awaiting
-                                review</div>
-                        </div>
-                        <span
-                            class="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-bold"><?= intval($stats['total_pending_residents']) ?></span>
-                    </a>
+                    <!-- Removed Pending Approvals button -->
                     <a href="staffrecords.php" class="icon-action-btn bg-cyan-50 hover:bg-cyan-100 border-cyan-200"
                         title="Staff Records">
                         <div class="icon-action-icon bg-cyan-100 text-cyan-600">
@@ -2089,17 +2077,17 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                         <i class="fas fa-arrow-right text-cyan-400"></i>
                     </a>
-                    <a href="generate_report.php" target="_blank"
-                        class="icon-action-btn bg-blue-50 hover:bg-blue-100 border-blue-200" title="Generate Report">
-                        <div class="icon-action-icon bg-blue-100 text-blue-600">
-                            <i class="fas fa-file-export"></i>
-                        </div>
-                        <div class="icon-action-content">
-                            <div class="icon-action-label">Generate Report</div>
-                            <div class="icon-action-desc">Export system data</div>
-                        </div>
-                        <i class="fas fa-external-link-alt text-blue-400"></i>
-                    </a>
+                    <!-- Removed Generate Report button -->
+                                    <button id="activityLogsBtn" class="icon-action-btn bg-indigo-50 hover:bg-indigo-100 border-indigo-200" type="button" title="Activity Logs">
+                                        <div class="icon-action-icon bg-indigo-100 text-indigo-600">
+                                            <i class="fas fa-history"></i>
+                                        </div>
+                                        <div class="icon-action-content">
+                                            <div class="icon-action-label">Activity Logs</div>
+                                            <div class="icon-action-desc">View system activity</div>
+                                        </div>
+                                        <i class="fas fa-arrow-right text-indigo-400"></i>
+                                    </button>
                 </div>
             </div>
         </div>
@@ -2243,36 +2231,28 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- Activity Logs -->
-        <div class="main-container p-6 activity-logs-container" id="activity-logs">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mr-3">
-                        <i class="fas fa-history text-indigo-600"></i>
+        <!-- Activity Logs Modal -->
+        <div id="activityLogsModal" class="modal-overlay" style="display:none;">
+            <div class="modal-container" style="max-width:900px; padding: 2rem 2.5rem;" onclick="event.stopPropagation()">
+                <div class="flex flex-row items-center justify-between mb-6 gap-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center mr-3">
+                            <i class="fas fa-history text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-secondary">Activity Logs</h2>
+                            <p class="text-gray-500 text-sm">System activity and user actions</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="text-lg font-semibold text-secondary">Activity Logs</h2>
-                        <p class="text-gray-500 text-sm">System activity and user actions</p>
-                    </div>
+                    <button onclick="hideActivityLogsModal()" class="text-gray-500 hover:text-gray-700" style="font-size:1.5rem;">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <a href="generate_report.php" target="_blank" class="btn-view">
-                        <i class="fas fa-file-export mr-2"></i>Export
-                    </a>
-                </div>
-            </div>
-
-            <!-- Log Tabs -->
-            <div class="log-tabs mb-6">
-                <a href="?logs_tab=resident#activity-logs"
-                    class="log-tab <?= (empty($_GET['logs_tab']) || $_GET['logs_tab'] == 'resident') ? 'log-tab-active' : '' ?>">
-                    <i class="fas fa-user"></i>Resident Log <span class="log-tab-badge"><?= $resident_total ?></span>
-                </a>
-                <a href="?logs_tab=staff#activity-logs"
-                    class="log-tab <?= (isset($_GET['logs_tab']) && $_GET['logs_tab'] == 'staff') ? 'log-tab-active' : '' ?>">
-                    <i class="fas fa-user-tie"></i>Staff Actions <span class="log-tab-badge"><?= $staff_total ?></span>
-                </a>
+            <!-- Log Tabs (always visible in modal) -->
+            <div class="log-tabs mb-6" id="activityLogsTabs">
+                <button class="log-tab log-tab-active" id="residentTabBtn" type="button"><i class="fas fa-user"></i>Resident Log <span class="log-tab-badge"><?= $resident_total ?></span></button>
+                <button class="log-tab" id="staffTabBtn" type="button"><i class="fas fa-user-tie"></i>Staff Actions <span class="log-tab-badge"><?= $staff_total ?></span></button>
             </div>
 
             <div class="activity-logs-loading" id="activityLogsLoading" aria-live="polite">
@@ -2280,7 +2260,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="activity-logs-loading-text">Loading records...</div>
             </div>
 
-            <?php if (empty($_GET['logs_tab']) || $_GET['logs_tab'] == 'resident'): ?>
+            <div id="residentLogsSection">
                 <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl"
                     style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
                     <table class="patient-table">
@@ -2314,7 +2294,6 @@ require_once __DIR__ . '/../includes/header.php';
                         </tbody>
                     </table>
                 </div>
-
                 <div class="flex justify-between items-center text-sm activity-logs-pagination">
                     <div class="text-gray-500">Page <?= $page_resident ?> of <?= $resident_total_pages ?></div>
                     <div class="flex gap-2">
@@ -2323,7 +2302,6 @@ require_once __DIR__ . '/../includes/header.php';
                                 href="?logs_tab=resident&page_resident=<?= $page_resident - 1 ?>#activity-logs"><i
                                     class="fas fa-chevron-left mr-1"></i>Prev</a>
                         <?php endif; ?>
-
                         <?php if ($page_resident < $resident_total_pages): ?>
                             <a class="btn-action"
                                 href="?logs_tab=resident&page_resident=<?= $page_resident + 1 ?>#activity-logs">Next<i
@@ -2331,8 +2309,8 @@ require_once __DIR__ . '/../includes/header.php';
                         <?php endif; ?>
                     </div>
                 </div>
-
-            <?php else: ?>
+            </div>
+            <div id="staffLogsSection" style="display:none;">
                 <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl"
                     style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
                     <table class="patient-table">
@@ -2394,7 +2372,6 @@ require_once __DIR__ . '/../includes/header.php';
                         </tbody>
                     </table>
                 </div>
-
                 <div class="flex justify-between items-center text-sm activity-logs-pagination">
                     <div class="text-gray-500">Page <?= $page_staff ?> of <?= $staff_total_pages ?></div>
                     <div class="flex gap-2">
@@ -2402,15 +2379,55 @@ require_once __DIR__ . '/../includes/header.php';
                             <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff - 1 ?>#activity-logs"><i
                                     class="fas fa-chevron-left mr-1"></i>Prev</a>
                         <?php endif; ?>
-
                         <?php if ($page_staff < $staff_total_pages): ?>
                             <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff + 1 ?>#activity-logs">Next<i
                                     class="fas fa-chevron-right ml-1"></i></a>
                         <?php endif; ?>
                     </div>
                 </div>
-            <?php endif; ?>
+            </div>
         </div>
+        <script>
+        // Modal logic for Activity Logs
+        const activityLogsBtn = document.getElementById('activityLogsBtn');
+        const activityLogsModal = document.getElementById('activityLogsModal');
+        const residentTabBtn = document.getElementById('residentTabBtn');
+        const staffTabBtn = document.getElementById('staffTabBtn');
+        const residentLogsSection = document.getElementById('residentLogsSection');
+        const staffLogsSection = document.getElementById('staffLogsSection');
+
+        function showActivityLogsModal() {
+            activityLogsModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        function hideActivityLogsModal() {
+            activityLogsModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        if (activityLogsBtn) {
+            activityLogsBtn.addEventListener('click', showActivityLogsModal);
+        }
+        if (residentTabBtn && staffTabBtn && residentLogsSection && staffLogsSection) {
+            residentTabBtn.addEventListener('click', function() {
+                residentTabBtn.classList.add('log-tab-active');
+                staffTabBtn.classList.remove('log-tab-active');
+                residentLogsSection.style.display = '';
+                staffLogsSection.style.display = 'none';
+            });
+            staffTabBtn.addEventListener('click', function() {
+                staffTabBtn.classList.add('log-tab-active');
+                residentTabBtn.classList.remove('log-tab-active');
+                staffLogsSection.style.display = '';
+                residentLogsSection.style.display = 'none';
+            });
+        }
+        // Prevent modal from closing except via close button
+        activityLogsModal.addEventListener('click', function(e) {
+            if (e.target === activityLogsModal) {
+                // Do nothing, only close via button
+            }
+        });
+        </script>
 
     </div>
 

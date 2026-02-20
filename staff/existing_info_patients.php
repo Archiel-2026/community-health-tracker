@@ -3341,6 +3341,34 @@ if (!empty($searchTerm)) {
                 max-width: 96%;
             }
         }
+        
+        .custom-select-filter {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    height: 48px;
+    padding: 10px 55px 10px 18px;  
+    /* left padding for text */
+    /* right padding creates gap between text & arrow */
+
+    font-size: 18px;
+    font-weight: 500;
+
+    border: 2px solid #2F80ED;
+    border-radius: 10px;
+    background-color: #F5F5F5;
+
+    background-image: url('images/big-arrow.svg');
+    background-repeat: no-repeat;
+    background-position: right 18px center; 
+    /* space between arrow and right edge */
+    background-size: 22px;
+}
+
+
+
+        
     </style>
 </head>
 
@@ -3683,9 +3711,9 @@ if (!empty($searchTerm)) {
                                                                                                                 appearance: none;
                                                                                                                 background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%2322233b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
                                                                                                                 background-repeat: no-repeat;
-                                                                                                                background-position: right 1.2rem center;
+                                                                                                                background-position: right 2rem center;
                                                                                                                 background-size: 1.5rem 1.5rem;
-                                                                                                                padding-right: 3.5rem;
+                                                                                                                padding-right: 4.5rem;
                                                                                                             }
                                                                                                             select.custom-select-filter::-ms-expand {
                                                                                                                 display: none;

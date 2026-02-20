@@ -2975,42 +2975,85 @@ $recordsPerPage = 5;
                     return found ? found.count : 0;
                 });
                 new Chart(patientRegCtx, {
-                    type: 'bar',
+                    type: 'doughnut',
                     data: {
-                        labels: patientLabels,
+                        labels: ['New Patient Records', 'Doctor Consultations'],
                         datasets: [
                             {
-                                label: 'New Patient Records',
-                                data: patientValues,
-                                backgroundColor: 'rgba(99, 102, 241, 0.25)',
-                                borderColor: '#6366F1',
-                                borderWidth: 2,
-                                borderRadius: 6
-                            },
-                            {
-                                label: 'Consultations',
-                                data: consultValues,
-                                backgroundColor: 'rgba(16, 185, 129, 0.45)',
-                                borderColor: '#10B981',
-                                borderWidth: 2,
-                                borderRadius: 6
+                                data: [
+                                    patientValues.reduce((a, b) => a + b, 0),
+                                    consultValues.reduce((a, b) => a + b, 0)
+                                ],
+                                backgroundColor: [
+                                    '#42a5f5', // Blue from provided image
+                                    '#ec4899'  // Pink
+                                ],
+                                borderColor: [
+                                    '#42a5f5',
+                                    '#ec4899'
+                                ],
+                                borderWidth: 3,
+                                hoverOffset: 16
                             }
                         ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: true } },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: { drawBorder: false, color: 'rgba(229, 231, 235, 0.5)' },
-                                ticks: { font: { size: 11 } }
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    color: '#374151',
+                                    font: { size: 16, weight: 'bold', family: 'Segoe UI, Arial' },
+                                    padding: 24,
+                                    boxWidth: 24
+                                }
                             },
-                            x: {
-                                grid: { display: false },
-                                ticks: { font: { size: 11 } }
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: '#fff',
+                                titleColor: '#6366F1',
+                                bodyColor: '#10B981',
+                                borderColor: '#6366F1',
+                                borderWidth: 2,
+                                padding: 16,
+                                caretSize: 8,
+                                displayColors: true
+                            },
+                            datalabels: {
+                                display: true,
+                                color: function(context) {
+                                    return context.dataIndex === 0 ? '#6366F1' : '#10B981';
+                                },
+                                font: { size: 38, weight: 'bold', family: 'Segoe UI, Arial' },
+                                anchor: 'center',
+                                align: 'center',
+                                offset: 24,
+                                padding: 16,
+                                borderRadius: 8,
+                                backgroundColor: 'rgba(255,255,255,0.85)',
+                                borderWidth: 2,
+                                borderColor: function(context) {
+                                    return context.dataIndex === 0 ? '#42a5f5' : '#ec4899';
+                                },
+                                formatter: (value, ctx) => {
+                                    // Only show the count, not the label
+                                    return value;
+                                }
+                            },
+                            shadow: {
+                                shadowOffsetX: 0,
+                                shadowOffsetY: 8,
+                                shadowBlur: 24,
+                                shadowColor: 'rgba(49, 46, 129, 0.18)'
                             }
+                        },
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true
                         }
                     }
                 });
@@ -3068,21 +3111,26 @@ $recordsPerPage = 5;
                 genderData = genderData.sort((a, b) => b.count - a.count);
                 const genderLabels = genderData.map(item => item.gender || 'Unknown');
                 const genderValues = genderData.map(item => item.count);
-                const genderColors = genderLabels.map(label => {
-                    if (label.toLowerCase() === 'male') return '#3B82F6';
-                    if (label.toLowerCase() === 'female') return '#EC4899';
-                    return '#6B7280';
-                });
+                // Create gradient for area fill
+                const gradient = genderDistributionCtx.createLinearGradient(0, 0, genderDistributionCtx.canvas.width, 0);
+                gradient.addColorStop(0, '#42a5f5');
+                gradient.addColorStop(1, '#42a5f5');
                 new Chart(genderDistributionCtx, {
-                    type: 'doughnut',
+                    type: 'line',
                     data: {
                         labels: genderLabels,
                         datasets: [{
+                            label: 'Gender Distribution',
                             data: genderValues,
-                            backgroundColor: genderColors,
-                            borderWidth: 1,
-                            borderColor: '#ffffff',
-                            hoverBackgroundColor: genderColors.map(color => color + 'CC')
+                            fill: true,
+                            backgroundColor: gradient,
+                            borderColor: '#42a5f5',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#42a5f5',
+                            pointRadius: 8,
+                            pointHoverRadius: 12,
+                            tension: 0.45
                         }]
                     },
                     options: {
@@ -3090,15 +3138,52 @@ $recordsPerPage = 5;
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    usePointStyle: true,
-                                    font: { size: 12 }
-                                }
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: '#fff',
+                                titleColor: '#42a5f5',
+                                bodyColor: '#6366f1',
+                                borderColor: '#42a5f5',
+                                borderWidth: 2,
+                                padding: 16,
+                                caretSize: 8,
+                                displayColors: false
+                            },
+                            datalabels: {
+                                display: true,
+                                color: '#42a5f5',
+                                font: { size: 32, weight: 'bold', family: 'Segoe UI, Arial' },
+                                align: 'end',
+                                anchor: 'end',
+                                offset: 8,
+                                backgroundColor: 'rgba(255,255,255,0.85)',
+                                borderRadius: 8,
+                                borderWidth: 2,
+                                borderColor: '#42a5f5',
+                                padding: 8,
+                                formatter: (value, ctx) => value
                             }
                         },
-                        cutout: '60%'
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    color: '#64748b',
+                                    font: { size: 16, weight: 'bold' }
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(66,165,245,0.08)' },
+                                ticks: { display: false }
+                            }
+                        },
+                        animation: {
+                            duration: 1200,
+                            easing: 'easeInOutQuart'
+                        }
                     }
                 });
             } catch (error) { console.error('Error initializing gender distribution chart:', error); }
