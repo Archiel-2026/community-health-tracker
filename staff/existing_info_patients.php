@@ -1560,7 +1560,7 @@ $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 $searchBy = isset($_GET['search_by']) ? trim($_GET['search_by']) : 'name';
 
 // Get patient type filter
-$patientTypeFilter = isset($_GET['patient_type']) ? $_GET['patient_type'] : 'all';
+$patientTypeFilter = isset($_GET['patient_type']) ? strtolower(trim($_GET['patient_type'])) : 'all';
 
 // Check if manual selection mode is active
 $manualSelectMode = isset($_GET['manual_select']) && $_GET['manual_select'] == 'true';
@@ -1575,25 +1575,51 @@ $offset = ($currentPage - 1) * $recordsPerPage;
 
 // Get total count of patients based on filter
 try {
-    // Respect shared view toggle
     $countQuery = "SELECT COUNT(*) as total FROM sitio1_patients p WHERE p.deleted_at IS NULL";
     $countParams = [];
 
-    if ($patientTypeFilter == 'registered') {
+    // Apply patient type filter to count query
+    if ($patientTypeFilter === 'registered') {
         $countQuery .= " AND p.user_id IS NOT NULL";
-    } elseif ($patientTypeFilter == 'regular') {
+    } elseif ($patientTypeFilter === 'regular') {
         $countQuery .= " AND p.user_id IS NULL";
     }
 
+    // Apply staff restriction if not viewing all records
     if (!staff_can_view_all()) {
         $countQuery .= " AND p.added_by = ?";
         $countParams[] = $_SESSION['user']['id'];
     }
 
+    // Apply date filter to count query if provided
+    if (!empty($_GET['filter_date'])) {
+        $countQuery .= " AND DATE(p.created_at) = ?";
+        $countParams[] = $_GET['filter_date'];
+    }
+
     $stmt = $pdo->prepare($countQuery);
-    $stmt->execute($countParams);
+    
+    // Bind parameters for count query
+    $paramIndex = 1;
+    foreach ($countParams as $param) {
+        if (is_int($param) || ctype_digit((string)$param)) {
+            $stmt->bindValue($paramIndex, (int)$param, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue($paramIndex, $param, PDO::PARAM_STR);
+        }
+        $paramIndex++;
+    }
+    
+    $stmt->execute();
     $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    $totalPages = ceil($totalRecords / $recordsPerPage);
+    $totalPages = max(1, ceil($totalRecords / $recordsPerPage));
+    
+    // Ensure current page is within valid range
+    if ($currentPage > $totalPages) {
+        $currentPage = $totalPages;
+        $offset = ($currentPage - 1) * $recordsPerPage;
+    }
+    
 } catch (PDOException $e) {
     $error = "Error counting patient records: " . $e->getMessage();
     $totalRecords = 0;
@@ -1617,10 +1643,18 @@ try {
             p.family_no,
             p.fourps_member,
             p.user_id,
+            p.created_at,
             e.blood_type,
-            e.height, e.weight, e.temperature, e.blood_pressure,
-            e.allergies, e.immunization_record, e.chronic_conditions,
-            e.medical_history, e.current_medications, e.family_history,
+            e.height, 
+            e.weight, 
+            e.temperature, 
+            e.blood_pressure,
+            e.allergies, 
+            e.immunization_record, 
+            e.chronic_conditions,
+            e.medical_history, 
+            e.current_medications, 
+            e.family_history,
             u.unique_number,
             u.email as user_email,
             u.sitio as user_sitio,
@@ -1640,12 +1674,14 @@ try {
     // Build params based on shared-mode and filters
     $selectParams = [];
 
-    if ($patientTypeFilter == 'registered') {
+    // Apply patient type filter
+    if ($patientTypeFilter === 'registered') {
         $selectQuery .= " AND p.user_id IS NOT NULL";
-    } elseif ($patientTypeFilter == 'regular') {
+    } elseif ($patientTypeFilter === 'regular') {
         $selectQuery .= " AND p.user_id IS NULL";
     }
 
+    // Apply staff restriction if not viewing all records
     if (!staff_can_view_all()) {
         $selectQuery .= " AND p.added_by = ?";
         $selectParams[] = $_SESSION['user']['id'];
@@ -1661,38 +1697,67 @@ try {
     $dateSortOrder = (isset($_GET['date_sort']) && strtolower($_GET['date_sort']) === 'asc') ? 'ASC' : 'DESC';
     $selectQuery .= " ORDER BY p.created_at $dateSortOrder";
 
+    // Apply pagination limits only if not in view all or manual select mode
     $limitNeeded = false;
     if (!$viewAll && !$manualSelectMode) {
         $selectQuery .= " LIMIT ? OFFSET ?";
         $limitNeeded = true;
     }
 
-    $stmt = $pdo->prepare($selectQuery);
-
-    // Bind non-limit params first
-    $pos = 1;
-    foreach ($selectParams as $param) {
-        if (is_int($param) || ctype_digit((string) $param)) {
-            $stmt->bindValue($pos, (int) $param, PDO::PARAM_INT);
-        } else {
-            $stmt->bindValue($pos, $param, PDO::PARAM_STR);
-        }
-        $pos++;
+    // DEBUG: Output the query and params for troubleshooting
+    if (isset($_GET['debug_filter'])) {
+        echo '<pre style="background:#fff;color:#000;z-index:9999;position:relative;margin:20px;padding:15px;border:2px solid red;">';
+        echo "<b>SQL Query:</b>\n" . htmlspecialchars($selectQuery) . "\n\n";
+        echo "<b>Params:</b>\n" . print_r($selectParams, true) . "\n\n";
+        echo "<b>Patient Type Filter:</b> " . htmlspecialchars($patientTypeFilter) . "\n";
+        echo "<b>Date Sort:</b> " . htmlspecialchars($dateSortOrder) . "\n";
+        echo "<b>Filter Date:</b> " . (isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : 'none') . "\n";
+        echo "<b>View All:</b> " . ($viewAll ? 'true' : 'false') . "\n";
+        echo "<b>Manual Select Mode:</b> " . ($manualSelectMode ? 'true' : 'false') . "\n";
+        echo "<b>Limit Needed:</b> " . ($limitNeeded ? 'true' : 'false') . "\n";
+        echo "<b>Records Per Page:</b> " . $recordsPerPage . "\n";
+        echo "<b>Offset:</b> " . $offset . "\n";
+        echo '</pre>';
     }
 
-    // Bind LIMIT and OFFSET as integers (avoid them being quoted)
+    $stmt = $pdo->prepare($selectQuery);
+
+    // Bind parameters
+    $paramIndex = 1;
+    foreach ($selectParams as $param) {
+        if (is_int($param) || ctype_digit((string)$param)) {
+            $stmt->bindValue($paramIndex, (int)$param, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue($paramIndex, $param, PDO::PARAM_STR);
+        }
+        $paramIndex++;
+    }
+
+    // Bind LIMIT and OFFSET as integers
     if ($limitNeeded) {
-        $stmt->bindValue($pos, (int) $recordsPerPage, PDO::PARAM_INT);
-        $pos++;
-        $stmt->bindValue($pos, (int) $offset, PDO::PARAM_INT);
+        $stmt->bindValue($paramIndex, (int)$recordsPerPage, PDO::PARAM_INT);
+        $paramIndex++;
+        $stmt->bindValue($paramIndex, (int)$offset, PDO::PARAM_INT);
     }
 
     $stmt->execute();
-
     $allPatients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Debug output for results count
+    if (isset($_GET['debug_filter'])) {
+        echo "<b>Total Records Found:</b> " . count($allPatients) . "\n";
+        echo "<b>First Record Sample:</b>\n";
+        if (!empty($allPatients)) {
+            echo print_r($allPatients[0], true);
+        } else {
+            echo "No records found";
+        }
+        echo '</pre>';
+    }
 
 } catch (PDOException $e) {
     $error = "Error fetching patient records: " . $e->getMessage();
+    error_log("Patient fetch error: " . $e->getMessage());
 }
 
 // Get list of patients matching search
@@ -1715,24 +1780,28 @@ if (!empty($searchTerm)) {
             $selectQuery = "SELECT p.id, p.full_name, p.date_of_birth, p.age, 
                             COALESCE(e.gender, p.gender) as gender, p.sitio, p.civil_status, p.occupation,
                             p.phic_no, p.bhw_assigned, p.family_no, p.fourps_member,
-                            e.blood_type, e.height, e.weight, e.temperature, e.blood_pressure
+                            e.blood_type, e.height, e.weight, e.temperature, e.blood_pressure,
+                            CASE WHEN p.user_id IS NOT NULL THEN 'Registered Patient' ELSE 'Regular Patient' END as patient_type
                         FROM sitio1_patients p 
                         LEFT JOIN existing_info_patients e ON p.id = e.patient_id 
-                        WHERE p.deleted_at IS NULL AND p.full_name LIKE ? 
-                        ORDER BY p.full_name LIMIT 10";
+                        WHERE p.deleted_at IS NULL AND p.full_name LIKE ?";
 
             $params = ["%$searchTerm%"];
-            if (!staff_can_view_all()) {
-                $selectQuery = "SELECT p.id, p.full_name, p.date_of_birth, p.age, 
-                            COALESCE(e.gender, p.gender) as gender, p.sitio, p.civil_status, p.occupation,
-                            p.phic_no, p.bhw_assigned, p.family_no, p.fourps_member,
-                            e.blood_type, e.height, e.weight, e.temperature, e.blood_pressure
-                        FROM sitio1_patients p 
-                        LEFT JOIN existing_info_patients e ON p.id = e.patient_id 
-                        WHERE p.added_by = ? AND p.deleted_at IS NULL AND p.full_name LIKE ? 
-                        ORDER BY p.full_name LIMIT 10";
-                $params = [$_SESSION['user']['id'], "%$searchTerm%"];
+            // Add patient type filter if set
+            if (isset($patientTypeFilter) && $patientTypeFilter !== 'all') {
+                if ($patientTypeFilter === 'registered') {
+                    $selectQuery .= " AND p.user_id IS NOT NULL";
+                } elseif ($patientTypeFilter === 'regular') {
+                    $selectQuery .= " AND p.user_id IS NULL";
+                }
             }
+
+            if (!staff_can_view_all()) {
+                $selectQuery .= " AND p.added_by = ?";
+                $params[] = $_SESSION['user']['id'];
+            }
+
+            $selectQuery .= " ORDER BY p.full_name LIMIT 10";
 
             $stmt = $pdo->prepare($selectQuery);
             $stmt->execute($params);
@@ -2075,23 +2144,23 @@ if (!empty($searchTerm)) {
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            width: 355px;
-            margin: 8px 0;
-        }
-
-        .btn-edit:hover {
-            background-color: #fef3c7;
-            border-color: #f39c12;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.15);
-        }
-
-        .btn-save-medical {
-            background-color: #50a4dbff;
-            color: #ffffffff;
-            border-radius: 30px;
-            padding: 14px 28px;
-            transition: all 0.3s ease;
+                                        width: 100%;
+                                        font-size: 1.1rem;
+                                        font-weight: 600;
+                                        color: #22223b;
+                                        background: #fff;
+                                        border: 2px solid #3C96E1;
+                                        border-radius: 8px;
+                                        height: 48px;
+                                        padding: 0 2.5rem 0 1.2rem;
+                                        appearance: none;
+                                        -webkit-appearance: none;
+                                        -moz-appearance: none;
+                                        box-shadow: none;
+                                        position: relative;
+                                        transition: border 0.2s, box-shadow 0.2s;
+                                        display: block;
+                                        line-height: 48px;
             font-weight: 600;
             min-height: 60px;
             display: inline-flex;
@@ -3583,21 +3652,88 @@ if (!empty($searchTerm)) {
                                     <?php if ($manualSelectMode): ?>
                                         <input type="hidden" name="manual_select" value="true">
                                     <?php endif; ?>
-                                    <select name="patient_type" onchange="this.form.submit()" class="patient-type-filter">
-                                        <option value="all" <?= $patientTypeFilter === 'all' ? 'selected' : '' ?>>All Patient
-                                            Types</option>
+                                    <select name="patient_type" onchange="this.form.submit()" class="custom-select-filter">
+                                        <option value="all" <?= ($patientTypeFilter === 'all' || $patientTypeFilter === '' || !isset($patientTypeFilter)) ? 'selected' : '' ?>>All Patient Types</option>
                                         <option value="registered" <?= $patientTypeFilter === 'registered' ? 'selected' : '' ?>>Registered Patient</option>
-                                        <option value="regular" <?= $patientTypeFilter === 'regular' ? 'selected' : '' ?>>
-                                            Regular Patient</option>
+                                        <option value="regular" <?= $patientTypeFilter === 'regular' ? 'selected' : '' ?>>Regular Patient</option>
                                     </select>
-                                    <select name="date_sort" onchange="this.form.submit()" class="patient-type-filter ml-2">
+                                    <select name="date_sort" onchange="this.form.submit()" class="custom-select-filter ml-2">
                                         <option value="desc" <?= (empty($_GET['date_sort']) || $_GET['date_sort'] === 'desc') ? 'selected' : '' ?>>Newest First</option>
                                         <option value="asc" <?= (isset($_GET['date_sort']) && $_GET['date_sort'] === 'asc') ? 'selected' : '' ?>>Oldest First</option>
                                     </select>
                                     <input type="date" name="filter_date"
                                         value="<?= isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : '' ?>"
-                                        class="patient-type-filter ml-2" onchange="this.form.submit()"
+                                        class="custom-select-filter ml-2" onchange="this.form.submit()"
                                         placeholder="Filter by Date">
+                                                                    <style>
+                                                                    .custom-select-filter {
+                                                                                                                                                /* Hide default browser arrow for select and keep only custom SVG arrow */
+                                                                                                                                                select.custom-select-filter {
+                                                                                                                                                    -webkit-appearance: none;
+                                                                                                                                                    -moz-appearance: none;
+                                                                                                                                                    appearance: none;
+                                                                                                                                                }
+                                                                                                                                                select.custom-select-filter::-ms-expand {
+                                                                                                                                                    display: none;
+                                                                                                                                                }
+                                                                                                            /* Hide default browser arrow for select and keep only custom SVG arrow */
+                                                                                                            select.custom-select-filter {
+                                                                                                                -webkit-appearance: none;
+                                                                                                                -moz-appearance: none;
+                                                                                                                appearance: none;
+                                                                                                                background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%2322233b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+                                                                                                                background-repeat: no-repeat;
+                                                                                                                background-position: right 1.2rem center;
+                                                                                                                background-size: 1.5rem 1.5rem;
+                                                                                                                padding-right: 3.5rem;
+                                                                                                            }
+                                                                                                            select.custom-select-filter::-ms-expand {
+                                                                                                                display: none;
+                                                                                                            }
+                                                                        width: 100%;
+                                                                        font-size: 1rem;
+                                                                        font-weight: 500;
+                                                                        color: #22223b;
+                                                                        background: #fff;
+                                                                        border: 1px solid #3C96E1;
+                                                                        border-radius: 6px;
+                                                                        height: 48px;
+                                                                        padding: 0 3.5rem 0 1.5rem;
+                                                                                                            }
+                                                                                                            /* Remove custom arrow for date input */
+                                                                                                            input[type="date"].custom-select-filter {
+                                                                                                                background-image: none !important;
+                                                                                                                padding-right: 1.5rem;
+                                                                        appearance: none;
+                                                                        -webkit-appearance: none;
+                                                                        -moz-appearance: none;
+                                                                        box-shadow: 0 2px 8px 0 rgba(60,150,225,0.08);
+                                                                        position: relative;
+                                                                        transition: border 0.2s, box-shadow 0.2s;
+                                                                        display: flex;
+                                                                        align-items: center;
+                                                                    }
+                                                                    .custom-select-filter:focus {
+                                                                        outline: none;
+                                                                        border: 2px solid #3C96E1;
+                                                                        box-shadow: 0 0 0 2px #60a5fa33;
+                                                                    }
+                                                                    .custom-select-filter::-ms-expand {
+                                                                        display: none;
+                                                                    }
+                                                                    /* Custom arrow */
+                                                                    /* Custom arrow for select filters only */
+                                                                    select.custom-select-filter {
+                                                                        background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%2322233b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+                                                                        background-repeat: no-repeat;
+                                                                        background-position: right 1.2rem center;
+                                                                        background-size: 1.5rem 1.5rem;
+                                                                        padding-right: 2.5rem;
+                                                                    }
+                                                                    select.custom-select-filter::-ms-expand {
+                                                                        display: none;
+                                                                    }
+                                                                    </style>
                                 </form>
                             </div>
                         </div>
@@ -3777,41 +3913,57 @@ if (!empty($searchTerm)) {
                                     </table>
                                 </div>
 
-                                <!-- Enhanced Pagination Container -->
-                                <div class="pagination-container">
-                                    <div class="pagination">
-                                        <!-- Previous Button -->
-                                        <a href="?tab=patients-tab&page=<?= $currentPage - 1 ?>&patient_type=<?= $patientTypeFilter ?>"
-                                            class="pagination-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>">
-                                            <i class="fas fa-chevron-left"></i>
-                                        </a>
+                                <!-- Enhanced Pagination Container with preserved filters -->
+<div class="pagination-container">
+    <div class="pagination">
+        <?php
+        // Build query string for pagination links
+        $queryParams = [];
+        if (!empty($patientTypeFilter) && $patientTypeFilter !== 'all') {
+            $queryParams[] = 'patient_type=' . urlencode($patientTypeFilter);
+        }
+        if (!empty($_GET['filter_date'])) {
+            $queryParams[] = 'filter_date=' . urlencode($_GET['filter_date']);
+        }
+        if (!empty($_GET['date_sort'])) {
+            $queryParams[] = 'date_sort=' . urlencode($_GET['date_sort']);
+        }
+        $queryString = !empty($queryParams) ? '&' . implode('&', $queryParams) : '';
+        ?>
+        
+        <!-- Previous Button -->
+        <a href="?tab=patients-tab&page=<?= $currentPage - 1 ?><?= $queryString ?>"
+            class="pagination-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+            <i class="fas fa-chevron-left"></i>
+        </a>
 
-                                        <!-- Page Numbers -->
-                                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                                            <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
-                                                <a href="?tab=patients-tab&page=<?= $i ?>&patient_type=<?= $patientTypeFilter ?>"
-                                                    class="pagination-btn <?= $i == $currentPage ? 'active' : '' ?>">
-                                                    <?= $i ?>
-                                                </a>
-                                            <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
-                                                <span class="pagination-btn disabled">...</span>
-                                            <?php endif; ?>
-                                        <?php endfor; ?>
+        <!-- Page Numbers -->
+        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
+                <a href="?tab=patients-tab&page=<?= $i ?><?= $queryString ?>"
+                    class="pagination-btn <?= $i == $currentPage ? 'active' : '' ?>">
+                    <?= $i ?>
+                </a>
+            <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
+                <span class="pagination-btn disabled">...</span>
+            <?php endif; ?>
+        <?php endfor; ?>
 
-                                        <!-- Next Button -->
-                                        <a href="?tab=patients-tab&page=<?= $currentPage + 1 ?>&patient_type=<?= $patientTypeFilter ?>"
-                                            class="pagination-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
-                                            <i class="fas fa-chevron-right"></i>
-                                        </a>
-                                    </div>
+        <!-- Next Button -->
+        <a href="?tab=patients-tab&page=<?= $currentPage + 1 ?><?= $queryString ?>"
+            class="pagination-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    </div>
 
-                                    <div class="pagination-actions">
-                                        <a href="?tab=patients-tab&view_all=true&patient_type=<?= $patientTypeFilter ?>"
-                                            class="btn-view-all">
-                                            <i class="fas fa-list mr-2"></i>View All Patients
-                                        </a>
-                                    </div>
-                                </div>
+    <!-- Update the View All button in the header -->
+<div class="flex items-center gap-4">
+    <a href="?tab=patients-tab&view_all=true&patient_type=<?= urlencode($patientTypeFilter) ?><?= !empty($_GET['filter_date']) ? '&filter_date=' . urlencode($_GET['filter_date']) : '' ?><?= !empty($_GET['date_sort']) ? '&date_sort=' . urlencode($_GET['date_sort']) : '' ?>"
+        class="btn-view-all">
+        <i class="fas fa-list mr-2"></i>View All Patients
+    </a>
+</div>
+</div>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
@@ -5754,15 +5906,11 @@ if (!empty($searchTerm)) {
         // Enhanced modal close on outside click
         window.onclick = function (event) {
             const viewModal = document.getElementById('viewModal');
-            const addPatientModal = document.getElementById('addPatientModal');
             const consultationNoteModal = document.getElementById('consultationNoteModal');
             const exportModal = document.getElementById('exportModal');
 
             if (event.target === viewModal) {
                 closeViewModal();
-            }
-            if (event.target === addPatientModal) {
-                closeAddPatientModal();
             }
             if (event.target === consultationNoteModal) {
                 closeConsultationNoteModal();

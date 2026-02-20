@@ -17,7 +17,6 @@ try {
         // Get announcements for user
         if (isUser()) {
             $userId = $_SESSION['user']['id'];
-            
             // Get unread announcements
             $stmt = $pdo->prepare("
                 SELECT a.* 
@@ -28,13 +27,37 @@ try {
             ");
             $stmt->execute([$userId]);
             $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
             echo json_encode(['announcements' => $announcements]);
-        } 
-        // Get announcement stats for staff/admin
+        }
+        // Get all announcement responses for staff/admin (for analytics dashboard)
+        elseif ((isStaff() || isAdmin()) && isset($_GET['all_responses'])) {
+            // Fetch all announcements
+            $stmt = $pdo->query("SELECT id, title, purpose, audience_type, post_date FROM sitio1_announcements ORDER BY post_date DESC");
+            $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // For each announcement, get response counts
+            foreach ($announcements as &$a) {
+                $aid = $a['id'];
+                $stmt2 = $pdo->prepare("SELECT status, COUNT(*) as cnt FROM user_announcements WHERE announcement_id = ? GROUP BY status");
+                $stmt2->execute([$aid]);
+                $counts = ['accepted' => 0, 'dismissed' => 0];
+                $total = 0;
+                foreach ($stmt2->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $status = $row['status'];
+                    $cnt = (int)$row['cnt'];
+                    if (isset($counts[$status])) $counts[$status] += $cnt;
+                    $total += $cnt;
+                }
+                $a['response_counts'] = [
+                    'accepted' => $counts['accepted'],
+                    'dismissed' => $counts['dismissed'],
+                    'total' => $total
+                ];
+            }
+            echo json_encode(['announcements' => $announcements]);
+        }
+        // Get announcement stats for staff/admin (single announcement)
         elseif (isStaff() || isAdmin()) {
             $announcementId = $_GET['id'] ?? null;
-            
             if ($announcementId) {
                 // Get detailed responses for a specific announcement
                 $stmt = $pdo->prepare("
@@ -46,14 +69,13 @@ try {
                 ");
                 $stmt->execute([$announcementId]);
                 $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                
                 echo json_encode(['responses' => $responses]);
             } else {
                 http_response_code(400);
                 echo json_encode(['error' => 'Announcement ID is required']);
             }
         }
-    } 
+    }
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // User responding to announcement
         if (isUser()) {

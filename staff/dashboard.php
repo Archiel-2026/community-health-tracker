@@ -1789,14 +1789,17 @@ $recordsPerPage = 5;
                             <canvas id="patientRegistrationChart" height="300"></canvas>
                         </div>
                     </div>
-                    <!-- Health Issues Breakdown (Bar Graph) -->
+                    <!-- Announcement Response (Summary Table) -->
                     <div class="chart-container">
                         <h3 class="chart-title">
-                            <i class="fas fa-heartbeat"></i>
-                            Health Issues Breakdown
+                            <i class="fas fa-bullhorn"></i>
+                            Announcement Response
                         </h3>
-                        <div class="chart-wrapper">
-                            <canvas id="healthIssuesChart" height="300"></canvas>
+                        <div class="chart-wrapper" id="announcementResponseWrapper">
+                            <div id="announcementResponseLoader" class="flex justify-center items-center h-48">
+                                <span class="text-gray-500">Loading announcement responses...</span>
+                            </div>
+                            <div id="announcementResponseTable" style="display:none;"></div>
                         </div>
                     </div>
                 </div>
@@ -1848,6 +1851,7 @@ $recordsPerPage = 5;
                 <!-- Search and Filter Section -->
                 <div class="mb-6 rounded-lg">
                     <form method="GET" action="" class="flex flex-wrap gap-4 items-end">
+                        <input type="hidden" name="tab" value="account-management">
                         <div class="flex flex-col md:flex-row justify-between w-full border-b-2 pb-6">
                             <!-- RIGHT CONTENT -->
                             <div class="flex flex-col md:flex-row items-center gap-4">
@@ -1880,12 +1884,47 @@ $recordsPerPage = 5;
                                     <i class="fas fa-sort mr-1"></i> Sort by Date
                                 </label> -->
                                     <select
-                                        class="w-full text-base py-3 px-4 pr-10 border border-[#3C96E1] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3C96E1] focus:border-[#3C96E1]">
-                                        <option value="desc" <?= $sortOrder === 'desc' ? 'selected' : '' ?>>Newest First
-                                        </option>
-                                        <option value="asc" <?= $sortOrder === 'asc' ? 'selected' : '' ?>>Oldest First
-                                        </option>
+                                        name="sort"
+                                        class="custom-select-filter">
+                                        <option value="desc" <?= $sortOrder === 'desc' ? 'selected' : '' ?>>Newest First</option>
+                                        <option value="asc" <?= $sortOrder === 'asc' ? 'selected' : '' ?>>Oldest First</option>
                                     </select>
+                                    <style>
+                                    .custom-select-filter {
+                                        width: 100%;
+                                        font-size: 1rem;
+                                        font-weight: 500;
+                                        color: #22223b;
+                                        background: #fff;
+                                        border: 1px solid #3C96E1;
+                                        border-radius: 6px;
+                                        height: 48px;
+                                        padding: 0 2.5rem 0 1.5rem;
+                                        appearance: none;
+                                        -webkit-appearance: none;
+                                        -moz-appearance: none;
+                                        box-shadow: 0 2px 8px 0 rgba(60,150,225,0.08);
+                                        position: relative;
+                                        transition: border 0.2s, box-shadow 0.2s;
+                                        display: flex;
+                                        align-items: center;
+                                    }
+                                    .custom-select-filter:focus {
+                                        outline: none;
+                                        border: 1.5px solid #3C96E1;
+                                        box-shadow: 0 0 0 2px #60a5fa33;
+                                    }
+                                    .custom-select-filter::-ms-expand {
+                                        display: none;
+                                    }
+                                    /* Custom arrow */
+                                    .custom-select-filter {
+                                        background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%2322233b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+                                        background-repeat: no-repeat;
+                                        background-position: right 1.2rem center;
+                                        background-size: 1.5rem 1.5rem;
+                                    }
+                                    </style>
                                 </div>
 
                                 <!-- Action Buttons -->
@@ -2977,44 +3016,50 @@ $recordsPerPage = 5;
                 });
             } catch (error) { console.error('Error initializing patient registration/consultation chart:', error); }
             // 2. Health Issues Breakdown (Bar)
-            try {
-                const healthIssuesCtx = healthIssuesCanvas.getContext('2d');
-                let diseases = <?= json_encode($analytics['top_diseases']) ?>;
-                // Sort by count descending
-                diseases = diseases.sort((a, b) => b.count - a.count);
-                const diseaseLabels = diseases.length ? diseases.map(d => d.label) : ['No Data'];
-                const diseaseValues = diseases.length ? diseases.map(d => d.count) : [0];
-                new Chart(healthIssuesCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: diseaseLabels,
-                        datasets: [{
-                            label: 'Cases',
-                            data: diseaseValues,
-                            backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#06b6d4'],
-                            borderColor: '#fff',
-                            borderWidth: 1,
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: { drawBorder: false, color: 'rgba(229, 231, 235, 0.5)' },
-                                ticks: { font: { size: 11 } }
-                            },
-                            x: {
-                                grid: { display: false },
-                                ticks: { font: { size: 11 } }
-                            }
+            // Announcement Response (Table)
+            fetchAnnouncementResponses();
+
+            function fetchAnnouncementResponses() {
+                const loader = document.getElementById('announcementResponseLoader');
+                const tableDiv = document.getElementById('announcementResponseTable');
+                loader.style.display = '';
+                tableDiv.style.display = 'none';
+                fetch('/community-health-tracker/api/announcements.php?all_responses=1')
+                    .then(res => res.json())
+                    .then(data => {
+                        loader.style.display = 'none';
+                        tableDiv.style.display = '';
+                        if (!data.announcements || !data.announcements.length) {
+                            tableDiv.innerHTML = '<div class="text-gray-500">No announcement response data available.</div>';
+                            return;
                         }
-                    }
-                });
-            } catch (error) { console.error('Error initializing health issues chart:', error); }
+                        let html = `<table class='min-w-full divide-y divide-gray-200'><thead><tr>` +
+                            `<th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>Title</th>` +
+                            `<th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>Audience</th>` +
+                            `<th class='px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase'>Accepted</th>` +
+                            `<th class='px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase'>Dismissed</th>` +
+                            `<th class='px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase'>Total Responded</th>` +
+                            `<th class='px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase'>Date</th>` +
+                            `</tr></thead><tbody>`;
+                        data.announcements.forEach(a => {
+                            html += `<tr class='bg-white hover:bg-blue-50'>` +
+                                `<td class='px-4 py-2'>${a.title}</td>` +
+                                `<td class='px-4 py-2'>${a.audience_type === 'all' ? 'All Users' : 'Specific User'}</td>` +
+                                `<td class='px-4 py-2 text-center'>${a.response_counts.accepted}</td>` +
+                                `<td class='px-4 py-2 text-center'>${a.response_counts.dismissed}</td>` +
+                                `<td class='px-4 py-2 text-center'>${a.response_counts.total}</td>` +
+                                `<td class='px-4 py-2 text-center'>${a.post_date ? new Date(a.post_date).toLocaleDateString() : ''}</td>` +
+                                `</tr>`;
+                        });
+                        html += '</tbody></table>';
+                        tableDiv.innerHTML = html;
+                    })
+                    .catch(() => {
+                        loader.style.display = 'none';
+                        tableDiv.style.display = '';
+                        tableDiv.innerHTML = '<div class="text-red-500">Failed to load announcement response data.</div>';
+                    });
+            }
             // 3. Gender Distribution (Donut)
             try {
                 const genderDistributionCtx = genderDistributionCanvas.getContext('2d');
