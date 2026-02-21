@@ -4017,7 +4017,7 @@ if (!empty($searchTerm)) {
 
                                         <!-- Previous Button -->
                                         <a href="?tab=patients-tab&page=<?= $currentPage - 1 ?><?= $queryString ?>"
-                                            class="pagination-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+                                            class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 <?= $currentPage <= 1 ? 'disabled' : '' ?>">
                                             <i class="fas fa-chevron-left"></i>
                                         </a>
 
@@ -4025,17 +4025,19 @@ if (!empty($searchTerm)) {
                                         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                                             <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
                                                 <a href="?tab=patients-tab&page=<?= $i ?><?= $queryString ?>"
-                                                    class="pagination-btn <?= $i == $currentPage ? 'active' : '' ?>">
+                                                    class="mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
+                                            bg-blue-500 text-white border-blue-500 active <?= $i == $currentPage ? 'active' : '' ?>">
                                                     <?= $i ?>
                                                 </a>
                                             <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
-                                                <span class="pagination-btn disabled">...</span>
+                                                <span class="mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
+                                            bg-white text-blue-500 border-blue-500 disabled">...</span>
                                             <?php endif; ?>
                                         <?php endfor; ?>
 
                                         <!-- Next Button -->
                                         <a href="?tab=patients-tab&page=<?= $currentPage + 1 ?><?= $queryString ?>"
-                                            class="pagination-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+                                            class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
                                             <i class="fas fa-chevron-right"></i>
                                         </a>
                                     </div>
@@ -4088,7 +4090,7 @@ if (!empty($searchTerm)) {
 
             <!-- Content -->
             <div class="flex-1 overflow-y-auto px-16">
-                <div id="modalContent" class="min-h-[500px]">
+                <div id="modalContent" class="min-h-[500px] py-6">
                     <!-- Content will be loaded via AJAX -->
                     <div class="flex justify-center items-center py-20">
                         <div class="text-center">

@@ -915,7 +915,6 @@ $recordsPerPage = 5;
 
         .pagination-button:hover {
             background: #3C96E1;
-            color: white;
             border-color: #3C96E1;
             transform: translateY(-1px);
         }
@@ -1288,32 +1287,50 @@ $recordsPerPage = 5;
 
         <!-- Tab Contents -->
         <div class="tab-content">
+            <style>
+                .bg-gen-full {
+                    background-color: #3C96E1;
+                }
+
+                .bg-gen-full:hover {
+                    background-color: #1d82d5;
+                }
+
+                .bg-sort {
+                    background: #3C96E14D;
+                    color: #3C96E1;
+                }
+            </style>
             <!-- Reports Section -->
-            <div class="<?= $activeTab === 'reports' ? '' : 'hidden' ?> p-6 bg-white rounded-lg border border-gray-200"
-                id="reports" role="tabpanel" aria-labelledby="reports-tab">
-                <h2 class="text-2xl font-semibold mb-6 text-blue-700">Comprehensive Health Report</h2>
+            <div class="<?= $activeTab === 'reports' ? '' : 'hidden' ?>" id="reports" role="tabpanel"
+                aria-labelledby="reports-tab">
+                <h2 class="text-2xl font-semibold mb-8 text-gray-700">Comprehensive Health Report</h2>
                 <div id="fullReportContent">
-                    <div class="flex gap-2 mb-4">
+                    <div class="flex gap-2 mb-6 pb-6 border-b-2 border-gray-300">
                         <button onclick="generateFullReportModal()"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center"><i
-                                class="fas fa-sync-alt mr-2"></i> Generate Full Report</button>
+                            class="px-6 py-3 bg-gen-full text-white text-lg rounded-lg transition font-medium flex items-center">
+                            <svg class="w-8 h-8 mr-2" viewBox="0 0 27 27" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M10.125 19.125H7.875V11.25H10.125V19.125ZM14.625 19.125H12.375V7.875H14.625V19.125ZM19.125 19.125H16.875V14.625H19.125V19.125ZM21.375 21.375H5.625V5.625H21.375V21.4875M21.375 3.375H5.625C4.3875 3.375 3.375 4.3875 3.375 5.625V21.375C3.375 22.6125 4.3875 23.625 5.625 23.625H21.375C22.6125 23.625 23.625 22.6125 23.625 21.375V5.625C23.625 4.3875 22.6125 3.375 21.375 3.375Z"
+                                    fill="white" />
+                            </svg>
+                            Generate Full Report</button>
                     </div>
                     <!-- Report Generation Logs Display -->
                     <div id="reportLogsSection" class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center"><i
-                                class="fas fa-history mr-2 text-blue-500"></i> Generate Report Logs</h3>
-                        <div class="flex flex-wrap gap-2 mb-3">
+                        <div class="flex flex-wrap gap-6 mb-6 pb-6 border-b-2 border-gray-300">
                             <button id="sortByDateBtn"
-                                class="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition">Sort by
+                                class="px-6 py-3 rounded-md bg-gen-full text-lg font-medium text-white transition">Sort
+                                by
                                 Date</button>
                             <input type="date" id="filterDateInput"
-                                class="px-2 py-1 rounded border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-200 transition"
-                                style="height:36px;" />
-                            <button id="clearDateBtn"
+                                class="px-6 py-3 text-lg rounded-md border border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition">
+                            <!-- <button id="clearDateBtn"
                                 class="px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-                                title="Clear date filter">✕</button>
+                                title="Clear date filter">✕</button> -->
                             <button id="sortByNameBtn"
-                                class="px-3 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition">Sort
+                                class="px-6 py-3 text-lg rounded-md bg-sort font-medium text-blue-700 hover:bg-blue-200 transition">Sort
                                 A-Z</button>
                         </div>
                         <div id="reportLogsTableWrap">
@@ -1980,18 +1997,36 @@ $recordsPerPage = 5;
                     </form>
                 </div>
 
+                <!-- NO RESIDENT ACCOUNT AND SEARCH FOUND RECORD -->
                 <?php if (empty($residentUsers)): ?>
-                    <div class="bg-blue-50 p-6 rounded-lg text-center border border-blue-200">
-                        <i class="fas fa-users text-blue-400 text-4xl mb-3"></i>
-                        <p class="text-gray-600 text-lg">
-                            <?php if (!empty($searchQuery)): ?>
-                                No residents found matching your search.
-                            <?php else: ?>
-                                No resident accounts found.
-                            <?php endif; ?>
-                        </p>
+                    <div class="text-center py-12">
+                        <?php if (!empty($searchQuery)): ?>
+                            <div class="flex justify-center py-8">
+                                <svg width="100" height="100" viewBox="0 0 70 70" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M13.125 37.1874C13.125 36.6072 13.3555 36.0508 13.7657 35.6406C14.1759 35.2303 14.7323 34.9999 15.3125 34.9999H19.6875C20.2677 34.9999 20.8241 35.2303 21.2343 35.6406C21.6445 36.0508 21.875 36.6072 21.875 37.1874C21.875 37.7675 21.6445 38.3239 21.2343 38.7342C20.8241 39.1444 20.2677 39.3749 19.6875 39.3749H15.3125C14.7323 39.3749 14.1759 39.1444 13.7657 38.7342C13.3555 38.3239 13.125 37.7675 13.125 37.1874ZM58.4937 57.5913C58.691 57.8032 58.8442 58.0521 58.9445 58.3236C59.0449 58.5951 59.0903 58.8839 59.0782 59.1731C59.0662 59.4623 58.9968 59.7463 58.8741 60.0085C58.7515 60.2707 58.5781 60.506 58.3638 60.7007C58.1496 60.8953 57.8989 61.0456 57.6262 61.1426C57.3535 61.2397 57.0642 61.2817 56.7751 61.2661C56.4861 61.2506 56.203 61.1778 55.9423 61.052C55.6815 60.9263 55.4484 60.75 55.2563 60.5335L51.9312 56.8749H8.75C7.58968 56.8749 6.47688 56.4139 5.65641 55.5935C4.83594 54.773 4.375 53.6602 4.375 52.4999V17.4999C4.375 16.3396 4.83594 15.2268 5.65641 14.4063C6.47688 13.5858 7.58968 13.1249 8.75 13.1249H12.157L11.5063 12.4085C11.309 12.1966 11.1558 11.9477 11.0555 11.6761C10.9551 11.4046 10.9097 11.1159 10.9218 10.8267C10.9339 10.5374 11.0032 10.2535 11.1259 9.99127C11.2485 9.72906 11.4219 9.49379 11.6362 9.2991C11.8504 9.10442 12.1011 8.95419 12.3738 8.85712C12.6466 8.76005 12.9358 8.71808 13.2249 8.73363C13.5139 8.74918 13.797 8.82195 14.0578 8.94771C14.3185 9.07348 14.5516 9.24974 14.7437 9.46628L58.4937 57.5913ZM47.9527 52.4999L43.9742 48.1249H15.3125C14.7323 48.1249 14.1759 47.8944 13.7657 47.4842C13.3555 47.0739 13.125 46.5175 13.125 45.9374C13.125 45.3572 13.3555 44.8008 13.7657 44.3906C14.1759 43.9803 14.7323 43.7499 15.3125 43.7499H39.9984L36.0199 39.3749H28.4375C27.8573 39.3749 27.3009 39.1444 26.8907 38.7342C26.4805 38.3239 26.25 37.7675 26.25 37.1874C26.25 36.6072 26.4805 36.0508 26.8907 35.6406C27.3009 35.2303 27.8573 34.9999 28.4375 34.9999H32.0441L16.1328 17.4999H8.75V52.4999H47.9527ZM54.6875 39.3749C55.2677 39.3749 55.8241 39.1444 56.2343 38.7342C56.6445 38.3239 56.875 37.7675 56.875 37.1874C56.875 36.6072 56.6445 36.0508 56.2343 35.6406C55.8241 35.2303 55.2677 34.9999 54.6875 34.9999H48.8141C48.2339 34.9999 47.6775 35.2303 47.2673 35.6406C46.857 36.0508 46.6266 36.6072 46.6266 37.1874C46.6266 37.7675 46.857 38.3239 47.2673 38.7342C47.6775 39.1444 48.2339 39.3749 48.8141 39.3749H54.6875ZM61.25 13.1249H28.927C28.3468 13.1249 27.7904 13.3553 27.3802 13.7656C26.9699 14.1758 26.7395 14.7322 26.7395 15.3124C26.7395 15.8925 26.9699 16.4489 27.3802 16.8592C27.7904 17.2694 28.3468 17.4999 28.927 17.4999H61.25V53.2737C61.25 53.8539 61.4805 54.4103 61.8907 54.8205C62.3009 55.2307 62.8573 55.4612 63.4375 55.4612C64.0177 55.4612 64.5741 55.2307 64.9843 54.8205C65.3945 54.4103 65.625 53.8539 65.625 53.2737V17.4999C65.625 16.3396 65.1641 15.2268 64.3436 14.4063C63.5231 13.5858 62.4103 13.1249 61.25 13.1249Z"
+                                        fill="black" fill-opacity="0.3" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-medium text-gray-500 mb-4">No residents found matching your search.</h3>
+                            <p class="mt-1 text-lg text-gray-500">No matches came up. Try another spelling or ID number to find
+                                the resident you’re looking for.</p>
+                        <?php else: ?>
+                            <div class="flex justify-center py-8">
+                                <!-- Your SECOND SVG here -->
+                                <svg width="100" height="100" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M24.0625 26.25C24.0625 25.6698 24.293 25.1134 24.7032 24.7032C25.1134 24.293 25.6698 24.0625 26.25 24.0625H43.75C44.3302 24.0625 44.8866 24.293 45.2968 24.7032C45.707 25.1134 45.9375 25.6698 45.9375 26.25C45.9375 26.8302 45.707 27.3866 45.2968 27.7968C44.8866 28.207 44.3302 28.4375 43.75 28.4375H26.25C25.6698 28.4375 25.1134 28.207 24.7032 27.7968C24.293 27.3866 24.0625 26.8302 24.0625 26.25ZM26.25 37.1875H43.75C44.3302 37.1875 44.8866 36.957 45.2968 36.5468C45.707 36.1366 45.9375 35.5802 45.9375 35C45.9375 34.4198 45.707 33.8634 45.2968 33.4532C44.8866 33.043 44.3302 32.8125 43.75 32.8125H26.25C25.6698 32.8125 25.1134 33.043 24.7032 33.4532C24.293 33.8634 24.0625 34.4198 24.0625 35C24.0625 35.5802 24.293 36.1366 24.7032 36.5468C25.1134 36.957 25.6698 37.1875 26.25 37.1875ZM35 41.5625H26.25C25.6698 41.5625 25.1134 41.793 24.7032 42.2032C24.293 42.6134 24.0625 43.1698 24.0625 43.75C24.0625 44.3302 24.293 44.8866 24.7032 45.2968C25.1134 45.707 25.6698 45.9375 26.25 45.9375H35C35.5802 45.9375 36.1366 45.707 36.5468 45.2968C36.957 44.8866 37.1875 44.3302 37.1875 43.75C37.1875 43.1698 36.957 42.6134 36.5468 42.2032C36.1366 41.793 35.5802 41.5625 35 41.5625ZM61.25 13.125V42.8449C61.2518 43.4197 61.1394 43.989 60.9193 44.52C60.6991 45.0509 60.3756 45.5327 59.9676 45.9375L45.9375 59.9676C45.5327 60.3756 45.0509 60.6991 44.52 60.9193C43.989 61.1394 43.4197 61.2518 42.8449 61.25H13.125C11.9647 61.25 10.8519 60.7891 10.0314 59.9686C9.21094 59.1481 8.75 58.0353 8.75 56.875V13.125C8.75 11.9647 9.21094 10.8519 10.0314 10.0314C10.8519 9.21094 11.9647 8.75 13.125 8.75H56.875C58.0353 8.75 59.1481 9.21094 59.9686 10.0314C60.7891 10.8519 61.25 11.9647 61.25 13.125ZM13.125 56.875H41.5625V43.75C41.5625 43.1698 41.793 42.6134 42.2032 42.2032C42.6134 41.793 43.1698 41.5625 43.75 41.5625H56.875V13.125H13.125V56.875ZM45.9375 45.9375V53.7852L53.7824 45.9375H45.9375Z"
+                                        fill="black" fill-opacity="0.3" />
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-medium text-gray-500 mb-4">No resident records accounts found.</h3>
+                            <p class="mt-1 text-lg text-gray-500">No records found. Please try another spelling or account ID number to locate the account you’re looking for.</p>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
+
                     <div class="overflow-x-auto">
                         <table class="min-w-full">
                             <thead>
@@ -2089,11 +2124,13 @@ $recordsPerPage = 5;
                                 if (!empty($sortOrder))
                                     $prevUrl .= "&sort=" . urlencode($sortOrder);
                                 ?>
-                                <a href="<?= $prevUrl ?>" class="pagination-button">
+                                <a href="<?= $prevUrl ?>"
+                                    class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             <?php else: ?>
-                                <span class="pagination-button disabled">
+                                <span
+                                    class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600">
                                     <i class="fas fa-chevron-left"></i>
                                 </span>
                             <?php endif; ?>
@@ -2108,9 +2145,11 @@ $recordsPerPage = 5;
                                     $pageUrl .= "&sort=" . urlencode($sortOrder);
                                 ?>
                                 <?php if ($i == $currentPage): ?>
-                                    <span class="pagination-button active"><?= $i ?></span>
+                                    <span class="mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
+                                            bg-blue-500 text-white border-blue-500 active"><?= $i ?></span>
                                 <?php else: ?>
-                                    <a href="<?= $pageUrl ?>" class="pagination-button"><?= $i ?></a>
+                                    <a href="<?= $pageUrl ?>" class="mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
+                                            bg-white text-blue-500 border-blue-500"><?= $i ?></a>
                                 <?php endif; ?>
                             <?php endfor; ?>
 
@@ -2123,11 +2162,13 @@ $recordsPerPage = 5;
                                 if (!empty($sortOrder))
                                     $nextUrl .= "&sort=" . urlencode($sortOrder);
                                 ?>
-                                <a href="<?= $nextUrl ?>" class="pagination-button">
+                                <a href="<?= $nextUrl ?>"
+                                    class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             <?php else: ?>
-                                <span class="pagination-button disabled">
+                                <span
+                                    class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600">
                                     <i class="fas fa-chevron-right"></i>
                                 </span>
                             <?php endif; ?>
@@ -3286,7 +3327,17 @@ $recordsPerPage = 5;
                     return;
                 }
                 if (!data.logs.length) {
-                    wrap.innerHTML = '<div class="text-gray-500 text-sm">No report generation logs found.</div>';
+                    wrap.innerHTML =
+                        `<div class="text-center py-12 rounded-lg">
+                        <div class="flex justify-center py-8">
+                            <svg width="100" height="100" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M52.5 8.75H8.75V56.875H37.1875L39.375 61.25H4.375V4.375H56.875V37.1875L52.5 32.8125V8.75Z" fill="black" fill-opacity="0.3"/>
+                                <path d="M13.125 21.875H48.1206V17.5H13.125V21.875ZM13.125 35V30.625H39.375L37.1875 35H13.125ZM13.125 48.125V43.75H24.0625V48.125H13.125ZM46.7556 63.56L46.6069 63.805C46.5247 63.9026 46.4223 63.981 46.3066 64.0348C46.191 64.0886 46.065 64.1165 45.9375 64.1165C45.81 64.1165 45.684 64.0886 45.5684 64.0348C45.4527 63.981 45.3503 63.9026 45.2681 63.805L45.1194 63.56L44.8175 62.7944L45.9375 63.2363L47.0531 62.7988L46.7556 63.56ZM45.1238 28.315C45.1875 28.1504 45.2995 28.0089 45.4452 27.9092C45.5908 27.8094 45.7632 27.756 45.9397 27.756C46.1162 27.756 46.2886 27.8094 46.4342 27.9092C46.5798 28.0089 46.6919 28.1504 46.7556 28.315L49.4156 35.0656C50.0756 36.7389 51.0725 38.2587 52.3444 39.5306C53.6163 40.8025 55.1361 41.7994 56.8094 42.4594L62.7988 44.8219L63.2363 45.9375L62.7988 47.0531L56.8094 49.4156L56.1838 49.6781C53.089 51.0885 50.6625 53.6452 49.4156 56.8094L47.0531 62.7988L45.9375 63.2363L44.8175 62.7988L42.4594 56.8094C41.2125 53.6452 38.786 51.0885 35.6912 49.6781L35.0656 49.4156L28.315 46.7556C28.1504 46.6919 28.0089 46.5798 27.9092 46.4342C27.8094 46.2886 27.756 46.1162 27.756 45.9397C27.756 45.7632 27.8094 45.5908 27.9092 45.4452C28.0089 45.2995 28.1504 45.1875 28.315 45.1238L29.0763 44.8175L35.0656 42.4594C38.2298 41.2125 40.7865 38.786 42.1969 35.6912L42.4594 35.0656L45.1238 28.315ZM45.9375 37.9925C44.2345 41.4421 41.4421 44.2345 37.9925 45.9375C41.4414 47.6394 44.2337 50.4301 45.9375 53.8781C47.6402 50.4308 50.4308 47.6402 53.8781 45.9375C50.4301 44.2337 47.6394 41.4414 45.9375 37.9925ZM63.56 45.1238C63.7246 45.1875 63.8661 45.2995 63.9658 45.4452C64.0656 45.5908 64.119 45.7632 64.119 45.9397C64.119 46.1162 64.0656 46.2886 63.9658 46.4342C63.8661 46.5798 63.7246 46.6919 63.56 46.7556L62.7944 47.0531L63.2363 45.9375L62.7988 44.8219L63.56 45.1238Z" fill="black" fill-opacity="0.3"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-medium text-gray-500 mb-4">No generated reports yet</h3>
+                        <p class="mt-1 text-lg text-gray-500">Report can be generated and display here</p>
+                    </div>`;
                     return;
                 }
                 const logsPerPage = 6;
@@ -3317,23 +3368,66 @@ $recordsPerPage = 5;
                     let filteredLogs = filterLogsByDate(logs);
                     const start = (page - 1) * logsPerPage;
                     const end = start + logsPerPage;
-                    let html = `<div class='overflow-x-auto'><table class='min-w-full text-sm text-left border border-gray-200 rounded-lg'><thead><tr class='bg-blue-50 text-blue-900'><th class='py-2 px-3 border-b'>Date & Time</th><th class='py-2 px-3 border-b'>Staff Name</th><th class='py-2 px-3 border-b'>Type</th><th class='py-2 px-3 border-b'>Records</th></tr></thead><tbody>`;
+                    let html = `<div class='overflow-x-auto mb-6'>
+                                    <table class='min-w-full text-sm text-left'>
+                                        <thead>
+                                            <th class='py-3 text-lg font-semibold text-gray-600 border-b'>Date & Time</th>
+                                            <th class='py-3 text-lg font-semibold text-gray-600 border-b'>Staff Name</th>
+                                            <th class='py-3 text-lg font-semibold text-gray-600 border-b'>Type</th>
+                                        </thead>
+                                        <tbody>`;
                     for (const log of filteredLogs.slice(start, end)) {
-                        html += `<tr class='hover:bg-blue-50'>
-                        <td class='py-2 px-3 border-b whitespace-nowrap'>${log.created_at ? new Date(log.created_at).toLocaleString() : ''}</td>
-                        <td class='py-2 px-3 border-b'>${log.full_name || ''}</td>
-                        <td class='py-2 px-3 border-b'>${log.export_type === 'bulk_patient_records' ? (log.action_type === 'export_bulk_pdf' ? 'PDF' : 'Excel') : (log.export_type || log.action_type)}</td>
-                        <td class='py-2 px-3 border-b text-center'>${log.record_count || ''}</td>
-                    </tr>`;
+                        html += `<tr>
+                                    <td class='py-3 border-b font-normal text-gray-600 text-base whitespace-nowrap'>${log.created_at ? new Date(log.created_at).toLocaleString() : ''}</td>
+                                    <td class='py-3 border-b font-medium text-lg'>${log.full_name || ''}</td>
+                                    <td class="py-3 border-b">
+                                        ${log.export_type === 'bulk_patient_records' ? (log.action_type === 'export_bulk_pdf' ? `
+                                        <span class="px-6 py-1 text-lg font-semibold rounded-md bg-red-200 text-red-600">
+                                            PDF
+                                        </span>`
+                                :
+                                `<span class="px-6 py-1 text-lg font-semibold rounded-md bg-green-200 text-green-600">
+                                            Excel
+                                        </span>`
+                            ) : (log.export_type || log.action_type)
+                            }
+                                    </td>
+                                </tr>`;
                     }
                     html += '</tbody></table></div>';
                     // Pagination controls
                     const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
                     if (totalPages > 1) {
-                        html += `<div class='flex justify-end mt-2'>`;
+                        html += `<div class='flex items-center justify-center mt-2 gap-2'>`;
+
+                        // Previous button
+                        html += `<button 
+                                                class='mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600'
+                                                onclick='window._renderReportLogsPage(${page - 1})'
+                                                ${page === 1 ? 'disabled' : ''}>
+                                                <i class="fas fa-chevron-left text-lg"></i>
+                                            </button>`;
+
                         for (let i = 1; i <= totalPages; i++) {
-                            html += `<button class='px-3 py-1 mx-1 rounded border ${i === page ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'}' onclick='window._renderReportLogsPage(${i})'>${i}</button>`;
+                            html += `
+                                        <button 
+                                            class='mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
+                                            ${i === page
+                                    ? 'bg-blue-500 text-white border-blue-500'
+                                    : 'bg-white text-blue-500 border-blue-500'}'
+                                            onclick='window._renderReportLogsPage(${i})'>
+                                            ${i}
+                                        </button>`;
                         }
+
+                        // Next button
+                        html += `<button 
+                                            class='mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full border-blue-500 bg-blue-500 text-white hover:bg-blue-600' 
+                                            onclick='window._renderReportLogsPage(${page + 1})'
+                                            ${page === totalPages ? 'disabled' : ''}>
+                                            <i class="fas fa-chevron-right text-lg"></i>
+                                        </button>`;
+
                         html += `</div>`;
                     }
                     wrap.innerHTML = html;
