@@ -1158,7 +1158,9 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
         echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
         echo '<head>';
         echo '<meta charset="UTF-8">';
-        echo '<style>';
+        // CSS Block: Export Table Styles
+            // CSS Block: Patient Table Styles
+            echo '<style>';
         echo 'table { border-collapse: collapse; width: 100%; font-family: Calibri, Arial, sans-serif; }';
         echo 'th { background-color: #3498db; color: white; font-weight: bold; padding: 12px; text-align: left; border: 1px solid #ddd; }';
         echo 'td { padding: 10px; border: 1px solid #ddd; vertical-align: top; }';
@@ -2297,36 +2299,43 @@ if (!empty($searchTerm)) {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 3.5rem;
-            height: 3.5rem;
-            border-radius: 30px;
-            background-color: #3498DB;
-            color: #FFFFFF;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #fff;
+            color: #333;
             font-weight: 500;
-            transition: all 0.3s ease;
-            text-decoration: none;
+            font-size: 1rem;
+            border: 1.5px solid #e0e0e0;
+            margin: 0 2px;
+            transition: background 0.2s, color 0.2s, border 0.2s;
+            cursor: pointer;
         }
 
-        .pagination-btn:hover {
-            background-color: #218dd5;
-            color: #FFFFFF;
+        .pagination-btn:hover:not(.active):not(:disabled) {
+            border-color: #3498db;
+            color: #3498db;
         }
 
         .pagination-btn.active {
-            background-color: white;
-            color: #3498db;
-            font-size: 1.875rem;
-            border: 2px solid #3498db;
-            font-weight: 400;
+            background: #3498db;
+            color: #fff;
+            border-color: #3498db;
+            font-weight: 600;
         }
 
-        .pagination-btn.disabled {
+        .pagination-btn:disabled {
             cursor: not-allowed;
+            opacity: 0.5;
+            color: #bdbdbd;
+            background: #f5f5f5;
+            border-color: #e0e0e0;
         }
 
-        .pagination-btn.disabled:hover {
-            background-color: #218dd5;
-            color: #FFFFFF;
+        .pagination-btn:disabled:hover {
+            background: #f5f5f5;
+            color: #bdbdbd;
+            border-color: #e0e0e0;
         }
 
         .pagination-actions {
@@ -3526,6 +3535,8 @@ if (!empty($searchTerm)) {
                                             value="<?= isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : '' ?>"
                                             class="custom-select-filter ml-2" onchange="this.form.submit()"
                                             placeholder="Filter by Date">
+                                        <!-- CSS Block: Main UI Styles -->
+                                        <!-- CSS Block: Custom Select Filter Styles -->
                                         <style>
                                             .custom-select-filter {
 
@@ -3907,7 +3918,7 @@ if (!empty($searchTerm)) {
                                                         <td><?= !empty($patient['occupation']) ? htmlspecialchars($patient['occupation']) : (!empty($patient['user_occupation']) ? htmlspecialchars($patient['user_occupation']) : 'N/A') ?>
                                                         </td>
                                                     <?php endif; ?>
-                                                    <td><?= $patient['patient_type'] === 'Registered Patient' ? '<span class="user-badge">Registered Patient</span>' : '<span class="regular-badge">Regular Patient</span>' ?>
+                                                    <td><?= $patient['patient_type'] === 'Registered Patient' ? '<span class="user-badge">Account Access</span>' : '<span class="regular-badge">Regular Patient</span>' ?>
                                                     </td>
                                                     <td>
                                                         <button onclick="openViewModal(<?= $patient['id'] ?>)"
@@ -3940,6 +3951,7 @@ if (!empty($searchTerm)) {
 
                                 <!-- Enhanced Pagination Container with preserved filters -->
                                 <div class="pagination-container">
+                                    <!-- CSS Block: Pagination Styles -->
                                     <style>
                                         .bg-showing-paginate {
                                             background-color: rgba(52, 152, 219, 0.3);
@@ -6872,6 +6884,10 @@ if (!empty($searchTerm)) {
         });
     </script>
 
+    <!-- JS Block: Consultation Notes Functions -->
+    <!-- JS Block: Child Health Record Form Submission -->
+    <!-- JS Block: Test Connection Function -->
+    <!-- JS Block: DOMContentLoaded Event Listeners -->
     <script>
         // Function to handle Child Health Record form submission
         function submitChildHealthForm(event) {
