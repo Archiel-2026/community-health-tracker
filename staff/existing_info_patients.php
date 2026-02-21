@@ -3497,7 +3497,7 @@ if (!empty($searchTerm)) {
                                 </div>
 
                                 <!-- RIGHT CONTENT -->
-                                <div class="flex items-center gap-6">
+                                <div class="flex items-center gap-4">
                                     <!-- Export Records Button -->
                                     <button type="button" onclick="openExportModal()"
                                         class="btn-export inline-flex text-base items-center px-6"
@@ -3522,7 +3522,7 @@ if (!empty($searchTerm)) {
                                         <select name="patient_type" onchange="this.form.submit()"
                                             class="custom-select-filter">
                                             <option value="all" <?= ($patientTypeFilter === 'all' || $patientTypeFilter === '' || !isset($patientTypeFilter)) ? 'selected' : '' ?>>All Patient Types</option>
-                                            <option value="registered" <?= $patientTypeFilter === 'registered' ? 'selected' : '' ?>>Registered Patient</option>
+                                            <option value="registered" <?= $patientTypeFilter === 'registered' ? 'selected' : '' ?>>Account Access</option>
                                             <option value="regular" <?= $patientTypeFilter === 'regular' ? 'selected' : '' ?>>
                                                 Regular Patient</option>
                                         </select>
