@@ -2015,7 +2015,7 @@ $recordsPerPage = 5;
                                         </td>
                                         <td class="py-3 px-4 border-b border-gray-200">
                                             <span
-                                                class="px-6 py-2 inline-flex text-base leading-5 font-medium items-center rounded-full bg-status-green text-status-green">
+                                                class="px-4 py-2 inline-flex text-base leading-5 font-medium items-center rounded-full bg-status-green text-status-green">
                                                 <svg class="w-6 h-6 mr-1" viewBox="0 0 18 18" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
                                                     <path
@@ -3311,14 +3311,14 @@ $recordsPerPage = 5;
                     for (const log of filteredLogs.slice(start, end)) {
                         html += `<tr>
                                     <td class='py-3 border-b font-normal text-gray-600 text-base whitespace-nowrap'>${log.created_at ? new Date(log.created_at).toLocaleString() : ''}</td>
-                                    <td class='py-3 border-b font-medium text-lg'>${log.full_name || ''}</td>
+                                    <td class='py-3 border-b font-semibold text-base'>${log.full_name || ''}</td>
                                     <td class="py-3 border-b">
                                         ${log.export_type === 'bulk_patient_records' ? (log.action_type === 'export_bulk_pdf' ? `
-                                        <span class="px-6 py-1 text-lg font-semibold rounded-md bg-red-200 text-red-600">
+                                        <span class="px-6 py-1 text-base font-semibold rounded-md bg-red-200 text-red-600">
                                             PDF
                                         </span>`
                                 :
-                                `<span class="px-6 py-1 text-lg font-semibold rounded-md bg-green-200 text-green-600">
+                                `<span class="px-6 py-1 text-base font-semibold rounded-md bg-green-200 text-green-600">
                                             Excel
                                         </span>`
                             ) : (log.export_type || log.action_type)

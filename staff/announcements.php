@@ -26,19 +26,20 @@ use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;
 
 // Send email to specific users for announcement
-function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'basic', $imageUrl = null) {
+function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'basic', $imageUrl = null)
+{
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return false;
     }
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'cabanagarchiel@gmail.com';
-        $mail->Password   = 'qmdh ofnf bhfj wxsa';
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'cabanagarchiel@gmail.com';
+        $mail->Password = 'qmdh ofnf bhfj wxsa';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        $mail->Port = 587;
         $mail->setFrom('cabanagarchiel@gmail.com', 'Barangay Luz Health Center');
         $mail->addAddress($email, $fullName);
         $mail->isHTML(true);
@@ -189,19 +190,20 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
 }
 
 // Add notification functions before they're called
-function createTargetedAnnouncementNotification($announcementId, $title, $targetUsers) {
+function createTargetedAnnouncementNotification($announcementId, $title, $targetUsers)
+{
     global $pdo;
-    
+
     try {
         $message = "New announcement: " . $title;
         $link = "/community-health-tracker/announcements.php";
-        
+
         foreach ($targetUsers as $userId) {
             $stmt = $pdo->prepare("INSERT INTO notifications (user_id, type, message, link, created_at) 
                                   VALUES (?, 'announcement', ?, ?, NOW())");
             $stmt->execute([$userId, $message, $link]);
         }
-        
+
         return true;
     } catch (PDOException $e) {
         error_log("Error creating targeted notifications: " . $e->getMessage());
@@ -209,24 +211,25 @@ function createTargetedAnnouncementNotification($announcementId, $title, $target
     }
 }
 
-function createAnnouncementNotification($announcementId, $title) {
+function createAnnouncementNotification($announcementId, $title)
+{
     global $pdo;
-    
+
     try {
         $message = "New announcement: " . $title;
         $link = "/community-health-tracker/announcements.php";
-        
+
         // Get all approved users
         $stmt = $pdo->prepare("SELECT id FROM sitio1_users WHERE approved = TRUE");
         $stmt->execute();
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         foreach ($users as $user) {
             $stmt = $pdo->prepare("INSERT INTO notifications (user_id, type, message, link, created_at) 
                                   VALUES (?, 'announcement', ?, ?, NOW())");
             $stmt->execute([$user['id'], $message, $link]);
         }
-        
+
         return true;
     } catch (PDOException $e) {
         error_log("Error creating public notifications: " . $e->getMessage());
@@ -310,20 +313,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['post_announcement']))
                 createTargetedAnnouncementNotification($announcementId, $title, $target_users);
                 $success = ($announcement_type === 'lab_result') ? 'Lab Result sent to ' . count($target_users) . ' user(s) successfully!' : 'Message sent to ' . count($target_users) . ' user(s) successfully!';
             } elseif ($audience_type === 'public') {
-                    createAnnouncementNotification($announcementId, $title);
-                    // Send email to all approved users
-                    $stmtAll = $pdo->prepare("SELECT email, full_name FROM sitio1_users WHERE approved = TRUE AND email IS NOT NULL AND email != ''");
-                    $stmtAll->execute();
-                    $allUserInfos = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
-                    $sentCount = 0;
-                    foreach ($allUserInfos as $userInfo) {
-                        if (!empty($userInfo['email'])) {
-                            if (sendAnnouncementEmail($userInfo['email'], $userInfo['full_name'], $title, $message, $announcement_type, $image_path)) {
-                                $sentCount++;
-                            }
+                createAnnouncementNotification($announcementId, $title);
+                // Send email to all approved users
+                $stmtAll = $pdo->prepare("SELECT email, full_name FROM sitio1_users WHERE approved = TRUE AND email IS NOT NULL AND email != ''");
+                $stmtAll->execute();
+                $allUserInfos = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
+                $sentCount = 0;
+                foreach ($allUserInfos as $userInfo) {
+                    if (!empty($userInfo['email'])) {
+                        if (sendAnnouncementEmail($userInfo['email'], $userInfo['full_name'], $title, $message, $announcement_type, $image_path)) {
+                            $sentCount++;
                         }
                     }
-                    $success = 'Message broadcasted to all users successfully! Email sent to ' . $sentCount . ' user(s).';
+                }
+                $success = 'Message broadcasted to all users successfully! Email sent to ' . $sentCount . ' user(s).';
             } else {
                 // For landing_page announcements, no notifications needed
                 $success = 'Landing page announcement published successfully!';
@@ -348,7 +351,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_announcement']))
     $message = trim($_POST['message']);
     $priority = $_POST['priority'];
     $expiry_date = !empty($_POST['expiry_date']) ? $_POST['expiry_date'] : null;
-    
+
     try {
         $stmt = $pdo->prepare("UPDATE sitio1_announcements SET title = ?, message = ?, priority = ?, expiry_date = ? WHERE id = ? AND staff_id = ?");
         $stmt->execute([$title, $message, $priority, $expiry_date, $id, $staffId]);
@@ -421,7 +424,7 @@ try {
                           ORDER BY a.post_date DESC");
     $stmt->execute();
     $archivedAnnouncements = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Get detailed responses
     foreach ($activeAnnouncements as &$announcement) {
         $stmt = $pdo->prepare("SELECT u.id, u.full_name, ua.response_date 
@@ -431,7 +434,7 @@ try {
                               ORDER BY ua.response_date DESC");
         $stmt->execute([$announcement['id']]);
         $announcement['accepted_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         $stmt = $pdo->prepare("SELECT u.id, u.full_name, ua.response_date 
                               FROM user_announcements ua
                               JOIN sitio1_users u ON ua.user_id = u.id
@@ -439,7 +442,7 @@ try {
                               ORDER BY ua.response_date DESC");
         $stmt->execute([$announcement['id']]);
         $announcement['dismissed_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         $stmt = $pdo->prepare("SELECT u.id, u.full_name 
                               FROM sitio1_users u
                               WHERE u.approved = TRUE AND u.id NOT IN (
@@ -448,7 +451,7 @@ try {
                               )");
         $stmt->execute([$announcement['id']]);
         $announcement['pending_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         if ($announcement['audience_type'] === 'specific') {
             $stmt = $pdo->prepare("SELECT u.id, u.full_name 
                                   FROM announcement_targets at
@@ -475,6 +478,7 @@ try {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -483,752 +487,847 @@ try {
     <link rel="stylesheet" href="/asssets/css/normalize.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-    body {
-        font-family: 'Poppins', sans-serif;
-        line-height: 1.6;
-        background-color: #ecf0f1;
-        color: var(--secondary);
-    }
-
-    :root {
-        --primary: #3498db;
-        --primary-dark: #2980b9;
-        --secondary: #2c3e50;
-        --success: #3994d1ff;
-        --warning: #f39c12;
-        --danger: #e74c3c;
-        --light: #f8f9fa;
-        --gray: #95a5a6;
-        --border: #e2e8f0;
-        --shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .alert-success { background-color: #f0fdf4; border: 2px solid #bbf7d0; color: #065f46; }
-    .alert-error { background-color: #fef2f2; border: 2px solid #fecaca; color: #b91c1c; }
-    .custom-notification {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 1rem;
-        font-weight: 500;
-        min-width: 320px;
-        max-width: 480px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-radius: 0.75rem;
-        margin-bottom: 1rem;
-        opacity: 0;
-        transform: translateY(-20px);
-        transition: opacity 0.4s cubic-bezier(.4,0,.2,1), transform 0.4s cubic-bezier(.4,0,.2,1);
-        pointer-events: auto;
-    }
-
-    .custom-notification.show {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .card {
-        background: white;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-    }
-
-    .card-header {
-        padding: 1.25rem;
-        border-bottom: 1px solid var(--border);
-        background: var(--light);
-        font-weight: 600;
-    }
-
-    .card-body {
-        padding: 1.25rem;
-    }
-
-    .form-group {
-        margin-bottom: 1rem;
-    }
-
-    .form-label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        color: var(--secondary);
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        font-size: 0.875rem;
-        transition: border-color 0.2s;
-        font-family: 'Poppins', sans-serif;
-        background: rgba(255,255,255,0.7);
-        box-shadow: 0 2px 8px rgba(52,152,219,0.10);
-        backdrop-filter: blur(2px);
-    }
-
-    .form-control:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-    }
-
-    textarea.form-control {
-        min-height: 120px;
-        resize: vertical;
-    }
-
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        border-radius: 6px;
-        border: 1px solid transparent;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-decoration: none;
-        gap: 0.5rem;
-        font-family: 'Poppins', sans-serif;
-    }
-
-    .btn-primary {
-        background: white;
-        color: var(--primary);
-        border: 2px solid rgba(52, 152, 219, 1);
-    }
-
-    .btn-primary:hover {
-        background: #f0f9ff;
-        border-color: rgba(52, 152, 219, 0.6);
-        transform: translateY(-2px);
-    }
-
-    .btn-success {
-        background: var(--success);
-        color: white;
-        border-radius: 30px;
-    }
-
-    .btn-success:hover {
-        background: #358cc7ff;
-        border-color: #2980b9;
-        transform: translateY(-2px);
-    }
-
-    .btn-warning {
-        background: white;
-        color: var(--warning);
-        border: 2px solid rgba(243, 156, 18, 1);
-    }
-
-    .btn-warning:hover {
-        background: #fef3c7;
-        border-color: rgba(243, 156, 18, 0.6);
-        transform: translateY(-2px);
-    }
-
-    .btn-danger {
-        background: white;
-        color: var(--danger);
-        border: 2px solid rgba(231, 76, 60, 1);
-    }
-
-    .btn-danger:hover {
-        background: #fef2f2;
-        border-color: rgba(231, 76, 60, 0.6);
-        transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-        background: white;
-        color: var(--secondary);
-        border: 2px solid #7e7e7eff;
-        border-radius: 30px;
-    }
-
-    .btn-secondary:hover {
-        background: #f8fafc;
-        border-color: var(--gray);
-        transform: translateY(-2px);
-    }
-
-    .btn-sm {
-        padding: 0.5rem 1rem;
-        font-size: 0.75rem;
-    }
-
-    .tab-nav {
-        display: flex;
-        border-bottom: 1px solid var(--border);
-        background: white;
-    }
-
-    .tab-btn {
-        padding: 1rem 1.5rem;
-        background: none;
-        border: none;
-        border-bottom: 2px solid transparent;
-        font-weight: 500;
-        color: var(--gray);
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .tab-btn:hover {
-        color: var(--primary);
-    }
-
-    .tab-btn.active {
-        color: var(--primary);
-        border-bottom-color: var(--primary);
-        background: #f0f9ff;
-    }
-
-    .announcement-item {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        transition: all 0.2s;
-    }
-
-    .announcement-item:hover {
-        box-shadow: var(--shadow);
-    }
-
-    .announcement-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        margin-bottom: 0.75rem;
-    }
-
-    .announcement-title {
-        font-weight: 600;
-        color: var(--secondary);
-        margin-bottom: 0.25rem;
-    }
-
-    .announcement-meta {
-        font-size: 0.75rem;
-        color: var(--gray);
-    }
-
-    .announcement-content {
-        color: var(--secondary);
-        font-size: 0.875rem;
-        line-height: 1.5;
-        margin-bottom: 1rem;
-    }
-
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    .badge-high {
-        background: #fee2e2;
-        color: #dc2626;
-        border: 1px solid #fecaca;
-    }
-
-    .badge-medium {
-        background: #fef3c7;
-        color: #d97706;
-        border: 1px solid #fde68a;
-    }
-
-    .badge-normal {
-        background: #f0f9ff;
-        color: var(--primary);
-        border: 1px solid #bfdbfe;
-    }
-
-    .stats {
-        display: flex;
-        gap: 1rem;
-    }
-
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .stat-icon {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-    }
-
-    .stat-accepted {
-        background: #d1fae5;
-        color: #059669;
-    }
-
-    .stat-pending {
-        background: #fef3c7;
-        color: #d97706;
-    }
-
-    .stat-dismissed {
-        background: #fee2e2;
-        color: #dc2626;
-    }
-
-    /* MODAL STYLES - FIXED */
-    .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-
-    .modal.active {
-        display: flex;
-    }
-
-    .modal-content {
-        background: white;
-        border-radius: 8px;
-        max-width: 600px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-        z-index: 1001;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        transform: translateY(0) !important;
-    }
-
-    .modal-header {
-        padding: 1.25rem;
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .modal-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--secondary);
-    }
-
-    .modal-body {
-        padding: 1.25rem;
-    }
-
-    .modal-footer {
-        padding: 1.25rem;
-        border-top: 1px solid var(--border);
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.75rem;
-    }
-
-    .radio-group {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-    }
-
-    .radio-option {
-        position: relative;
-    }
-
-    .radio-input {
-        position: absolute;
-        opacity: 0;
-    }
-
-    .radio-label {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-align: center;
-    }
-
-    .radio-input:checked + .radio-label {
-        border-color: var(--primary);
-        background: #f0f9ff;
-    }
-
-    .checkbox-group {
-        max-height: 200px;
-        overflow-y: auto;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 0.75rem;
-    }
-
-    .checkbox-item {
-        display: flex;
-        align-items: center;
-        padding: 0.5rem;
-        cursor: pointer;
-    }
-
-    .checkbox-item:hover {
-        background: var(--light);
-    }
-
-    .file-upload {
-        border: 2px dashed var(--border);
-        border-radius: 6px;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-    }
-
-    .file-upload:hover {
-        border-color: var(--primary);
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem 1rem;
-        color: var(--gray);
-    }
-
-    .empty-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
-    }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card {
-        background: white;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--primary);
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-label {
-        font-size: 0.875rem;
-        color: var(--gray);
-    }
-
-    @media (max-width: 768px) {
-        .radio-group {
-            grid-template-columns: 1fr;
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            background-color: #ecf0f1;
+            color: var(--secondary);
         }
-        
-        .announcement-header {
-            flex-direction: column;
+
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2c3e50;
+            --success: #3994d1ff;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #f8f9fa;
+            --gray: #95a5a6;
+            --border: #e2e8f0;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert-success {
+            background-color: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background-color: #fef2f2;
+            border: 2px solid #fecaca;
+            color: #b91c1c;
+        }
+
+        .custom-notification {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            min-width: 320px;
+            max-width: 480px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.4s cubic-bezier(.4, 0, .2, 1), transform 0.4s cubic-bezier(.4, 0, .2, 1);
+            pointer-events: auto;
+        }
+
+        .custom-notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            height: 100%;
+            padding: 36px 36px;
+            /* added */
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: var(--secondary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 1px solid #3C96E1;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            font-family: 'Poppins', sans-serif;
+            /* background: rgba(255, 255, 255, 0.7); */
+            /* box-shadow: 0 2px 8px rgba(52, 152, 219, 0.10); */
+            /* backdrop-filter: blur(2px); */
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            gap: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid rgba(52, 152, 219, 1);
+        }
+
+        .btn-primary:hover {
+            background: #f0f9ff;
+            border-color: rgba(52, 152, 219, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            border-radius: 6px;
+        }
+
+        .btn-success:hover {
+            background: #358cc7ff;
+            border-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: white;
+            color: var(--warning);
+            border: 2px solid rgba(243, 156, 18, 1);
+        }
+
+        .btn-warning:hover {
+            background: #fef3c7;
+            border-color: rgba(243, 156, 18, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: white;
+            color: var(--danger);
+            border: 2px solid rgba(231, 76, 60, 1);
+        }
+
+        .btn-danger:hover {
+            background: #fef2f2;
+            border-color: rgba(231, 76, 60, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(29, 133, 221, 0.3);
+            color: #1D85DD;
+            /* border: 2px solid #7e7e7eff; */
+            border-radius: 6px;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: var(--gray);
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+        }
+
+        .tab-nav {
+            display: flex;
+            margin-bottom: 1rem;
+            background: white;
+            gap: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(29, 133, 221, 0.3);
+            border: none;
+            font-weight: 500;
+            color: #1D85DD;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 6px;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+
+        .tab-btn.active {
+            color: #FFFFFF;
+            border-bottom-color: var(--primary);
+            background: #1D85DD;
+        }
+
+        .announcement-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+
+        .announcement-item:hover {
+            box-shadow: var(--shadow);
+        }
+
+        .announcement-title {
+            font-weight: 400;
+            font-size: 1.125rem;
+            color: #1D85DD;
+            margin-bottom: 0.25rem;
+        }
+
+        .announcement-meta {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        .announcement-content {
+            color: var(--secondary);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin-bottom: 3rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-high {
+            background: rgba(224, 25, 25, 0.3);
+            color: #dc2626;
+            font-size: 1rem;
+        }
+
+        .badge-medium {
+            background: rgba(253, 136, 2, 0.3);
+            color: #FD8802;
+            font-size: 1rem;
+        }
+
+        .badge-normal {
+            background: rgba(29, 133, 221, 0.3);
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .stats {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .stat-accepted {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .stat-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .stat-dismissed {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* MODAL STYLES - FIXED */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 1001;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        .modal-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .modal-body {
+            padding: 1.25rem;
+        }
+
+        .modal-footer {
+            padding: 1.25rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
             gap: 0.75rem;
         }
-        
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
 
-    @media (max-width: 640px) {
+        .radio-group {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .radio-option {
+            position: relative;
+        }
+
+        .radio-input {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .radio-label {
+            display: flex;
+            flex-direction: column;
+            padding: 20px 32px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .radio-input:checked+.radio-label {
+            border-color: var(--primary);
+            background: #f0f9ff;
+        }
+
+        .checkbox-group {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.75rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+
+        .checkbox-item:hover {
+            background: var(--light);
+        }
+
+        .file-upload {
+            border: 2px dashed var(--border);
+            border-radius: 6px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--gray);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
         .stats-grid {
-            grid-template-columns: 1fr;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
         }
-        
-        .modal-content {
-            width: 95%;
-            margin: 0.5rem;
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px 36px;
+            /* text-align: center; */
         }
-    }
-</style>
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            line-height: 2rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        @media (max-width: 768px) {
+            .radio-group {
+                grid-template-columns: 1fr;
+            }
+
+            .announcement-header {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 0.5rem;
+            }
+        }
+    </style>
 </head>
+
 <body class="bg-gray-50 min-h-screen">
-    
-    <div class="container w-full max-w-none px-4 py-6 mt-16">
+
+    <div class="container w-full max-w-none px-8 py-10">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-2xl font-bold text-secondary mb-2">Announcement Management</h1>
-            <p class="text-gray-600">Create and manage community health announcements</p>
+            <h1 class="text-2xl font-bold mb-2">Announcement Management</h1>
+            <p class="text-lg text-gray-500">Create and manage community health announcements</p>
         </div>
 
         <!-- Stats -->
         <div class="stats-grid mb-6">
+            <!-- ACTIVE ANNOUNCEMENTS -->
             <div class="stat-card">
-                <div class="stat-value"><?= count($activeAnnouncements) ?></div>
-                <div class="stat-label">Active Announcements</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value"><?= count($archivedAnnouncements) ?></div>
-                <div class="stat-label">Archived</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value"><?= count($allUsers) ?></div>
-                <div class="stat-label">Registered Users</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">
-                    <?php
-                    $totalResponses = 0;
-                    foreach ($activeAnnouncements as $announcement) {
-                        $totalResponses += $announcement['accepted_count'] + $announcement['dismissed_count'];
-                    }
-                    echo $totalResponses;
-                    ?>
+                <div class="flex flex-col md:flex-row sm:flex-row items-center justify-between mb-4">
+                    <div class="stat-value">
+                        <?= count($activeAnnouncements) ?>
+                    </div>
+                    <div>
+                        <svg class="h-14 w-14" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M0 4C0 1.79086 1.79086 0 4 0H46C48.2091 0 50 1.79086 50 4V46C50 48.2091 48.2091 50 46 50H4C1.79086 50 0 48.2091 0 46V4Z"
+                                fill="#2563EB" fill-opacity="0.3" />
+                            <path
+                                d="M32.1552 20.1339C32.2772 20.2558 32.374 20.4006 32.4401 20.5599C32.5061 20.7192 32.5401 20.89 32.5401 21.0625C32.5401 21.235 32.5061 21.4058 32.4401 21.5651C32.374 21.7244 32.2772 21.8692 32.1552 21.9911L22.9677 31.1786C22.8458 31.3006 22.701 31.3974 22.5417 31.4635C22.3823 31.5295 22.2116 31.5635 22.0391 31.5635C21.8666 31.5635 21.6958 31.5295 21.5365 31.4635C21.3771 31.3974 21.2324 31.3006 21.1105 31.1786L17.173 27.2411C16.9267 26.9948 16.7883 26.6608 16.7883 26.3125C16.7883 25.9642 16.9267 25.6302 17.173 25.3839C17.4193 25.1376 17.7533 24.9993 18.1016 24.9993C18.4499 24.9993 18.7839 25.1376 19.0302 25.3839L22.0391 28.3945L30.298 20.1339C30.4199 20.0119 30.5646 19.9151 30.724 19.849C30.8833 19.783 31.0541 19.749 31.2266 19.749C31.3991 19.749 31.5698 19.783 31.7292 19.849C31.8885 19.9151 32.0333 20.0119 32.1552 20.1339ZM41.7266 25C41.7266 28.3746 40.7259 31.6735 38.851 34.4794C36.9762 37.2853 34.3114 39.4723 31.1936 40.7637C28.0758 42.0551 24.6451 42.393 21.3353 41.7346C18.0255 41.0763 14.9853 39.4512 12.5991 37.065C10.2128 34.6788 8.58778 31.6385 7.92942 28.3287C7.27106 25.0189 7.60896 21.5882 8.90038 18.4705C10.1918 15.3527 12.3787 12.6879 15.1847 10.813C17.9906 8.9382 21.2894 7.9375 24.6641 7.9375C29.1879 7.94228 33.525 9.74146 36.7238 12.9403C39.9226 16.1391 41.7218 20.4762 41.7266 25ZM39.1016 25C39.1016 22.1445 38.2548 19.3532 36.6684 16.979C35.082 14.6047 32.8272 12.7542 30.1891 11.6615C27.551 10.5687 24.6481 10.2828 21.8475 10.8399C19.0469 11.397 16.4743 12.772 14.4552 14.7911C12.4361 16.8103 11.0611 19.3828 10.504 22.1834C9.94691 24.984 10.2328 27.8869 11.3256 30.525C12.4183 33.1631 14.2688 35.4179 16.643 37.0043C19.0173 38.5908 21.8086 39.4375 24.6641 39.4375C28.4918 39.4332 32.1615 37.9107 34.8681 35.2041C37.5747 32.4974 39.0972 28.8277 39.1016 25Z"
+                                fill="#3C96E1" />
+                        </svg>
+                    </div>
                 </div>
-                <div class="stat-label">Total Responses</div>
+                <div class="text-xl font-medium text-gray-500">Active Announcements</div>
+            </div>
+            <!-- ARCHIVED ANNOUNCEMENTS -->
+            <div class="stat-card">
+                <div class="flex flex-col md:flex-row sm:flex-row items-center justify-between mb-4">
+                    <div class="stat-value">
+                        <?= count($archivedAnnouncements) ?>
+                    </div>
+                    <div>
+                        <svg class="h-14 w-14" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M0 4C0 1.79086 1.79086 0 4 0H46C48.2091 0 50 1.79086 50 4V46C50 48.2091 48.2091 50 46 50H4C1.79086 50 0 48.2091 0 46V4Z"
+                                fill="#D97706" fill-opacity="0.3" />
+                            <path
+                                d="M35.1641 9.25H14.1641C12.7717 9.25 11.4363 9.80312 10.4518 10.7877C9.46719 11.7723 8.91406 13.1076 8.91406 14.5V35.5C8.91406 36.8924 9.46719 38.2277 10.4518 39.2123C11.4363 40.1969 12.7717 40.75 14.1641 40.75H35.1641C36.5564 40.75 37.8918 40.1969 38.8764 39.2123C39.8609 38.2277 40.4141 36.8924 40.4141 35.5V14.5C40.4141 13.1076 39.8609 11.7723 38.8764 10.7877C37.8918 9.80312 36.5564 9.25 35.1641 9.25ZM37.7891 35.5C37.7891 36.1962 37.5125 36.8639 37.0202 37.3562C36.5279 37.8484 35.8603 38.125 35.1641 38.125H14.1641C13.4679 38.125 12.8002 37.8484 12.3079 37.3562C11.8156 36.8639 11.5391 36.1962 11.5391 35.5V14.5C11.5391 13.8038 11.8156 13.1361 12.3079 12.6438C12.8002 12.1516 13.4679 11.875 14.1641 11.875H35.1641C35.8603 11.875 36.5279 12.1516 37.0202 12.6438C37.5125 13.1361 37.7891 13.8038 37.7891 14.5V35.5ZM23.3516 21.7188C23.3516 22.1081 23.2361 22.4888 23.0198 22.8125C22.8034 23.1363 22.496 23.3886 22.1362 23.5376C21.7765 23.6866 21.3806 23.7256 20.9987 23.6497C20.6168 23.5737 20.266 23.3862 19.9907 23.1109C19.7154 22.8355 19.5279 22.4847 19.4519 22.1028C19.3759 21.7209 19.4149 21.3251 19.5639 20.9653C19.7129 20.6056 19.9653 20.2981 20.289 20.0818C20.6128 19.8655 20.9934 19.75 21.3828 19.75C21.905 19.75 22.4057 19.9574 22.7749 20.3266C23.1441 20.6958 23.3516 21.1966 23.3516 21.7188ZM29.9141 28.2812C29.9141 28.6706 29.7986 29.0513 29.5823 29.375C29.3659 29.6988 29.0585 29.9511 28.6987 30.1001C28.339 30.2491 27.9431 30.2881 27.5612 30.2122C27.1793 30.1362 26.8285 29.9487 26.5532 29.6734C26.2779 29.398 26.0904 29.0472 26.0144 28.6653C25.9384 28.2834 25.9774 27.8876 26.1264 27.5278C26.2754 27.1681 26.5278 26.8606 26.8515 26.6443C27.1753 26.428 27.5559 26.3125 27.9453 26.3125C28.4675 26.3125 28.9682 26.5199 29.3374 26.8891C29.7066 27.2583 29.9141 27.7591 29.9141 28.2812Z"
+                                fill="#D97706" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-xl font-medium text-gray-500">Archived Announcements</div>
+            </div>
+            <!-- REGISTERED USERS -->
+            <div class="stat-card">
+                <div class="flex flex-col md:flex-row sm:flex-row items-center justify-between mb-4">
+                    <div class="stat-value">
+                        <?= count($allUsers) ?>
+                    </div>
+                    <div>
+                        <svg class="h-14 w-14" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M0 4C0 1.79086 1.79086 0 4 0H46C48.2091 0 50 1.79086 50 4V46C50 48.2091 48.2091 50 46 50H4C1.79086 50 0 48.2091 0 46V4Z"
+                                fill="#9333EA" fill-opacity="0.3" />
+                            <path
+                                d="M28.6013 17.125C29.6397 17.125 30.6547 16.8171 31.5181 16.2402C32.3814 15.6633 33.0544 14.8434 33.4517 13.8841C33.8491 12.9248 33.953 11.8692 33.7505 10.8508C33.5479 9.83238 33.0479 8.89692 32.3137 8.16269C31.5794 7.42847 30.644 6.92845 29.6256 6.72588C28.6072 6.52331 27.5516 6.62727 26.5923 7.02463C25.6329 7.42199 24.813 8.0949 24.2361 8.95826C23.6593 9.82162 23.3513 10.8367 23.3513 11.875C23.3513 13.2674 23.9045 14.6027 24.889 15.5873C25.8736 16.5719 27.209 17.125 28.6013 17.125ZM28.6013 9.25C29.1205 9.25 29.628 9.40396 30.0597 9.69239C30.4914 9.98083 30.8278 10.3908 31.0265 10.8705C31.2252 11.3501 31.2772 11.8779 31.1759 12.3871C31.0746 12.8963 30.8246 13.364 30.4575 13.7312C30.0904 14.0983 29.6227 14.3483 29.1135 14.4496C28.6043 14.5509 28.0765 14.4989 27.5968 14.3002C27.1171 14.1015 26.7072 13.7651 26.4187 13.3334C26.1303 12.9017 25.9763 12.3942 25.9763 11.875C25.9763 11.1788 26.2529 10.5111 26.7452 10.0188C27.2375 9.52656 27.9052 9.25 28.6013 9.25ZM39.1013 27.625C39.1013 27.9731 38.9631 28.3069 38.7169 28.5531C38.4708 28.7992 38.1369 28.9375 37.7888 28.9375C31.9958 28.9375 29.1017 26.0156 26.777 23.6678C26.3274 23.2134 25.8976 22.7819 25.4645 22.3816L23.2611 27.4478L29.3642 31.807C29.5342 31.9284 29.6728 32.0887 29.7684 32.2744C29.864 32.4602 29.9138 32.6661 29.9138 32.875V42.0625C29.9138 42.4106 29.7756 42.7444 29.5294 42.9906C29.2833 43.2367 28.9494 43.375 28.6013 43.375C28.2532 43.375 27.9194 43.2367 27.6733 42.9906C27.4271 42.7444 27.2888 42.4106 27.2888 42.0625V33.5509L22.1914 29.9088L16.6806 42.5859C16.5786 42.8204 16.4103 43.0201 16.1963 43.1603C15.9824 43.3005 15.7321 43.3751 15.4763 43.375C15.2961 43.3754 15.1178 43.338 14.953 43.2651C14.6339 43.1264 14.383 42.8667 14.2553 42.543C14.1276 42.2194 14.1337 41.8583 14.2721 41.5391L23.1446 21.1347C21.6172 20.864 19.7124 21.3316 17.4517 22.5423C15.6486 23.5369 13.9658 24.7353 12.4363 26.114C12.181 26.3427 11.8463 26.4624 11.5039 26.4476C11.1615 26.4328 10.8384 26.2847 10.6038 26.0348C10.3692 25.785 10.2416 25.4533 10.2483 25.1106C10.255 24.7679 10.3955 24.4415 10.6398 24.201C11.0499 23.8155 20.7608 14.8117 26.836 20.0863C27.4644 20.631 28.0632 21.2348 28.6407 21.8205C30.9294 24.1305 33.0901 26.3125 37.7888 26.3125C38.1369 26.3125 38.4708 26.4508 38.7169 26.6969C38.9631 26.9431 39.1013 27.2769 39.1013 27.625Z"
+                                fill="#9333EA" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-xl font-medium text-gray-500">Registered Users</div>
+            </div>
+            <!-- TOTAL RESPONSES -->
+            <div class="stat-card">
+                <div class="flex flex-col md:flex-row sm:flex-row items-center justify-between mb-4">
+                    <div class="stat-value">
+                        <?php
+                        $totalResponses = 0;
+                        foreach ($activeAnnouncements as $announcement) {
+                            $totalResponses += $announcement['accepted_count'] + $announcement['dismissed_count'];
+                        }
+                        echo $totalResponses;
+                        ?>
+                    </div>
+                    <div>
+                        <svg class="h-14 w-14" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M0 4C0 1.79086 1.79086 0 4 0H46C48.2091 0 50 1.79086 50 4V46C50 48.2091 48.2091 50 46 50H4C1.79086 50 0 48.2091 0 46V4Z"
+                                fill="#22C55E" fill-opacity="0.3" />
+                            <path
+                                d="M40.4141 36.8125H39.1016V10.5625C39.1016 10.2144 38.9633 9.88056 38.7171 9.63442C38.471 9.38828 38.1372 9.25 37.7891 9.25H28.6016C28.2535 9.25 27.9196 9.38828 27.6735 9.63442C27.4273 9.88056 27.2891 10.2144 27.2891 10.5625V17.125H19.4141C19.066 17.125 18.7321 17.2633 18.486 17.5094C18.2398 17.7556 18.1016 18.0894 18.1016 18.4375V25H11.5391C11.191 25 10.8571 25.1383 10.611 25.3844C10.3648 25.6306 10.2266 25.9644 10.2266 26.3125V36.8125H8.91406C8.56597 36.8125 8.23213 36.9508 7.98598 37.1969C7.73984 37.4431 7.60156 37.7769 7.60156 38.125C7.60156 38.4731 7.73984 38.8069 7.98598 39.0531C8.23213 39.2992 8.56597 39.4375 8.91406 39.4375H40.4141C40.7622 39.4375 41.096 39.2992 41.3421 39.0531C41.5883 38.8069 41.7266 38.4731 41.7266 38.125C41.7266 37.7769 41.5883 37.4431 41.3421 37.1969C41.096 36.9508 40.7622 36.8125 40.4141 36.8125ZM29.9141 11.875H36.4766V36.8125H29.9141V11.875ZM20.7266 19.75H27.2891V36.8125H20.7266V19.75ZM12.8516 27.625H18.1016V36.8125H12.8516V27.625Z"
+                                fill="#22C55E" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-xl font-medium text-gray-500">Total Responses</div>
+            </div>
+        </div>
+
+        <!-- CREATE ANNOUNCEMENT TITLE HEADER -->
+        <div>
+            <div class="border-b-2 border-gray-300 pb-4 mb-6">
+                <h2 class="text-2xl font-bold mb-2">Create New Announcement</h2>
             </div>
         </div>
 
         <!-- Messages -->
         <?php if ($error): ?>
-            <script>document.addEventListener('DOMContentLoaded', function() { showNotification('error', <?= json_encode($error) ?>); });</script>
+            <script>document.addEventListener('DOMContentLoaded', function () { showNotification('error', <?= json_encode($error) ?>); });</script>
         <?php endif; ?>
         <?php if ($success): ?>
-            <script>document.addEventListener('DOMContentLoaded', function() { showNotification('success', <?= json_encode($success) ?>); });</script>
+            <script>document.addEventListener('DOMContentLoaded', function () { showNotification('success', <?= json_encode($success) ?>); });</script>
         <?php endif; ?>
         <script>
-        // Notification prompt with smooth show/hide
-        function showNotification(type, message, duration = 5000) {
-            const existingNotifications = document.querySelectorAll('.custom-notification');
-            existingNotifications.forEach(notification => notification.remove());
+            // Notification prompt with smooth show/hide
+            function showNotification(type, message, duration = 5000) {
+                const existingNotifications = document.querySelectorAll('.custom-notification');
+                existingNotifications.forEach(notification => notification.remove());
 
-            const notification = document.createElement('div');
-            notification.className = `custom-notification fixed top-6 right-6 z-50 px-6 py-4 rounded-xl shadow-lg border-2 ${type === 'error' ? 'alert-error' :
-                type === 'success' ? 'alert-success' :
-                type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                    'bg-blue-100 text-blue-800 border-blue-200'
-                }`;
+                const notification = document.createElement('div');
+                notification.className = `custom-notification fixed top-6 right-6 z-50 px-6 py-4 rounded-xl shadow-lg border-2 ${type === 'error' ? 'alert-error' :
+                    type === 'success' ? 'alert-success' :
+                        type === 'warning' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                            'bg-blue-100 text-blue-800 border-blue-200'
+                    }`;
 
-            const icon = type === 'error' ? 'fa-exclamation-circle' :
-                type === 'success' ? 'fa-check-circle' :
-                type === 'warning' ? 'fa-exclamation-triangle' :
-                    'fa-info-circle';
+                const icon = type === 'error' ? 'fa-exclamation-circle' :
+                    type === 'success' ? 'fa-check-circle' :
+                        type === 'warning' ? 'fa-exclamation-triangle' :
+                            'fa-info-circle';
 
-            notification.innerHTML = `
+                notification.innerHTML = `
                 <div class="flex items-center gap-2">
                     <i class="fas ${icon} text-xl"></i>
                     <span class="font-semibold">${message}</span>
                 </div>
             `;
 
-            document.body.appendChild(notification);
-            // Force reflow to enable transition
-            void notification.offsetWidth;
-            notification.classList.add('show');
+                document.body.appendChild(notification);
+                // Force reflow to enable transition
+                void notification.offsetWidth;
+                notification.classList.add('show');
 
-            const hideNotification = () => {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 400);
-            };
+                const hideNotification = () => {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 400);
+                };
 
-            const timeoutId = setTimeout(hideNotification, duration);
+                const timeoutId = setTimeout(hideNotification, duration);
 
-            // Allow manual dismissal by clicking
-            notification.style.cursor = 'pointer';
-            notification.addEventListener('click', () => {
-                clearTimeout(timeoutId);
-                hideNotification();
-            });
-        }
+                // Allow manual dismissal by clicking
+                notification.style.cursor = 'pointer';
+                notification.addEventListener('click', () => {
+                    clearTimeout(timeoutId);
+                    hideNotification();
+                });
+            }
         </script>
 
         <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Left Column - Form -->
-            <div class="lg:col-span-1 flex-1">
-                <div class="card mb-6">
-                    <div class="card-header">
-                        <h2 class="text-lg font-semibold text-secondary">Create New Announcement</h2>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="" enctype="multipart/form-data">
-                            <!-- Modern Loader Animation Overlay (matches Reports/Analytics) -->
-                            <div id="announcement-loading" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(248,250,252,0.85);z-index:2000;align-items:center;justify-content:center;" class="flex cht-analytics-loader-bg">
-                                <div class="cht-loader-bg">
-                                    <div class="cht-loader-unique">
-                                        <div class="cht-loader-bounce"></div>
-                                        <div class="cht-loader-bounce"></div>
-                                        <div class="cht-loader-bounce"></div>
-                                    </div>
-                                    <div class="cht-loader-text" id="announcement-loading-message">Sending announcement and emails...</div>
-                                    <span class="mt-3 text-base text-slate-500 text-center" style="font-family: Poppins, Arial, Helvetica, sans-serif; font-weight: 400;">Please wait while we process your announcement.<br>Do not close or refresh this page.</span>
-                                </div>
-                            </div>
-                            
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- FORM START (wraps LEFT + CENTER columns only) -->
+            <form method="POST" action="" enctype="multipart/form-data"
+                class="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Left Column - Form -->
+                <div class="h-full">
+                    <div class="card h-full">
+                        <div>
+
                             <!-- Title -->
                             <div class="form-group">
-                                <label class="form-label">Title *</label>
-                                <input type="text" name="title" required class="form-control" 
-                                       placeholder="Enter announcement title" maxlength="100">
+                                <label class="form-label">Title of the Announcement <span
+                                        style="color: #FF5555;">*</span></label>
+                                <input type="text" name="title" required class="form-control mb-4"
+                                    placeholder="Enter Announcement Title" maxlength="100">
                             </div>
 
                             <!-- Message -->
                             <div class="form-group">
-                                <label class="form-label">Message *</label>
-                                <textarea name="message" required class="form-control" 
-                                          placeholder="Type your announcement message here..." 
-                                          maxlength="500" rows="4"></textarea>
+                                <label class="form-label">Announcement Message <span
+                                        style="color: #FF5555;">*</span></label>
+                                <textarea name="message" required class="form-control mb-4"
+                                    placeholder="Type your announcement message here..." maxlength="500"
+                                    rows="6"></textarea>
                             </div>
 
                             <!-- Settings -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="form-group">
-                                    <label class="form-label">Priority</label>
+                                    <label class="form-label">Priority <span style="color: #FF5555;">*</span></label>
                                     <select name="priority" class="form-control">
                                         <option value="normal">Normal</option>
                                         <option value="medium">Medium</option>
                                         <option value="high">High</option>
                                     </select>
                                 </div>
-                                
+
                                 <div class="form-group">
-                                    <label class="form-label">Expiry Date</label>
-                                    <input type="date" name="expiry_date" class="form-control" min="<?= date('Y-m-d') ?>">
+                                    <label class="form-label">Expiry Date <span style="color: #FF5555;">*</span></label>
+                                    <input type="date" name="expiry_date" class="form-control"
+                                        min="<?= date('Y-m-d') ?>">
                                 </div>
                             </div>
 
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Column -->
+                <div class="h-full">
+                    <div class="card h-full">
+                        <div class="flex flex-col">
+
                             <!-- Audience -->
                             <div class="form-group">
-                                <label class="form-label mb-2">Audience</label>
+                                <label class="form-label mb-2">Choose Audience <span
+                                        style="color: #FF5555;">*</span></label>
                                 <div class="radio-group">
+                                    <!-- LANDING PAGE -->
                                     <div class="radio-option">
-                                        <input type="radio" id="audience-landing" name="audience_type" value="landing_page" class="radio-input" checked>
+                                        <input type="radio" id="audience-landing" name="audience_type"
+                                            value="landing_page" class="radio-input" checked>
                                         <label for="audience-landing" class="radio-label">
-                                            <i class="fas fa-globe mb-2 text-primary"></i>
-                                            <span class="font-medium">Landing Page</span>
-                                            <span class="text-xs text-gray-500">All visitors</span>
+                                            <div class="flex flex-col md:flex-row items-center justify-between">
+                                                <div class="flex flex-col">
+                                                    <h2 class="font-normal text-xl mb-2 text-[#1D85DD]">Landing
+                                                        Page</h2>
+                                                    <span class="text-lg font-normal text-gray-500">Send directly to
+                                                        website</span>
+                                                </div>
+                                                <div>
+                                                    <svg class="w-10 h-10" viewBox="0 0 25 25" fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path
+                                                            d="M19.5317 6.25V16.4063C19.5317 16.6135 19.4494 16.8122 19.3029 16.9587C19.1564 17.1052 18.9576 17.1875 18.7504 17.1875C18.5432 17.1875 18.3445 17.1052 18.198 16.9587C18.0515 16.8122 17.9692 16.6135 17.9692 16.4063V8.13574L6.80317 19.3027C6.65657 19.4493 6.45775 19.5317 6.25043 19.5317C6.04312 19.5317 5.84429 19.4493 5.6977 19.3027C5.55111 19.1561 5.46875 18.9573 5.46875 18.75C5.46875 18.5427 5.55111 18.3439 5.6977 18.1973L16.8647 7.03125H8.59418C8.38698 7.03125 8.18827 6.94894 8.04176 6.80243C7.89524 6.65591 7.81293 6.4572 7.81293 6.25C7.81293 6.0428 7.89524 5.84409 8.04176 5.69757C8.18827 5.55106 8.38698 5.46875 8.59418 5.46875H18.7504C18.9576 5.46875 19.1564 5.55106 19.3029 5.69757C19.4494 5.84409 19.5317 6.0428 19.5317 6.25Z"
+                                                            fill="#1D85DD" />
+                                                    </svg>
+                                                </div>
+                                            </div>
                                         </label>
                                     </div>
-                                    
+                                    <!-- ALL RESIDENTS -->
                                     <div class="radio-option">
-                                        <input type="radio" id="audience-public" name="audience_type" value="public" class="radio-input">
+                                        <input type="radio" id="audience-public" name="audience_type" value="public"
+                                            class="radio-input">
                                         <label for="audience-public" class="radio-label">
-                                            <i class="fas fa-users mb-2 text-primary"></i>
-                                            <span class="font-medium">All Users</span>
-                                            <span class="text-xs text-gray-500">Registered only</span>
+                                            <div class="flex flex-col md:flex-row items-center justify-between">
+                                                <div class="flex flex-col">
+                                                    <h2 class="font-normal text-xl mb-2 text-[#1D85DD]">All Residents
+                                                    </h2>
+                                                    <span class="text-lg font-normal text-gray-500">Send directly to all
+                                                        users</span>
+                                                </div>
+                                                <div>
+                                                    <svg class="w-10 h-10" viewBox="0 0 25 25" fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path
+                                                            d="M19.5317 6.25V16.4063C19.5317 16.6135 19.4494 16.8122 19.3029 16.9587C19.1564 17.1052 18.9576 17.1875 18.7504 17.1875C18.5432 17.1875 18.3445 17.1052 18.198 16.9587C18.0515 16.8122 17.9692 16.6135 17.9692 16.4063V8.13574L6.80317 19.3027C6.65657 19.4493 6.45775 19.5317 6.25043 19.5317C6.04312 19.5317 5.84429 19.4493 5.6977 19.3027C5.55111 19.1561 5.46875 18.9573 5.46875 18.75C5.46875 18.5427 5.55111 18.3439 5.6977 18.1973L16.8647 7.03125H8.59418C8.38698 7.03125 8.18827 6.94894 8.04176 6.80243C7.89524 6.65591 7.81293 6.4572 7.81293 6.25C7.81293 6.0428 7.89524 5.84409 8.04176 5.69757C8.18827 5.55106 8.38698 5.46875 8.59418 5.46875H18.7504C18.9576 5.46875 19.1564 5.55106 19.3029 5.69757C19.4494 5.84409 19.5317 6.0428 19.5317 6.25Z"
+                                                            fill="#1D85DD" />
+                                                    </svg>
+                                                </div>
+                                            </div>
                                         </label>
                                     </div>
-                                    
+                                    <!-- SPECIFIC RESIDENT -->
                                     <div class="radio-option">
-                                        <input type="radio" id="audience-specific" name="audience_type" value="specific" class="radio-input">
+                                        <input type="radio" id="audience-specific" name="audience_type" value="specific"
+                                            class="radio-input">
                                         <label for="audience-specific" class="radio-label">
-                                            <i class="fas fa-user-friends mb-2 text-primary"></i>
-                                            <span class="font-medium">Specific Users</span>
-                                            <span class="text-xs text-gray-500">Select recipients</span>
+                                            <div class="flex flex-col md:flex-row items-center justify-between">
+                                                <div class="flex flex-col">
+                                                    <h2 class="font-normal text-xl mb-2 text-[#1D85DD]">Specific
+                                                        Resident
+                                                    </h2>
+                                                    <span class="text-lg font-normal text-gray-500">Send directly to
+                                                        specific user</span>
+                                                </div>
+                                                <div>
+                                                    <svg class="w-10 h-10" viewBox="0 0 25 25" fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg">
+                                                        <path
+                                                            d="M19.5317 6.25V16.4063C19.5317 16.6135 19.4494 16.8122 19.3029 16.9587C19.1564 17.1052 18.9576 17.1875 18.7504 17.1875C18.5432 17.1875 18.3445 17.1052 18.198 16.9587C18.0515 16.8122 17.9692 16.6135 17.9692 16.4063V8.13574L6.80317 19.3027C6.65657 19.4493 6.45775 19.5317 6.25043 19.5317C6.04312 19.5317 5.84429 19.4493 5.6977 19.3027C5.55111 19.1561 5.46875 18.9573 5.46875 18.75C5.46875 18.5427 5.55111 18.3439 5.6977 18.1973L16.8647 7.03125H8.59418C8.38698 7.03125 8.18827 6.94894 8.04176 6.80243C7.89524 6.65591 7.81293 6.4572 7.81293 6.25C7.81293 6.0428 7.89524 5.84409 8.04176 5.69757C8.18827 5.55106 8.38698 5.46875 8.59418 5.46875H18.7504C18.9576 5.46875 19.1564 5.55106 19.3029 5.69757C19.4494 5.84409 19.5317 6.0428 19.5317 6.25Z"
+                                                            fill="#1D85DD" />
+                                                    </svg>
+                                                </div>
+                                            </div>
                                         </label>
                                     </div>
                                 </div>
-                                
+
                                 <div id="user-selection" class="mt-3 hidden">
                                     <div class="mb-2">
-                                        <input type="text" id="user-search" placeholder="Search users..." class="form-control">
+                                        <input type="text" id="user-search" placeholder="Search users..."
+                                            class="form-control">
                                     </div>
+
                                     <div class="checkbox-group">
                                         <?php if (empty($allUsers)): ?>
                                             <p class="text-center py-4 text-gray-500">No users available</p>
                                         <?php else: ?>
                                             <?php foreach ($allUsers as $user): ?>
                                                 <label class="checkbox-item">
-                                                    <input type="checkbox" name="target_users[]" value="<?= $user['id'] ?>" 
-                                                           class="user-checkbox mr-2">
+                                                    <input type="checkbox" name="target_users[]" value="<?= $user['id'] ?>"
+                                                        class="user-checkbox mr-2">
                                                     <span>
                                                         <?= htmlspecialchars($user['full_name']) ?>
+                                                        <span class="text-gray-400 ml-1">
+                                                            @<?= htmlspecialchars($user['username']) ?>
+                                                        </span>
                                                     </span>
                                                 </label>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
                                     </div>
+
                                     <div class="mt-2 text-sm text-gray-500" id="selected-count">0 users selected</div>
                                 </div>
                             </div>
 
-                            <!-- Image Upload -->
-                            <div class="form-group">
-                                <label class="form-label mb-2">Image (Optional)</label>
-                                <div class="file-upload" onclick="document.getElementById('announcement_image').click()">
-                                    <input type="file" id="announcement_image" name="announcement_image" 
-                                           accept="image/*" class="hidden" onchange="updateImageName(this)">
-                                    <i class="fas fa-cloud-upload-alt text-3xl mb-2 text-gray-400"></i>
-                                    <p class="font-medium" id="image-name">Click to upload image</p>
-                                    <p class="text-sm text-gray-500">JPG, PNG, GIF • Max 5MB</p>
-                                </div>
+                            <!-- Submit -->
+                            <div class="flex justify-between gap-3 mt-auto">
+                                <button type="submit" name="post_announcement" class="btn btn-success">
+                                    Post Announcement
+                                </button>
+
+                                <button type="button" onclick="clearForm()" class="btn btn-secondary">
+                                    Clear
+                                </button>
                             </div>
 
-                            <!-- Announcement Type Buttons (for Specific Users) -->
-                            <div id="announcement-type-buttons" class="gap-6 pt-4 border-t border-gray-200 hidden">
-                                <button type="submit" name="post_announcement" value="basic" class="btn btn-success rounded-full" onclick="setAnnouncementType('basic'); return showAnnouncementLoading();">
-                                    <i class="fas fa-paper-plane"></i> Basic Announcement
-                                </button>
-                                <button type="submit" name="post_announcement" value="lab_result" class="btn btn-info bg-green-500 hover:bg-green-600 text-white" style="border-radius:30px;" onclick="setAnnouncementType('lab_result'); return showAnnouncementLoading();">
-                                    <i class="fas fa-vial"></i> Lab Results
-                                </button>
-                            </div>
-                            <!-- Submit for other audience types -->
-                            <div id="announcement-submit" class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                                <button type="button" onclick="clearForm()" class="btn btn-secondary">
-                                    <i class="fas fa-times"></i> Clear
-                                </button>
-                                <button type="submit" name="post_announcement" class="btn btn-success" onclick="return showAnnouncementLoading();">
-                                    <i class="fas fa-paper-plane"></i> Publish
-                                </button>
-                            </div>
-                                    
-                            <input type="hidden" id="announcement_type" name="announcement_type" value="basic">
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+            </form>
 
             <!-- Right Column - Announcements List -->
-            <div class="lg:col-span-1 flex-1">
-                <div class="card">
+            <div class="lg:col-span-1 h-full">
+                <div class="card h-full flex flex-col">
+
+                    <!-- Header -->
                     <div class="card-header">
-                        <h2 class="text-lg font-semibold text-secondary">Announcements</h2>
+                        <h2 class="text-lg font-semibold mb-6 text-secondary">
+                            Announcements Posted
+                        </h2>
                     </div>
-                    
+
                     <!-- Tabs -->
                     <div class="tab-nav">
                         <button class="tab-btn active" data-tab="active">
@@ -1240,473 +1339,409 @@ try {
                     </div>
 
                     <!-- Active Announcements -->
-                    <div id="active-tab-content" class="p-4">
-                        <?php
-                        $displayLimit = 3;
-                        $hasMore = count($activeAnnouncements) > $displayLimit;
-                        ?>
+                    <div id="active-tab-content" class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 overflow-auto">
+
                         <?php if (empty($activeAnnouncements)): ?>
-                            <div class="empty-state">
+                            <div class="empty-state col-span-full">
                                 <i class="fas fa-bullhorn empty-icon"></i>
                                 <p>No active announcements</p>
                             </div>
                         <?php else: ?>
-                            <?php for ($i = 0; $i < min($displayLimit, count($activeAnnouncements)); $i++):
-                                $announcement = $activeAnnouncements[$i];
-                            ?>
+
+                            <?php foreach ($activeAnnouncements as $announcement): ?>
                                 <div class="announcement-item">
                                     <div class="announcement-header">
-                                        <div>
-                                            <h3 class="announcement-title"><?= htmlspecialchars($announcement['title']) ?></h3>
-                                            <div class="announcement-meta">
-                                                <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
-                                            </div>
-                                            <div class="announcement-staff-meta text-xs text-gray-500 mt-1">
-                                                <span>Posted by: <b><?= htmlspecialchars($announcement['staff_full_name']) ?></b> (<?= htmlspecialchars($announcement['staff_position']) ?>)</span>
-                                            </div>
-                                            <div class="announcement-type-meta mt-1">
-                                                <span class="badge badge-normal">
-                                                    <?php
-                                                        if ($announcement['announcement_type'] === 'lab_result') {
-                                                            echo 'Lab Result';
-                                                        } else {
-                                                            echo 'Basic Announcement';
-                                                        }
-                                                    ?>
-                                                </span>
-                                                <span class="badge badge-normal">
-                                                    <?php
-                                                        if ($announcement['audience_type'] === 'public') {
-                                                            echo 'All Users';
-                                                        } elseif ($announcement['audience_type'] === 'landing_page') {
-                                                            echo 'Landing Page';
-                                                        } elseif ($announcement['audience_type'] === 'specific') {
-                                                            echo 'Specific Users';
-                                                        }
-                                                    ?>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="flex gap-1">
-                                            <button onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
-                                                    class="btn btn-primary btn-sm"
-                                                    title="View">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button onclick="openEditModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
-                                                    class="btn btn-warning btn-sm"
-                                                    title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button onclick="openArchiveModal(<?= $announcement['id'] ?>)"
-                                                    class="btn btn-danger btn-sm"
-                                                    title="Archive">
-                                                <i class="fas fa-archive"></i>
-                                            </button>
+                                        <div
+                                            class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                                            <h3 class="announcement-title">
+                                                <?= htmlspecialchars($announcement['title']) ?>
+                                            </h3>
+
+                                            <span class="badge badge-<?= $announcement['priority'] ?>">
+                                                <?= ucfirst($announcement['priority']) ?>
+                                            </span>
                                         </div>
                                     </div>
+
                                     <div class="announcement-content">
-                                        <?= htmlspecialchars(substr($announcement['message'], 0, 100)) ?>
-                                        <?php if (strlen($announcement['message']) > 100): ?>...<?php endif; ?>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="badge badge-<?= $announcement['priority'] ?>">
-                                            <?= ucfirst($announcement['priority']) ?>
-                                        </span>
-                                        <div class="stats">
-                                            <?php if ($announcement['audience_type'] === 'public'): ?>
-                                                <div class="stat-item">
-                                                    <div class="stat-icon stat-accepted" title="Accepted">
-                                                        <i class="fas fa-check"></i>
-                                                    </div>
-                                                    <span class="text-sm">Accepted (<?= $announcement['accepted_count'] ?>)</span>
-                                                </div>
-                                                <div class="stat-item">
-                                                    <div class="stat-icon stat-dismissed" title="Dismissed">
-                                                        <i class="fas fa-times"></i>
-                                                    </div>
-                                                    <span class="text-sm">Dismissed (<?= $announcement['dismissed_count'] ?>)</span>
-                                                </div>
-                                                <div class="stat-item">
-                                                    <div class="stat-icon stat-pending" title="Pending">
-                                                        <i class="fas fa-clock"></i>
-                                                    </div>
-                                                    <span class="text-sm">Pending (<?= $announcement['pending_count'] ?>)</span>
-                                                </div>
-                                            <?php else: ?>
-                                                <?php if ($announcement['accepted_count'] > 0): ?>
-                                                <div class="stat-item">
-                                                    <div class="stat-icon stat-accepted" title="Accepted">
-                                                        <i class="fas fa-check"></i>
-                                                    </div>
-                                                    <span class="text-sm">Accepted</span>
-                                                </div>
-                                                <?php endif; ?>
-                                                <?php if ($announcement['dismissed_count'] > 0): ?>
-                                                <div class="stat-item">
-                                                    <div class="stat-icon stat-dismissed" title="Dismissed">
-                                                        <i class="fas fa-times"></i>
-                                                    </div>
-                                                    <span class="text-sm">Dismissed</span>
-                                                </div>
-                                                <?php endif; ?>
-                                                <?php if ($announcement['pending_count'] > 0 && $announcement['accepted_count'] == 0 && $announcement['dismissed_count'] == 0): ?>
-                                                <div class="stat-item">
-                                                    <div class="stat-icon stat-pending" title="Pending">
-                                                        <i class="fas fa-clock"></i>
-                                                    </div>
-                                                    <span class="text-sm">Pending</span>
-                                                </div>
-                                                <?php endif; ?>
+                                            <?= htmlspecialchars(substr($announcement['message'], 0, 100)) ?>
+                                            <?php if (strlen($announcement['message']) > 100): ?>...
                                             <?php endif; ?>
                                         </div>
-                                    </div>
-                                </div>
-                            <?php endfor; ?>
-                            <?php if ($hasMore): ?>
-                                <button class="btn btn-primary w-full mt-2" onclick="openAllAnnouncementsModal()">View All</button>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                    </div>
 
-                    <!-- Archived Announcements -->
-                    <div id="archived-tab-content" class="hidden p-4">
-                        <?php if (empty($archivedAnnouncements)): ?>
-                            <div class="empty-state">
-                                <i class="fas fa-archive empty-icon"></i>
-                                <p>No archived announcements</p>
-                            </div>
-                        <?php else: ?>
-                            <?php foreach ($archivedAnnouncements as $announcement): ?>
-                                <div class="announcement-item">
-                                    <div class="announcement-header">
-                                        <div>
-                                            <h3 class="announcement-title"><?= htmlspecialchars($announcement['title']) ?></h3>
-                                            <div class="announcement-meta">
-                                                Archived on <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
-                                            </div>
-                                            <div class="announcement-staff-meta text-xs text-gray-500 mt-1">
-                                                <span>Posted by: <b><?= htmlspecialchars($announcement['staff_full_name']) ?></b> (<?= htmlspecialchars($announcement['staff_position']) ?>)</span>
-                                            </div>
-                                        </div>
+                                    <div class="flex justify-end items-center">
                                         <div class="flex gap-1">
+                                            <button
+                                                onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
+                                                class="btn btn-primary btn-sm" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+
+                                            <button
+                                                onclick="openEditModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
+                                                class="btn btn-warning btn-sm" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+
                                             <form method="POST" action="" class="inline">
                                                 <input type="hidden" name="id" value="<?= $announcement['id'] ?>">
-                                                <button type="submit" name="repost_announcement"
-                                                        class="btn btn-warning btn-sm"
-                                                        title="Repost"
-                                                        onclick="return confirm('Repost this announcement?')">
-                                                    <i class="fas fa-redo"></i>
+                                                <button type="submit" name="archive_announcement" class="btn btn-danger btn-sm"
+                                                    title="Archive" onclick="return confirm('Archive this announcement?')">
+                                                    <i class="fas fa-archive"></i>
                                                 </button>
                                             </form>
-                                            <button onclick="openDeleteModal(<?= $announcement['id'] ?>)"
-                                                    class="btn btn-danger btn-sm"
-                                                    title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
+
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Archived Announcements -->
+                    <div id="archived-tab-content" class="hidden p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                        <?php if (empty($archivedAnnouncements)): ?>
+                            <div class="empty-state col-span-full">
+                                <i class="fas fa-archive empty-icon"></i>
+                                <p>No archived announcements</p>
+                            </div>
+                        <?php else: ?>
+
+                            <?php foreach ($archivedAnnouncements as $announcement): ?>
+                                <div class="announcement-item">
+                                    <div class="announcement-header">
+                                        <div>
+                                            <h3 class="announcement-title">
+                                                <?= htmlspecialchars($announcement['title']) ?>
+                                            </h3>
+                                            <div class="announcement-meta">
+                                                Archived on <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex gap-1">
+                                            <form method="POST" action="" class="inline">
+                                                <input type="hidden" name="id" value="<?= $announcement['id'] ?>">
+                                                <button type="submit" name="repost_announcement" class="btn btn-warning btn-sm"
+                                                    title="Repost" onclick="return confirm('Repost this announcement?')">
+                                                    <i class="fas fa-redo"></i>
+                                                </button>
+                                            </form>
+
+                                            <form method="POST" action="" class="inline">
+                                                <input type="hidden" name="id" value="<?= $announcement['id'] ?>">
+                                                <button type="submit" name="delete_announcement" class="btn btn-danger btn-sm"
+                                                    title="Delete"
+                                                    onclick="return confirm('Permanently delete this announcement?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- View Modal -->
-    <div id="viewModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Announcement Details</h3>
-                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="modalContent"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary close-modal">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Announcement</h3>
-                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form method="POST" action="" id="edit-form" onsubmit="return validateEditForm()">
+        <!-- View Modal -->
+        <div id="viewModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Announcement Details</h3>
+                    <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <div class="modal-body">
-                    <input type="hidden" name="id" id="edit-id">
-                    <input type="hidden" name="edit_announcement" value="1">
-                    
-                    <div class="space-y-4">
-                        <div class="form-group">
-                            <label class="form-label">Title *</label>
-                            <input type="text" name="title" id="edit-title" required class="form-control" maxlength="200">
-                            <span class="text-xs text-gray-500" id="edit-title-counter">0/200 characters</span>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Message *</label>
-                            <textarea name="message" id="edit-message" required class="form-control" rows="5" maxlength="1000"></textarea>
-                            <span class="text-xs text-gray-500" id="edit-message-counter">0/1000 characters</span>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Priority</label>
-                            <select name="priority" id="edit-priority" class="form-control">
-                                <option value="normal">Normal</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">Expiry Date</label>
-                            <input type="date" name="expiry_date" id="edit-expiry" class="form-control">
-                        </div>
-                    </div>
+                    <div id="modalContent"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary close-modal">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Save Changes
+                        Close
                     </button>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header bg-red-50">
-                <h3 class="modal-title text-red-700">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Deletion
-                </h3>
-                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
-                    <i class="fas fa-times"></i>
-                </button>
             </div>
-            <form method="POST" action="" id="delete-form">
-                <div class="modal-body">
-                    <input type="hidden" name="id" id="delete-id">
-                    <input type="hidden" name="delete_announcement" value="1">
-                    
-                    <div class="text-center py-4">
-                        <div class="text-red-500 text-5xl mb-4">
-                            <i class="fas fa-trash-alt"></i>
+        </div>
+
+        <!-- Edit Modal -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Edit Announcement</h3>
+                    <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form method="POST" action="" id="edit-form" onsubmit="return validateEditForm()">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="edit-id">
+                        <input type="hidden" name="edit_announcement" value="1">
+
+                        <div class="space-y-4">
+                            <div class="form-group">
+                                <label class="form-label">Title *</label>
+                                <input type="text" name="title" id="edit-title" required class="form-control"
+                                    maxlength="200">
+                                <span class="text-xs text-gray-500" id="edit-title-counter">0/200 characters</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Message *</label>
+                                <textarea name="message" id="edit-message" required class="form-control" rows="5"
+                                    maxlength="1000"></textarea>
+                                <span class="text-xs text-gray-500" id="edit-message-counter">0/1000 characters</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Priority</label>
+                                <select name="priority" id="edit-priority" class="form-control">
+                                    <option value="normal">Normal</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Expiry Date</label>
+                                <input type="date" name="expiry_date" id="edit-expiry" class="form-control">
+                            </div>
                         </div>
-                        <p class="text-lg font-semibold mb-2">Are you sure?</p>
-                        <p class="text-gray-600">This will permanently delete this announcement.</p>
-                        <p class="text-gray-600">This action cannot be undone.</p>
                     </div>
-                </div>
-                <div class="modal-footer bg-gray-50">
-                    <button type="button" class="btn btn-secondary close-modal">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash"></i> Delete Permanently
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Archive Confirmation Modal -->
-    <div id="archiveModal" class="modal">
-        <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header bg-yellow-50">
-                <h3 class="modal-title text-yellow-700">
-                    <i class="fas fa-archive mr-2"></i>Archive Announcement
-                </h3>
-                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
-                    <i class="fas fa-times"></i>
-                </button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
             </div>
-            <form method="POST" action="" id="archive-form">
-                <div class="modal-body">
-                    <input type="hidden" name="id" id="archive-id">
-                    <input type="hidden" name="archive_announcement" value="1">
-                    
-                    <div class="text-center py-4">
-                        <div class="text-yellow-500 text-5xl mb-4">
-                            <i class="fas fa-archive"></i>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteModal" class="modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header bg-red-50">
+                    <h3 class="modal-title text-red-700">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Deletion
+                    </h3>
+                    <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form method="POST" action="" id="delete-form">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="delete-id">
+                        <input type="hidden" name="delete_announcement" value="1">
+
+                        <div class="text-center py-4">
+                            <div class="text-red-500 text-5xl mb-4">
+                                <i class="fas fa-trash-alt"></i>
+                            </div>
+                            <p class="text-lg font-semibold mb-2">Are you sure?</p>
+                            <p class="text-gray-600">This will permanently delete this announcement.</p>
+                            <p class="text-gray-600">This action cannot be undone.</p>
                         </div>
-                        <p class="text-lg font-semibold mb-2">Archive this announcement?</p>
-                        <p class="text-gray-600">You can repost it later from the archived section.</p>
                     </div>
-                </div>
-                <div class="modal-footer bg-gray-50">
-                    <button type="button" class="btn btn-secondary close-modal">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-archive"></i> Archive
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- All Announcements Modal -->
-    <div id="allAnnouncementsModal" class="modal">
-        <div class="modal-content" style="max-width: 700px;">
-            <div class="modal-header">
-                <h3 class="modal-title">All Announcements</h3>
-                <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body" id="allAnnouncementsBody">
-                <!-- Announcements will be rendered here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary close-modal">Close</button>
+                    <div class="modal-footer bg-gray-50">
+                        <button type="button" class="btn btn-secondary close-modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Delete Permanently
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Helper function to escape HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        <!-- Archive Confirmation Modal -->
+        <div id="archiveModal" class="modal">
+            <div class="modal-content" style="max-width: 450px;">
+                <div class="modal-header bg-yellow-50">
+                    <h3 class="modal-title text-yellow-700">
+                        <i class="fas fa-archive mr-2"></i>Archive Announcement
+                    </h3>
+                    <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form method="POST" action="" id="archive-form">
+                    <div class="modal-body">
+                        <input type="hidden" name="id" id="archive-id">
+                        <input type="hidden" name="archive_announcement" value="1">
 
-        // Close all modals function
-        function closeAllModals() {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                modal.classList.remove('active');
-            });
-            document.body.style.overflow = 'auto';
-        }
+                        <div class="text-center py-4">
+                            <div class="text-yellow-500 text-5xl mb-4">
+                                <i class="fas fa-archive"></i>
+                            </div>
+                            <p class="text-lg font-semibold mb-2">Archive this announcement?</p>
+                            <p class="text-gray-600">You can repost it later from the archived section.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-gray-50">
+                        <button type="button" class="btn btn-secondary close-modal">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-archive"></i> Archive
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-        // Show modal function
-        function showModal(modalId) {
-            closeAllModals();
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                // Use setTimeout to ensure DOM is updated
-                setTimeout(() => {
-                    modal.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                }, 10);
+        <!-- All Announcements Modal -->
+        <div id="allAnnouncementsModal" class="modal">
+            <div class="modal-content" style="max-width: 700px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">All Announcements</h3>
+                    <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" id="allAnnouncementsBody">
+                    <!-- Announcements will be rendered here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Helper function to escape HTML
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
-        }
 
-        // Show announcement loading with dynamic message
-        function showAnnouncementLoading() {
-            const audienceType = document.querySelector('input[name="audience_type"]:checked')?.value;
-            const loadingDiv = document.getElementById('announcement-loading');
-            const loadingMsg = document.getElementById('announcement-loading-message');
-            if (audienceType === 'landing_page') {
-                // No Gmail/email for landing page, skip loading
+            // Close all modals function
+            function closeAllModals() {
+                const modals = document.querySelectorAll('.modal');
+                modals.forEach(modal => {
+                    modal.classList.remove('active');
+                });
+                document.body.style.overflow = 'auto';
+            }
+
+            // Show modal function
+            function showModal(modalId) {
+                closeAllModals();
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    // Use setTimeout to ensure DOM is updated
+                    setTimeout(() => {
+                        modal.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                    }, 10);
+                }
+            }
+
+            // Show announcement loading with dynamic message
+            function showAnnouncementLoading() {
+                const audienceType = document.querySelector('input[name="audience_type"]:checked')?.value;
+                const loadingDiv = document.getElementById('announcement-loading');
+                const loadingMsg = document.getElementById('announcement-loading-message');
+                if (audienceType === 'landing_page') {
+                    // No Gmail/email for landing page, skip loading
+                    return true;
+                }
+                if (loadingDiv && loadingMsg) {
+                    let msg = '';
+                    if (audienceType === 'specific') {
+                        msg = 'Announcement Sending to Specific User and Email';
+                    } else if (audienceType === 'public') {
+                        msg = 'Announcement Sending to All Users and Email';
+                    } else {
+                        msg = 'Sending announcement and emails...';
+                    }
+                    loadingMsg.textContent = msg;
+                    loadingDiv.style.display = 'flex';
+                }
                 return true;
             }
-            if (loadingDiv && loadingMsg) {
-                let msg = '';
-                if (audienceType === 'specific') {
-                    msg = 'Announcement Sending to Specific User and Email';
-                } else if (audienceType === 'public') {
-                    msg = 'Announcement Sending to All Users and Email';
-                } else {
-                    msg = 'Sending announcement and emails...';
-                }
-                loadingMsg.textContent = msg;
-                loadingDiv.style.display = 'flex';
-            }
-            return true;
-        }
 
-        // Set announcement type
-        function setAnnouncementType(type) {
-            document.getElementById('announcement_type').value = type;
-        }
-        
-        // Update image name
-        function updateImageName(input) {
-            if (input.files && input.files[0]) {
-                document.getElementById('image-name').innerHTML = 
-                    `<i class="fas fa-check-circle text-green-500 mr-2"></i> ${input.files[0].name}`;
+            // Set announcement type
+            function setAnnouncementType(type) {
+                document.getElementById('announcement_type').value = type;
             }
-        }
-        
-        // Update selected user count
-        function updateSelectedUserCount() {
-            const checkboxes = document.querySelectorAll('.user-checkbox:checked');
-            const count = checkboxes.length;
-            const countElement = document.getElementById('selected-count');
-            if (countElement) {
-                countElement.textContent = `${count} user${count !== 1 ? 's' : ''} selected`;
-            }
-        }
-        
-        // Clear form
-        function clearForm() {
-            document.querySelector('form').reset();
-            const userSelection = document.getElementById('user-selection');
-            if (userSelection) userSelection.classList.add('hidden');
-            document.getElementById('image-name').textContent = 'Click to upload image';
-            document.getElementById('selected-count').textContent = '0 users selected';
-            document.getElementById('audience-landing').checked = true;
-        }
-        
-        // Character counter function
-        function updateCharCounter(inputId, counterId, maxLength) {
-            const input = document.getElementById(inputId);
-            const counter = document.getElementById(counterId);
-            
-            if (input && counter) {
-                const currentLength = input.value.length;
-                counter.textContent = `${currentLength}/${maxLength} characters`;
-                
-                if (currentLength > maxLength * 0.9) {
-                    counter.classList.add('text-red-500');
-                    counter.classList.remove('text-gray-500');
-                } else {
-                    counter.classList.remove('text-red-500');
-                    counter.classList.add('text-gray-500');
+
+            // Update image name
+            function updateImageName(input) {
+                if (input.files && input.files[0]) {
+                    document.getElementById('image-name').innerHTML =
+                        `<i class="fas fa-check-circle text-green-500 mr-2"></i> ${input.files[0].name}`;
                 }
             }
-        }
-        
-        // View Modal Functions
-        function openViewModal(announcement) {
-            // Ensure announcement is properly parsed
-            if (typeof announcement === 'string') {
-                try {
-                    announcement = JSON.parse(announcement);
-                } catch (e) {
-                    console.error('Error parsing announcement data:', e);
-                    return;
+
+            // Update selected user count
+            function updateSelectedUserCount() {
+                const checkboxes = document.querySelectorAll('.user-checkbox:checked');
+                const count = checkboxes.length;
+                const countElement = document.getElementById('selected-count');
+                if (countElement) {
+                    countElement.textContent = `${count} user${count !== 1 ? 's' : ''} selected`;
                 }
             }
-            
-            const modalContent = document.getElementById('modalContent');
-            
-            const postDate = new Date(announcement.post_date).toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric'
-            });
-            
-            let content = `
+
+            // Clear form
+            function clearForm() {
+                document.querySelector('form').reset();
+                const userSelection = document.getElementById('user-selection');
+                if (userSelection) userSelection.classList.add('hidden');
+                document.getElementById('image-name').textContent = 'Click to upload image';
+                document.getElementById('selected-count').textContent = '0 users selected';
+                document.getElementById('audience-landing').checked = true;
+            }
+
+            // Character counter function
+            function updateCharCounter(inputId, counterId, maxLength) {
+                const input = document.getElementById(inputId);
+                const counter = document.getElementById(counterId);
+
+                if (input && counter) {
+                    const currentLength = input.value.length;
+                    counter.textContent = `${currentLength}/${maxLength} characters`;
+
+                    if (currentLength > maxLength * 0.9) {
+                        counter.classList.add('text-red-500');
+                        counter.classList.remove('text-gray-500');
+                    } else {
+                        counter.classList.remove('text-red-500');
+                        counter.classList.add('text-gray-500');
+                    }
+                }
+            }
+
+            // View Modal Functions
+            function openViewModal(announcement) {
+                // Ensure announcement is properly parsed
+                if (typeof announcement === 'string') {
+                    try {
+                        announcement = JSON.parse(announcement);
+                    } catch (e) {
+                        console.error('Error parsing announcement data:', e);
+                        return;
+                    }
+                }
+
+                const modalContent = document.getElementById('modalContent');
+
+                const postDate = new Date(announcement.post_date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                let content = `
                 <div class="space-y-4">
                     <div class="flex justify-between items-start">
                         <div>
@@ -1737,29 +1772,29 @@ try {
                         <div>
                             <p class="text-gray-500">Audience:</p>
                             <p class="font-medium">
-                                ${announcement.audience_type === 'public' ? 'All Users' : 
-                                  announcement.audience_type === 'landing_page' ? 'Landing Page' : 
-                                  'Specific Users'}
+                                ${announcement.audience_type === 'public' ? 'All Users' :
+                        announcement.audience_type === 'landing_page' ? 'Landing Page' :
+                            'Specific Users'}
                             </p>
                         </div>
                     </div>
             `;
-            
-            if (announcement.expiry_date) {
-                const expiryDate = new Date(announcement.expiry_date).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric'
-                });
-                content += `
+
+                if (announcement.expiry_date) {
+                    const expiryDate = new Date(announcement.expiry_date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    content += `
                     <div>
                         <p class="text-gray-500">Expires:</p>
                         <p class="font-medium">${expiryDate}</p>
                     </div>
                 `;
-            }
-            
-            content += `
+                }
+
+                content += `
                 <div>
                     <p class="text-gray-500 mb-2">Message:</p>
                     <div class="bg-gray-50 p-4 rounded border">
@@ -1782,82 +1817,82 @@ try {
                     </div>
                 </div>
             `;
-            
-            modalContent.innerHTML = content;
-            showModal('viewModal');
-        }
 
-        // Edit Modal Functions
-        function openEditModal(announcement) {
-            // Ensure announcement is properly parsed
-            if (typeof announcement === 'string') {
-                try {
-                    announcement = JSON.parse(announcement);
-                } catch (e) {
-                    console.error('Error parsing announcement data:', e);
-                    return;
+                modalContent.innerHTML = content;
+                showModal('viewModal');
+            }
+
+            // Edit Modal Functions
+            function openEditModal(announcement) {
+                // Ensure announcement is properly parsed
+                if (typeof announcement === 'string') {
+                    try {
+                        announcement = JSON.parse(announcement);
+                    } catch (e) {
+                        console.error('Error parsing announcement data:', e);
+                        return;
+                    }
                 }
-            }
-            
-            document.getElementById('edit-id').value = announcement.id || '';
-            document.getElementById('edit-title').value = announcement.title || '';
-            document.getElementById('edit-message').value = announcement.message || '';
-            document.getElementById('edit-priority').value = announcement.priority || 'normal';
-            document.getElementById('edit-expiry').value = announcement.expiry_date || '';
-            
-            // Update character counters
-            updateCharCounter('edit-title', 'edit-title-counter', 200);
-            updateCharCounter('edit-message', 'edit-message-counter', 1000);
-            
-            showModal('editModal');
-        }
-        
-        function validateEditForm() {
-            const title = document.getElementById('edit-title').value.trim();
-            const message = document.getElementById('edit-message').value.trim();
-            
-            if (title.length === 0) {
-                alert('Please enter a title');
-                document.getElementById('edit-title').classList.add('border-red-500');
-                document.getElementById('edit-title').focus();
-                return false;
-            }
-            
-            if (message.length === 0) {
-                alert('Please enter a message');
-                document.getElementById('edit-message').classList.add('border-red-500');
-                document.getElementById('edit-message').focus();
-                return false;
-            }
-            
-            return true;
-        }
-        
-        // Archive Modal Functions
-        function openArchiveModal(announcementId) {
-            document.getElementById('archive-id').value = announcementId;
-            showModal('archiveModal');
-        }
-        
-        // Delete Modal Functions
-        function openDeleteModal(announcementId) {
-            document.getElementById('delete-id').value = announcementId;
-            showModal('deleteModal');
-        }
 
-        // All Announcements Modal with Pagination
-        function openAllAnnouncementsModal(page = 1, perPage = 5) {
-            const announcements = <?= json_encode($activeAnnouncements) ?>;
-            const total = announcements.length;
-            const totalPages = Math.ceil(total / perPage);
-            let html = '';
+                document.getElementById('edit-id').value = announcement.id || '';
+                document.getElementById('edit-title').value = announcement.title || '';
+                document.getElementById('edit-message').value = announcement.message || '';
+                document.getElementById('edit-priority').value = announcement.priority || 'normal';
+                document.getElementById('edit-expiry').value = announcement.expiry_date || '';
 
-            const start = (page - 1) * perPage;
-            const end = Math.min(start + perPage, total);
+                // Update character counters
+                updateCharCounter('edit-title', 'edit-title-counter', 200);
+                updateCharCounter('edit-message', 'edit-message-counter', 1000);
 
-            for (let i = start; i < end; i++) {
-                const a = announcements[i];
-                html += `
+                showModal('editModal');
+            }
+
+            function validateEditForm() {
+                const title = document.getElementById('edit-title').value.trim();
+                const message = document.getElementById('edit-message').value.trim();
+
+                if (title.length === 0) {
+                    alert('Please enter a title');
+                    document.getElementById('edit-title').classList.add('border-red-500');
+                    document.getElementById('edit-title').focus();
+                    return false;
+                }
+
+                if (message.length === 0) {
+                    alert('Please enter a message');
+                    document.getElementById('edit-message').classList.add('border-red-500');
+                    document.getElementById('edit-message').focus();
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Archive Modal Functions
+            function openArchiveModal(announcementId) {
+                document.getElementById('archive-id').value = announcementId;
+                showModal('archiveModal');
+            }
+
+            // Delete Modal Functions
+            function openDeleteModal(announcementId) {
+                document.getElementById('delete-id').value = announcementId;
+                showModal('deleteModal');
+            }
+
+            // All Announcements Modal with Pagination
+            function openAllAnnouncementsModal(page = 1, perPage = 5) {
+                const announcements = <?= json_encode($activeAnnouncements) ?>;
+                const total = announcements.length;
+                const totalPages = Math.ceil(total / perPage);
+                let html = '';
+
+                const start = (page - 1) * perPage;
+                const end = Math.min(start + perPage, total);
+
+                for (let i = start; i < end; i++) {
+                    const a = announcements[i];
+                    html += `
                     <div class="announcement-item mb-3">
                         <div class="announcement-header">
                             <div>
@@ -1879,176 +1914,209 @@ try {
                         <div class="announcement-content">${escapeHtml(a.message.length > 100 ? a.message.substring(0, 100) + '...' : a.message)}</div>
                     </div>
                 `;
-            }
+                }
 
-            // Pagination controls
-            if (totalPages > 1) {
-                html += `<div class="flex justify-center gap-2 mt-4">
+                // Pagination controls
+                if (totalPages > 1) {
+                    html += `<div class="flex justify-center gap-2 mt-4">
                     ${Array.from({ length: totalPages }, (_, i) => i + 1).map(p => `
                         <button class="btn btn-sm ${p === page ? 'btn-primary' : 'btn-secondary'}" onclick="openAllAnnouncementsModal(${p},${perPage})">${p}</button>
                     `).join('')}
                 </div>`;
+                }
+
+                document.getElementById('allAnnouncementsBody').innerHTML = html;
+                showModal('allAnnouncementsModal');
             }
 
-            document.getElementById('allAnnouncementsBody').innerHTML = html;
-            showModal('allAnnouncementsModal');
-        }
-
-        // Initialize all event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Tab functionality
-            document.querySelectorAll('.tab-btn').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const tabId = this.dataset.tab;
-                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    document.getElementById('active-tab-content').classList.toggle('hidden', tabId !== 'active');
-                    document.getElementById('archived-tab-content').classList.toggle('hidden', tabId !== 'archived');
-                });
-            });
-
-            // Audience selection
-            document.querySelectorAll('input[name="audience_type"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const userSelection = document.getElementById('user-selection');
-                    const typeButtons = document.getElementById('announcement-type-buttons');
-                    const submitDiv = document.getElementById('announcement-submit');
-                    if (this.value === 'specific') {
-                        userSelection.classList.remove('hidden');
-                        typeButtons.classList.remove('hidden');
-                        submitDiv.classList.add('hidden');
-                        updateSelectedUserCount();
-                    } else {
-                        userSelection.classList.add('hidden');
-                        typeButtons.classList.add('hidden');
-                        submitDiv.classList.remove('hidden');
-                    }
-                    validateAnnouncementForm();
-                });
-            });
-
-            // Add click listeners to checkboxes
-            document.querySelectorAll('.checkbox-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    if (!e.target.matches('input[type="checkbox"]')) {
-                        const checkbox = this.querySelector('input[type="checkbox"]');
-                        if (checkbox) {
-                            checkbox.checked = !checkbox.checked;
-                            updateSelectedUserCount();
-                            validateAnnouncementForm();
-                        }
-                    }
-                });
-            });
-            document.querySelectorAll('.user-checkbox').forEach(cb => {
-                cb.addEventListener('change', function() {
-                    updateSelectedUserCount();
-                    validateAnnouncementForm();
-                });
-            });
-
-            // User search functionality
-            const userSearch = document.getElementById('user-search');
-            if (userSearch) {
-                userSearch.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase();
-                    const userItems = document.querySelectorAll('.checkbox-item');
-                    userItems.forEach(item => {
-                        const text = item.textContent.toLowerCase();
-                        item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+            // Initialize all event listeners
+            document.addEventListener('DOMContentLoaded', function () {
+                // Tab functionality
+                document.querySelectorAll('.tab-btn').forEach(button => {
+                    button.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        const tabId = this.dataset.tab;
+                        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                        this.classList.add('active');
+                        document.getElementById('active-tab-content').classList.toggle('hidden', tabId !== 'active');
+                        document.getElementById('archived-tab-content').classList.toggle('hidden', tabId !== 'archived');
                     });
-                    updateSelectedUserCount();
-                    validateAnnouncementForm();
                 });
-            }
 
-            // Add character counter event listeners
-            const editTitle = document.getElementById('edit-title');
-            const editMessage = document.getElementById('edit-message');
-            if (editTitle) {
-                editTitle.addEventListener('input', function() {
-                    updateCharCounter('edit-title', 'edit-title-counter', 200);
-                    this.classList.remove('border-red-500');
+                // Audience selection
+                document.querySelectorAll('input[name="audience_type"]').forEach(radio => {
+                    radio.addEventListener('change', function () {
+                        const userSelection = document.getElementById('user-selection');
+                        const typeButtons = document.getElementById('announcement-type-buttons');
+                        const submitDiv = document.getElementById('announcement-submit');
+                        if (this.value === 'specific') {
+                            userSelection.classList.remove('hidden');
+                            typeButtons.classList.remove('hidden');
+                            submitDiv.classList.add('hidden');
+                            updateSelectedUserCount();
+                        } else {
+                            userSelection.classList.add('hidden');
+                            typeButtons.classList.add('hidden');
+                            submitDiv.classList.remove('hidden');
+                        }
+                        validateAnnouncementForm();
+                    });
                 });
-            }
-            if (editMessage) {
-                editMessage.addEventListener('input', function() {
-                    updateCharCounter('edit-message', 'edit-message-counter', 1000);
-                    this.classList.remove('border-red-500');
+
+                // Add click listeners to checkboxes
+                document.querySelectorAll('.checkbox-item').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        if (!e.target.matches('input[type="checkbox"]')) {
+                            const checkbox = this.querySelector('input[type="checkbox"]');
+                            if (checkbox) {
+                                checkbox.checked = !checkbox.checked;
+                                updateSelectedUserCount();
+                                validateAnnouncementForm();
+                            }
+                        }
+                    });
                 });
-            }
+                document.querySelectorAll('.user-checkbox').forEach(cb => {
+                    cb.addEventListener('change', function () {
+                        updateSelectedUserCount();
+                        validateAnnouncementForm();
+                    });
+                });
 
-            // Initialize user count
-            updateSelectedUserCount();
-            validateAnnouncementForm();
+                // User search functionality
+                const userSearch = document.getElementById('user-search');
+                if (userSearch) {
+                    userSearch.addEventListener('input', function () {
+                        const searchTerm = this.value.toLowerCase();
+                        const userItems = document.querySelectorAll('.checkbox-item');
+                        userItems.forEach(item => {
+                            const text = item.textContent.toLowerCase();
+                            item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+                        });
+                        updateSelectedUserCount();
+                        validateAnnouncementForm();
+                    });
+                }
 
-            // Close modal when clicking outside
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.addEventListener('click', function(e) {
-                    if (e.target === this) {
+                // Add character counter event listeners
+                const editTitle = document.getElementById('edit-title');
+                const editMessage = document.getElementById('edit-message');
+                if (editTitle) {
+                    editTitle.addEventListener('input', function () {
+                        updateCharCounter('edit-title', 'edit-title-counter', 200);
+                        this.classList.remove('border-red-500');
+                    });
+                }
+                if (editMessage) {
+                    editMessage.addEventListener('input', function () {
+                        updateCharCounter('edit-message', 'edit-message-counter', 1000);
+                        this.classList.remove('border-red-500');
+                    });
+                }
+
+                // Initialize user count
+                updateSelectedUserCount();
+                validateAnnouncementForm();
+
+                // Close modal when clicking outside
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', function (e) {
+                        if (e.target === this) {
+                            closeAllModals();
+                        }
+                    });
+                });
+                // Close modal with Escape key
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') {
                         closeAllModals();
                     }
                 });
-            });
-            // Close modal with Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closeAllModals();
-                }
-            });
-            // Add click listeners to close buttons
-            document.querySelectorAll('.close-modal').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    closeAllModals();
+                // Add click listeners to close buttons
+                document.querySelectorAll('.close-modal').forEach(button => {
+                    button.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        closeAllModals();
+                    });
                 });
+                // Add input listeners for required fields
+                document.querySelector('input[name="title"]').addEventListener('input', validateAnnouncementForm);
+                document.querySelector('textarea[name="message"]').addEventListener('input', validateAnnouncementForm);
             });
-            // Add input listeners for required fields
-            document.querySelector('input[name="title"]').addEventListener('input', validateAnnouncementForm);
-            document.querySelector('textarea[name="message"]').addEventListener('input', validateAnnouncementForm);
-        });
 
-        // Validate announcement form and disable/enable submit buttons
-        function validateAnnouncementForm() {
-            const title = document.querySelector('input[name="title"]');
-            const message = document.querySelector('textarea[name="message"]');
-            const audienceType = document.querySelector('input[name="audience_type"]:checked')?.value;
-            const submitBtn = document.querySelector('#announcement-submit button.btn-success');
-            const basicBtn = document.querySelector('#announcement-type-buttons button[name="post_announcement"][value="basic"]');
-            const labBtn = document.querySelector('#announcement-type-buttons button[name="post_announcement"][value="lab_result"]');
-            let valid = true;
-            if (!title || !title.value.trim()) valid = false;
-            if (!message || !message.value.trim()) valid = false;
-            if (audienceType === 'specific') {
-                const checkedUsers = document.querySelectorAll('.user-checkbox:checked');
-                if (checkedUsers.length === 0) valid = false;
+            // Validate announcement form and disable/enable submit buttons
+            function validateAnnouncementForm() {
+                const title = document.querySelector('input[name="title"]');
+                const message = document.querySelector('textarea[name="message"]');
+                const audienceType = document.querySelector('input[name="audience_type"]:checked')?.value;
+                const submitBtn = document.querySelector('#announcement-submit button.btn-success');
+                const basicBtn = document.querySelector('#announcement-type-buttons button[name="post_announcement"][value="basic"]');
+                const labBtn = document.querySelector('#announcement-type-buttons button[name="post_announcement"][value="lab_result"]');
+                let valid = true;
+                if (!title || !title.value.trim()) valid = false;
+                if (!message || !message.value.trim()) valid = false;
+                if (audienceType === 'specific') {
+                    const checkedUsers = document.querySelectorAll('.user-checkbox:checked');
+                    if (checkedUsers.length === 0) valid = false;
+                }
+                if (submitBtn) submitBtn.disabled = !valid;
+                if (basicBtn) basicBtn.disabled = !valid;
+                if (labBtn) labBtn.disabled = !valid;
             }
-            if (submitBtn) submitBtn.disabled = !valid;
-            if (basicBtn) basicBtn.disabled = !valid;
-            if (labBtn) labBtn.disabled = !valid;
-        }
         </script>
         <!-- Loader animation styles for announcement loader (copied from dashboard.php) -->
         <style>
-        .cht-loader-bg { display: flex; flex-direction: column; align-items: center; }
-        .cht-loader-unique {
-            display: flex; gap: 0.7em; margin-bottom: 1.5rem;
-        }
-        .cht-loader-bounce {
-            width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #60a5fa 40%, #2563eb 100%);
-            animation: cht-bounce 1.1s infinite cubic-bezier(.68,-0.55,.27,1.55);
-        }
-        .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #93c5fd 40%, #3b82f6 100%); }
-        .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #a5b4fc 40%, #6366f1 100%); }
-        @keyframes cht-bounce {
-            0%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-30px); }
-        }
-        .cht-loader-text {
-            color: #22223b; font-size: 1.2rem; font-weight: 500; letter-spacing: 0.01em;
-            text-align: center;
-        }
+            .cht-loader-bg {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cht-loader-unique {
+                display: flex;
+                gap: 0.7em;
+                margin-bottom: 1.5rem;
+            }
+
+            .cht-loader-bounce {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #60a5fa 40%, #2563eb 100%);
+                animation: cht-bounce 1.1s infinite cubic-bezier(.68, -0.55, .27, 1.55);
+            }
+
+            .cht-loader-bounce:nth-child(2) {
+                animation-delay: 0.2s;
+                background: linear-gradient(135deg, #93c5fd 40%, #3b82f6 100%);
+            }
+
+            .cht-loader-bounce:nth-child(3) {
+                animation-delay: 0.4s;
+                background: linear-gradient(135deg, #a5b4fc 40%, #6366f1 100%);
+            }
+
+            @keyframes cht-bounce {
+
+                0%,
+                80%,
+                100% {
+                    transform: translateY(0);
+                }
+
+                40% {
+                    transform: translateY(-30px);
+                }
+            }
+
+            .cht-loader-text {
+                color: #22223b;
+                font-size: 1.2rem;
+                font-weight: 500;
+                letter-spacing: 0.01em;
+                text-align: center;
+            }
         </style>
 </body>
+
 </html>
