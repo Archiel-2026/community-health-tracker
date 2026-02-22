@@ -1373,9 +1373,6 @@ $recordsPerPage = 5;
                                     <button onclick="exportFullReport('pdf')"
                                         class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium flex items-center"><i
                                             class="fas fa-file-pdf mr-2"></i> Export PDF</button>
-                                    <button onclick="exportFullReport('excel')"
-                                        class="px-4 py-2 bg-yellow-600 text-gray-900 rounded-lg hover:bg-yellow-500 transition font-medium flex items-center"><i
-                                            class="fas fa-file-excel mr-2"></i> Export Excel</button>
                                     <button type="button" onclick="closeFullReportModal()"
                                         class="px-6 py-3 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400 transition font-medium"><i
                                             class="fas fa-times mr-2"></i> Close</button>
@@ -1525,141 +1522,76 @@ $recordsPerPage = 5;
                         let html = '';
                         // Add custom CSS for report backgrounds
                         html += `<style>
-                                .cht-report-table {
-                                    width: 100%;
-                                    border-collapse: collapse;
-                                    margin-bottom: 2rem;
-                                }
-                                .cht-report-table th, .cht-report-table td {
-                                    border: 1.5px solid #cbd5e1;
-                                    padding: 0.7em 1em;
-                                    text-align: left;
-                                    vertical-align: top;
-                                }
-                                .cht-report-table th {
-                                    background: #f1f5f9;
-                                    font-weight: 700;
-                                    color: #1e293b;
-                                    width: 220px;
-                                }
-                                .cht-report-table tr:not(:last-child) td {
-                                    border-bottom: 1.5px solid #cbd5e1;
-                                }
-                                .cht-report-section-title {
-                                    margin-top: 2.2rem;
-                                }
-                .cht-report-container {
-                    max-width: 900px;
-                    margin: 0 auto;
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                    background: #fff;
-                    padding: 2.5rem 2.5rem 2rem 2.5rem;
-                    border: 2.5px solid #1e293b;
-                    border-radius: 1.2rem;
-                    box-shadow: 0 8px 32px rgba(30,41,59,0.18), 0 1.5px 8px rgba(30,41,59,0.10);
-                    position: relative;
-                }
-                .cht-report-container:before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    border-radius: 1.2rem;
-                    pointer-events: none;
-                    border: 1.5px dashed #64748b;
-                    z-index: 1;
-                }
-                .cht-document-modal {
-                    background: #f1f5f9;
-                    border: 2.5px solid #1e293b;
-                    border-radius: 1.5rem;
-                    box-shadow: 0 12px 40px rgba(30,41,59,0.18), 0 2px 12px rgba(30,41,59,0.10);
-                    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
-                }
-                .cht-report-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
-                    margin-bottom: 0.5rem;
-                }
-                .cht-report-header img {
-                    height: 65px;
-                    width: 65px;
-                    object-fit: contain;
-                    border-radius: 10px;
-                    background: #fff;
-                    border: 1px solid #cbd5e1;
-                }
-                .cht-report-govinfo {
-                    flex: 1;
-                    text-align: center;
-                    font-size: 1.05rem;
-                    color: #22223b;
-                    font-weight: 500;
-                    line-height: 1.3;
-                }
-                .cht-report-titlebar {
-                    text-align: center;
-                    margin-bottom: 1.2rem;
-                }
-                .cht-report-titlebar .cht-report-section-title {
-                    color: #b91c1c;
-                    font-size: 1.15rem;
-                    font-weight: 700;
-                    letter-spacing: 0.04em;
-                    margin-bottom: 0.2rem;
-                }
-                .cht-section-card {
-                    background: #fff;
-                    border-radius: 0.7rem;
-                    border: 1.5px solid #cbd5e1;
-                    padding: 2.2rem 2.2rem;
-                    margin-bottom: 2.2rem;
-                }
-                .cht-section-title {
-                    color: #1e293b;
-                    font-size: 1.2rem;
-                    font-weight: 700;
-                    margin-bottom: 1.1rem;
-                    letter-spacing: 0.01em;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.7em;
-                }
-                .cht-section-title i {
-                    font-size: 1.1em;
-                    color: #64748b;
-                }
-                .cht-report-list {
-                    margin: 0;
-                    padding: 0;
-                    list-style: none;
-                }
-                .cht-report-list > li {
-                    margin-bottom: 0.8em;
-                    font-size: 1.05em;
-                }
-                .cht-report-list ul {
-                    margin-left: 2em;
-                    margin-top: 0.3em;
-                }
-                .cht-label {
-                    background: #f1f5f9;
-                    color: #22223b;
-                    border-radius: 0.4em;
-                    padding: 0.13em 0.7em;
-                    font-size: 0.98em;
-                    font-weight: 600;
-                    margin-right: 0.5em;
-                }
-                .cht-report-list b {
-                    color: #1e293b;
-                    font-weight: 700;
-                }
-                @media (max-width: 900px) {
-                    .cht-section-card { padding: 1rem 0.4rem; }
-                    .cht-report-container { padding: 0.7rem 0; }
-                }
-                </style>`;
+                            .report-modal-container { max-width: 700px; margin: 0 auto; font-family: 'Segoe UI', Arial, sans-serif; background: #fff; border: 2px solid #cbd5e1; border-radius: 1.2rem; padding: 2rem 2rem 1.5rem 2rem; }
+                            .report-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+                            .report-modal-header img { height: 55px; width: 55px; object-fit: contain; border-radius: 10px; background: #fff; border: 1px solid #cbd5e1; }
+                            .report-modal-govinfo { flex: 1; text-align: center; font-size: 1.05rem; color: #22223b; font-weight: 500; line-height: 1.3; }
+                            .report-modal-titlebar { text-align: center; margin-bottom: 1.2rem; }
+                            .report-modal-section { border: 1.5px solid #cbd5e1; border-radius: 0.7rem; background: #f9fafb; margin-bottom: 1.2rem; padding: 1.2rem 1.2rem; }
+                            .report-modal-section-title { font-size: 1.1rem; font-weight: 700; color: #22223b; margin-bottom: 0.7rem; }
+                            .report-modal-table { width: 100%; border-collapse: collapse; margin-bottom: 0.5rem; }
+                            .report-modal-table th, .report-modal-table td { border: 1px solid #cbd5e1; padding: 0.7em 1em; text-align: left; vertical-align: top; }
+                            .report-modal-table th { background: #f1f5f9; font-weight: 700; color: #1e293b; width: 220px; }
+                            .report-modal-table tr:not(:last-child) td { border-bottom: 1px solid #cbd5e1; }
+                            .report-modal-recommend { margin-top: 1.2rem; }
+                            .report-modal-footer { margin-top: 2rem; font-size: 0.98em; color: #64748b; text-align: right; }
+                        </style>`;
+                        html += `<div class="report-modal-container">
+                            <div class="report-modal-header">
+                                <img src="assets/images/Luz.jpg" alt="Barangay Luz Logo">
+                                <div class="report-modal-govinfo">
+                                    Republic of the Philippines<br>
+                                    City of Cebu, Philippines<br>
+                                    Barangay Luz, Cebu City<br>
+                                </div>
+                                <img src="assets/images/DOH.png" alt="City Health Logo">
+                            </div>
+                            <div class="report-modal-titlebar">
+                                <div style="font-size:1.1rem;font-weight:700;color:#22223b;">OFFICE OF THE CITY HEALTH</div>
+                                <div style="font-size:1.05rem;color:#22223b;font-weight:600;">Comprehensive Health Report</div>
+                            </div>
+                            <div class="report-modal-section">
+                                <div class="report-modal-section-title">Resident Demographics</div>
+                                <table class="report-modal-table">
+                                    <tr><th>Total Registered Residents</th><td>${data.resident_demographics.total_registered}</td></tr>
+                                    <tr><th>New Registrations This Period</th><td>${data.resident_demographics.new_registrations}</td></tr>
+                                    <tr><th>Age Distribution</th><td>
+                                        Children (0–12): ${data.resident_demographics.age_distribution.children} | Adolescents (13–19): ${data.resident_demographics.age_distribution.adolescents} | Adults (20–59): ${data.resident_demographics.age_distribution.adults} | Seniors (60+): ${data.resident_demographics.age_distribution.seniors}
+                                    </td></tr>
+                                    <tr><th>Sex Distribution</th><td>Male: ${data.resident_demographics.sex_distribution.Male} | Female: ${data.resident_demographics.sex_distribution.Female}</td></tr>
+                                </table>
+                            </div>
+                            <div class="report-modal-section">
+                                <div class="report-modal-section-title">Medical Information Summary</div>
+                                <table class="report-modal-table">
+                                    <tr><th>Common Conditions Recorded</th><td>
+                                        Hypertension: ${data.medical_summary.common_conditions.hypertension}<br>
+                                        Diabetes: ${data.medical_summary.common_conditions.diabetes}<br>
+                                        Tuberculosis: ${data.medical_summary.common_conditions.tuberculosis}<br>
+                                        Other: ${Object.keys(data.medical_summary.common_conditions.other).map(k => k + ': ' + data.medical_summary.common_conditions.other[k]).join(' ')}
+                                    </td></tr>
+                                    <tr><th>Immunization Coverage</th><td>
+                                        Fully immunized children: ${data.medical_summary.fully_immunized_children}<br>
+                                        Vaccine Administered (by type): ${Object.keys(data.medical_summary.vaccines_administered).map(k => k + ': ' + data.medical_summary.vaccines_administered[k]).join(' ')}
+                                    </td></tr>
+                                </table>
+                            </div>
+                            <div class="report-modal-section">
+                                <div class="report-modal-section-title">Administrative Data</div>
+                                <table class="report-modal-table">
+                                    <tr><th>Average Patients per Doctor</th><td>${data.admin.avg_patients_per_doctor}</td></tr>
+                                    <tr><th>Average Patients per Nurse</th><td>${data.admin.avg_patients_per_nurse}</td></tr>
+                                </table>
+                            </div>
+                            <div class="report-modal-section report-modal-recommend">
+                                <table class="report-modal-table">
+                                    <tr><th>Recommendations</th><td>${data.recommendations}</td></tr>
+                                    <tr><th>Prepared by</th><td>${data.prepared_by}</td></tr>
+                                    <tr><th>Date</th><td>${data.date}</td></tr>
+                                </table>
+                            </div>
+                        </div>`;
+                        return html;
                         html += `<div class='cht-report-container'>`;
                         // Header with two logos and centered info
                         html += `<div class='cht-report-header'>
