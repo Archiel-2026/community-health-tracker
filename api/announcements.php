@@ -31,8 +31,26 @@ try {
         }
         // Get all announcement responses for staff/admin (for analytics dashboard)
         elseif ((isStaff() || isAdmin()) && isset($_GET['all_responses'])) {
-            // Fetch all announcements
-            $stmt = $pdo->query("SELECT id, title, purpose, audience_type, post_date FROM sitio1_announcements ORDER BY post_date DESC");
+            // Filtering logic
+            $time = $_GET['time'] ?? 'day';
+            $date = $_GET['date'] ?? date('Y-m-d');
+            $where = [];
+            $params = [];
+            if ($time === 'day' && $date) {
+                $where[] = 'DATE(post_date) = ?';
+                $params[] = $date;
+            } elseif ($time === 'month' && $date) {
+                $where[] = 'DATE_FORMAT(post_date, "%Y-%m") = ?';
+                $params[] = date('Y-m', strtotime($date));
+            } elseif ($time === 'year' && $date) {
+                $where[] = 'YEAR(post_date) = ?';
+                $params[] = date('Y', strtotime($date));
+            }
+            // Always show only active announcements
+            $where[] = "status = 'active'";
+            $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+            $stmt = $pdo->prepare("SELECT id, title, purpose, audience_type, post_date FROM sitio1_announcements $whereSql ORDER BY post_date DESC");
+            $stmt->execute($params);
             $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
             // For each announcement, get response counts
             foreach ($announcements as &$a) {
@@ -41,11 +59,14 @@ try {
                 $stmt2->execute([$aid]);
                 $counts = ['accepted' => 0, 'dismissed' => 0];
                 $total = 0;
-                foreach ($stmt2->fetchAll(PDO::FETCH_ASSOC) as $row) {
-                    $status = $row['status'];
-                    $cnt = (int)$row['cnt'];
-                    if (isset($counts[$status])) $counts[$status] += $cnt;
-                    $total += $cnt;
+                $responseRows = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+                if ($responseRows) {
+                    foreach ($responseRows as $row) {
+                        $status = $row['status'];
+                        $cnt = (int)$row['cnt'];
+                        if (isset($counts[$status])) $counts[$status] += $cnt;
+                        $total += $cnt;
+                    }
                 }
                 $a['response_counts'] = [
                     'accepted' => $counts['accepted'],

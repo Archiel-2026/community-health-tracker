@@ -43,7 +43,17 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
         $mail->setFrom('cabanagarchiel@gmail.com', 'Barangay Luz Health Center');
         $mail->addAddress($email, $fullName);
         $mail->isHTML(true);
-        $mail->Subject = ($type === 'lab_result') ? 'Lab Result Notification' : 'New Announcement Notification';
+
+        // Determine subject based on type and audience
+        $subject = 'Announcement';
+        if ($type === 'lab_result') {
+            $subject = 'Lab Result';
+        } elseif ($type === 'basic') {
+            $subject = 'General Announcement';
+        } elseif ($type === 'public') {
+            $subject = 'For All Residents';
+        }
+        $mail->Subject = $subject;
 
         // Use the correct host for absolute URLs
         $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
@@ -256,14 +266,16 @@ if (isset($_SESSION['announcement_success'])) {
 }
 
 // Handle form submission for new announcement
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['post_announcement'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['post_announcement']) || isset($_POST['post_lab_result']))) {
     $title = trim($_POST['title']);
     $message = trim($_POST['message']);
     $priority = isset($_POST['priority']) ? $_POST['priority'] : 'normal';
     $expiry_date = !empty($_POST['expiry_date']) ? $_POST['expiry_date'] : null;
     $audience_type = isset($_POST['audience_type']) ? $_POST['audience_type'] : 'public';
     $target_users = isset($_POST['target_users']) ? (is_array($_POST['target_users']) ? array_filter($_POST['target_users']) : []) : [];
-    $announcement_type = isset($_POST['announcement_type']) ? $_POST['announcement_type'] : 'basic';
+    
+    // Determine announcement type
+    $announcement_type = isset($_POST['post_lab_result']) ? 'lab_result' : 'basic';
 
     if ($audience_type === 'specific' && empty($target_users)) {
         $error = 'Please select at least one user for specific announcement.';
@@ -550,7 +562,6 @@ try {
             box-shadow: var(--shadow);
             height: 100%;
             padding: 36px 36px;
-            /* added */
         }
 
         .form-group {
@@ -573,9 +584,6 @@ try {
             font-size: 1rem;
             transition: border-color 0.2s;
             font-family: 'Poppins', sans-serif;
-            /* background: rgba(255, 255, 255, 0.7); */
-            /* box-shadow: 0 2px 8px rgba(52, 152, 219, 0.10); */
-            /* backdrop-filter: blur(2px); */
         }
 
         .form-control:focus {
@@ -586,7 +594,7 @@ try {
 
         textarea.form-control {
             min-height: 120px;
-            resize: vertical;
+            resize: none;
         }
 
         .btn {
@@ -655,7 +663,6 @@ try {
         .btn-secondary {
             background: rgba(29, 133, 221, 0.3);
             color: #1D85DD;
-            /* border: 2px solid #7e7e7eff; */
             border-radius: 6px;
         }
 
@@ -668,6 +675,17 @@ try {
         .btn-sm {
             padding: 0.5rem 1rem;
             font-size: 0.75rem;
+        }
+
+        .btn-lab {
+            background: #10b981;
+            color: white;
+            border-radius: 6px;
+        }
+
+        .btn-lab:hover {
+            background: #059669;
+            transform: translateY(-2px);
         }
 
         .tab-nav {
@@ -704,6 +722,14 @@ try {
             border-radius: 8px;
             padding: 1rem;
             transition: all 0.2s;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            box-sizing: border-box;
+            min-height: 0;
+            max-width: 100%;
+            overflow: visible;
         }
 
         .announcement-item:hover {
@@ -724,9 +750,17 @@ try {
 
         .announcement-content {
             color: var(--secondary);
-            font-size: 0.875rem;
-            line-height: 1.5;
-            margin-bottom: 3rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.2rem;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            padding: 0.5rem 0.2rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(52,152,219,0.07);
+            min-height: 0;
+            max-width: 100%;
         }
 
         .badge {
@@ -754,6 +788,12 @@ try {
         .badge-normal {
             background: rgba(29, 133, 221, 0.3);
             color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .badge-lab {
+            background: rgba(16, 185, 129, 0.3);
+            color: #10b981;
             font-size: 1rem;
         }
 
@@ -937,7 +977,6 @@ try {
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 24px 36px;
-            /* text-align: center; */
         }
 
         .stat-value {
@@ -950,6 +989,72 @@ try {
         .stat-label {
             font-size: 0.875rem;
             color: var(--gray);
+        }
+
+        /* Loader animation styles */
+        #announcement-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(248, 250, 252, 0.95);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .cht-loader-bg {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .cht-loader-unique {
+            display: flex;
+            gap: 0.7em;
+            margin-bottom: 1.5rem;
+        }
+
+        .cht-loader-bounce {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #60a5fa 40%, #2563eb 100%);
+            animation: cht-bounce 1.1s infinite cubic-bezier(.68, -0.55, .27, 1.55);
+        }
+
+        .cht-loader-bounce:nth-child(2) {
+            animation-delay: 0.2s;
+            background: linear-gradient(135deg, #93c5fd 40%, #3b82f6 100%);
+        }
+
+        .cht-loader-bounce:nth-child(3) {
+            animation-delay: 0.4s;
+            background: linear-gradient(135deg, #a5b4fc 40%, #6366f1 100%);
+        }
+
+        @keyframes cht-bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-30px);
+            }
+        }
+
+        .cht-loader-text {
+            color: #22223b;
+            font-size: 1.2rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            text-align: center;
         }
 
         @media (max-width: 768px) {
@@ -981,6 +1086,24 @@ try {
 </head>
 
 <body class="bg-gray-50 min-h-screen">
+
+    <!-- Modern Loader Animation Overlay -->
+    <div id="announcement-loading">
+        <div class="cht-loader-bg">
+            <div class="cht-loader-unique">
+                <div class="cht-loader-bounce"></div>
+                <div class="cht-loader-bounce"></div>
+                <div class="cht-loader-bounce"></div>
+            </div>
+            <div class="cht-loader-text" id="announcement-loading-message">Sending announcement and emails...</div>
+            <span class="mt-3 text-base text-slate-500 text-center" style="font-family: Poppins, Arial, Helvetica, sans-serif; font-weight: 400;">Please wait while we process your announcement.<br>Do not close or refresh this page.</span>
+        </div>
+
+        <script>
+        // Expose all active announcements to JS for modal
+        window.allActiveAnnouncementsData = <?php echo json_encode($activeAnnouncements, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+        </script>
+    </div>
 
     <div class="container w-full max-w-none px-8 py-10">
         <!-- Header -->
@@ -1143,11 +1266,12 @@ try {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- FORM START (wraps LEFT + CENTER columns only) -->
             <form method="POST" action="" enctype="multipart/form-data"
-                class="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                class="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6"
+                onsubmit="return showAnnouncementLoading(this.querySelector('[name=post_lab_result]') ? 'lab_result' : 'basic')">
 
                 <!-- Left Column - Form -->
                 <div class="h-full">
-                    <div class="card h-full">
+                    <div class="card" style="height:auto;min-height:0;">
                         <div>
 
                             <!-- Title -->
@@ -1155,7 +1279,7 @@ try {
                                 <label class="form-label">Title of the Announcement <span
                                         style="color: #FF5555;">*</span></label>
                                 <input type="text" name="title" required class="form-control mb-4"
-                                    placeholder="Enter Announcement Title" maxlength="100">
+                                    placeholder="Enter Announcement Title" maxlength="100" id="announcement-title">
                             </div>
 
                             <!-- Message -->
@@ -1164,7 +1288,7 @@ try {
                                         style="color: #FF5555;">*</span></label>
                                 <textarea name="message" required class="form-control mb-4"
                                     placeholder="Type your announcement message here..." maxlength="500"
-                                    rows="6"></textarea>
+                                    rows="6" id="announcement-message"></textarea>
                             </div>
 
                             <!-- Settings -->
@@ -1172,6 +1296,7 @@ try {
                                 <div class="form-group">
                                     <label class="form-label">Priority <span style="color: #FF5555;">*</span></label>
                                     <select name="priority" class="form-control">
+                                        <option value="">Select Priority</option>
                                         <option value="normal">Normal</option>
                                         <option value="medium">Medium</option>
                                         <option value="high">High</option>
@@ -1181,7 +1306,7 @@ try {
                                 <div class="form-group">
                                     <label class="form-label">Expiry Date <span style="color: #FF5555;">*</span></label>
                                     <input type="date" name="expiry_date" class="form-control"
-                                        min="<?= date('Y-m-d') ?>">
+                                        min="<?= date('Y-m-d') ?>" id="announcement-expiry">
                                 </div>
                             </div>
 
@@ -1191,7 +1316,7 @@ try {
 
                 <!-- Center Column -->
                 <div class="h-full">
-                    <div class="card h-full">
+                    <div class="card" style="height:auto;min-height:0;">
                         <div class="flex flex-col">
 
                             <!-- Audience -->
@@ -1287,9 +1412,6 @@ try {
                                                         class="user-checkbox mr-2">
                                                     <span>
                                                         <?= htmlspecialchars($user['full_name']) ?>
-                                                        <span class="text-gray-400 ml-1">
-                                                            @<?= htmlspecialchars($user['username']) ?>
-                                                        </span>
                                                     </span>
                                                 </label>
                                             <?php endforeach; ?>
@@ -1300,12 +1422,68 @@ try {
                                 </div>
                             </div>
 
-                            <!-- Submit -->
-                            <div class="flex justify-between gap-3 mt-auto">
-                                <button type="submit" name="post_announcement" class="btn btn-success">
-                                    Post Announcement
-                                </button>
+                            <!-- Image Upload -->
+                            <div class="form-group">
+                                <label class="form-label mb-2">Image (Optional)</label>
+                                <div class="file-upload" onclick="document.getElementById('announcement_image').click();">
+                                    <input type="file" id="announcement_image" name="announcement_image" 
+                                           accept="image/*" class="hidden" onchange="updateImageName(this)">
+                                    <i class="fas fa-cloud-upload-alt text-3xl mb-2 text-gray-400"></i>
+                                    <p class="font-medium" id="image-name">Click to upload image</p>
+                                    <p class="text-sm text-gray-500">JPG, PNG, GIF • Max 5MB</p>
+                                </div>
+                            </div>
 
+                            <!-- Submit Buttons -->
+                            <div class="flex justify-between gap-3 mt-auto">
+                                <div class="flex gap-2">
+                                    <button type="submit" name="post_announcement" class="btn btn-success">
+                                        Post Announcement
+                                    </button>
+
+                                    <script>
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        const titleInput = document.getElementById('announcement-title');
+                                        const messageInput = document.getElementById('announcement-message');
+                                        const priorityInput = document.querySelector('select[name="priority"]');
+                                        const expiryInput = document.getElementById('announcement-expiry');
+                                        const postBtn = document.querySelector('button[name="post_announcement"]');
+
+                                        function isFutureDate(dateStr) {
+                                            if (!dateStr) return false;
+                                            const inputDate = new Date(dateStr);
+                                            const today = new Date();
+                                            today.setHours(0,0,0,0);
+                                            return inputDate > today;
+                                        }
+
+                                        function validateAnnouncementFields() {
+                                            const title = titleInput.value.trim();
+                                            const message = messageInput.value.trim();
+                                            const priority = priorityInput.value;
+                                            const expiry = expiryInput.value;
+                                            const allFilled = title && message && priority && expiry;
+                                            const expiryValid = isFutureDate(expiry);
+                                            const enable = allFilled && expiryValid;
+                                            postBtn.disabled = !enable;
+                                            postBtn.classList.toggle('opacity-50', !enable);
+                                            postBtn.classList.toggle('cursor-not-allowed', !enable);
+                                        }
+
+                                        [titleInput, messageInput, priorityInput, expiryInput].forEach(el => {
+                                            el.addEventListener('input', validateAnnouncementFields);
+                                            el.addEventListener('change', validateAnnouncementFields);
+                                        });
+
+                                        // Initial state
+                                        validateAnnouncementFields();
+                                    });
+                                    </script>
+                                    <!-- Lab Result Button: Only show if Specific Resident is selected -->
+                                    <button type="submit" name="post_lab_result" id="labResultBtn" class="btn btn-lab" style="display:none;">
+                                        Lab Result
+                                    </button>
+                                </div>
                                 <button type="button" onclick="clearForm()" class="btn btn-secondary">
                                     Clear
                                 </button>
@@ -1319,7 +1497,7 @@ try {
 
             <!-- Right Column - Announcements List -->
             <div class="lg:col-span-1 h-full">
-                <div class="card h-full flex flex-col">
+                <div class="card flex flex-col" style="height:auto;min-height:0;">
 
                     <!-- Header -->
                     <div class="card-header">
@@ -1339,109 +1517,125 @@ try {
                     </div>
 
                     <!-- Active Announcements -->
-                    <div id="active-tab-content" class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 overflow-auto">
-
+                    <div id="active-tab-content" style="display: flex; flex-direction: column; gap: 0.5rem; flex: 1; overflow: auto;">
                         <?php if (empty($activeAnnouncements)): ?>
                             <div class="empty-state col-span-full">
                                 <i class="fas fa-bullhorn empty-icon"></i>
                                 <p>No active announcements</p>
                             </div>
                         <?php else: ?>
-
+                            <?php $activeCount = 0; ?>
                             <?php foreach ($activeAnnouncements as $announcement): ?>
-                                <div class="announcement-item">
-                                    <div class="announcement-header">
-                                        <div
-                                            class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                                            <h3 class="announcement-title">
-                                                <?= htmlspecialchars($announcement['title']) ?>
-                                            </h3>
-
-                                            <span class="badge badge-<?= $announcement['priority'] ?>">
-                                                <?= ucfirst($announcement['priority']) ?>
-                                            </span>
+                                <?php if ($activeCount < 3): ?>
+                                    <?php $activeCount++; ?>
+                                    <div class="announcement-item limited-active" style="display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 2px 8px rgba(52,152,219,0.07); border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.5rem; background: #fff;">
+                                        <div class="flex flex-row justify-between items-start mb-2">
+                                            <div class="flex flex-col gap-1" style="min-width:0;">
+                                                <h3 class="announcement-title" style="font-size: 1.15rem; color: #2563eb; font-weight: 500; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;" title="<?= htmlspecialchars($announcement['title']) ?>">
+                                                    <?= htmlspecialchars($announcement['title']) ?>
+                                                </h3>
+                                                <div class="text-xs text-gray-400 mb-1">Posted by : <span class="badge badge-normal" style="background: #e0eaff; color: #2563eb; font-size: 0.85rem; padding: 0.2rem 0.7rem; border-radius: 999px;">Encoder</span></div>
+                                                <div class="text-base text-gray-700">Leandro Labos</div>
+                                            </div>
+                                            <div class="flex flex-col items-end gap-2">
+                                                <span class="badge badge-<?= $announcement['priority'] ?>" style="background: <?= $announcement['priority'] === 'high' ? '#fee2e2' : '#e0eaff' ?>; color: <?= $announcement['priority'] === 'high' ? '#dc2626' : '#2563eb' ?>; font-size: 0.95rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 1.2rem; min-width: 70px; text-align: center;">
+                                                    <?= ucfirst($announcement['priority']) ?>
+                                                </span>
+                                                <?php
+                                                if ($announcement['audience_type'] === 'public') {
+                                                    echo '<div style="display:flex;flex-direction:row;gap:0.5rem;margin-top:0.2rem;">';
+                                                    echo '<span class="badge stat-accepted" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.7rem;border-radius:4px;"><i class="fas fa-check-circle stat-icon" style="background:none;color:#059669;"></i> ' . $announcement['accepted_count'] . '</span>';
+                                                    echo '<span class="badge stat-pending" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.7rem;border-radius:4px;"><i class="fas fa-hourglass-half stat-icon" style="background:none;color:#d97706;"></i> ' . $announcement['pending_count'] . '</span>';
+                                                    echo '<span class="badge stat-dismissed" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.7rem;border-radius:4px;"><i class="fas fa-times-circle stat-icon" style="background:none;color:#dc2626;"></i> ' . $announcement['dismissed_count'] . '</span>';
+                                                    echo '</div>';
+                                                } else {
+                                                    $statusBadge = '';
+                                                    if ($announcement['accepted_count'] > 0) {
+                                                        $statusBadge = '<span class="badge" style="background: #d1fae5; color: #059669; font-size: 0.85rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.9rem; margin-top: 0.2rem;">Accepted</span>';
+                                                    } elseif ($announcement['dismissed_count'] > 0) {
+                                                        $statusBadge = '<span class="badge" style="background: #fee2e2; color: #dc2626; font-size: 0.85rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.9rem; margin-top: 0.2rem;">Dismissed</span>';
+                                                    } else {
+                                                        $statusBadge = '<span class="badge" style="background: #fef3c7; color: #d97706; font-size: 0.85rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.9rem; margin-top: 0.2rem;">Pending</span>';
+                                                    }
+                                                    echo $statusBadge;
+                                                }
+                                                ?>
+                                            </div>
                                         </div>
-                                    </div>
-
-                                    <div class="announcement-content">
-                                            <?= htmlspecialchars(substr($announcement['message'], 0, 100)) ?>
-                                            <?php if (strlen($announcement['message']) > 100): ?>...
-                                            <?php endif; ?>
-                                        </div>
-
-                                    <div class="flex justify-end items-center">
-                                        <div class="flex gap-1">
+                                        <div class="flex flex-row justify-end items-center mt-2 gap-2">
                                             <button
                                                 onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
-                                                class="btn btn-primary btn-sm" title="View">
+                                                class="btn btn-primary btn-sm" title="View" style="background: #e0eaff; color: #2563eb; border: none;">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-
                                             <button
                                                 onclick="openEditModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
-                                                class="btn btn-warning btn-sm" title="Edit">
+                                                class="btn btn-warning btn-sm" title="Edit" style="background: #fef3c7; color: #d97706; border: none;">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-
                                             <form method="POST" action="" class="inline">
                                                 <input type="hidden" name="id" value="<?= $announcement['id'] ?>">
                                                 <button type="submit" name="archive_announcement" class="btn btn-danger btn-sm"
-                                                    title="Archive" onclick="return confirm('Archive this announcement?')">
-                                                    <i class="fas fa-archive"></i>
+                                                    title="Archive" style="background: #fee2e2; color: #dc2626; border: none;" onclick="return confirm('Archive this announcement?')">
+                                                    <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
                                         </div>
                                     </div>
-                                </div>
+                                <?php endif; ?>
                             <?php endforeach; ?>
-
+                            <?php if (count($activeAnnouncements) > 3): ?>
+                                <button id="viewAllActiveBtn" class="btn btn-primary btn-block mt-2" style="background: #2563eb; color: #fff;">View All Active Announcements</button>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
 
                     <!-- Archived Announcements -->
-                    <div id="archived-tab-content" class="hidden p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-
+                    <div id="archived-tab-content" class="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <?php if (empty($archivedAnnouncements)): ?>
                             <div class="empty-state col-span-full">
                                 <i class="fas fa-archive empty-icon"></i>
                                 <p>No archived announcements</p>
                             </div>
                         <?php else: ?>
-
+                            <?php $archivedCount = 0; ?>
                             <?php foreach ($archivedAnnouncements as $announcement): ?>
-                                <div class="announcement-item">
-                                    <div class="announcement-header">
-                                        <div>
-                                            <h3 class="announcement-title">
-                                                <?= htmlspecialchars($announcement['title']) ?>
-                                            </h3>
-                                            <div class="announcement-meta">
-                                                Archived on <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                                <?php if ($archivedCount < 3): ?>
+                                    <?php $archivedCount++; ?>
+                                    <div class="announcement-item limited-archived" style="display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 2px 8px rgba(52,152,219,0.07); border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.5rem; background: #fff; width: 100%; box-sizing: border-box; min-height: 155px;">
+                                        <div class="flex flex-row justify-between items-start mb-2">
+                                            <div class="flex flex-col gap-1">
+                                                <h3 class="announcement-title" style="font-size: 1.15rem; color: #2563eb; font-weight: 500; margin-bottom: 0.2rem;">Lab Result</h3>
+                                                <div class="text-xs text-gray-400 mb-1">Posted by : <span class="badge badge-normal" style="background: #e0eaff; color: #2563eb; font-size: 0.85rem; padding: 0.2rem 0.7rem; border-radius: 999px;">Encoder</span></div>
+                                                <div class="text-base text-gray-700">Leandro Labos</div>
+                                                <div class="text-xs text-gray-400 mt-2">Archived on : <span style="color: #222; font-weight: 500;"><?= date('M d, Y', strtotime($announcement['post_date'])) ?></span></div>
                                             </div>
+                                            <span class="badge badge-<?= $announcement['priority'] ?>" style="background: <?= $announcement['priority'] === 'high' ? '#fee2e2' : '#e0eaff' ?>; color: <?= $announcement['priority'] === 'high' ? '#dc2626' : '#2563eb' ?>; font-size: 0.95rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 1.2rem; min-width: 70px; text-align: center;">
+                                                <?= ucfirst($announcement['priority']) ?>
+                                            </span>
                                         </div>
-
-                                        <div class="flex gap-1">
+                                        <div class="flex flex-row justify-end items-center mt-2 gap-2">
                                             <form method="POST" action="" class="inline">
                                                 <input type="hidden" name="id" value="<?= $announcement['id'] ?>">
                                                 <button type="submit" name="repost_announcement" class="btn btn-warning btn-sm"
-                                                    title="Repost" onclick="return confirm('Repost this announcement?')">
+                                                    title="Repost" style="background: #fef3c7; color: #d97706; border: none;" onclick="return confirm('Repost this announcement?')">
                                                     <i class="fas fa-redo"></i>
                                                 </button>
                                             </form>
-
                                             <form method="POST" action="" class="inline">
                                                 <input type="hidden" name="id" value="<?= $announcement['id'] ?>">
                                                 <button type="submit" name="delete_announcement" class="btn btn-danger btn-sm"
-                                                    title="Delete"
-                                                    onclick="return confirm('Permanently delete this announcement?')">
+                                                    title="Delete" style="background: #fee2e2; color: #dc2626; border: none;" onclick="return confirm('Permanently delete this announcement?')">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
                                         </div>
                                     </div>
-                                </div>
+                                <?php endif; ?>
                             <?php endforeach; ?>
-
+                            <?php if (count($archivedAnnouncements) > 3): ?>
+                                <button id="viewAllArchivedBtn" class="btn btn-warning btn-block mt-2" style="background: #d97706; color: #fff;">View All Archived Announcements</button>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -1464,6 +1658,24 @@ try {
                     <button type="button" class="btn btn-secondary close-modal">
                         Close
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Active Announcements Modal -->
+        <div id="allActiveModal" class="modal">
+            <div class="modal-content" style="max-width: 800px; width: 95vw;">
+                <div class="modal-header">
+                    <h3 class="modal-title">All Active Announcements</h3>
+                    <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div id="allActiveAnnouncementsContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary close-modal">Close</button>
                 </div>
             </div>
         </div>
@@ -1597,24 +1809,6 @@ try {
             </div>
         </div>
 
-        <!-- All Announcements Modal -->
-        <div id="allAnnouncementsModal" class="modal">
-            <div class="modal-content" style="max-width: 700px;">
-                <div class="modal-header">
-                    <h3 class="modal-title">All Announcements</h3>
-                    <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body" id="allAnnouncementsBody">
-                    <!-- Announcements will be rendered here -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary close-modal">Close</button>
-                </div>
-            </div>
-        </div>
-
         <script>
             // Helper function to escape HTML
             function escapeHtml(text) {
@@ -1637,7 +1831,6 @@ try {
                 closeAllModals();
                 const modal = document.getElementById(modalId);
                 if (modal) {
-                    // Use setTimeout to ensure DOM is updated
                     setTimeout(() => {
                         modal.classList.add('active');
                         document.body.style.overflow = 'hidden';
@@ -1646,32 +1839,44 @@ try {
             }
 
             // Show announcement loading with dynamic message
-            function showAnnouncementLoading() {
+            function showAnnouncementLoading(buttonType) {
                 const audienceType = document.querySelector('input[name="audience_type"]:checked')?.value;
-                const loadingDiv = document.getElementById('announcement-loading');
-                const loadingMsg = document.getElementById('announcement-loading-message');
+                const title = document.querySelector('input[name="title"]').value.trim();
+                const message = document.querySelector('textarea[name="message"]').value.trim();
+                
+                if (!title || !message) {
+                    showNotification('error', 'Please fill in all required fields');
+                    return false;
+                }
+                
+                if (audienceType === 'specific') {
+                    const checkedUsers = document.querySelectorAll('.user-checkbox:checked');
+                    if (checkedUsers.length === 0) {
+                        showNotification('error', 'Please select at least one user for specific announcement');
+                        return false;
+                    }
+                }
+                
                 if (audienceType === 'landing_page') {
-                    // No Gmail/email for landing page, skip loading
                     return true;
                 }
+                
+                const loadingDiv = document.getElementById('announcement-loading');
+                const loadingMsg = document.getElementById('announcement-loading-message');
+                
                 if (loadingDiv && loadingMsg) {
                     let msg = '';
                     if (audienceType === 'specific') {
-                        msg = 'Announcement Sending to Specific User and Email';
+                        msg = buttonType === 'lab_result' 
+                            ? 'Sending lab results to specific users and emails...'
+                            : 'Sending announcement to specific users and emails...';
                     } else if (audienceType === 'public') {
-                        msg = 'Announcement Sending to All Users and Email';
-                    } else {
-                        msg = 'Sending announcement and emails...';
+                        msg = 'Broadcasting announcement to all users and sending emails...';
                     }
                     loadingMsg.textContent = msg;
                     loadingDiv.style.display = 'flex';
                 }
                 return true;
-            }
-
-            // Set announcement type
-            function setAnnouncementType(type) {
-                document.getElementById('announcement_type').value = type;
             }
 
             // Update image name
@@ -1700,6 +1905,10 @@ try {
                 document.getElementById('image-name').textContent = 'Click to upload image';
                 document.getElementById('selected-count').textContent = '0 users selected';
                 document.getElementById('audience-landing').checked = true;
+                
+                // Hide lab result button
+                const labResultBtn = document.getElementById('labResultBtn');
+                if (labResultBtn) labResultBtn.style.display = 'none';
             }
 
             // Character counter function
@@ -1723,7 +1932,6 @@ try {
 
             // View Modal Functions
             function openViewModal(announcement) {
-                // Ensure announcement is properly parsed
                 if (typeof announcement === 'string') {
                     try {
                         announcement = JSON.parse(announcement);
@@ -1749,21 +1957,26 @@ try {
                             <div class="text-xs text-gray-500 mt-1">
                                 Posted by: <b>${escapeHtml(announcement.staff_full_name || '')}</b> (${escapeHtml(announcement.staff_position || '')})
                             </div>
+                            <div class="mt-1">
+                                <span class="badge ${announcement.announcement_type === 'lab_result' ? 'badge-lab' : 'badge-normal'}" style="display:inline-block;padding:0.2rem 0.9rem;border-radius:4px;font-size:0.95rem;font-weight:500;${announcement.announcement_type === 'lab_result' ? 'background:#e0eaff;color:#2563eb;' : (announcement.audience_type === 'public' ? 'background:#e0eaff;color:#2563eb;' : 'background:#f3f4f6;color:#374151;')}">
+                                    ${announcement.announcement_type === 'lab_result' ? 'Lab Result' : (announcement.audience_type === 'public' ? 'For All Residents' : 'Basic Announcement')}
+                                </span>
+                            </div>
                         </div>
-                        <span class="badge badge-${announcement.priority || 'normal'}">
+                        <span class="badge badge-${announcement.priority || 'normal'}" style="display:inline-block;padding:0.2rem 0.9rem;border-radius:4px;font-size:0.95rem;font-weight:500;${announcement.priority === 'high' ? 'background:#fee2e2;color:#dc2626;' : announcement.priority === 'medium' ? 'background:#fef3c7;color:#d97706;' : 'background:#e0eaff;color:#2563eb;'}">
                             ${announcement.priority ? announcement.priority.charAt(0).toUpperCase() + announcement.priority.slice(1) : 'Normal'} Priority
                         </span>
                     </div>
                     
-                            <!-- Show specific user names if audience is specific -->
-                            ${announcement.audience_type === 'specific' && announcement.target_users && announcement.target_users.length > 0 ? `
-                                <div>
-                                    <p class="text-gray-500 mb-1">Specific Users:</p>
-                                    <ul class="pl-4 list-disc text-sm">
-                                        ${announcement.target_users.map(u => `<li>${escapeHtml(u.full_name)}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            ` : ''}
+                    ${announcement.audience_type === 'specific' && announcement.target_users && announcement.target_users.length > 0 ? `
+                        <div>
+                            <p class="text-gray-500 mb-1">Specific Users:</p>
+                            <ul class="pl-4 list-disc text-sm">
+                                ${announcement.target_users.map(u => `<li>${escapeHtml(u.full_name)}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <p class="text-gray-500">Posted on:</p>
@@ -1772,7 +1985,7 @@ try {
                         <div>
                             <p class="text-gray-500">Audience:</p>
                             <p class="font-medium">
-                                ${announcement.audience_type === 'public' ? 'All Users' :
+                                ${announcement.audience_type === 'public' ? 'All Residents' :
                         announcement.audience_type === 'landing_page' ? 'Landing Page' :
                             'Specific Users'}
                             </p>
@@ -1802,17 +2015,17 @@ try {
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-3 gap-4 text-center">
-                    <div class="p-3 bg-green-50 border border-green-200 rounded">
-                        <p class="text-green-700 font-bold">${announcement.accepted_count || 0}</p>
+                <div class="grid grid-cols-3 gap-4 text-center mt-2">
+                    <div class="p-3 bg-green-50 border border-green-200 rounded" style="border-radius:4px;">
+                        <p class="text-green-700 font-bold flex items-center justify-center gap-1"><i class='fas fa-check-circle mr-1'></i> ${announcement.accepted_count || 0}</p>
                         <p class="text-sm text-green-600">Accepted</p>
                     </div>
-                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                        <p class="text-yellow-700 font-bold">${announcement.pending_count || 0}</p>
+                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded" style="border-radius:4px;">
+                        <p class="text-yellow-700 font-bold flex items-center justify-center gap-1"><i class='fas fa-hourglass-half mr-1'></i> ${announcement.pending_count || 0}</p>
                         <p class="text-sm text-yellow-600">Pending</p>
                     </div>
-                    <div class="p-3 bg-red-50 border border-red-200 rounded">
-                        <p class="text-red-700 font-bold">${announcement.dismissed_count || 0}</p>
+                    <div class="p-3 bg-red-50 border border-red-200 rounded" style="border-radius:4px;">
+                        <p class="text-red-700 font-bold flex items-center justify-center gap-1"><i class='fas fa-times-circle mr-1'></i> ${announcement.dismissed_count || 0}</p>
                         <p class="text-sm text-red-600">Dismissed</p>
                     </div>
                 </div>
@@ -1824,7 +2037,6 @@ try {
 
             // Edit Modal Functions
             function openEditModal(announcement) {
-                // Ensure announcement is properly parsed
                 if (typeof announcement === 'string') {
                     try {
                         announcement = JSON.parse(announcement);
@@ -1840,7 +2052,6 @@ try {
                 document.getElementById('edit-priority').value = announcement.priority || 'normal';
                 document.getElementById('edit-expiry').value = announcement.expiry_date || '';
 
-                // Update character counters
                 updateCharCounter('edit-title', 'edit-title-counter', 200);
                 updateCharCounter('edit-message', 'edit-message-counter', 1000);
 
@@ -1868,67 +2079,6 @@ try {
                 return true;
             }
 
-            // Archive Modal Functions
-            function openArchiveModal(announcementId) {
-                document.getElementById('archive-id').value = announcementId;
-                showModal('archiveModal');
-            }
-
-            // Delete Modal Functions
-            function openDeleteModal(announcementId) {
-                document.getElementById('delete-id').value = announcementId;
-                showModal('deleteModal');
-            }
-
-            // All Announcements Modal with Pagination
-            function openAllAnnouncementsModal(page = 1, perPage = 5) {
-                const announcements = <?= json_encode($activeAnnouncements) ?>;
-                const total = announcements.length;
-                const totalPages = Math.ceil(total / perPage);
-                let html = '';
-
-                const start = (page - 1) * perPage;
-                const end = Math.min(start + perPage, total);
-
-                for (let i = start; i < end; i++) {
-                    const a = announcements[i];
-                    html += `
-                    <div class="announcement-item mb-3">
-                        <div class="announcement-header">
-                            <div>
-                                <h3 class="announcement-title">${escapeHtml(a.title)}</h3>
-                                <div class="announcement-meta">${new Date(a.post_date).toLocaleDateString()}</div>
-                            </div>
-                            <div class="flex gap-1">
-                                <button onclick='openViewModal(${JSON.stringify(a)})' class="btn btn-primary btn-sm" title="View">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button onclick='openEditModal(${JSON.stringify(a)})' class="btn btn-warning btn-sm" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button onclick='openArchiveModal(${a.id})' class="btn btn-danger btn-sm" title="Archive">
-                                    <i class="fas fa-archive"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="announcement-content">${escapeHtml(a.message.length > 100 ? a.message.substring(0, 100) + '...' : a.message)}</div>
-                    </div>
-                `;
-                }
-
-                // Pagination controls
-                if (totalPages > 1) {
-                    html += `<div class="flex justify-center gap-2 mt-4">
-                    ${Array.from({ length: totalPages }, (_, i) => i + 1).map(p => `
-                        <button class="btn btn-sm ${p === page ? 'btn-primary' : 'btn-secondary'}" onclick="openAllAnnouncementsModal(${p},${perPage})">${p}</button>
-                    `).join('')}
-                </div>`;
-                }
-
-                document.getElementById('allAnnouncementsBody').innerHTML = html;
-                showModal('allAnnouncementsModal');
-            }
-
             // Initialize all event listeners
             document.addEventListener('DOMContentLoaded', function () {
                 // Tab functionality
@@ -1938,28 +2088,84 @@ try {
                         const tabId = this.dataset.tab;
                         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
                         this.classList.add('active');
-                        document.getElementById('active-tab-content').classList.toggle('hidden', tabId !== 'active');
-                        document.getElementById('archived-tab-content').classList.toggle('hidden', tabId !== 'archived');
+                        // Show only the selected tab's content
+                        if (tabId === 'active') {
+                            document.getElementById('active-tab-content').style.display = 'flex';
+                            document.getElementById('archived-tab-content').style.display = 'none';
+                        } else {
+                            document.getElementById('active-tab-content').style.display = 'none';
+                            document.getElementById('archived-tab-content').style.display = 'flex';
+                        }
                     });
                 });
+                // Set initial state: show active, hide archived
+                document.getElementById('active-tab-content').style.display = 'flex';
+                document.getElementById('archived-tab-content').style.display = 'none';
+
+                // View All Active Announcements button
+                const viewAllActiveBtn = document.getElementById('viewAllActiveBtn');
+                if (viewAllActiveBtn) {
+                    viewAllActiveBtn.addEventListener('click', function () {
+                        // Get all active announcements from PHP variable
+                        const announcements = window.allActiveAnnouncementsData || [];
+                        const container = document.getElementById('allActiveAnnouncementsContent');
+                        if (!container) return;
+                        if (!announcements.length) {
+                            container.innerHTML = '<div class="text-center text-gray-500">No active announcements found.</div>';
+                        } else {
+                            container.innerHTML = announcements.map(announcement => {
+                                const postDate = new Date(announcement.post_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                                return `
+                                    <div class="announcement-item mb-4 p-4 rounded shadow border bg-white">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <div>
+                                                <h4 class="font-semibold text-lg mb-1">${escapeHtml(announcement.title || 'No Title')}</h4>
+                                                <div class="text-xs text-gray-500">Posted by: <b>${escapeHtml(announcement.staff_full_name || '')}</b> (${escapeHtml(announcement.staff_position || '')})</div>
+                                            </div>
+                                            <span class="badge badge-${announcement.priority || 'normal'}" style="display:inline-block;padding:0.2rem 0.9rem;border-radius:4px;font-size:0.95rem;font-weight:500;${announcement.priority === 'high' ? 'background:#fee2e2;color:#dc2626;' : announcement.priority === 'medium' ? 'background:#fef3c7;color:#d97706;' : 'background:#e0eaff;color:#2563eb;'}">
+                                                ${announcement.priority ? announcement.priority.charAt(0).toUpperCase() + announcement.priority.slice(1) : 'Normal'} Priority
+                                            </span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <span class="badge ${announcement.announcement_type === 'lab_result' ? 'badge-lab' : 'badge-normal'}" style="display:inline-block;padding:0.2rem 0.9rem;border-radius:4px;font-size:0.95rem;font-weight:500;${announcement.announcement_type === 'lab_result' ? 'background:#e0eaff;color:#2563eb;' : (announcement.audience_type === 'public' ? 'background:#e0eaff;color:#2563eb;' : 'background:#f3f4f6;color:#374151;')}">
+                                                ${announcement.announcement_type === 'lab_result' ? 'Lab Result' : (announcement.audience_type === 'public' ? 'For All Residents' : 'Basic Announcement')}
+                                            </span>
+                                            <span class="ml-2 text-xs text-gray-400">${postDate}</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <p class="text-gray-500 mb-1">Message:</p>
+                                            <div class="bg-gray-50 p-3 rounded border text-gray-700 whitespace-pre-line">${escapeHtml(announcement.message || 'No message')}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+                        }
+                        showModal('allActiveModal');
+                    });
+                }
 
                 // Audience selection
                 document.querySelectorAll('input[name="audience_type"]').forEach(radio => {
                     radio.addEventListener('change', function () {
                         const userSelection = document.getElementById('user-selection');
-                        const typeButtons = document.getElementById('announcement-type-buttons');
-                        const submitDiv = document.getElementById('announcement-submit');
+                        const labResultBtn = document.getElementById('labResultBtn');
+                        const radioGroup = document.querySelector('.radio-group');
                         if (this.value === 'specific') {
                             userSelection.classList.remove('hidden');
-                            typeButtons.classList.remove('hidden');
-                            submitDiv.classList.add('hidden');
-                            updateSelectedUserCount();
+                            labResultBtn.style.display = 'block';
+                            if (radioGroup) {
+                                radioGroup.style.height = 'auto';
+                                radioGroup.style.maxHeight = 'none';
+                            }
                         } else {
                             userSelection.classList.add('hidden');
-                            typeButtons.classList.add('hidden');
-                            submitDiv.classList.remove('hidden');
+                            labResultBtn.style.display = 'none';
+                            if (radioGroup) {
+                                radioGroup.style.height = '';
+                                radioGroup.style.maxHeight = '';
+                            }
                         }
-                        validateAnnouncementForm();
+                        updateSelectedUserCount();
                     });
                 });
 
@@ -1971,15 +2177,14 @@ try {
                             if (checkbox) {
                                 checkbox.checked = !checkbox.checked;
                                 updateSelectedUserCount();
-                                validateAnnouncementForm();
                             }
                         }
                     });
                 });
+                
                 document.querySelectorAll('.user-checkbox').forEach(cb => {
                     cb.addEventListener('change', function () {
                         updateSelectedUserCount();
-                        validateAnnouncementForm();
                     });
                 });
 
@@ -1994,7 +2199,6 @@ try {
                             item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
                         });
                         updateSelectedUserCount();
-                        validateAnnouncementForm();
                     });
                 }
 
@@ -2016,7 +2220,6 @@ try {
 
                 // Initialize user count
                 updateSelectedUserCount();
-                validateAnnouncementForm();
 
                 // Close modal when clicking outside
                 document.querySelectorAll('.modal').forEach(modal => {
@@ -2026,12 +2229,14 @@ try {
                         }
                     });
                 });
+                
                 // Close modal with Escape key
                 document.addEventListener('keydown', function (e) {
                     if (e.key === 'Escape') {
                         closeAllModals();
                     }
                 });
+                
                 // Add click listeners to close buttons
                 document.querySelectorAll('.close-modal').forEach(button => {
                     button.addEventListener('click', function (e) {
@@ -2039,84 +2244,8 @@ try {
                         closeAllModals();
                     });
                 });
-                // Add input listeners for required fields
-                document.querySelector('input[name="title"]').addEventListener('input', validateAnnouncementForm);
-                document.querySelector('textarea[name="message"]').addEventListener('input', validateAnnouncementForm);
             });
-
-            // Validate announcement form and disable/enable submit buttons
-            function validateAnnouncementForm() {
-                const title = document.querySelector('input[name="title"]');
-                const message = document.querySelector('textarea[name="message"]');
-                const audienceType = document.querySelector('input[name="audience_type"]:checked')?.value;
-                const submitBtn = document.querySelector('#announcement-submit button.btn-success');
-                const basicBtn = document.querySelector('#announcement-type-buttons button[name="post_announcement"][value="basic"]');
-                const labBtn = document.querySelector('#announcement-type-buttons button[name="post_announcement"][value="lab_result"]');
-                let valid = true;
-                if (!title || !title.value.trim()) valid = false;
-                if (!message || !message.value.trim()) valid = false;
-                if (audienceType === 'specific') {
-                    const checkedUsers = document.querySelectorAll('.user-checkbox:checked');
-                    if (checkedUsers.length === 0) valid = false;
-                }
-                if (submitBtn) submitBtn.disabled = !valid;
-                if (basicBtn) basicBtn.disabled = !valid;
-                if (labBtn) labBtn.disabled = !valid;
-            }
         </script>
-        <!-- Loader animation styles for announcement loader (copied from dashboard.php) -->
-        <style>
-            .cht-loader-bg {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .cht-loader-unique {
-                display: flex;
-                gap: 0.7em;
-                margin-bottom: 1.5rem;
-            }
-
-            .cht-loader-bounce {
-                width: 22px;
-                height: 22px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, #60a5fa 40%, #2563eb 100%);
-                animation: cht-bounce 1.1s infinite cubic-bezier(.68, -0.55, .27, 1.55);
-            }
-
-            .cht-loader-bounce:nth-child(2) {
-                animation-delay: 0.2s;
-                background: linear-gradient(135deg, #93c5fd 40%, #3b82f6 100%);
-            }
-
-            .cht-loader-bounce:nth-child(3) {
-                animation-delay: 0.4s;
-                background: linear-gradient(135deg, #a5b4fc 40%, #6366f1 100%);
-            }
-
-            @keyframes cht-bounce {
-
-                0%,
-                80%,
-                100% {
-                    transform: translateY(0);
-                }
-
-                40% {
-                    transform: translateY(-30px);
-                }
-            }
-
-            .cht-loader-text {
-                color: #22223b;
-                font-size: 1.2rem;
-                font-weight: 500;
-                letter-spacing: 0.01em;
-                text-align: center;
-            }
-        </style>
 </body>
 
 </html>

@@ -1170,9 +1170,9 @@ $recordsPerPage = 5;
     <div id="ajaxLoader" class="cht-analytics-loader-bg" style="display: none;">
         <div style="display: flex; flex-direction: column; align-items: center;">
             <div class="cht-loader-unique">
-                <div class="cht-loader-bounce"></div>
-                <div class="cht-loader-bounce"></div>
-                <div class="cht-loader-bounce"></div>
+                <div class="cht-loader-bounce warmblue-dot"></div>
+                <div class="cht-loader-bounce warmblue-dot"></div>
+                <div class="cht-loader-bounce warmblue-dot"></div>
             </div>
             <div class="cht-loader-text">Loading analytics...</div>
         </div>
@@ -1349,7 +1349,7 @@ $recordsPerPage = 5;
                     <!-- Modal for Full Report Display -->
                     <div id="fullReportModal" class="modal-overlay hidden">
                         <div class="modal-container modal-desktop cht-document-modal"
-                            style="max-width:1000px;min-width:350px;">
+                            style="max-width:1000px;min-width:350px;padding:2rem;">
                             <div class="modal-header">
                                 <div class="flex justify-between items-center">
                                     <h3 class="text-xl font-semibold text-gray-900">
@@ -1368,10 +1368,10 @@ $recordsPerPage = 5;
                             <div class="modal-footer">
                                 <div class="flex flex-wrap gap-2 justify-end">
                                     <button onclick="printFullReport()"
-                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center"><i
+                                        class="px-6 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition font-medium flex items-center" style="border-radius:9999px; min-width:120px;"><i
                                             class="fas fa-print mr-2"></i> Print</button>
                                     <button onclick="exportFullReport('pdf')"
-                                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium flex items-center"><i
+                                        class="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium flex items-center" style="border-radius:9999px; min-width:120px;"><i
                                             class="fas fa-file-pdf mr-2"></i> Export PDF</button>
                                     <button type="button" onclick="closeFullReportModal()"
                                         class="px-6 py-3 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400 transition font-medium"><i
@@ -1393,9 +1393,9 @@ $recordsPerPage = 5;
                         const loaderHTML = `
                     <div class="cht-loader-bg">
                         <div class="cht-loader-unique">
-                            <div class="cht-loader-bounce"></div>
-                            <div class="cht-loader-bounce"></div>
-                            <div class="cht-loader-bounce"></div>
+                            <div class="cht-loader-bounce warmblue-dot"></div>
+                            <div class="cht-loader-bounce warmblue-dot"></div>
+                            <div class="cht-loader-bounce warmblue-dot"></div>
                         </div>
                         <div class="cht-loader-text">Generating report, please wait...</div>
                         <span class="mt-3 text-base text-slate-500 text-center" style="font-family: Poppins, Arial, Helvetica, sans-serif; font-weight: 400;">Please wait while we process your report.<br>Do not close or refresh this page.</span>
@@ -1438,23 +1438,21 @@ $recordsPerPage = 5;
                                 setTimeout(() => {
                                     // Show completion checkmark and message for 1s before hiding loader
                                     loader.innerHTML = `
-                                <div class="cht-loader-bg">
-                                    <div class="cht-loader-complete">
-                                        <svg width="110" height="110" viewBox="0 0 110 110">
-                                            <defs>
-                                                <radialGradient id="warmBlueBg" cx="50%" cy="50%" r="50%">
-                                                    <stop offset="0%" stop-color="#e0e7ff"/>
-                                                    <stop offset="100%" stop-color="#60a5fa"/>
-                                                </radialGradient>
-                                                <linearGradient id="warmBlueStroke" x1="0" y1="0" x2="1" y2="1">
-                                                    <stop offset="0%" stop-color="#2563eb"/>
-                                                    <stop offset="100%" stop-color="#3b82f6"/>
-                                                </linearGradient>
-                                            </defs>
-                                            <circle cx="55" cy="55" r="50" fill="url(#warmBlueBg)" stroke="url(#warmBlueStroke)" stroke-width="8"/>
-                                            <polyline points="35,60 52,78 80,38" fill="none" stroke="#2563eb" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                        <div class="cht-loader-complete-text" style="color:#2563eb;font-size:1.5rem;font-weight:500;">Generation Completed!</div>
+                                <div class="cht-loader-bg" style="backdrop-filter: blur(2px);">
+                                    <div class="cht-loader-complete" style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;">
+                                        <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+                                            <div style="position:absolute;width:110px;height:110px;filter:blur(16px);background:linear-gradient(135deg,#6ee7b7 0%,#22d3ee 100%);opacity:0.5;"></div>
+                                            <svg width="110" height="110" viewBox="0 0 110 110" style="position:relative;z-index:1;">
+                                                <circle cx="55" cy="55" r="50" fill="#e6f9ed" stroke="#34d399" stroke-width="8"/>
+                                                <g>
+                                                    <circle cx="55" cy="55" r="32" fill="#34d399" opacity="0.18"/>
+                                                    <circle cx="55" cy="55" r="24" fill="#34d399"/>
+                                                    <path d="M48 56.5l6 6 12-14" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                                </g>
+                                            </svg>
+                                        </div>
+                                        <div class="cht-loader-complete-text" style="color:#059669;font-size:1.7rem;font-weight:700;text-shadow:0 2px 12px #bbf7d0;letter-spacing:0.01em;">Report Generation Complete</div>
+                                        <div style="color:#374151;font-size:1.1rem;font-weight:400;text-align:center;max-width:320px;">Your comprehensive health report is ready!<br>Click below to view, print, or export your report.</div>
                                     </div>
                                 </div>
                             `;
@@ -1493,12 +1491,19 @@ $recordsPerPage = 5;
                 .cht-loader-unique {
                     display: flex; gap: 0.7em; margin-bottom: 1.5rem;
                 }
-                .cht-loader-bounce {
-                    width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #60a5fa 40%, #2563eb 100%);
+                .cht-loader-bounce.warmblue-dot {
+                    width: 22px; height: 22px; border-radius: 50%;
+                    background: linear-gradient(135deg, #e0e7ff 0%, #60a5fa 60%, #2563eb 100%);
                     animation: cht-bounce 1.1s infinite cubic-bezier(.68,-0.55,.27,1.55);
                 }
-                .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #93c5fd 40%, #3b82f6 100%); }
-                .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #a5b4fc 40%, #6366f1 100%); }
+                .cht-loader-bounce.warmblue-dot:nth-child(2) {
+                    animation-delay: 0.2s;
+                    background: linear-gradient(135deg, #dbeafe 0%, #60a5fa 60%, #2563eb 100%);
+                }
+                .cht-loader-bounce.warmblue-dot:nth-child(3) {
+                    animation-delay: 0.4s;
+                    background: linear-gradient(135deg, #bfdbfe 0%, #60a5fa 60%, #2563eb 100%);
+                }
                 @keyframes cht-bounce {
                     0%, 80%, 100% { transform: translateY(0); }
                     40% { transform: translateY(-30px); }
@@ -1520,50 +1525,126 @@ $recordsPerPage = 5;
                     document.head.appendChild(loaderStyles);
                     function renderFullReport(data) {
                         let html = '';
-                        // Add custom CSS for report backgrounds
                         html += `<style>
-                            .report-modal-container { max-width: 700px; margin: 0 auto; font-family: 'Segoe UI', Arial, sans-serif; background: #fff; border: 2px solid #cbd5e1; border-radius: 1.2rem; padding: 2rem 2rem 1.5rem 2rem; }
-                            .report-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-                            .report-modal-header img { height: 55px; width: 55px; object-fit: contain; border-radius: 10px; background: #fff; border: 1px solid #cbd5e1; }
-                            .report-modal-govinfo { flex: 1; text-align: center; font-size: 1.05rem; color: #22223b; font-weight: 500; line-height: 1.3; }
-                            .report-modal-titlebar { text-align: center; margin-bottom: 1.2rem; }
-                            .report-modal-section { border: 1.5px solid #cbd5e1; border-radius: 0.7rem; background: #f9fafb; margin-bottom: 1.2rem; padding: 1.2rem 1.2rem; }
-                            .report-modal-section-title { font-size: 1.1rem; font-weight: 700; color: #22223b; margin-bottom: 0.7rem; }
-                            .report-modal-table { width: 100%; border-collapse: collapse; margin-bottom: 0.5rem; }
-                            .report-modal-table th, .report-modal-table td { border: 1px solid #cbd5e1; padding: 0.7em 1em; text-align: left; vertical-align: top; }
-                            .report-modal-table th { background: #f1f5f9; font-weight: 700; color: #1e293b; width: 220px; }
-                            .report-modal-table tr:not(:last-child) td { border-bottom: 1px solid #cbd5e1; }
-                            .report-modal-recommend { margin-top: 1.2rem; }
-                            .report-modal-footer { margin-top: 2rem; font-size: 0.98em; color: #64748b; text-align: right; }
+                        .cht-report-modal-container {
+                            max-width: 650px;
+                            margin: 0 auto;
+                            font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+                            background: #fff;
+                            /* border-radius removed */
+                            border: 1.5px solid #e5e7eb;
+                            box-shadow: 0 4px 24px rgba(30,41,59,0.10);
+                            padding: 2rem;
+                        }
+                        .cht-report-modal-header {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            margin-bottom: 0.5rem;
+                        }
+                        .cht-report-modal-header img {
+                            height: 60px;
+                            width: 60px;
+                            object-fit: contain;
+                            border-radius: 0;
+                            background: #fff;
+                            border: none;
+                        }
+                        .cht-report-modal-govinfo {
+                            flex: 1;
+                            text-align: center;
+                            font-size: 1.05rem;
+                            color: #22223b;
+                            font-weight: 500;
+                            line-height: 1.3;
+                        }
+                        .cht-report-modal-titlebar {
+                            text-align: center;
+                            margin-bottom: 1.2rem;
+                        }
+                        .cht-report-modal-titlebar .cht-office {
+                            font-size: 1.08rem;
+                            font-weight: 700;
+                            color: #22223b;
+                        }
+                        .cht-report-modal-titlebar .cht-report-title {
+                            font-size: 1.05rem;
+                            color: #22223b;
+                            font-weight: 600;
+                        }
+                        .cht-report-modal-section {
+                            border: 1.5px solid #e5e7eb;
+                            border-radius: 0.7rem;
+                            background: #f9fafb;
+                            margin-bottom: 1.2rem;
+                            padding: 1.5rem;
+                        }
+                        .cht-report-modal-section-title {
+                            font-size: 1.08rem;
+                            font-weight: 700;
+                            color: #22223b;
+                            margin-bottom: 0.7rem;
+                        }
+                        .cht-report-modal-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 0.5rem;
+                        }
+                        .cht-report-modal-table th, .cht-report-modal-table td {
+                            border: 1px solid #e5e7eb;
+                            padding: 1em 1.2em;
+                            text-align: left;
+                            vertical-align: top;
+                            font-size: 1rem;
+                        }
+                        .cht-report-modal-table th {
+                            background: #f1f5f9;
+                            font-weight: 600;
+                            color: #1e293b;
+                            width: 220px;
+                        }
+                        .cht-report-modal-table tr:not(:last-child) td {
+                            border-bottom: 1px solid #e5e7eb;
+                        }
+                        .cht-report-modal-recommend th {
+                            width: 180px;
+                        }
+                        .cht-report-modal-footer {
+                            margin-top: 2rem;
+                            font-size: 0.98em;
+                            color: #64748b;
+                            text-align: right;
+                        }
                         </style>`;
-                        html += `<div class="report-modal-container">
-                            <div class="report-modal-header">
-                                <img src="assets/images/Luz.jpg" alt="Barangay Luz Logo">
-                                <div class="report-modal-govinfo">
+                        html += `<div class="cht-report-modal-container">
+                            <div class="cht-report-modal-header">
+                                <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo">
+                                <div class="cht-report-modal-govinfo">
                                     Republic of the Philippines<br>
                                     City of Cebu, Philippines<br>
-                                    Barangay Luz, Cebu City<br>
+                                    Barangay Luz, Cebu City
                                 </div>
-                                <img src="assets/images/DOH.png" alt="City Health Logo">
+                                <img src="../asssets/images/DOH.webp" alt="City Health Logo">
                             </div>
-                            <div class="report-modal-titlebar">
-                                <div style="font-size:1.1rem;font-weight:700;color:#22223b;">OFFICE OF THE CITY HEALTH</div>
-                                <div style="font-size:1.05rem;color:#22223b;font-weight:600;">Comprehensive Health Report</div>
+                            <div class="cht-report-modal-titlebar">
+                                <div class="cht-office">OFFICE OF THE CITY HEALTH</div>
+                                <div class="cht-report-title">Comprehensive Health Report</div>
                             </div>
-                            <div class="report-modal-section">
-                                <div class="report-modal-section-title">Resident Demographics</div>
-                                <table class="report-modal-table">
+                            <div class="cht-report-modal-section">
+                                <div class="cht-report-modal-section-title">Resident Demographics</div>
+                                <table class="cht-report-modal-table">
                                     <tr><th>Total Registered Residents</th><td>${data.resident_demographics.total_registered}</td></tr>
                                     <tr><th>New Registrations This Period</th><td>${data.resident_demographics.new_registrations}</td></tr>
                                     <tr><th>Age Distribution</th><td>
-                                        Children (0–12): ${data.resident_demographics.age_distribution.children} | Adolescents (13–19): ${data.resident_demographics.age_distribution.adolescents} | Adults (20–59): ${data.resident_demographics.age_distribution.adults} | Seniors (60+): ${data.resident_demographics.age_distribution.seniors}
+                                        Children (0–12): ${data.resident_demographics.age_distribution.children} &nbsp; | &nbsp; Adults (20–59): ${data.resident_demographics.age_distribution.adults}<br>
+                                        Adolescents (13–19): ${data.resident_demographics.age_distribution.adolescents} &nbsp; | &nbsp; Seniors (60+): ${data.resident_demographics.age_distribution.seniors}
                                     </td></tr>
-                                    <tr><th>Sex Distribution</th><td>Male: ${data.resident_demographics.sex_distribution.Male} | Female: ${data.resident_demographics.sex_distribution.Female}</td></tr>
+                                    <tr><th>Sex Distribution</th><td>Male: ${data.resident_demographics.sex_distribution.Male} &nbsp; Female: ${data.resident_demographics.sex_distribution.Female}</td></tr>
                                 </table>
                             </div>
-                            <div class="report-modal-section">
-                                <div class="report-modal-section-title">Medical Information Summary</div>
-                                <table class="report-modal-table">
+                            <div class="cht-report-modal-section">
+                                <div class="cht-report-modal-section-title">Medical Information Summary</div>
+                                <table class="cht-report-modal-table">
                                     <tr><th>Common Conditions Recorded</th><td>
                                         Hypertension: ${data.medical_summary.common_conditions.hypertension}<br>
                                         Diabetes: ${data.medical_summary.common_conditions.diabetes}<br>
@@ -1571,21 +1652,21 @@ $recordsPerPage = 5;
                                         Other: ${Object.keys(data.medical_summary.common_conditions.other).map(k => k + ': ' + data.medical_summary.common_conditions.other[k]).join(' ')}
                                     </td></tr>
                                     <tr><th>Immunization Coverage</th><td>
-                                        Fully immunized children: ${data.medical_summary.fully_immunized_children}<br>
-                                        Vaccine Administered (by type): ${Object.keys(data.medical_summary.vaccines_administered).map(k => k + ': ' + data.medical_summary.vaccines_administered[k]).join(' ')}
+                                        Fully immunized Children: ${data.medical_summary.fully_immunized_children}<br>
+                                        Vaccines Administered (by type): ${Object.keys(data.medical_summary.vaccines_administered).map(k => k + ': ' + data.medical_summary.vaccines_administered[k]).join(' ')}
                                     </td></tr>
                                 </table>
                             </div>
-                            <div class="report-modal-section">
-                                <div class="report-modal-section-title">Administrative Data</div>
-                                <table class="report-modal-table">
+                            <div class="cht-report-modal-section">
+                                <div class="cht-report-modal-section-title">Administrative Data</div>
+                                <table class="cht-report-modal-table">
                                     <tr><th>Average Patients per Doctor</th><td>${data.admin.avg_patients_per_doctor}</td></tr>
                                     <tr><th>Average Patients per Nurse</th><td>${data.admin.avg_patients_per_nurse}</td></tr>
                                 </table>
                             </div>
-                            <div class="report-modal-section report-modal-recommend">
-                                <table class="report-modal-table">
-                                    <tr><th>Recommendations</th><td>${data.recommendations}</td></tr>
+                            <div class="cht-report-modal-section cht-report-modal-recommend">
+                                <table class="cht-report-modal-table">
+                                    <tr><th>Recommendation</th><td>${data.recommendations}</td></tr>
                                     <tr><th>Prepared by</th><td>${data.prepared_by}</td></tr>
                                     <tr><th>Date</th><td>${data.date}</td></tr>
                                 </table>
@@ -1761,6 +1842,16 @@ $recordsPerPage = 5;
                             Announcement Response
                         </h3>
                         <div class="chart-wrapper" id="announcementResponseWrapper">
+                            <div class="flex flex-wrap gap-4 mb-4 items-center">
+                                <label class="font-medium text-gray-600">View by:</label>
+                                <select id="announcementTimeFilter" class="border rounded px-3 py-2 focus:ring-2 focus:ring-blue-400">
+                                    <option value="day">Day</option>
+                                    <option value="month">Month</option>
+                                    <option value="year">Year</option>
+                                </select>
+                                <input type="date" id="announcementDateInput" class="border rounded px-3 py-2 focus:ring-2 focus:ring-blue-400" />
+                                <button id="announcementFilterBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Apply</button>
+                            </div>
                             <div id="announcementResponseLoader" class="flex justify-center items-center h-48">
                                 <span class="text-gray-500">Loading announcement responses...</span>
                             </div>
@@ -2028,7 +2119,7 @@ $recordsPerPage = 5;
                                         <td class="py-3 px-4 border-b border-gray-200 text-center">
                                             <button
                                                 onclick="openResidentDetailsModal(<?= htmlspecialchars(json_encode($user)) ?>)"
-                                                class="px-6 py-4 inline-flex bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-base">
+                                                class="px-7 py-3 inline-flex bg-blue-600 text-white rounded-full hover:bg-blue-700 transition font-medium text-base">
                                                 <svg class="w-6 h-6 mr-1" viewBox="0 0 24 24" fill="none"
                                                     xmlns="http://www.w3.org/2000/svg">
                                                     <path
@@ -2057,12 +2148,12 @@ $recordsPerPage = 5;
                                     $prevUrl .= "&sort=" . urlencode($sortOrder);
                                 ?>
                                 <a href="<?= $prevUrl ?>"
-                                    class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600">
+                                    class="pagination-button" style="margin: 0 4px;">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             <?php else: ?>
                                 <span
-                                    class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600">
+                                    class="pagination-button disabled" style="margin: 0 4px;">
                                     <i class="fas fa-chevron-left"></i>
                                 </span>
                             <?php endif; ?>
@@ -2077,11 +2168,9 @@ $recordsPerPage = 5;
                                     $pageUrl .= "&sort=" . urlencode($sortOrder);
                                 ?>
                                 <?php if ($i == $currentPage): ?>
-                                    <span class="mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
-                                            bg-blue-500 text-white border-blue-500 active"><?= $i ?></span>
+                                    <span class="pagination-button active" style="font-size: 1.1rem; margin: 0 2px;"><?= $i ?></span>
                                 <?php else: ?>
-                                    <a href="<?= $pageUrl ?>" class="mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
-                                            bg-white text-blue-500 border-blue-500"><?= $i ?></a>
+                                    <a href="<?= $pageUrl ?>" class="pagination-button" style="font-size: 1.1rem; margin: 0 2px;"><?= $i ?></a>
                                 <?php endif; ?>
                             <?php endfor; ?>
 
@@ -2095,12 +2184,12 @@ $recordsPerPage = 5;
                                     $nextUrl .= "&sort=" . urlencode($sortOrder);
                                 ?>
                                 <a href="<?= $nextUrl ?>"
-                                    class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600">
+                                    class="pagination-button" style="margin: 0 4px;">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             <?php else: ?>
                                 <span
-                                    class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600">
+                                    class="pagination-button disabled" style="margin: 0 4px;">
                                     <i class="fas fa-chevron-right"></i>
                                 </span>
                             <?php endif; ?>
@@ -2930,12 +3019,19 @@ $recordsPerPage = 5;
         .cht-loader-vertical {
             /* No longer used for horizontal layout */
         }
-        .cht-loader-bounce {
-            width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #2563eb 60%, #38bdf8 100%);
+        .cht-loader-bounce.warmblue-dot {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: linear-gradient(135deg, #e0e7ff 0%, #60a5fa 60%, #2563eb 100%);
             animation: cht-bounce 1.1s infinite cubic-bezier(.68,-0.55,.27,1.55);
         }
-        .cht-loader-bounce:nth-child(2) { animation-delay: 0.2s; background: linear-gradient(135deg, #22c55e 60%, #bef264 100%); }
-        .cht-loader-bounce:nth-child(3) { animation-delay: 0.4s; background: linear-gradient(135deg, #f59e42 60%, #fbbf24 100%); }
+        .cht-loader-bounce.warmblue-dot:nth-child(2) {
+            animation-delay: 0.2s;
+            background: linear-gradient(135deg, #dbeafe 0%, #60a5fa 60%, #2563eb 100%);
+        }
+        .cht-loader-bounce.warmblue-dot:nth-child(3) {
+            animation-delay: 0.4s;
+            background: linear-gradient(135deg, #bfdbfe 0%, #60a5fa 60%, #2563eb 100%);
+        }
         @keyframes cht-bounce {
             0%, 80%, 100% { transform: translateY(0); }
             40% { transform: translateY(-30px); }
@@ -3070,47 +3166,79 @@ $recordsPerPage = 5;
             // Announcement Response (Table)
             fetchAnnouncementResponses();
 
-            function fetchAnnouncementResponses() {
+            function fetchAnnouncementResponses(filter = {}) {
                 const loader = document.getElementById('announcementResponseLoader');
                 const tableDiv = document.getElementById('announcementResponseTable');
                 loader.style.display = '';
                 tableDiv.style.display = 'none';
-                fetch('/community-health-tracker/api/announcements.php?all_responses=1')
+                // Build query params
+                let params = ['all_responses=1'];
+                if (filter.time) params.push('time=' + encodeURIComponent(filter.time));
+                if (filter.date) params.push('date=' + encodeURIComponent(filter.date));
+                fetch('/community-health-tracker/api/announcements.php?' + params.join('&'))
                     .then(res => res.json())
                     .then(data => {
+                        console.log('Announcement API response:', data);
                         loader.style.display = 'none';
                         tableDiv.style.display = '';
                         if (!data.announcements || !data.announcements.length) {
                             tableDiv.innerHTML = '<div class="text-gray-500">No announcement response data available.</div>';
                             return;
                         }
-                        let html = `<table class='min-w-full divide-y divide-gray-200'><thead><tr>` +
-                            `<th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>Title</th>` +
-                            `<th class='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase'>Audience</th>` +
-                            `<th class='px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase'>Accepted</th>` +
-                            `<th class='px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase'>Dismissed</th>` +
-                            `<th class='px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase'>Total Responded</th>` +
-                            `<th class='px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase'>Date</th>` +
-                            `</tr></thead><tbody>`;
+                        // Summarize counts by category and response type
+                        let summary = {
+                            'Landing Page': {accepted: 0, dismissed: 0, total: 0, count: 0},
+                            'All Users': {accepted: 0, dismissed: 0, total: 0, count: 0},
+                            'Specific Users': {accepted: 0, dismissed: 0, total: 0, count: 0}
+                        };
                         data.announcements.forEach(a => {
-                            html += `<tr class='bg-white hover:bg-blue-50'>` +
-                                `<td class='px-4 py-2'>${a.title}</td>` +
-                                `<td class='px-4 py-2'>${a.audience_type === 'all' ? 'All Users' : 'Specific User'}</td>` +
-                                `<td class='px-4 py-2 text-center'>${a.response_counts.accepted}</td>` +
-                                `<td class='px-4 py-2 text-center'>${a.response_counts.dismissed}</td>` +
-                                `<td class='px-4 py-2 text-center'>${a.response_counts.total}</td>` +
-                                `<td class='px-4 py-2 text-center'>${a.post_date ? new Date(a.post_date).toLocaleDateString() : ''}</td>` +
-                                `</tr>`;
+                            let cat = a.audience_type === 'landing_page' ? 'Landing Page' :
+                                (a.audience_type === 'public' ? 'All Users' : 'Specific Users');
+                            summary[cat].accepted += a.response_counts.accepted;
+                            summary[cat].dismissed += a.response_counts.dismissed;
+                            summary[cat].total += a.response_counts.total;
+                            summary[cat].count++;
                         });
-                        html += '</tbody></table>';
+                        let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-6">';
+                        Object.keys(summary).forEach(cat => {
+                            html += `<div class='bg-white rounded shadow p-4'>` +
+                                `<h4 class='font-semibold text-blue-700 mb-2 text-lg'>${cat}</h4>` +
+                                `<div class='mb-2 text-gray-700'>Total Announcements: <span class='font-bold'>${summary[cat].count}</span></div>` +
+                                `<div class='mb-2 text-green-700'>Accepted: <span class='font-bold'>${summary[cat].accepted}</span></div>` +
+                                `<div class='mb-2 text-red-700'>Dismissed: <span class='font-bold'>${summary[cat].dismissed}</span></div>` +
+                                `<div class='mb-2 text-gray-700'>Total Responses: <span class='font-bold'>${summary[cat].total}</span></div>` +
+                                `</div>`;
+                        });
+                        html += '</div>';
                         tableDiv.innerHTML = html;
                     })
-                    .catch(() => {
+                    .catch((err) => {
+                        console.error('Announcement API fetch error:', err);
                         loader.style.display = 'none';
                         tableDiv.style.display = '';
                         tableDiv.innerHTML = '<div class="text-red-500">Failed to load announcement response data.</div>';
                     });
             }
+
+            // Filter controls event listeners
+            document.addEventListener('DOMContentLoaded', function() {
+                const filterBtn = document.getElementById('announcementFilterBtn');
+                const timeFilter = document.getElementById('announcementTimeFilter');
+                const dateInput = document.getElementById('announcementDateInput');
+                // Set default date to today
+                dateInput.valueAsDate = new Date();
+                filterBtn.addEventListener('click', function() {
+                    fetchAnnouncementResponses({
+                        time: timeFilter.value,
+                        date: dateInput.value
+                    });
+                });
+                // Initial load
+                fetchAnnouncementResponses({
+                    time: timeFilter.value,
+                    date: dateInput.value
+                });
+            });
             // 3. Gender Distribution (Donut)
             try {
                 const genderDistributionCtx = genderDistributionCanvas.getContext('2d');
@@ -3300,7 +3428,8 @@ $recordsPerPage = 5;
                     let filteredLogs = filterLogsByDate(logs);
                     const start = (page - 1) * logsPerPage;
                     const end = start + logsPerPage;
-                    let html = `<div class='overflow-x-auto mb-6'>
+                    let html = `<h3 class='text-xl font-bold text-gray-700 mb-4'>Generated Report Logs</h3>
+                        <div class='overflow-x-auto mb-6'>
                                     <table class='min-w-full text-sm text-left'>
                                         <thead>
                                             <th class='py-3 text-lg font-semibold text-gray-600 border-b'>Date & Time</th>
@@ -3311,14 +3440,16 @@ $recordsPerPage = 5;
                     for (const log of filteredLogs.slice(start, end)) {
                         html += `<tr>
                                     <td class='py-3 border-b font-normal text-gray-600 text-base whitespace-nowrap'>${log.created_at ? new Date(log.created_at).toLocaleString() : ''}</td>
-                                    <td class='py-3 border-b font-semibold text-base'>${log.full_name || ''}</td>
+                                    <td class='py-3 border-b'>
+                                        <span class="inline-block rounded-full" style="background:rgba(34,197,94,0.15); color:#15803d; backdrop-filter: blur(2px); padding: 0.5rem 1.25rem; font-weight:600; font-size:1rem;">${log.full_name || ''}</span>
+                                    </td>
                                     <td class="py-3 border-b">
                                         ${log.export_type === 'bulk_patient_records' ? (log.action_type === 'export_bulk_pdf' ? `
-                                        <span class="px-6 py-1 text-base font-semibold rounded-md bg-red-200 text-red-600">
+                                        <span class="px-4 py-1 text-lg font-bold rounded-full text-red-600 inline-block" style="min-width:60px;text-align:center;">
                                             PDF
                                         </span>`
                                 :
-                                `<span class="px-6 py-1 text-base font-semibold rounded-md bg-green-200 text-green-600">
+                                `<span class="px-4 py-1 text-lg font-bold rounded-full bg-green-200 text-green-600 inline-block" style="min-width:60px;text-align:center;">
                                             Excel
                                         </span>`
                             ) : (log.export_type || log.action_type)
@@ -3330,35 +3461,32 @@ $recordsPerPage = 5;
                     // Pagination controls
                     const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
                     if (totalPages > 1) {
-                        html += `<div class='flex items-center justify-center mt-2 gap-2'>`;
+                        html += `<div class='flex items-center justify-center mt-2 gap-1'>`;
 
                         // Previous button
                         html += `<button 
-                                                class='mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600'
-                                                onclick='window._renderReportLogsPage(${page - 1})'
-                                                ${page === 1 ? 'disabled' : ''}>
-                                                <i class="fas fa-chevron-left text-lg"></i>
-                                            </button>`;
+                            class='pagination-btn mx-1 w-8 h-8 flex items-center justify-center rounded-full border border-blue-500 bg-white text-blue-500 hover:bg-blue-100 transition ${page === 1 ? "opacity-50 cursor-not-allowed" : ""}'
+                            onclick='window._renderReportLogsPage(${page - 1})'
+                            ${page === 1 ? 'disabled' : ''}>
+                            <i class="fas fa-chevron-left text-base"></i>
+                        </button>`;
 
                         for (let i = 1; i <= totalPages; i++) {
                             html += `
-                                        <button 
-                                            class='mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
-                                            ${i === page
-                                    ? 'bg-blue-500 text-white border-blue-500'
-                                    : 'bg-white text-blue-500 border-blue-500'}'
-                                            onclick='window._renderReportLogsPage(${i})'>
-                                            ${i}
-                                        </button>`;
+                                <button 
+                                    class='pagination-btn mx-0.5 w-8 h-8 flex items-center justify-center rounded-full border border-blue-500 text-sm font-semibold transition ${i === page ? "bg-blue-500 text-white" : "bg-white text-blue-500 hover:bg-blue-100"}'
+                                    onclick='window._renderReportLogsPage(${i})'>
+                                    ${i}
+                                </button>`;
                         }
 
                         // Next button
                         html += `<button 
-                                            class='mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full border-blue-500 bg-blue-500 text-white hover:bg-blue-600' 
-                                            onclick='window._renderReportLogsPage(${page + 1})'
-                                            ${page === totalPages ? 'disabled' : ''}>
-                                            <i class="fas fa-chevron-right text-lg"></i>
-                                        </button>`;
+                            class='pagination-btn mx-1 w-8 h-8 flex items-center justify-center rounded-full border border-blue-500 bg-white text-blue-500 hover:bg-blue-100 transition ${page === totalPages ? "opacity-50 cursor-not-allowed" : ""}'
+                            onclick='window._renderReportLogsPage(${page + 1})'
+                            ${page === totalPages ? 'disabled' : ''}>
+                            <i class="fas fa-chevron-right text-base"></i>
+                        </button>`;
 
                         html += `</div>`;
                     }

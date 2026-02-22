@@ -1915,20 +1915,20 @@ if (!empty($searchTerm)) {
             background-color: rgba(95, 48, 163, 0.2);
             color: #5F30A3;
             display: inline-block;
-            padding: 0.4rem 0.5rem;
-            border-radius: 0.25rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 9999px; /* fully rounded */
             font-size: 1rem;
-            font-weight: 400;
+            font-weight: 500;
         }
 
         .regular-badge {
             background-color: rgba(1, 199, 143, 0.2);
             color: #00A978;
             display: inline-block;
-            padding: 0.4rem 0.5rem;
-            border-radius: 0.25rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 9999px; /* fully rounded */
             font-size: 1rem;
-            font-weight: 400;
+            font-weight: 500;
         }
 
         .btn-export {
@@ -1986,12 +1986,15 @@ if (!empty($searchTerm)) {
 
         .btn-view {
             background-color: #3498db;
-            color: #ffffffff;
+            color: #fff;
             transition: all 0.3s ease;
             font-weight: 500;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            border-radius: 9999px;
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
         }
 
         .btn-view:hover {
@@ -2003,15 +2006,15 @@ if (!empty($searchTerm)) {
 
         .btn-archive {
             background-color: #e74c3c;
-            color: white;
-            /* border-radius: 30px; */
-            /* padding: 10px 20px; */
+            color: #fff;
             transition: all 0.3s ease;
             font-weight: 500;
-            /* min-height: 45px; */
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            border-radius: 9999px;
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
         }
 
         .btn-archive:hover {
@@ -3508,7 +3511,8 @@ if (!empty($searchTerm)) {
                                             </button>
                                         <?php else: ?>
                                             <a href="existing_info_patients.php<?= $manualSelectMode ? '?manual_select=true&tab=patients-tab' : '?tab=patients-tab' ?>"
-                                                class="btn-gray inline-flex items-center px-6 rounded-r-lg rounded-l-none">
+                                                class="btn-gray inline-flex items-center px-6 rounded-none"
+style="border-radius: 4px;">
                                                 <i class="fas fa-times mr-2"></i> Clear
                                             </a>
                                         <?php endif; ?>
@@ -3579,7 +3583,7 @@ if (!empty($searchTerm)) {
                                                     background-repeat: no-repeat;
                                                     background-position: right 2rem center;
                                                     background-size: 1.5rem 1.5rem;
-                                                    padding-right: 4.5rem;
+                                                    padding-right: 3.5rem; /* Reduced to ensure text is visible and not hidden by icon */
                                                 }
 
                                                 select.custom-select-filter::-ms-expand {
@@ -3973,7 +3977,7 @@ if (!empty($searchTerm)) {
                                                     </td>
                                                     <td>
                                                         <button onclick="openViewModal(<?= $patient['id'] ?>)"
-                                                            class="btn-view py-1.5 px-6 rounded-md inline-flex items-center mr-2">
+                                                                class="btn-view mr-2">
                                                             <svg class="w-8 h-8 mr-1" viewBox="0 0 24 24" stroke-width="2"
                                                                 xmlns="http://www.w3.org/2000/svg">
                                                                 <path
@@ -3983,7 +3987,7 @@ if (!empty($searchTerm)) {
                                                             View
                                                         </button>
                                                         <a href="?delete_patient=<?= $patient['id'] ?>"
-                                                            class="btn-archive py-1.5 rounded-md px-6 inline-flex items-center"
+                                                            class="btn-archive"
                                                             onclick="return confirm('Are you sure you want to archive this patient record?')">
                                                             <svg class="w-8 h-8 mr-1" viewBox="0 0 24 24" fill="none"
                                                                 xmlns="http://www.w3.org/2000/svg">
@@ -4043,7 +4047,7 @@ if (!empty($searchTerm)) {
 
                                         <!-- Previous Button -->
                                         <a href="?tab=patients-tab&page=<?= $currentPage - 1 ?><?= $queryString ?>"
-                                            class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+                                            class="pagination-btn<?= ($currentPage <= 1 ? ' disabled' : '') ?>" style="margin: 0 4px;">
                                             <i class="fas fa-chevron-left"></i>
                                         </a>
 
@@ -4051,19 +4055,17 @@ if (!empty($searchTerm)) {
                                         <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                                             <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
                                                 <a href="?tab=patients-tab&page=<?= $i ?><?= $queryString ?>"
-                                                    class="mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
-                                            bg-blue-500 text-white border-blue-500 active <?= $i == $currentPage ? 'active' : '' ?>">
+                                                    class="pagination-btn<?= ($i == $currentPage ? ' active' : '') ?>" style="font-size: 1.1rem;">
                                                     <?= $i ?>
                                                 </a>
                                             <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
-                                                <span class="mx-1 w-14 h-14 py-3 flex text-2xl items-center justify-center rounded-full border transition
-                                            bg-white text-blue-500 border-blue-500 disabled">...</span>
+                                                <span class="pagination-btn disabled" style="pointer-events: none;">...</span>
                                             <?php endif; ?>
                                         <?php endfor; ?>
 
                                         <!-- Next Button -->
                                         <a href="?tab=patients-tab&page=<?= $currentPage + 1 ?><?= $queryString ?>"
-                                            class="mx-2 w-14 h-14 py-3 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-600 <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+                                            class="pagination-btn<?= ($currentPage >= $totalPages ? ' disabled' : '') ?>" style="margin: 0 4px;">
                                             <i class="fas fa-chevron-right"></i>
                                         </a>
                                     </div>
@@ -4094,7 +4096,7 @@ if (!empty($searchTerm)) {
 
     <div id="viewModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal"
         style="display:none;">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
+        <div class="bg-white rounded-[6px] shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
             <!-- Header -->
             <div class="sticky top-0 z-20 bg-[#2563EB] px-10 py-6 flex items-center">
                 <h3 class="text-xl font-medium flex gap-3 text-center w-full items-center text-white">
@@ -4163,7 +4165,7 @@ if (!empty($searchTerm)) {
     <!-- Global Success Modal -->
     <div id="successModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100]"
         style="display:none; opacity:0; transition:opacity 0.3s;">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+        <div class="bg-white rounded-[6px] shadow-2xl max-w-md w-full p-8 text-center">
             <div class='mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4'><i
                     class='fas fa-check text-green-600 text-2xl'></i></div>
             <h3 class='text-xl font-semibold mb-2 text-green-700'>Success</h3>
@@ -4174,7 +4176,7 @@ if (!empty($searchTerm)) {
     </div>
     <div id="presentPregnantModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal"
         style="display:none;">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
+        <div class="bg-white rounded-[6px] shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
             <!-- Header -->
             <div class="sticky top-0 z-20 bg-[#2563EB] px-10 py-6 flex items-center">
                 <h3 class="text-xl font-medium flex gap-3 text-center w-full items-center text-white">
@@ -4444,14 +4446,11 @@ if (!empty($searchTerm)) {
         </div>
     </div>
 
-    <!-- Export Modal (Warm Blue & White) -->
-    <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal"
-        style="display: none;">
-        <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-[#D4E3F7]">
+    <!-- Export Modal (Warm Blue & White, Improved UX) -->
+    <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" style="display: none;">
+        <div class="bg-white rounded-[6px] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Sticky Header - Warm Blue -->
-            <div
-                class="sticky top-0 z-20 bg-gradient-to-r from-[#4A90E2] to-[#357ABD] px-10 py-8 flex items-center justify-between">
+            <div class="sticky top-0 z-20 bg-[#4A90E2] px-10 py-8 flex items-center justify-between">
                 <h3 class="text-2xl font-bold flex items-center text-white gap-3">
                     <i class="fas fa-download"></i>
                     <span>Export Patient Records</span>
@@ -4460,7 +4459,6 @@ if (!empty($searchTerm)) {
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-
             <!-- Scrollable Content - White -->
             <div class="px-8 bg-white flex-1 overflow-y-auto py-8">
                 <!-- Export All Records Section -->
@@ -4469,82 +4467,64 @@ if (!empty($searchTerm)) {
                         <i class="fas fa-layer-group"></i>
                         Export All Patient Records
                     </h4>
-                    <p class="text-[#666666] text-sm mb-6">Download all accessible patient records in your preferred
-                        format.</p>
-
+                    <p class="text-[#666666] text-sm mb-6">Download all accessible patient records in your preferred format.</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Excel Export Button -->
+                        <!-- Excel Export Button (Green) -->
                         <button onclick="exportAllRecords('excel')"
-                            class="p-5 rounded-xl border-2 border-[#E8F0FE] bg-white hover:bg-[#F8FBFF] hover:border-[#4A90E2] transition-all group cursor-pointer shadow-sm hover:shadow-md">
-                            <div class="flex items-center gap-4">
-                                <div
-                                    class="w-14 h-14 rounded-lg bg-[#E8F0FE] flex items-center justify-center group-hover:bg-[#D4E3F7] transition">
-                                    <i class="fas fa-file-excel text-2xl text-[#4A90E2]"></i>
-                                </div>
-                                <div class="text-left">
-                                    <h5 class="font-bold text-[#2E5C8A]">Excel Format</h5>
-                                    <p class="text-xs text-[#888888]">.xlsx - Ready for analysis</p>
-                                </div>
+                            class="p-5 rounded-xl bg-white shadow-lg border border-[#E8F0FE] transition-all group cursor-pointer flex items-center gap-4 font-medium">
+                            <div class="w-14 h-14 rounded-lg bg-white border border-[#2ecc71] shadow-md flex items-center justify-center text-[#2ecc71]">
+                                <i class="fas fa-file-excel text-2xl text-white"></i>
+                            </div>
+                            <div class="text-left">
+                                <h5 class="font-bold text-green-700 text-lg">Export as Excel</h5>
+                                <p class="text-xs text-[#888888]">.xlsx - Ready for analysis</p>
                             </div>
                         </button>
-
-                        <!-- PDF Export Button -->
+                        <!-- PDF Export Button (Red) -->
                         <button onclick="exportAllRecords('pdf')"
-                            class="p-5 rounded-xl border-2 border-[#E8F0FE] bg-white hover:bg-[#F8FBFF] hover:border-[#4A90E2] transition-all group cursor-pointer shadow-sm hover:shadow-md">
-                            <div class="flex items-center gap-4">
-                                <div
-                                    class="w-14 h-14 rounded-lg bg-[#E8F0FE] flex items-center justify-center group-hover:bg-[#D4E3F7] transition">
-                                    <i class="fas fa-file-pdf text-2xl text-[#4A90E2]"></i>
-                                </div>
-                                <div class="text-left">
-                                    <h5 class="font-bold text-[#2E5C8A]">PDF Format</h5>
-                                    <p class="text-xs text-[#888888]">.pdf - Professional report</p>
-                                </div>
+                            class="p-5 rounded-xl shadow-lg bg-[#E8F0FE] hover:bg-[#D4E3F7] transition-all group cursor-pointer flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-lg bg-white border border-[#C0392B] shadow-md flex items-center justify-center text-[#C0392B]">
+                                <i class="fas fa-file-pdf text-2xl text-white"></i>
+                            </div>
+                            <div class="text-left">
+                                <h5 class="font-bold text-red-700 text-lg">Export as PDF</h5>
+                                <p class="text-xs text-[#888888]">.pdf - Professional report</p>
                             </div>
                         </button>
                     </div>
                 </div>
-
-                <div class="border-t border-[#E8F0FE] my-8"></div>
-
+                <div class="my-8"></div>
                 <!-- Manual Selection Section -->
                 <div>
                     <h4 class="text-lg font-bold text-[#2E5C8A] mb-4 flex items-center gap-2">
                         <i class="fas fa-hand-pointer"></i>
                         Select Specific Patients
                     </h4>
-                    <p class="text-[#666666] text-sm mb-6">Choose individual patients to export. Ideal for targeted
-                        reports and focused data sharing.</p>
-
+                    <p class="text-[#666666] text-sm mb-6">Choose individual patients to export. Ideal for targeted reports and focused data sharing.</p>
                     <button onclick="openManualSelectionModal()"
-                        class="w-full p-6 rounded-xl border-2 border-[#D4E3F7] bg-[#F8FBFF] hover:bg-[#E8F0FE] hover:border-[#4A90E2] transition-all group cursor-pointer shadow-sm hover:shadow-md">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <i class="fas fa-users text-3xl text-[#4A90E2]"></i>
-                                <div class="text-left">
-                                    <h5 class="font-bold text-[#2E5C8A]">Choose Specific Patients</h5>
-                                    <p class="text-sm text-[#666666]">Select individual records for export</p>
-                                </div>
+                        class="w-full p-6 rounded-xl shadow-lg bg-[#F8FBFF] hover:bg-[#E8F0FE] transition-all group cursor-pointer flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-users text-3xl text-[#4A90E2]"></i>
+                            <div class="text-left">
+                                <h5 class="font-bold text-[#2E5C8A]">Choose Specific Patients</h5>
+                                <p class="text-sm text-[#666666]">Select individual records for export</p>
                             </div>
-                            <i class="fas fa-chevron-right text-[#4A90E2] text-xl"></i>
                         </div>
+                        <i class="fas fa-chevron-right text-[#4A90E2] text-xl"></i>
                     </button>
                 </div>
-
                 <!-- Info Box -->
-                <div class="mt-8 p-5 bg-[#F8FBFF] border-l-4 border-[#4A90E2] rounded-lg">
+                <div class="mt-8 p-5 bg-[#F8FBFF] shadow-lg rounded-lg">
                     <p class="text-sm text-[#2E5C8A]">
                         <i class="fas fa-lightbulb mr-2"></i>
-                        <strong>Tip:</strong> All exports include complete medical information. Use manual selection to
-                        reduce file size or share specific patient records.
+                        <strong>Tip:</strong> All exports include complete medical information. Use manual selection to reduce file size or share specific patient records.
                     </p>
                 </div>
             </div>
-
             <!-- Sticky Footer -->
-            <div class="bg-white border-t border-[#E8F0FE] px-8 py-4 sticky bottom-0 flex justify-end gap-3">
+            <div class="bg-white px-8 py-4 sticky bottom-0 flex justify-end gap-3 shadow-lg">
                 <button type="button" onclick="closeExportModal()"
-                    class="px-6 py-3 rounded-lg border-2 border-[#D4E3F7] text-[#2E5C8A] hover:bg-[#F8FBFF] transition font-medium">
+                    class="px-6 py-3 rounded-lg bg-[#4A90E2] text-white hover:bg-[#357ABD] transition font-medium">
                     <i class="fas fa-times mr-2"></i>Cancel
                 </button>
             </div>
@@ -4555,17 +4535,14 @@ if (!empty($searchTerm)) {
     <div id="manualSelectionModal"
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal"
         style="display: none;">
-        <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col border border-[#D4E3F7]">
+        <div class="bg-white rounded-[6px] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Sticky Header - Warm Blue -->
-            <div
-                class="sticky top-0 z-20 bg-gradient-to-r from-[#4A90E2] to-[#357ABD] px-10 py-8 flex items-center justify-between">
+            <div class="sticky top-0 z-20 bg-gradient-to-r from-[#4A90E2] to-[#357ABD] px-10 py-8 flex items-center justify-between">
                 <h3 class="text-2xl font-bold flex items-center text-white gap-3">
                     <i class="fas fa-check-square"></i>
-                    <span>Select Patients to Export</span>
+                    <span>Choose Specific Patients</span>
                 </h3>
-                <button onclick="closeManualSelectionModal()"
-                    class="text-white hover:text-gray-200 text-2xl transition">
+                <button onclick="closeManualSelectionModal()" class="text-white hover:text-gray-200 text-2xl transition">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -4574,10 +4551,10 @@ if (!empty($searchTerm)) {
             <div class="px-10 bg-white flex-1 overflow-y-auto py-8">
                 <form id="manualExportForm" method="POST" action="">
                     <!-- Selection Controls -->
-                    <div class="bg-[#F8FBFF] border-2 border-[#D4E3F7] rounded-xl p-6 mb-6">
+                    <div class="bg-[#E8F0FE] rounded-xl p-6 mb-6 shadow-md">
                         <div class="flex items-center justify-between flex-wrap gap-4">
                             <div>
-                                <h4 class="font-bold text-[#2E5C8A] text-lg flex items-center gap-2">
+                                <h4 class="font-bold text-[#357ABD] text-lg flex items-center gap-2">
                                     <i class="fas fa-list-check"></i>
                                     Patient Selection
                                 </h4>
@@ -4588,12 +4565,11 @@ if (!empty($searchTerm)) {
                                 </p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <label
-                                    class="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg hover:bg-[#E8F0FE] transition">
+                                <label class="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg hover:bg-[#D4E3F7] transition">
                                     <input type="checkbox" id="selectAllPatients"
                                         class="patient-checkbox select-all-checkbox w-5 h-5 accent-[#4A90E2]"
                                         onchange="toggleAllPatients(this)">
-                                    <span class="font-medium text-[#2E5C8A]">Select All</span>
+                                    <span class="font-medium text-[#357ABD]">Select All</span>
                                 </label>
                             </div>
                         </div>
@@ -5135,7 +5111,7 @@ if (!empty($searchTerm)) {
 
                     <div class="flex gap-3">
                         <button type="button" onclick="clearAddPatientForm()"
-                            class="flex px-6 py-4 text-center items-center gap-3 rounded-full border border-[#2563EB] text-[#2563EB] hover:bg-gray-200 font-medium">
+                            class="flex px-6 py-4 text-center items-center gap-3 rounded-[4px] border border-[#2563EB] text-[#2563EB] hover:bg-gray-200 font-medium">
                             <svg width="15" height="15" viewBox="0 0 15 15" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path
