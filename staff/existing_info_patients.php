@@ -1563,6 +1563,9 @@ $searchBy = isset($_GET['search_by']) ? trim($_GET['search_by']) : 'name';
 
 // Get patient type filter
 $patientTypeFilter = isset($_GET['patient_type']) ? strtolower(trim($_GET['patient_type'])) : 'all';
+if (!in_array($patientTypeFilter, ['all', 'registered', 'regular'])) {
+    $patientTypeFilter = 'all';
+}
 
 // Check if manual selection mode is active
 $manualSelectMode = isset($_GET['manual_select']) && $_GET['manual_select'] == 'true';
@@ -1691,8 +1694,11 @@ try {
 
     // Filter by specific date if provided
     if (!empty($_GET['filter_date'])) {
-        $selectQuery .= " AND DATE(p.created_at) = ?";
-        $selectParams[] = $_GET['filter_date'];
+        $filterDate = $_GET['filter_date'];
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $filterDate)) {
+            $selectQuery .= " AND DATE(p.created_at) = ?";
+            $selectParams[] = $filterDate;
+        }
     }
 
     // Determine sort order from filter
@@ -3956,7 +3962,14 @@ if (!empty($searchTerm)) {
                                                         <td><?= !empty($patient['occupation']) ? htmlspecialchars($patient['occupation']) : (!empty($patient['user_occupation']) ? htmlspecialchars($patient['user_occupation']) : 'N/A') ?>
                                                         </td>
                                                     <?php endif; ?>
-                                                    <td><?= $patient['patient_type'] === 'Registered Patient' ? '<span class="user-badge">Account Access</span>' : '<span class="regular-badge">Regular Patient</span>' ?>
+                                                    <td>
+                                                        <?php if ($patient['patient_type'] === 'Registered Patient'): ?>
+                                                            <span class="user-badge">Account Access</span>
+                                                        <?php elseif ($patient['patient_type'] === 'Regular Patient'): ?>
+                                                            <span class="regular-badge">Regular Patient</span>
+                                                        <?php else: ?>
+                                                            <span class="regular-badge">Regular Patient</span>
+                                                        <?php endif; ?>
                                                     </td>
                                                     <td>
                                                         <button onclick="openViewModal(<?= $patient['id'] ?>)"
@@ -4583,6 +4596,10 @@ if (!empty($searchTerm)) {
                                     <span class="font-medium text-[#2E5C8A]">Select All</span>
                                 </label>
                             </div>
+                        </div>
+                        <!-- Searchbar for patient selection -->
+                        <div class="mt-4 flex items-center gap-3">
+                            <input type="text" id="patientSearchInput" onkeyup="filterPatientSelectionList()" placeholder="Search patient name..." class="search-input w-full py-3 px-6 text-base font-normal rounded-md focus:outline-none border border-[#3C96E1] focus:ring-2 focus:ring-blue-400 focus:border-blue-500">
                         </div>
                     </div>
 

@@ -5,17 +5,17 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../vendor/autoload.php'; // PhpSpreadsheet
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-
-require_once __DIR__ . '/generate_full_report.php';
 if (!isStaff() && !isAdmin()) {
     http_response_code(403);
-    echo 'Access denied';
     exit();
 }
+
+require_once __DIR__ . '/generate_full_report.php';
 $pdo = $GLOBALS['pdo'];
 $reportData = generate_health_report($pdo);
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
@@ -57,19 +57,20 @@ function writeSection($sheet, &$row, $title, $data) {
                 }
             }
         } else {
-            $sheet->setCellValue('B'.$row, $label);
-            $sheet->setCellValue('C'.$row, ($value === '' || $value === null) ? '(None)' : $value);
+            $sheet->setCellValue('A'.$row, $label);
+            $sheet->setCellValue('B'.$row, ($value === '' || $value === null) ? '(None)' : $value);
             $row++;
         }
     }
     $row++;
 }
 
+
 writeSection($sheet, $row, 'Resident Demographics', $reportData['resident_demographics']);
 writeSection($sheet, $row, 'Medical Information Summary', $reportData['medical_summary']);
-writeSection($sheet, $row, 'Consultation Records', $reportData['consultation_records']);
-writeSection($sheet, $row, 'Doctor’s Notes & Case Summaries', $reportData['doctor_notes']);
-
+writeSection($sheet, $row, 'Administrative Data', $reportData['admin']);
+$sheet->setCellValue('A'.$row, 'Recommendations: '.$reportData['recommendations']);
+$row++;
 $sheet->setCellValue('A'.$row, 'Prepared by: '.$reportData['prepared_by']);
 $row++;
 $sheet->setCellValue('A'.$row, 'Date: '.$reportData['date']);
