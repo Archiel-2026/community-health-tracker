@@ -808,54 +808,52 @@ try {
         <section id="announcementsSection" class="warm-blue-light-bg text-white section-padding">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
-                    <h2 class="section-title02 text-3xl md:text-4xl font-bold text-white">
+                    <h2 class="section-title02 text-3xl md:text-4xl font-bold text-gray-900">
                         Latest Announcements
                     </h2>
-                    <p class="text-white max-w-3xl mx-auto text-lg">
+                    <p class="text-gray-600 max-w-3xl mx-auto text-lg">
                         Stay informed with important updates, health advisories, and community events
                     </p>
                 </div>
 
                 <?php if (empty($announcements)): ?>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-16 text-center border border-white/20">
+                    <div class="bg-white rounded-2xl p-16 text-center border border-gray-200">
                         <div class="mb-6">
-                            <i class="fas fa-bullhorn text-6xl text-white/50"></i>
+                            <i class="fas fa-bullhorn text-6xl text-gray-300"></i>
                         </div>
-                        <h3 class="text-2xl font-semibold text-white mb-3">No Announcements Yet</h3>
-                        <p class="text-white max-w-md mx-auto text-lg">
+                        <h3 class="text-2xl font-semibold text-gray-700 mb-3">No Announcements Yet</h3>
+                        <p class="text-gray-500 max-w-md mx-auto text-lg">
                             Check back soon for important health updates and community announcements.
                         </p>
                     </div>
                 <?php else: ?>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 grid-spacing">
                         <?php foreach ($announcements as $index => $announcement): ?>
-                            <div class="bg-white backdrop-blur-sm rounded-xl overflow-hidden border border-white/20 info-card card-hover">
+                            <div class="bg-white rounded-xl overflow-hidden border border-gray-200 info-card card-hover">
                                 <div class="p-6">
                                     <div class="flex items-start justify-between mb-4">
                                         <div>
                                             <?php if ($announcement['priority'] == 'high'): ?>
-                                                <span class="announcement-priority bg-red-500/50 text-red-100 border border-red-400/50">
-                                                    <i class="fas fa-exclamation-triangle mr-2"></i>High Priority
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                                                    <i class="fas fa-exclamation-triangle mr-1"></i> High Priority
                                                 </span>
                                             <?php elseif ($announcement['priority'] == 'medium'): ?>
-                                                <span class="announcement-priority bg-yellow-500/50 text-yellow-100 border border-yellow-400/50">
-                                                    <i class="fas fa-exclamation-circle mr-2"></i>Medium Priority
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                                    <i class="fas fa-exclamation-circle mr-1"></i> Medium Priority
                                                 </span>
                                             <?php else: ?>
-                                                <span class="announcement-priority bg-blue-500/50 text-blue-100 border border-blue-400/50">
-                                                    <i class="fas fa-info-circle mr-2"></i>Announcement
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                                                    <i class="fas fa-info-circle mr-1"></i> Announcement
                                                 </span>
                                             <?php endif; ?>
                                         </div>
-                                        <div class="text-sm text-blue-200">
+                                        <div class="text-sm text-gray-500">
                                             <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
                                         </div>
                                     </div>
-                                    
-                                    <h3 class="text-xl font-bold text-white mb-3">
+                                    <h3 class="text-xl font-bold text-gray-900 mb-3">
                                         <?= htmlspecialchars($announcement['title']) ?>
                                     </h3>
-                                    
                                     <?php if ($announcement['image_path']): ?>
                                         <div class="mb-4 rounded-lg overflow-hidden">
                                             <img src="<?= htmlspecialchars($announcement['image_path']) ?>" 
@@ -863,13 +861,11 @@ try {
                                                  class="responsive-img h-48 object-cover">
                                         </div>
                                     <?php endif; ?>
-
-                                    <div class="text-blue-100 whitespace-pre-line mb-4 text-lead">
+                                    <div class="text-gray-700 whitespace-pre-line mb-4 text-lead">
                                         <?= nl2br(htmlspecialchars(substr($announcement['message'], 0, 150))) ?>...
                                     </div>
-
                                     <button onclick="openAnnouncementModal(<?= $index ?>)"
-                                            class="text-white hover:text-blue-200 font-semibold flex items-center text-sm">
+                                            class="text-blue-700 hover:text-blue-900 font-semibold flex items-center text-sm">
                                         Read Full Announcement
                                         <i class="fas fa-arrow-right ml-2"></i>
                                     </button>
@@ -877,7 +873,6 @@ try {
                             </div>
                         <?php endforeach; ?>
                     </div>
-
                     <div class="text-center">
                         <button onclick="openAnnouncementsModal()"
                                 class="btn-primary bg-white text-[#3a7bd5] hover:bg-blue-50">
@@ -1130,7 +1125,7 @@ try {
 
     <!-- Other Modals -->
     <div id="learnMoreModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
-        <div class="relative w-full max-w-7xl h-[92vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+        <div class="relative w-full max-w-7xl max-h-[75vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-y-auto z-[1050] modal-content" style="z-index:1051; transition: opacity 0.3s, transform 0.3s; opacity:0; transform:scale(0.95);">
             <div class="sticky top-0 z-20 bg-white border-b border-blue-100 px-10 py-6 flex items-center justify-between">
                 <div>
                     <h2 class="text-3xl font-bold warm-blue-text">
@@ -1183,8 +1178,8 @@ try {
     </div>
 
     <div id="announcementsModal" class="fixed inset-0 hidden z-50 bg-black/30">
-        <div class="absolute inset-0 flex items-center justify-center p-4">
-            <div class="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div class="absolute inset-0 flex items-center justify-center p-4 z-[1050]">
+            <div class="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[75vh] flex flex-col overflow-y-auto modal-content" style="z-index:1051; transition: opacity 0.3s, transform 0.3s; opacity:0; transform:scale(0.95);">
                 <button onclick="closeAnnouncementsModal()"
                     class="absolute top-4 right-4 z-50 text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -1194,16 +1189,18 @@ try {
                 </button>
 
                 <div class="overflow-y-auto flex-1 p-8">
-                    <div class="text-center mb-8">
-                        <div class="flex items-center justify-center gap-3 mb-4">
-                            <div class="bg-blue-100 p-3 rounded-full">
-                                <i class="fas fa-bullhorn text-2xl text-blue-600"></i>
+                    <div class="sticky top-0 z-20 bg-white pb-4 mb-4">
+                        <div class="text-center">
+                            <div class="flex items-center justify-center gap-3 mb-4">
+                                <div class="bg-blue-100 p-3 rounded-full">
+                                    <i class="fas fa-bullhorn text-2xl text-blue-600"></i>
+                                </div>
+                                <h2 class="text-3xl font-bold text-gray-900">All Announcements</h2>
                             </div>
-                            <h2 class="text-3xl font-bold text-gray-900">All Announcements</h2>
+                            <p class="text-gray-600 max-w-2xl mx-auto text-lead">
+                                Stay updated with all important announcements from Barangay Luz Health Center
+                            </p>
                         </div>
-                        <p class="text-gray-600 max-w-2xl mx-auto text-lead">
-                            Stay updated with all important announcements from Barangay Luz Health Center
-                        </p>
                     </div>
 
                     <?php if (empty($announcements)): ?>
@@ -1352,14 +1349,29 @@ try {
         }
 
         // Announcement Modal Functions
+
         function openAnnouncementsModal() {
-            document.getElementById('announcementsModal').classList.remove('hidden');
+            const modal = document.getElementById('announcementsModal');
+            const modalContent = modal.querySelector('.modal-content');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                modalContent.style.opacity = '1';
+                modalContent.style.transform = 'scale(1)';
+            }, 10);
         }
 
         function closeAnnouncementsModal() {
-            document.getElementById('announcementsModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            const modal = document.getElementById('announcementsModal');
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.style.opacity = '0';
+            modalContent.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }, 300);
         }
 
         function openAnnouncementModal(index) {
@@ -1368,13 +1380,27 @@ try {
 
         // Learn More Modal Functions
         function openLearnMoreModal() {
-            document.getElementById('learnMoreModal').classList.remove('hidden');
+            const modal = document.getElementById('learnMoreModal');
+            const modalContent = modal.querySelector('.modal-content');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                modalContent.style.opacity = '1';
+                modalContent.style.transform = 'scale(1)';
+            }, 10);
         }
 
         function closeLearnMoreModal() {
-            document.getElementById('learnMoreModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            const modal = document.getElementById('learnMoreModal');
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.style.opacity = '0';
+            modalContent.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }, 300);
         }
 
         // Close modals when clicking outside

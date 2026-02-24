@@ -1,6 +1,25 @@
 <?php
+
+// --- AUTO DELETE OLD ARCHIVED/SOFT-DELETED RECORDS (older than 5 years/60 months) ---
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/header.php';
+
+// Only run auto-delete if staff is logged in (avoid running on every include)
+if (isset($_SESSION['user']) && isStaff()) {
+    $now = date('Y-m-d H:i:s');
+    $fiveYearsAgo = date('Y-m-d H:i:s', strtotime('-5 years'));
+    try {
+        // 1. Hard delete from deleted_patients (archived records)
+        $stmt = $pdo->prepare("DELETE FROM deleted_patients WHERE deleted_at IS NOT NULL AND deleted_at < ?");
+        $stmt->execute([$fiveYearsAgo]);
+
+        // 2. Hard delete from sitio1_patients (soft-deleted records)
+        $stmt = $pdo->prepare("DELETE FROM sitio1_patients WHERE deleted_at IS NOT NULL AND deleted_at < ?");
+        $stmt->execute([$fiveYearsAgo]);
+    } catch (Exception $e) {
+        error_log('Auto hard-delete error (5 years): ' . $e->getMessage());
+    }
+}
 
 redirectIfNotLoggedIn();
 if (!isStaff()) {
@@ -702,11 +721,11 @@ try {
         <!-- Header with Title -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div>
-                <h1 class="text-3xl font-bold text-secondary">Deleted Patients Archive</h1>
-                <p class="text-gray-600 mt-1">Patient records that have been moved to archive. Only restoration is allowed.</p>
+                <h1 class="text-2xl font-bold text-gray-800 mb-1">Archived Patient Records</h1>
+                <p class="text-gray-500 text-base">Patient records that have been moved to archive. Only restoration is allowed.</p>
             </div>
-            <a href="existing_info_patients.php" class="btn-primary mt-4 md:mt-0">
-                <i class="fas fa-arrow-left mr-1"></i>Back to Patients
+            <a href="existing_info_patients.php" class="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium px-5 py-2 rounded-lg shadow transition mt-4 md:mt-0">
+                <i class="fas fa-arrow-left"></i> Back to Patient
             </a>
         </div>
         
@@ -733,149 +752,79 @@ try {
             <?php unset($_SESSION['success_message']); ?>
         <?php endif; ?>
         
-        <!-- SEARCH AND FILTER SECTION - IMPROVED UX WITH TOGGLE CHEVRON -->
-        <div class="search-section p-4 mb-6">
-            <form method="get" class="flex flex-wrap items-end gap-3">
-                <!-- Search Input Group - Flexible width -->
-                <div class="flex-1 min-w-[240px]">
-                    <label for="search" class="block text-sm font-medium text-secondary mb-1">
-                        <i class="fas fa-search text-primary mr-1"></i>Search Patients
-                    </label>
+        <!-- SEARCH AND FILTER SECTION -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+            <form method="get" class="flex flex-wrap items-center gap-3">
+                <div class="flex-1 min-w-[220px]">
                     <div class="relative">
-                        <input type="text" 
-                               id="search" 
-                               name="search" 
-                               value="<?= htmlspecialchars($search ?? '') ?>" 
-                               placeholder="Enter patient name..." 
-                               class="search-input pr-10" />
+                        <input type="text" id="search" name="search" value="<?= htmlspecialchars($search ?? '') ?>" placeholder="Search record by name" class="w-full border border-gray-300 rounded-lg py-2 px-4 pr-10 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200" />
                         <?php if (!empty($search)): ?>
-                            <a href="deleted_patients.php" 
-                               class="clear-search-icon"
-                               title="Clear search">
-                                <i class="fas fa-times-circle"></i>
-                            </a>
+                            <a href="deleted_patients.php" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500" title="Clear search"><i class="fas fa-times-circle"></i></a>
                         <?php endif; ?>
                     </div>
                 </div>
-                
-                <!-- Search Button -->
-                <div class="flex-shrink-0">
-                    <button type="submit" class="btn-search">
-                        <i class="fas fa-search"></i>
-                        <span>Search</span>
-                    </button>
-                </div>
-                
-                <!-- Clear Button - Only shows when search is active -->
-                <?php if (!empty($search)): ?>
-                    <div class="flex-shrink-0">
-                        <a href="deleted_patients.php" class="btn-clear">
-                            <i class="fas fa-times"></i>
-                            <span>Clear</span>
-                        </a>
-                    </div>
-                <?php endif; ?>
-                
-                <!-- Filter Dropdown Group - With toggle chevron -->
-                <div class="flex items-center gap-2 <?= !empty($search) ? 'ml-auto' : '' ?>">
-                    <div class="sort-select-wrapper" id="sortSelectWrapper">
-                        <select name="sort" class="sort-select" id="sortSelect">
-                            <option value="" <?= $sort === '' ? 'selected' : '' ?>>Sort: Date (Newest)</option>
-                            <option value="date_asc" <?= $sort === 'date_asc' ? 'selected' : '' ?>>Sort: Date (Oldest)</option>
-                            <option value="name_asc" <?= $sort === 'name_asc' ? 'selected' : '' ?>>Sort: Name (A-Z)</option>
-                            <option value="name_desc" <?= $sort === 'name_desc' ? 'selected' : '' ?>>Sort: Name (Z-A)</option>
-                        </select>
-                        <div class="sort-select-chevron">
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-filter">
-                        <i class="fas fa-filter"></i>
-                        <span class="hidden sm:inline">Apply</span>
-                        <span class="sm:hidden">Filter</span>
-                    </button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium px-5 py-2 rounded-lg transition flex items-center gap-2"><i class="fas fa-search"></i>Search</button>
+                <div class="flex items-center gap-2 ml-auto">
+                    <select name="sort" class="border border-gray-300 rounded-lg py-2 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                        <option value="" <?= $sort === '' ? 'selected' : '' ?>>Sort - Date</option>
+                        <option value="date_asc" <?= $sort === 'date_asc' ? 'selected' : '' ?>>Date (Oldest)</option>
+                        <option value="name_asc" <?= $sort === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
+                        <option value="name_desc" <?= $sort === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)</option>
+                    </select>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-medium px-5 py-2 rounded-lg transition flex items-center gap-2"><i class="fas fa-filter"></i>Filter</button>
                 </div>
             </form>
         </div>
         
         <!-- Main Content Card -->
-        <div class="main-container overflow-hidden mb-8">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h2 class="text-xl font-semibold text-secondary">Archived Patient Records</h2>
-                        <p class="text-sm text-gray-500 mt-1">Total archived records: <?= $totalRows ?? 0 ?></p>
-                    </div>
-                    <div class="flex gap-2">
-                        <span class="user-badge"><i class="fas fa-user-check mr-1"></i>Registered</span>
-                        <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">Regular</span>
-                    </div>
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-lg font-semibold text-gray-800">Archived Records</h2>
+                    <span class="inline-flex items-center justify-center ml-2 w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold"> <?= $totalRows ?? 0 ?> </span>
                 </div>
             </div>
-            
             <?php if (empty($deletedPatients)): ?>
-                <div class="text-center py-12 bg-gray-50 rounded-lg">
-                    <div class="w-20 h-20 bg-white border-2 border-warmBlue rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-archive text-primary text-3xl"></i>
+                <div class="flex flex-col items-center justify-center py-16">
+                    <div class="w-20 h-20 flex items-center justify-center rounded-full border-2 border-blue-100 bg-white mb-4">
+                        <i class="fas fa-archive text-blue-400 text-4xl"></i>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-900">Archive is Empty</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <div class="text-xl font-bold text-gray-700 mb-1">Your Archive is Empty</div>
+                    <div class="text-gray-500 text-base text-center">
                         <?php if (!empty($search)): ?>
-                            No archived patients found matching "<?= htmlspecialchars($search) ?>".
-                            <a href="deleted_patients.php" class="text-primary hover:underline block mt-2">
-                                <i class="fas fa-undo mr-1"></i>Clear search
-                            </a>
+                            No archived patients found matching <span class="font-bold">"<?= htmlspecialchars($search) ?>"</span>.
                         <?php else: ?>
                             No deleted patient records found in archive.
                         <?php endif; ?>
-                    </p>
+                    </div>
+                    <a href="deleted_patients.php" class="mt-8 bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg flex items-center gap-2 transition"><i class="fas fa-search"></i>Click Search</a>
                 </div>
             <?php else: ?>
                 <div class="overflow-x-auto">
-                    <table class="patient-table">
-                        <thead>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-blue-50">
                             <tr>
-                                <th>Name</th>
-                                <th>Age</th>
-                                <th>Gender</th>
-                                <th>Type</th>
-                                <th>Contact</th>
-                                <th>Deleted On</th>
-                                <th>Action</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Age</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Gender</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type of Patient</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Contact</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Deleted On</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="bg-white divide-y divide-gray-100">
                             <?php foreach ($deletedPatients as $patient): ?>
                                 <tr>
-                                    <td>
-                                        <div class="font-medium text-gray-900"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                        <div class="text-sm text-gray-500">ID: <?= $patient['original_id'] ?></div>
-                                        <?php if (!empty($patient['user_email'])): ?>
-                                            <div class="text-sm text-gray-500"><?= htmlspecialchars($patient['user_email']) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?= $patient['age'] ?? 'N/A' ?></td>
-                                    <td><?= htmlspecialchars($patient['gender'] ?? 'N/A') ?></td>
-                                    <td>
-                                        <?php if (!empty($patient['user_id']) && $patient['is_registered_user']): ?>
-                                            <span class="user-badge"><i class="fas fa-user-check mr-1"></i>Registered</span>
-                                        <?php else: ?>
-                                            <span class="text-gray-500"><i class="fas fa-user mr-1"></i>Regular</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?= htmlspecialchars($patient['contact'] ?? 'N/A') ?></td>
-                                    <td>
-                                        <?= date('M j, Y', strtotime($patient['archived_date'])) ?>
-                                        <div class="text-sm text-gray-500">
-                                            <?= date('g:i A', strtotime($patient['archived_date'])) ?>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <a href="?restore_patient=<?= $patient['original_id'] ?>&search=<?= urlencode($search ?? '') ?>&sort=<?= urlencode($sort ?? '') ?>&page=<?= $page ?>" 
-                                           class="btn-restore" 
-                                           onclick="return confirm('Are you sure you want to restore this patient record?\n\nThis will recover all personal information, medical history, and consultation notes for <?= htmlspecialchars(addslashes($patient['full_name'])) ?>.')">
-                                            <i class="fas fa-undo"></i>
-                                            <span>Restore</span>
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-900 font-medium"> <?= htmlspecialchars($patient['full_name']) ?> </td>
+                                    <td class="px-6 py-4 whitespace-nowrap"> <?= $patient['age'] ?? 'N/A' ?> </td>
+                                    <td class="px-6 py-4 whitespace-nowrap"> <?= htmlspecialchars($patient['gender'] ?? 'N/A') ?> </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">Regular</td>
+                                    <td class="px-6 py-4 whitespace-nowrap"> <?= htmlspecialchars($patient['contact'] ?? 'N/A') ?> </td>
+                                    <td class="px-6 py-4 whitespace-nowrap"> <?= date('M d, Y', strtotime($patient['archived_date'])) ?> </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <a href="?restore_patient=<?= $patient['original_id'] ?>&search=<?= urlencode($search ?? '') ?>&sort=<?= urlencode($sort ?? '') ?>&page=<?= $page ?>" class="bg-green-500 hover:bg-green-600 text-white font-bold text-base py-3 px-6 rounded-full inline-flex items-center gap-2 transition shadow-md" style="width:auto;min-width:0;" onclick="return confirm('Are you sure you want to restore this patient record?\n\nThis will recover all personal information, medical history, and consultation notes for <?= htmlspecialchars(addslashes($patient['full_name'])) ?>.')">
+                                            <i class="fas fa-undo text-lg"></i>Restore
                                         </a>
                                     </td>
                                 </tr>
@@ -883,7 +832,6 @@ try {
                         </tbody>
                     </table>
                 </div>
-                
                 <!-- Pagination -->
                 <?php if ($totalPages > 1): ?>
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -892,11 +840,7 @@ try {
                     </div>
                     <div class="flex gap-2">
                         <?php if ($page > 1): ?>
-                            <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search ?? '') ?>&sort=<?= urlencode($sort ?? '') ?>" 
-                               class="btn-primary px-4 py-2 text-sm">
-                                <i class="fas fa-chevron-left"></i>
-                                <span>Previous</span>
-                            </a>
+                            <a href="?page=<?= $page - 1 ?>&search=<?= urlencode($search ?? '') ?>&sort=<?= urlencode($sort ?? '') ?>" class="bg-blue-500 hover:bg-blue-600 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition"><i class="fas fa-chevron-left"></i>Previous</a>
                         <?php endif; ?>
                         
                         <?php if ($page < $totalPages): ?>
@@ -915,8 +859,7 @@ try {
         <!-- Footer Information -->
         <div class="text-center text-sm text-gray-500 mt-6">
             <i class="fas fa-shield-alt text-primary mr-1"></i>
-            Archived patient records are retained for data recovery purposes. 
-            Restoring a patient will recover all associated consultation notes and medical information.
+            Archived patient records are retained for up to 60 months (5 years) for data recovery purposes. After this period, records will be automatically and permanently deleted. Restoring a patient will recover all associated consultation notes and medical information, if still within the retention period.
         </div>
     </div>
 

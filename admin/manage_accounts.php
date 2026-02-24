@@ -441,7 +441,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
     }
-    // Handle staff account creation
     elseif (isset($_POST['create_staff'])) {
         // Sanitize and validate input
         $username = trim($_POST['username'] ?? '');
@@ -1834,7 +1833,7 @@ try {
                                 </div>
                             </div>
                             
-                            <div class="flex gap-2">
+                            <div class="flex flex-wrap gap-2 w-full">
                                 <button onclick="openStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
                                         class="btn-modern btn-modern-outline flex-1">
                                     <i class="fas fa-key"></i>
@@ -2158,13 +2157,15 @@ try {
                                 </div>
                             </div>
                             
-                            <div class="flex gap-2">
-                                <button onclick="openResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
-                                        class="btn-modern btn-modern-outline flex-1">
-                                    <i class="fas fa-key"></i>
-                                    Change Password
+
+                            <div class="flex gap-2 flex-wrap">
+
+
+                                <button type="button" onclick="openResidentRecoveryModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')" class="btn-modern btn-modern-warning flex-1">
+                                    <i class="fas fa-unlock-alt"></i>
+                                    Recover Password
                                 </button>
-                                
+
                                 <form method="POST" action="" class="flex-1">
                                     <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
                                     <input type="hidden" name="action" value="suspend">
@@ -2175,7 +2176,7 @@ try {
                                         Suspend
                                     </button>
                                 </form>
-                                
+
                                 <?php if (!$hasPatientRecord): ?>
                                 <button onclick="switchToLinking(<?= $resident['id'] ?>)"
                                         class="btn-modern btn-modern-primary">
@@ -2549,67 +2550,7 @@ try {
         </div>
     </div>
 
-    <!-- Resident Password Modal -->
-    <div class="modern-modal" id="residentPasswordModal">
-        <div class="modern-modal-content">
-            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <i class="fas fa-key text-secondary"></i>
-                Change Resident Password
-            </h3>
-            
-            <div class="bg-green-50 rounded-xl p-4 mb-6">
-                <p class="font-medium" id="residentPasswordName"></p>
-            </div>
-            
-            <form method="POST" action="" id="residentPasswordForm">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                <input type="hidden" name="resident_id" id="residentPasswordId">
-                
-                <div class="mb-4">
-                    <label class="modern-label">Current Password</label>
-                    <div class="password-field">
-                        <input type="password" name="current_password" id="residentCurrentPass" required class="modern-input">
-                        <button type="button" class="password-toggle" onclick="togglePasswordField('residentCurrentPass')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="modern-label">New Password</label>
-                    <div class="password-field">
-                        <input type="password" name="new_password" id="residentNewPass" required class="modern-input" minlength="6" oninput="checkResidentPasswordStrength()">
-                        <button type="button" class="password-toggle" onclick="togglePasswordField('residentNewPass')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <div class="password-strength">
-                        <div class="password-strength-bar" id="residentPasswordStrength"></div>
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="modern-label">Confirm Password</label>
-                    <div class="password-field">
-                        <input type="password" name="confirm_password" id="residentConfirmPass" required class="modern-input" minlength="6" oninput="checkResidentPasswordMatch()">
-                        <button type="button" class="password-toggle" onclick="togglePasswordField('residentConfirmPass')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <div id="residentPassMessage" class="validation-message"></div>
-                </div>
-                
-                <div class="flex gap-3">
-                    <button type="button" onclick="closeResidentPasswordModal()" class="btn-modern btn-modern-outline flex-1">
-                        Cancel
-                    </button>
-                    <button type="submit" name="change_resident_password" class="btn-modern btn-modern-secondary flex-1">
-                        Update Password
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
     <!-- Reset Password Modal (Admin Reset) -->
     <div class="modern-modal" id="resetPasswordModal">
@@ -3087,5 +3028,45 @@ try {
             }
         });
     </script>
+
+<!-- Resident Password Recovery Modal (always outside main container) -->
+<div id="residentRecoveryModal" class="modern-modal">
+    <div class="modern-modal-content">
+        <h2 class="text-xl font-bold mb-4">Recover Resident Password</h2>
+        <form method="POST" action="" id="residentRecoveryForm">
+            <input type="hidden" name="resident_id" id="recoveryResidentId">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+            <div class="mb-4">
+                <label class="modern-label">New Password</label>
+                <input type="password" name="new_password" class="modern-input" required minlength="6">
+            </div>
+            <div class="mb-4">
+                <label class="modern-label">Confirm Password</label>
+                <input type="password" name="confirm_password" class="modern-input" required minlength="6">
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" name="reset_resident_password" class="btn-modern btn-modern-primary flex-1">Set New Password</button>
+                <button type="button" class="btn-modern btn-modern-outline flex-1" onclick="closeResidentRecoveryModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openResidentRecoveryModal(id, name) {
+    document.getElementById('residentRecoveryModal').classList.add('show');
+    document.getElementById('recoveryResidentId').value = id;
+}
+function closeResidentRecoveryModal() {
+    document.getElementById('residentRecoveryModal').classList.remove('show');
+}
+// Optional: Close modal on outside click
+if (document.getElementById('residentRecoveryModal')) {
+    document.getElementById('residentRecoveryModal').addEventListener('click', function(e) {
+        if (e.target === this) closeResidentRecoveryModal();
+    });
+}
+</script>
+
 </body>
 </html>

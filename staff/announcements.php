@@ -1525,9 +1525,19 @@ try {
                             </div>
                         <?php else: ?>
                             <?php $activeCount = 0; ?>
-                            <?php foreach ($activeAnnouncements as $announcement): ?>
-                                <?php if ($activeCount < 3): ?>
-                                    <?php $activeCount++; ?>
+                            <?php
+                            $activeCount = 0;
+                            $seenAnnouncements = [];
+                            foreach ($activeAnnouncements as $announcement) {
+                                // Use title and content as a unique key
+                                $uniqueKey = md5($announcement['title'] . (isset($announcement['content']) ? $announcement['content'] : ''));
+                                if (in_array($uniqueKey, $seenAnnouncements)) {
+                                    continue; // skip duplicate
+                                }
+                                $seenAnnouncements[] = $uniqueKey;
+                                if ($activeCount < 3) {
+                                    $activeCount++;
+                            ?>
                                     <div class="announcement-item limited-active" style="display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 2px 8px rgba(52,152,219,0.07); border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.5rem; background: #fff;">
                                         <div class="flex flex-row justify-between items-start mb-2">
                                             <div class="flex flex-col gap-1" style="min-width:0;">
@@ -1582,8 +1592,9 @@ try {
                                             </form>
                                         </div>
                                     </div>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
+                                <?php }
+                            }
+                            ?>
                             <?php if (count($activeAnnouncements) > 3): ?>
                                 <button id="viewAllActiveBtn" class="btn btn-primary btn-block mt-2" style="background: #2563eb; color: #fff;">View All Active Announcements</button>
                             <?php endif; ?>
@@ -1591,7 +1602,7 @@ try {
                     </div>
 
                     <!-- Archived Announcements -->
-                    <div id="archived-tab-content" class="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div id="archived-tab-content" style="display: flex; flex-direction: column; gap: 0.5rem; flex: 1; overflow: auto;">
                         <?php if (empty($archivedAnnouncements)): ?>
                             <div class="empty-state col-span-full">
                                 <i class="fas fa-archive empty-icon"></i>
@@ -1602,10 +1613,12 @@ try {
                             <?php foreach ($archivedAnnouncements as $announcement): ?>
                                 <?php if ($archivedCount < 3): ?>
                                     <?php $archivedCount++; ?>
-                                    <div class="announcement-item limited-archived" style="display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 2px 8px rgba(52,152,219,0.07); border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.5rem; background: #fff; width: 100%; box-sizing: border-box; min-height: 155px;">
+                                    <div class="announcement-item limited-archived" style="display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 2px 8px rgba(52,152,219,0.07); border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.5rem; background: #fff;">
                                         <div class="flex flex-row justify-between items-start mb-2">
-                                            <div class="flex flex-col gap-1">
-                                                <h3 class="announcement-title" style="font-size: 1.15rem; color: #2563eb; font-weight: 500; margin-bottom: 0.2rem;">Lab Result</h3>
+                                            <div class="flex flex-col gap-1" style="min-width:0;">
+                                                <h3 class="announcement-title" style="font-size: 1.15rem; color: #2563eb; font-weight: 500; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;" title="<?= htmlspecialchars($announcement['title']) ?>">
+                                                    <?= htmlspecialchars($announcement['title']) ?>
+                                                </h3>
                                                 <div class="text-xs text-gray-400 mb-1">Posted by : <span class="badge badge-normal" style="background: #e0eaff; color: #2563eb; font-size: 0.85rem; padding: 0.2rem 0.7rem; border-radius: 999px;">Encoder</span></div>
                                                 <div class="text-base text-gray-700">Leandro Labos</div>
                                                 <div class="text-xs text-gray-400 mt-2">Archived on : <span style="color: #222; font-weight: 500;"><?= date('M d, Y', strtotime($announcement['post_date'])) ?></span></div>
@@ -1615,6 +1628,11 @@ try {
                                             </span>
                                         </div>
                                         <div class="flex flex-row justify-end items-center mt-2 gap-2">
+                                            <button
+                                                onclick="openViewModal(<?= htmlspecialchars(json_encode($announcement, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
+                                                class="btn btn-primary btn-sm" title="View" style="background: #e0eaff; color: #2563eb; border: none;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
                                             <form method="POST" action="" class="inline">
                                                 <input type="hidden" name="id" value="<?= $announcement['id'] ?>">
                                                 <button type="submit" name="repost_announcement" class="btn btn-warning btn-sm"

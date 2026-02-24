@@ -404,7 +404,43 @@ if (isset($_SESSION['success_message'])) {
 $activeTab = $_GET['tab'] ?? 'analytics';
 
 // Get data for dashboard
+// Preload announcement response summary for instant display
+$announcementSummary = [
+    'All Users' => ['accepted' => 0, 'dismissed' => 0, 'total' => 0, 'count' => 0],
+    'Specific Users' => ['accepted' => 0, 'dismissed' => 0, 'total' => 0, 'count' => 0],
+];
 try {
+    // Preload announcement summary for today (default view)
+    $today = date('Y-m-d');
+    $stmt = $pdo->prepare("SELECT id, audience_type FROM sitio1_announcements WHERE DATE(post_date) = ? AND status = 'active' AND (audience_type = 'public' OR audience_type = 'specific') ORDER BY post_date DESC");
+    $stmt->execute([$today]);
+    $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($announcements as $a) {
+        $aid = $a['id'];
+        $cat = $a['audience_type'] === 'public' ? 'All Users' : 'Specific Users';
+        // Only count responses from residents (role = 'patient')
+        $stmt2 = $pdo->prepare("SELECT ua.status, COUNT(*) as cnt FROM user_announcements ua JOIN sitio1_users u ON ua.user_id = u.id WHERE ua.announcement_id = ? AND u.role = 'patient' GROUP BY ua.status");
+        $stmt2->execute([$aid]);
+        $counts = ['accepted' => 0, 'dismissed' => 0];
+        $total = 0;
+        $responseRows = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+        if ($responseRows) {
+            foreach ($responseRows as $row) {
+                $status = $row['status'];
+                $cnt = (int)$row['cnt'];
+                if (isset($counts[$status])) $counts[$status] += $cnt;
+                $total += $cnt;
+            }
+        }
+        $announcementSummary[$cat]['accepted'] += $counts['accepted'];
+        $announcementSummary[$cat]['dismissed'] += $counts['dismissed'];
+        $announcementSummary[$cat]['total'] += $total;
+        $announcementSummary[$cat]['count']++;
+    }
+    unset($a);
+    unset($stmt2);
+    unset($announcements);
+    // End preload
     // Basic stats
     $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_patients WHERE deleted_at IS NULL");
     $stats['total_patients'] = $stmt->fetchColumn();
@@ -1852,10 +1888,23 @@ $recordsPerPage = 5;
                                 <input type="date" id="announcementDateInput" class="border rounded px-3 py-2 focus:ring-2 focus:ring-blue-400" />
                                 <button id="announcementFilterBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Apply</button>
                             </div>
-                            <div id="announcementResponseLoader" class="flex justify-center items-center h-48">
+                            <!-- INSTANT ANNOUNCEMENT SUMMARY (PHP) -->
+                            <div id="announcementResponseLoader" class="flex justify-center items-center h-48" style="display:none;">
                                 <span class="text-gray-500">Loading announcement responses...</span>
                             </div>
-                            <div id="announcementResponseTable" style="display:none;"></div>
+                            <div id="announcementResponseTable">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <?php foreach ($announcementSummary as $cat => $summary): ?>
+                                        <div class='bg-white rounded shadow p-4'>
+                                            <h4 class='font-semibold text-blue-700 mb-2 text-lg'><?= htmlspecialchars($cat) ?></h4>
+                                            <div class='mb-2 text-gray-700'>Total Announcements: <span class='font-bold'><?= $summary['count'] ?></span></div>
+                                            <div class='mb-2 text-green-700'>Accepted: <span class='font-bold'><?= $summary['accepted'] ?></span></div>
+                                            <div class='mb-2 text-red-700'>Dismissed: <span class='font-bold'><?= $summary['dismissed'] ?></span></div>
+                                            <div class='mb-2 text-gray-700'>Total Responses: <span class='font-bold'><?= $summary['total'] ?></span></div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3164,8 +3213,7 @@ $recordsPerPage = 5;
             } catch (error) { console.error('Error initializing patient registration/consultation chart:', error); }
             // 2. Health Issues Breakdown (Bar)
             // Announcement Response (Table)
-            fetchAnnouncementResponses();
-
+            // Only use AJAX for filter changes, not for initial load
             function fetchAnnouncementResponses(filter = {}) {
                 const loader = document.getElementById('announcementResponseLoader');
                 const tableDiv = document.getElementById('announcementResponseTable');
@@ -3178,7 +3226,6 @@ $recordsPerPage = 5;
                 fetch('/community-health-tracker/api/announcements.php?' + params.join('&'))
                     .then(res => res.json())
                     .then(data => {
-                        console.log('Announcement API response:', data);
                         loader.style.display = 'none';
                         tableDiv.style.display = '';
                         if (!data.announcements || !data.announcements.length) {
@@ -3213,7 +3260,6 @@ $recordsPerPage = 5;
                         tableDiv.innerHTML = html;
                     })
                     .catch((err) => {
-                        console.error('Announcement API fetch error:', err);
                         loader.style.display = 'none';
                         tableDiv.style.display = '';
                         tableDiv.innerHTML = '<div class="text-red-500">Failed to load announcement response data.</div>';
@@ -3233,11 +3279,7 @@ $recordsPerPage = 5;
                         date: dateInput.value
                     });
                 });
-                // Initial load
-                fetchAnnouncementResponses({
-                    time: timeFilter.value,
-                    date: dateInput.value
-                });
+                // Do NOT call fetchAnnouncementResponses on initial load (PHP handles it)
             });
             // 3. Gender Distribution (Donut)
             try {

@@ -28,7 +28,164 @@ document.addEventListener('DOMContentLoaded', function() {
             mobileMenu.classList.toggle('hidden');
         });
     }
+
+    initInstantNavigation();
 });
+
+const navPageCache = new Map();
+let navLoaderEl = null;
+
+function initInstantNavigation() {
+    const navLinks = Array.from(document.querySelectorAll('a.nav-tab[href]'));
+    if (!navLinks.length || !window.fetch || !window.history || !window.DOMParser) {
+        return;
+    }
+
+    navLinks.forEach(link => {
+        const prefetch = () => prefetchNavLink(link);
+        link.addEventListener('mouseenter', prefetch, { passive: true });
+        link.addEventListener('focus', prefetch, { passive: true });
+        link.addEventListener('touchstart', prefetch, { passive: true });
+    });
+
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+            navLinks.forEach(prefetchNavLink);
+        }, { timeout: 1500 });
+    } else {
+        setTimeout(() => {
+            navLinks.forEach(prefetchNavLink);
+        }, 700);
+    }
+
+    document.addEventListener('click', async function(event) {
+        const link = event.target.closest('a.nav-tab[href]');
+        if (!link || !shouldHandleNavLink(link, event)) {
+            return;
+        }
+
+        const targetUrl = normalizeUrl(link.href);
+        const currentUrl = normalizeUrl(window.location.href);
+        if (targetUrl === currentUrl) {
+            event.preventDefault();
+            return;
+        }
+
+        event.preventDefault();
+        showNavLoader();
+
+        try {
+            const html = await getPageHtml(targetUrl);
+            history.pushState({ instantNav: true }, '', targetUrl);
+            document.open();
+            document.write(html);
+            document.close();
+        } catch (error) {
+            window.location.assign(targetUrl);
+        }
+    });
+
+    window.addEventListener('popstate', function() {
+        window.location.reload();
+    });
+}
+
+function shouldHandleNavLink(link, event) {
+    if (event.defaultPrevented || event.button !== 0) {
+        return false;
+    }
+
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return false;
+    }
+
+    if (link.target && link.target !== '_self') {
+        return false;
+    }
+
+    if (link.hasAttribute('download')) {
+        return false;
+    }
+
+    const url = new URL(link.href, window.location.href);
+    if (url.origin !== window.location.origin || !/^https?:$/.test(url.protocol)) {
+        return false;
+    }
+
+    return true;
+}
+
+function normalizeUrl(url) {
+    const parsed = new URL(url, window.location.href);
+    parsed.hash = '';
+    return parsed.href;
+}
+
+function prefetchNavLink(link) {
+    const url = normalizeUrl(link.href);
+    if (url === normalizeUrl(window.location.href) || navPageCache.has(url)) {
+        return;
+    }
+
+    getPageHtml(url).catch(() => {
+        // Keep silent and fallback to regular navigation if prefetch fails.
+    });
+}
+
+async function getPageHtml(url) {
+    if (navPageCache.has(url)) {
+        return navPageCache.get(url);
+    }
+
+    const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {
+            'X-Requested-With': 'InstantNavigation'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Navigation request failed (${response.status})`);
+    }
+
+    const html = await response.text();
+    if (!html || html.indexOf('<html') === -1) {
+        throw new Error('Invalid HTML response');
+    }
+
+    navPageCache.set(url, html);
+    enforceCacheLimit(6);
+    return html;
+}
+
+function enforceCacheLimit(maxEntries) {
+    while (navPageCache.size > maxEntries) {
+        const firstKey = navPageCache.keys().next().value;
+        navPageCache.delete(firstKey);
+    }
+}
+
+function showNavLoader() {
+    if (!navLoaderEl) {
+        navLoaderEl = document.createElement('div');
+        navLoaderEl.id = 'instant-nav-loader';
+        navLoaderEl.style.position = 'fixed';
+        navLoaderEl.style.top = '0';
+        navLoaderEl.style.left = '0';
+        navLoaderEl.style.height = '3px';
+        navLoaderEl.style.width = '0';
+        navLoaderEl.style.zIndex = '99999';
+        navLoaderEl.style.background = 'linear-gradient(90deg, #38bdf8, #0ea5e9)';
+        navLoaderEl.style.transition = 'width 0.22s ease';
+        document.body.appendChild(navLoaderEl);
+    }
+
+    navLoaderEl.style.width = '65%';
+    requestAnimationFrame(() => {
+        navLoaderEl.style.width = '100%';
+    });
+}
 
 function showTooltip(e) {
     const tooltipText = this.getAttribute('data-tooltip');

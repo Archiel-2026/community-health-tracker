@@ -1967,265 +1967,182 @@ require_once __DIR__ . '/../includes/header.php';
 
 <body class="bg-gray-50">
 
-    <div class="container mx-auto px-4">
-        <!-- Dashboard Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div class="flex items-center">
-                <i class="fas fa-chart-network text-3xl font-bold text-primary mr-4"></i>
-                <div>
-                    <h1 class="text-3xl font-bold text-secondary">Admin Dashboard</h1>
-                    <p class="text-gray-600 mt-1">Overview of system statistics and activities</p>
+    <div class="w-full max-w-[1200px] mx-auto px-2 md:px-0 py-6">
+        <!-- Top Stats Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="rounded-xl bg-white border border-gray-100 shadow-sm flex flex-col items-start p-5 gap-2">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
+                        <i class="fas fa-user-shield text-blue-500 text-xl"></i>
+                    </span>
+                    <span class="text-2xl font-bold text-gray-900"><?= intval($stats['total_active_staff']) ?></span>
                 </div>
+                <div class="text-gray-500 text-sm">Active Admin</div>
             </div>
-            <div class="text-sm text-gray-500">
-                <i class="fas fa-calendar-alt mr-2"></i>Last updated: <?= date('M j, Y g:i A') ?>
-            </div>
-        </div>
-
-        <!-- Notification Area -->
-        <div id="notificationArea"></div>
-
-        <!-- Stats Cards Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-card-icon bg-blue-100">
-                    <i class="fas fa-user-doctor text-blue-600"></i>
+            <div class="rounded-xl bg-white border border-gray-100 shadow-sm flex flex-col items-start p-5 gap-2">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-orange-50">
+                        <i class="fas fa-running text-orange-400 text-xl"></i>
+                    </span>
+                    <span class="text-2xl font-bold text-gray-900"><?= intval($stats['total_approved_residents']) ?></span>
                 </div>
-                <div class="stat-card-value text-blue-600"><?= intval($stats['total_active_staff']) ?></div>
-                <div class="stat-card-label">Active Staff</div>
-                <div class="stat-card-sublabel"><?= intval($stats['total_inactive_staff']) ?> inactive</div>
+                <div class="text-gray-500 text-sm">Resident Accounts</div>
             </div>
-
-            <div class="stat-card">
-                <div class="stat-card-icon bg-green-100">
-                    <i class="fas fa-users text-green-600"></i>
+            <div class="rounded-xl bg-white border border-gray-100 shadow-sm flex flex-col items-start p-5 gap-2">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-purple-50">
+                        <i class="fas fa-file-medical text-purple-500 text-xl"></i>
+                    </span>
+                    <span class="text-2xl font-bold text-gray-900"><?= intval($stats['total_patients']) ?></span>
                 </div>
-                <div class="stat-card-value text-green-600"><?= intval($stats['total_approved_residents']) ?></div>
-                <div class="stat-card-label">Resident Accounts</div>
-                <div class="stat-card-sublabel"><?= intval($stats['total_pending_residents']) ?> pending</div>
+                <div class="text-gray-500 text-sm">Patient Records</div>
             </div>
-
-            <div class="stat-card">
-                <div class="stat-card-icon bg-purple-100">
-                    <i class="fas fa-file-medical text-purple-600"></i>
+            <div class="rounded-xl bg-white border border-gray-100 shadow-sm flex flex-col items-start p-5 gap-2">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50">
+                        <i class="fas fa-link text-amber-500 text-xl"></i>
+                    </span>
+                    <span class="text-2xl font-bold text-gray-900"><?= intval($stats['linked_accounts_count']) ?></span>
                 </div>
-                <div class="stat-card-value text-purple-600"><?= intval($stats['total_patients']) ?></div>
-                <div class="stat-card-label">Patient Records</div>
-                <div class="stat-card-sublabel"><?= intval($stats['total_unlinked_patients']) ?> unlinked</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-card-icon bg-amber-100">
-                    <i class="fas fa-link text-amber-600"></i>
-                </div>
-                <div class="stat-card-value text-amber-600"><?= intval($stats['linked_accounts_count']) ?></div>
-                <div class="stat-card-label">Linked Accounts</div>
-                <div class="stat-card-sublabel"><?= intval($stats['total_unlinked_residents']) ?> unlinked</div>
+                <div class="text-gray-500 text-sm">Linked Accounts</div>
             </div>
         </div>
 
-        <!-- Main Content Grid: Chart + Quick Actions -->
-        <div class="chart-actions-grid">
-            <!-- Chart Section -->
-            <div class="main-container p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-700">System Overview</h3>
-                        <p class="text-sm text-gray-500">Monthly registration trends (Last 12 months)</p>
-                    </div>
+        <!-- System Overview and Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- System Overview Chart -->
+            <div class="rounded-xl bg-white border border-gray-100 shadow-sm p-6 flex flex-col min-h-[320px]">
+                <div class="mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">System Overview</h2>
+                    <p class="text-gray-500 text-sm">Monthly registration trends (Last 12 months)</p>
                 </div>
-                <div style="height: 350px;">
+                <div class="flex-1 flex items-center justify-center min-h-[220px]">
                     <canvas id="overviewChart" style="width:100%;height:100%;"></canvas>
                 </div>
             </div>
-
-            <!-- Quick Actions Panel -->
-            <div class="main-container p-6">
-                <div class="flex items-center mb-6">
-                    <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center mr-3">
-                        <i class="fas fa-bolt text-white"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-700">Quick Actions</h3>
-                        <p class="text-sm text-gray-500">Access key features</p>
-                    </div>
+            <!-- Quick Actions -->
+            <div class="rounded-xl bg-white border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
+                <div class="mb-2">
+                    <h2 class="text-lg font-semibold text-gray-800">Quick Actions</h2>
+                    <p class="text-gray-500 text-sm">Access key features</p>
                 </div>
-
-                <!-- Icon Action Buttons -->
-                <div class="space-y-3">
-                    <a href="viewpatients.php"
-                        class="icon-action-btn bg-purple-50 hover:bg-purple-100 border-purple-200"
-                        title="View All Patients">
-                        <div class="icon-action-icon bg-purple-100 text-purple-600">
-                            <i class="fas fa-users"></i>
+                <div class="flex flex-col gap-3">
+                    <a href="viewpatients.php" class="flex items-center justify-between p-4 rounded-lg border border-purple-100 bg-purple-50 hover:bg-purple-100 transition group" title="View All Patients">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                                <i class="fas fa-walking text-purple-500 text-xl"></i>
+                            </span>
+                            <div>
+                                <div class="font-semibold text-purple-700">View All Patients</div>
+                                <div class="text-xs text-gray-500">Browse Patient Records</div>
+                            </div>
                         </div>
-                        <div class="icon-action-content">
-                            <div class="icon-action-label">View All Patients</div>
-                            <div class="icon-action-desc">Browse patient records</div>
-                        </div>
-                        <i class="fas fa-arrow-right text-purple-400"></i>
+                        <i class="fas fa-arrow-up-right-from-square text-purple-400"></i>
                     </a>
-                    <!-- Removed Pending Approvals button -->
-                    <a href="staffrecords.php" class="icon-action-btn bg-cyan-50 hover:bg-cyan-100 border-cyan-200"
-                        title="Staff Records">
-                        <div class="icon-action-icon bg-cyan-100 text-cyan-600">
-                            <i class="fas fa-user-tie"></i>
+                    <a href="staffrecords.php" class="flex items-center justify-between p-4 rounded-lg border border-cyan-100 bg-cyan-50 hover:bg-cyan-100 transition group" title="Admin Records">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
+                                <i class="fas fa-id-card-alt text-cyan-500 text-xl"></i>
+                            </span>
+                            <div>
+                                <div class="font-semibold text-cyan-700">Admin Records</div>
+                                <div class="text-xs text-gray-500">Manage Staff Accounts</div>
+                            </div>
                         </div>
-                        <div class="icon-action-content">
-                            <div class="icon-action-label">Staff Records</div>
-                            <div class="icon-action-desc">Manage staff accounts</div>
-                        </div>
-                        <i class="fas fa-arrow-right text-cyan-400"></i>
+                        <i class="fas fa-arrow-up-right-from-square text-cyan-400"></i>
                     </a>
-                    <!-- Removed Generate Report button -->
-                                    <button id="activityLogsBtn" class="icon-action-btn bg-indigo-50 hover:bg-indigo-100 border-indigo-200" type="button" title="Activity Logs">
-                                        <div class="icon-action-icon bg-indigo-100 text-indigo-600">
-                                            <i class="fas fa-history"></i>
-                                        </div>
-                                        <div class="icon-action-content">
-                                            <div class="icon-action-label">Activity Logs</div>
-                                            <div class="icon-action-desc">View system activity</div>
-                                        </div>
-                                        <i class="fas fa-arrow-right text-indigo-400"></i>
-                                    </button>
+                    <button id="activityLogsBtn" type="button" class="flex items-center justify-between p-4 rounded-lg border border-indigo-100 bg-indigo-50 hover:bg-indigo-100 transition group" title="Activity Logs">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-clipboard-list text-indigo-500 text-xl"></i>
+                            </span>
+                            <div>
+                                <div class="font-semibold text-indigo-700">Activity Logs</div>
+                                <div class="text-xs text-gray-500">System activity and user actions</div>
+                            </div>
+                        </div>
+                        <i class="fas fa-arrow-up-right-from-square text-indigo-400"></i>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Patient Records and Quick Stats - Two Column Grid -->
-        <div class="two-col-grid">
-            <!-- Patient Records Table -->
-            <div class="main-container">
-                <div class="p-5 pb-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div class="flex items-center">
-                            <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center mr-3">
-                                <i class="fas fa-notes-medical text-purple-600"></i>
-                            </div>
-                            <div>
-                                <h2 class="text-lg font-semibold text-secondary">Recent Patient Records</h2>
-                                <p class="text-gray-400 text-sm">Latest patient entries</p>
-                            </div>
-                        </div>
-                        <button class="btn-view" onclick="openRecordsModal(1)"><i class="fas fa-list mr-2"></i>View
-                            All</button>
+        <!-- Recent Patient Records and Account Status -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Recent Patient Records -->
+            <div class="rounded-xl bg-white border border-gray-100 shadow-sm p-6 flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-800">Recent Patient Records</h2>
+                        <p class="text-gray-500 text-sm">Latest patient entries</p>
                     </div>
+                    <button class="px-4 py-2 rounded bg-blue-100 text-blue-700 font-semibold text-sm hover:bg-blue-200 transition" onclick="openRecordsModal(1)">View All</button>
                 </div>
-
-                <div class="px-5 pb-5">
-                    <div class="patient-records-list">
-                        <?php foreach (array_slice($stats['recent_patients'], 0, 5) as $patient): ?>
-                            <div class="patient-record-item">
-                                <div class="patient-record-main">
-                                    <div class="patient-avatar">
-                                        <?php
-                                        $profileImg = null;
-                                        if (!empty($patient['user_id'])) {
-                                            $uid = $patient['user_id'];
-                                            $profileDir = __DIR__ . '/../uploads/profiles/';
-                                            $allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
-                                            foreach ($allowedExts as $ext) {
-                                                $file = $profileDir . 'profile_' . $uid . '.' . $ext;
-                                                if (file_exists($file)) {
-                                                    $profileImg = '/community-health-tracker/uploads/profiles/profile_' . $uid . '.' . $ext;
-                                                    break;
-                                                }
+                <div class="flex flex-col gap-3">
+                    <?php foreach (array_slice($stats['recent_patients'], 0, 3) as $patient): ?>
+                        <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-white">
+                                    <?php
+                                    $profileImg = null;
+                                    if (!empty($patient['user_id'])) {
+                                        $uid = $patient['user_id'];
+                                        $profileDir = __DIR__ . '/../uploads/profiles/';
+                                        $allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
+                                        foreach ($allowedExts as $ext) {
+                                            $file = $profileDir . 'profile_' . $uid . '.' . $ext;
+                                            if (file_exists($file)) {
+                                                $profileImg = '/community-health-tracker/uploads/profiles/profile_' . $uid . '.' . $ext;
+                                                break;
                                             }
                                         }
-                                        ?>
-                                        <?php if ($profileImg): ?>
-                                            <img src="<?= htmlspecialchars($profileImg) ?>" alt="Profile"
-                                                class="w-10 h-10 rounded-full object-cover border border-gray-300"
-                                                style="background:none;" />
-                                        <?php else: ?>
-                                            <span
-                                                style="display:inline-block;width:40px;height:40px;line-height:40px;text-align:center;font-weight:600;font-size:1.25rem;color:#6b7280;background:none;"><?= strtoupper(substr($patient['full_name'], 0, 1)) ?></span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="patient-info">
-                                        <div class="patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                        <div class="patient-meta">
-                                            <span><?= htmlspecialchars($patient['age'] ?? 'N/A') ?> yrs</span>
-                                            <span class="meta-divider">•</span>
-                                            <span><?= htmlspecialchars($patient['gender'] ?? 'N/A') ?></span>
-                                            <span class="meta-divider">•</span>
-                                            <span><?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
-                                        </div>
-                                    </div>
+                                    }
+                                    ?>
+                                    <?php if ($profileImg): ?>
+                                        <img src="<?= htmlspecialchars($profileImg) ?>" alt="Profile" class="w-10 h-10 object-cover" />
+                                    <?php else: ?>
+                                        <span class="text-gray-400 font-bold text-lg"><?= strtoupper(substr($patient['full_name'], 0, 1)) ?></span>
+                                    <?php endif; ?>
                                 </div>
-                                <div class="patient-record-actions">
-                                    <span
-                                        class="record-date"><?= date('M j', strtotime($patient['created_at'] ?? 'now')) ?></span>
-                                    <button class="action-btn action-view"
-                                        onclick="showViewModal(<?= $patient['id'] ?>, '<?= addslashes($patient['full_name']) ?>')"
-                                        title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="action-btn action-edit"
-                                        onclick="showEditModal(<?= $patient['id'] ?>, '<?= addslashes($patient['full_name']) ?>')"
-                                        title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
+                                <div>
+                                    <div class="font-semibold text-gray-800 text-sm"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                    <div class="text-xs text-gray-500 flex gap-2 items-center">
+                                        <span><?= htmlspecialchars($patient['gender'] ?? 'N/A') ?></span>
+                                        <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                        <span><?= htmlspecialchars($patient['age'] ?? 'N/A') ?> Year Old</span>
+                                    </div>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="mt-4 text-center">
-                        <a href="viewpatients.php" class="btn-action">View All Patient Records</a>
-                    </div>
+                            <div class="flex items-center gap-2">
+                                <button class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-500" onclick="showViewModal(<?= $patient['id'] ?>, '<?= addslashes($patient['full_name']) ?>')" title="View"><i class="fas fa-eye"></i></button>
+                                <button class="w-8 h-8 flex items-center justify-center rounded-full bg-green-50 hover:bg-green-100 text-green-500" onclick="showEditModal(<?= $patient['id'] ?>, '<?= addslashes($patient['full_name']) ?>')" title="Edit"><i class="fas fa-pen"></i></button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
-
-            <!-- Account Status Overview -->
-            <div class="main-container p-6">
-                <div class="flex items-center mb-6">
-                    <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mr-3">
-                        <i class="fas fa-chart-pie text-green-600"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-semibold text-secondary">Account Status</h2>
-                        <p class="text-gray-500 text-sm">Linking overview</p>
-                    </div>
+            <!-- Account Status -->
+            <div class="rounded-xl bg-white border border-gray-100 shadow-sm p-6 flex flex-col">
+                <div class="mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Account Status</h2>
+                    <p class="text-gray-500 text-sm">Linking overview</p>
                 </div>
-
-                <!-- Linked Accounts Highlight -->
-                <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-5 mb-6"
-                    style="box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="text-xs font-bold text-green-700 mb-1 uppercase tracking-wider">Linked Accounts
-                            </div>
-                            <div class="text-4xl font-bold text-green-600"><?= $stats['linked_accounts_count'] ?></div>
-                            <p class="text-xs text-green-600 font-medium mt-1">Resident-Patient Links</p>
-                        </div>
-                        <div
-                            class="w-14 h-14 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-200">
-                            <i class="fas fa-link text-white text-xl"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Status Grid -->
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-amber-50 rounded-xl p-4 text-center"
-                        style="box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12);">
-                        <div class="text-2xl font-bold text-amber-600"><?= $stats['total_unlinked_residents'] ?></div>
-                        <div class="text-xs font-medium text-amber-700">Unlinked Accounts</div>
+                    <div class="rounded-xl bg-amber-50 flex flex-col items-center justify-center p-4">
+                        <div class="text-2xl font-bold text-amber-600">0<?= $stats['linked_accounts_count'] ?></div>
+                        <div class="text-xs font-medium text-amber-700">Linked Accounts</div>
                     </div>
-                    <div class="bg-orange-50 rounded-xl p-4 text-center"
-                        style="box-shadow: 0 2px 8px rgba(249, 115, 22, 0.12);">
-                        <div class="text-2xl font-bold text-orange-600"><?= $stats['total_unlinked_patients'] ?></div>
-                        <div class="text-xs font-medium text-orange-700">Unlinked Patients</div>
+                    <div class="rounded-xl bg-purple-50 flex flex-col items-center justify-center p-4">
+                        <div class="text-2xl font-bold text-purple-600">0<?= $stats['total_unlinked_residents'] ?></div>
+                        <div class="text-xs font-medium text-purple-700">Unlinked Accounts</div>
                     </div>
-                    <div class="bg-red-50 rounded-xl p-4 text-center"
-                        style="box-shadow: 0 2px 8px rgba(239, 68, 68, 0.12);">
-                        <div class="text-2xl font-bold text-red-600"><?= $stats['total_declined_residents'] ?></div>
-                        <div class="text-xs font-medium text-red-700">Declined</div>
+                    <div class="rounded-xl bg-blue-50 flex flex-col items-center justify-center p-4">
+                        <div class="text-2xl font-bold text-blue-600">0<?= $stats['total_unlinked_patients'] ?></div>
+                        <div class="text-xs font-medium text-blue-700">Unlinked Patients</div>
                     </div>
-                    <div class="bg-gray-100 rounded-xl p-4 text-center"
-                        style="box-shadow: 0 2px 8px rgba(107, 114, 128, 0.12);">
-                        <div class="text-2xl font-bold text-gray-600"><?= $stats['total_inactive_staff'] ?></div>
-                        <div class="text-xs font-medium text-gray-700">Inactive Staff</div>
+                    <div class="rounded-xl bg-green-50 flex flex-col items-center justify-center p-4">
+                        <div class="text-2xl font-bold text-green-600">0<?= $stats['total_inactive_staff'] ?></div>
+                        <div class="text-xs font-medium text-green-700">Inactive Staff</div>
                     </div>
                 </div>
             </div>
@@ -2244,15 +2161,18 @@ require_once __DIR__ . '/../includes/header.php';
                             <p class="text-gray-500 text-sm">System activity and user actions</p>
                         </div>
                     </div>
-                    <button onclick="hideActivityLogsModal()" class="text-gray-500 hover:text-gray-700" style="font-size:1.5rem;">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button id="exportLogsBtn" class="px-4 py-2 rounded bg-blue-500 text-white font-semibold text-sm hover:bg-blue-600 transition" title="Export"><i class="fas fa-download mr-1"></i>Export</button>
+                        <button onclick="hideActivityLogsModal()" class="text-gray-500 hover:text-gray-700 ml-2" style="font-size:1.5rem;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
 
             <!-- Log Tabs (always visible in modal) -->
             <div class="log-tabs mb-6" id="activityLogsTabs">
-                <button class="log-tab log-tab-active" id="residentTabBtn" type="button"><i class="fas fa-user"></i>Resident Log <span class="log-tab-badge"><?= $resident_total ?></span></button>
-                <button class="log-tab" id="staffTabBtn" type="button"><i class="fas fa-user-tie"></i>Staff Actions <span class="log-tab-badge"><?= $staff_total ?></span></button>
+                <button class="log-tab log-tab-active" id="residentTabBtn" type="button">Resident Log</button>
+                <button class="log-tab" id="staffTabBtn" type="button">Admin Log</button>
             </div>
 
             <div class="activity-logs-loading" id="activityLogsLoading" aria-live="polite">
@@ -2261,15 +2181,13 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <div id="residentLogsSection">
-                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl"
-                    style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
+                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
                     <table class="patient-table">
                         <thead>
                             <tr>
-                                <th>Time</th>
+                                <th>Time Log</th>
                                 <th>Resident</th>
-                                <th>Action</th>
-                                <th>IP</th>
+                                <th>Action Performed</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2282,13 +2200,15 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?= htmlspecialchars($log['display_name'] ?? (isset($log['user_id']) && $log['user_id'] ? 'User #' . $log['user_id'] : 'System')) ?>
                                     </td>
                                     <td>
-                                        <span
-                                            class="px-2 py-1 rounded-full text-xs font-medium <?= ($log['type'] ?? '') == 'login' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' ?>">
-                                            <?= htmlspecialchars($log['type'] ?? $log['action_type'] ?? '') ?>
-                                        </span>
+                                        <?php $actionType = strtolower($log['type'] ?? $log['action_type'] ?? ''); ?>
+                                        <?php if ($actionType === 'login'): ?>
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Login</span>
+                                        <?php elseif ($actionType === 'logout'): ?>
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">Logout</span>
+                                        <?php else: ?>
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $actionType))) ?></span>
+                                        <?php endif; ?>
                                     </td>
-                                    <td class="text-gray-500 text-sm">
-                                        <?= htmlspecialchars($log['ip'] ?? $log['ip_address'] ?? '—') ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -2298,29 +2218,22 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="text-gray-500">Page <?= $page_resident ?> of <?= $resident_total_pages ?></div>
                     <div class="flex gap-2">
                         <?php if ($page_resident > 1): ?>
-                            <a class="btn-action"
-                                href="?logs_tab=resident&page_resident=<?= $page_resident - 1 ?>#activity-logs"><i
-                                    class="fas fa-chevron-left mr-1"></i>Prev</a>
+                            <a class="btn-action" href="?logs_tab=resident&page_resident=<?= $page_resident - 1 ?>#activity-logs"><i class="fas fa-chevron-left mr-1"></i>Prev</a>
                         <?php endif; ?>
                         <?php if ($page_resident < $resident_total_pages): ?>
-                            <a class="btn-action"
-                                href="?logs_tab=resident&page_resident=<?= $page_resident + 1 ?>#activity-logs">Next<i
-                                    class="fas fa-chevron-right ml-1"></i></a>
+                            <a class="btn-action" href="?logs_tab=resident&page_resident=<?= $page_resident + 1 ?>#activity-logs">Next<i class="fas fa-chevron-right ml-1"></i></a>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
             <div id="staffLogsSection" style="display:none;">
-                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl"
-                    style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
+                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl" style="box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);">
                     <table class="patient-table">
                         <thead>
                             <tr>
-                                <th>Time</th>
+                                <th>Time Log</th>
                                 <th>Staff Name</th>
                                 <th>Action Performed</th>
-                                <th>Details</th>
-                                <th>IP Address</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2330,43 +2243,18 @@ require_once __DIR__ . '/../includes/header.php';
                                         <?= !empty($log['created_at']) ? date('M j, Y g:i A', strtotime($log['created_at'])) : 'N/A' ?>
                                     </td>
                                     <td>
-                                        <div class="flex items-center">
-                                            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
-                                                <i class="fas fa-user-md text-blue-600 text-sm"></i>
-                                            </div>
-                                            <div>
-                                                <span
-                                                    class="font-semibold text-gray-800"><?= htmlspecialchars($log['display_name'] ?? 'Unknown Staff') ?></span>
-                                                <?php if (!empty($log['staff_id'])): ?>
-                                                    <span class="text-xs text-gray-400 block">ID: <?= $log['staff_id'] ?></span>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
+                                        <span class="font-semibold text-gray-800"><?= htmlspecialchars($log['display_name'] ?? 'Unknown Staff') ?></span>
                                     </td>
                                     <td>
-                                        <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                        <?php
-                                        $actionType = strtolower($log['type'] ?? $log['action_type'] ?? '');
-                                        if (strpos($actionType, 'add') !== false || strpos($actionType, 'create') !== false) {
-                                            echo 'bg-green-100 text-green-700';
-                                        } elseif (strpos($actionType, 'edit') !== false || strpos($actionType, 'update') !== false) {
-                                            echo 'bg-yellow-100 text-yellow-700';
-                                        } elseif (strpos($actionType, 'delete') !== false || strpos($actionType, 'remove') !== false) {
-                                            echo 'bg-red-100 text-red-700';
-                                        } elseif (strpos($actionType, 'view') !== false) {
-                                            echo 'bg-purple-100 text-purple-700';
-                                        } else {
-                                            echo 'bg-blue-100 text-blue-700';
-                                        }
-                                        ?>">
-                                            <?= htmlspecialchars(ucwords(str_replace('_', ' ', $log['type'] ?? $log['action_type'] ?? ''))) ?>
-                                        </span>
+                                        <?php $actionType = strtolower($log['type'] ?? $log['action_type'] ?? ''); ?>
+                                        <?php if ($actionType === 'staff login' || $actionType === 'login'): ?>
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Staff Login</span>
+                                        <?php elseif ($actionType === 'add patient'): ?>
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Add Patient</span>
+                                        <?php else: ?>
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $actionType))) ?></span>
+                                        <?php endif; ?>
                                     </td>
-                                    <td class="text-gray-500 text-sm max-w-xs truncate"
-                                        title="<?= htmlspecialchars(is_array($log['details'] ?? null) || is_object($log['details'] ?? null) ? json_encode($log['details']) : ($log['details'] ?? '')) ?>">
-                                        <?= htmlspecialchars(is_array($log['details'] ?? null) || is_object($log['details'] ?? null) ? json_encode($log['details']) : ($log['details'] ?? ($log['related_id'] ? 'Record #' . $log['related_id'] : '—'))) ?>
-                                    </td>
-                                    <td class="text-gray-400 text-xs"><?= htmlspecialchars($log['ip_address'] ?? '—') ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -2376,12 +2264,10 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="text-gray-500">Page <?= $page_staff ?> of <?= $staff_total_pages ?></div>
                     <div class="flex gap-2">
                         <?php if ($page_staff > 1): ?>
-                            <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff - 1 ?>#activity-logs"><i
-                                    class="fas fa-chevron-left mr-1"></i>Prev</a>
+                            <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff - 1 ?>#activity-logs"><i class="fas fa-chevron-left mr-1"></i>Prev</a>
                         <?php endif; ?>
                         <?php if ($page_staff < $staff_total_pages): ?>
-                            <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff + 1 ?>#activity-logs">Next<i
-                                    class="fas fa-chevron-right ml-1"></i></a>
+                            <a class="btn-action" href="?logs_tab=staff&page_staff=<?= $page_staff + 1 ?>#activity-logs">Next<i class="fas fa-chevron-right ml-1"></i></a>
                         <?php endif; ?>
                     </div>
                 </div>

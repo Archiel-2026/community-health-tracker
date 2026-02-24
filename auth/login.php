@@ -101,6 +101,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Attempt login
     $login_result = loginUser($username, $password, $role);
 
+    // Resident lockout handling
+    if (is_array($login_result) && isset($login_result['locked'])) {
+        $minutes = $login_result['minutes'];
+        echo <<<HTML
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+        </head>
+        <body>
+            <div class="fixed inset-0 flex items-center justify-center p-4">
+                <div class="relative bg-white/90 backdrop-blur-sm rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 animate-fade-in">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="relative w-20 h-20 mb-6">
+                            <div class="absolute inset-0 rounded-full border-4 border-yellow-100"></div>
+                            <div class="absolute inset-0 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin"></div>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01" />
+                                </svg>
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-3">Account Locked</h3>
+                        <p class="text-gray-600 text-lg">Your account has been temporarily locked for {$minutes} minutes due to multiple failed login attempts.<br>Please try again later or contact your barangay health center administrator.</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        HTML;
+        exit();
+    }
+
     if ($login_result === true) {
         echo <<<HTML
         <!DOCTYPE html>

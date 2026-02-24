@@ -417,7 +417,7 @@ function getTimeAgo($datetime)
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
         border: 1px solid #e5e7eb;
-        min-height: 250px;
+        min-height: 140px;
         /* margin-bottom: 8px; */
         display: flex;
         flex-direction: column;
@@ -461,7 +461,7 @@ function getTimeAgo($datetime)
         }
 
         .stats-card {
-            min-height: 140px;
+            min-height: 100px;
             padding: 20px;
         }
     }
@@ -476,7 +476,7 @@ function getTimeAgo($datetime)
         }
 
         .stats-card {
-            min-height: 130px;
+            min-height: 90px;
             padding: 16px;
         }
     }
@@ -659,7 +659,7 @@ function getTimeAgo($datetime)
     /* Stats card icons */
     .stats-icon-container {
         width: 68px;
-        height: 68px;
+        height: 50px;
         border-radius: 4px;
         display: flex;
         align-items: center;
@@ -1145,8 +1145,7 @@ function getTimeAgo($datetime)
                                         </div>
                                     <?php else: ?>
                                         <?php
-                                        $recentAnnouncements = array_slice($generalAnnouncements, 0, 5); // Get 5 announcements but only show 3 at a time
-                                    
+                                        $recentAnnouncements = array_slice($generalAnnouncements, 0, 2); // Show only 2 announcements
                                         foreach ($recentAnnouncements as $index => $announcement):
                                             $isPriorityHigh = $announcement['priority'] === 'high';
                                             $isPriorityMedium = $announcement['priority'] === 'medium';
@@ -1191,7 +1190,7 @@ function getTimeAgo($datetime)
                                             $staffPosition = !empty($announcement['staff_position']) ? htmlspecialchars($announcement['staff_position']) : '';
                                             $staffName = !empty($announcement['staff_name']) ? htmlspecialchars($announcement['staff_name']) : '';
                                             ?>
-                                            <div class="border border-gray-200 rounded-lg p-4  mb-3 announcement-item <?= $index >= 3 ? 'opacity-0 h-0 overflow-hidden' : '' ?>"
+                                            <div class="border border-gray-200 rounded-lg p-4  mb-3 announcement-item"
                                                 data-announcement-id="<?= htmlspecialchars($announcement['id']) ?>">
                                                 <div class="flex justify-between items-start w-full">
                                                     <div class="flex gap-2 items-center">
@@ -1220,11 +1219,11 @@ function getTimeAgo($datetime)
                                             </div>
                                         <?php endforeach; ?>
 
-                                        <?php if (count($recentAnnouncements) > 3): ?>
+                                        <?php if (count($generalAnnouncements) > 2): ?>
                                             <div class="text-center py-3">
                                                 <span class="text-blue-600 text-sm font-medium">
-                                                    +<?= count($recentAnnouncements) - 3 ?> more
-                                                    announcement<?= (count($recentAnnouncements) - 3) > 1 ? 's' : '' ?>
+                                                    +<?= count($generalAnnouncements) - 2 ?> more
+                                                    announcement<?= (count($generalAnnouncements) - 2) > 1 ? 's' : '' ?>
                                                 </span>
                                             </div>
                                         <?php endif; ?>

@@ -101,18 +101,45 @@ function loginUser($username, $password, $role) {
     $stmt = $pdo->prepare("SELECT * FROM $table WHERE username = ?");
     $stmt->execute([$username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
+    // Resident login lockout logic
+    if ($role === 'user' && $user) {
+        $now = new DateTime();
+        $lockedUntil = $user['account_locked_until'] ? new DateTime($user['account_locked_until']) : null;
+        $lastFailed = $user['last_failed_login'] ? new DateTime($user['last_failed_login']) : null;
+
+        // Reset failed attempts if last fail was over 15 min ago
+        if ($lastFailed && $now->getTimestamp() - $lastFailed->getTimestamp() > 900) {
+            $pdo->prepare("UPDATE sitio1_users SET failed_login_attempts = 0 WHERE id = ?")->execute([$user['id']]);
+            $user['failed_login_attempts'] = 0;
+        }
+
+        // If locked, check if lockout expired
+        if ($lockedUntil && $now < $lockedUntil) {
+            $minutes = ceil(($lockedUntil->getTimestamp() - $now->getTimestamp()) / 60);
+            return [
+                'locked' => true,
+                'minutes' => $minutes
+            ];
+        }
+    }
+
     if ($user && password_verify($password, $user['password'])) {
         // For staff accounts, check if they're active
         if ($role === 'staff' && isset($user['status']) && $user['status'] !== 'active') {
             return 'Your staff account is deactivated. Please contact an administrator.';
         }
-        
+
         // For regular users, check if they're approved
         if ($role === 'user' && !$user['approved']) {
             return 'Your account is pending approval by the Admin!';
         }
-        
+
+        // Reset failed attempts and lockout on successful login
+        if ($role === 'user') {
+            $pdo->prepare("UPDATE sitio1_users SET failed_login_attempts = 0, last_failed_login = NULL, account_locked_until = NULL WHERE id = ?")->execute([$user['id']]);
+        }
+
         $_SESSION['user'] = [
             'id' => $user['id'],
             'username' => $user['username'],
@@ -177,7 +204,31 @@ function loginUser($username, $password, $role) {
 
         return true;
     }
-    
+
+    // If failed login for resident, increment counter and lock if needed
+    if ($role === 'user' && $user) {
+        $now = new DateTime();
+        $failed = $user['failed_login_attempts'] + 1;
+        $update = [
+            'failed_login_attempts' => $failed,
+            'last_failed_login' => $now->format('Y-m-d H:i:s')
+        ];
+        $lockout = false;
+        if ($failed >= 5) {
+            $lockMinutes = 20;
+            $update['account_locked_until'] = $now->modify("+{$lockMinutes} minutes")->format('Y-m-d H:i:s');
+            $lockout = true;
+        }
+        $set = [];
+        foreach ($update as $k => $v) $set[] = "$k = " . $pdo->quote($v);
+        $pdo->exec("UPDATE sitio1_users SET ".implode(", ", $set)." WHERE id = " . intval($user['id']));
+        if ($lockout) {
+            return [
+                'locked' => true,
+                'minutes' => 20
+            ];
+        }
+    }
     return false;
 }
 ?>

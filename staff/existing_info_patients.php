@@ -4804,19 +4804,14 @@ style="border-radius: 4px;">
             <!-- Content -->
             <div class="flex-1 overflow-y-auto px-16">
                 <form method="POST" action="" id="patientForm" enctype="multipart/form-data">
-                    <!-- Personal Information -->
-                    <div class="bg-white my-10">
-                        <h3
-                            class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
-                            <svg width="42" height="38" viewBox="0 0 42 38" fill="none"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M0 2.06875C0.00381259 1.52162 0.222709 0.997953 0.609402 0.61087C0.996095 0.223787 1.51954 0.00436385 2.06667 0H39.6C40.7417 0 41.6667 0.927083 41.6667 2.06875V35.4312C41.6629 35.9784 41.444 36.502 41.0573 36.8891C40.6706 37.2762 40.1471 37.4956 39.6 37.5H2.06667C1.51836 37.4994 0.992702 37.2812 0.605186 36.8933C0.217671 36.5054 -2.78032e-07 35.9796 0 35.4312V2.06875ZM8.33333 25V29.1667H33.3333V25H8.33333ZM8.33333 8.33333V20.8333H20.8333V8.33333H8.33333ZM25 8.33333V12.5H33.3333V8.33333H25ZM25 16.6667V20.8333H33.3333V16.6667H25ZM12.5 12.5H16.6667V16.6667H12.5V12.5Z"
-                                    fill="#2563EB" />
+                    <!-- Step 1: Personal Information -->
+                    <div id="personalInfoStep" class="bg-white my-10">
+                        <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                            <svg width="42" height="38" viewBox="0 0 42 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M0 2.06875C0.00381259 1.52162 0.222709 0.997953 0.609402 0.61087C0.996095 0.223787 1.51954 0.00436385 2.06667 0H39.6C40.7417 0 41.6667 0.927083 41.6667 2.06875V35.4312C41.6629 35.9784 41.444 36.502 41.0573 36.8891C40.6706 37.2762 40.1471 37.4956 39.6 37.5H2.06667C1.51836 37.4994 0.992702 37.2812 0.605186 36.8933C0.217671 36.5054 -2.78032e-07 35.9796 0 35.4312V2.06875ZM8.33333 25V29.1667H33.3333V25H8.33333ZM8.33333 8.33333V20.8333H20.8333V8.33333H8.33333ZM25 8.33333V12.5H33.3333V8.33333H25ZM25 16.6667V20.8333H33.3333V16.6667H25ZM12.5 12.5H16.6667V16.6667H12.5V12.5Z" fill="#2563EB" />
                             </svg>
                             Personal Information
                         </h3>
-
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div>
                                 <label for="modal_full_name" class="block text-sm font-medium mb-2">
@@ -4963,10 +4958,13 @@ style="border-radius: 4px;">
                                     class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
                             </div>
                         </div>
+                        <div class="flex justify-end mt-8">
+                            <button type="button" id="nextToMedicalBtn" class="btn-primary px-8 py-3 rounded-full text-white font-medium shadow" disabled>Next</button>
+                        </div>
                     </div>
 
                     <!-- Medical Information -->
-                    <div class="bg-white">
+                    <div id="medicalInfoStep" class="bg-white" style="display:none;">
                         <h3
                             class="text-2xl border-b border-black-100 font-normal text-blue-700 gap-4 py-6 mb-6 flex items-center">
                             <svg width="42" height="42" viewBox="0 0 42 42" fill="none"
@@ -5137,6 +5135,59 @@ style="border-radius: 4px;">
     </div>
 
     <script>
+                // --- Stepper Logic for Add Patient Modal ---
+                document.addEventListener('DOMContentLoaded', function() {
+                    const personalStep = document.getElementById('personalInfoStep');
+                    const medicalStep = document.getElementById('medicalInfoStep');
+                    const nextBtn = document.getElementById('nextToMedicalBtn');
+                    // List all required personal info fields
+                    const requiredFields = [
+                        document.getElementById('modal_full_name'),
+                        document.getElementById('modal_date_of_birth'),
+                        document.getElementById('modal_gender'),
+                        document.getElementById('modal_address'),
+                        document.getElementById('modal_contact'),
+                    ];
+                    // Optional: Add civil status and sitio if present
+                    if (document.getElementById('modal_civil_status')) requiredFields.push(document.getElementById('modal_civil_status'));
+                    if (document.getElementById('modal_sitio')) requiredFields.push(document.getElementById('modal_sitio'));
+
+                    function validatePersonalFields() {
+                        return requiredFields.every(field => {
+                            if (!field) return true;
+                            if (field.tagName === 'SELECT') {
+                                return field.value && field.value !== '';
+                            }
+                            return field.value && field.value.trim() !== '';
+                        });
+                    }
+
+                    function updateNextBtnState() {
+                        nextBtn.disabled = !validatePersonalFields();
+                    }
+
+                    requiredFields.forEach(field => {
+                        if (!field) return;
+                        field.addEventListener('input', updateNextBtnState);
+                        field.addEventListener('change', updateNextBtnState);
+                    });
+
+                    nextBtn.addEventListener('click', function() {
+                        if (!validatePersonalFields()) return;
+                        personalStep.style.display = 'none';
+                        medicalStep.style.display = '';
+                    });
+
+                    // When modal opens, always reset to step 1
+                    window.openAddPatientModal = (function(origFn) {
+                        return function() {
+                            personalStep.style.display = '';
+                            medicalStep.style.display = 'none';
+                            nextBtn.disabled = true;
+                            if (typeof origFn === 'function') origFn();
+                        };
+                    })(window.openAddPatientModal);
+                });
         // Consultation Notes Variables
         let currentPatientId = null;
         let hasNotes = false;
