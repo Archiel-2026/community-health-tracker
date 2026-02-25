@@ -2315,7 +2315,7 @@ if (!empty($searchTerm)) {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 0.8rem;
+            gap: 8px;
             flex-grow: 1;
         }
 
@@ -2327,18 +2327,18 @@ if (!empty($searchTerm)) {
             height: 40px;
             border-radius: 50%;
             background: #fff;
-            color: #333;
+            color: #3498DB;
             font-weight: 500;
-            font-size: 1rem;
-            border: 1.5px solid #e0e0e0;
+            font-size: 1.1rem;
+            border: 1.5px solid #3498DB;
             margin: 0 2px;
             transition: background 0.2s, color 0.2s, border 0.2s;
             cursor: pointer;
         }
 
         .pagination-btn:hover:not(.active):not(:disabled) {
-            border-color: #3498db;
-            color: #3498db;
+            background: #3C96E14D;
+            border-color: #3C96E1;
         }
 
         .pagination-btn.active {
@@ -2357,9 +2357,8 @@ if (!empty($searchTerm)) {
         }
 
         .pagination-btn:disabled:hover {
-            background: #f5f5f5;
-            color: #bdbdbd;
-            border-color: #e0e0e0;
+            background: #3C96E14D;
+            border-color: #3C96E1;
         }
 
         .pagination-actions {
@@ -2561,7 +2560,7 @@ if (!empty($searchTerm)) {
         }
 
         .search-input {
-            border: 2px solid #55b2f0ff !important;
+            /* border: 2px solid #55b2f0ff !important; */
             background-color: white !important;
             transition: all 0.3s ease;
             /* border-radius: 10px !important; */
@@ -2573,10 +2572,10 @@ if (!empty($searchTerm)) {
             position: relative;
         }
 
-        .search-input:focus {
+        /* .search-input:focus {
             border-color: #84c0e9ff !important;
             box-shadow: 0 0 0 3px #8acdfaff;
-        }
+        } */
 
         .search-select {
             border: 2px solid #55b2f0ff !important;
@@ -2672,7 +2671,7 @@ if (!empty($searchTerm)) {
         .btn-edit,
         .btn-view-all,
         .btn-back-to-pagination,
-        .search-input,
+        /* .search-input, */
         .search-select {
             border-style: solid !important;
         }
@@ -3293,7 +3292,7 @@ if (!empty($searchTerm)) {
         }
 
         .patient-table th {
-            padding: 0.75rem 1rem;
+            padding: 0.75rem 0;
             text-align: left;
             font-weight: 600;
             font-size: 1.13rem;
@@ -3311,7 +3310,7 @@ if (!empty($searchTerm)) {
         } */
 
         .patient-table td {
-            padding: 1rem;
+            padding: 1rem 0;
             font-weight: 400;
             font-size: 1rem;
             color: #4B5563;

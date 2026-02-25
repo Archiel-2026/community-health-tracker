@@ -1288,7 +1288,7 @@ try {
                                         style="color: #FF5555;">*</span></label>
                                 <textarea name="message" required class="form-control mb-4"
                                     placeholder="Type your announcement message here..." maxlength="500"
-                                    rows="6" id="announcement-message"></textarea>
+                                    rows="13" id="announcement-message"></textarea>
                             </div>
 
                             <!-- Settings -->

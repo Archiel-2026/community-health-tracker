@@ -872,7 +872,7 @@ if (isset($_SESSION['user']['id'])) {
                         <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="logo-image">
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
-                            <div class="barangay-text">Barangay Luz</div>
+                            <div class="barangay-text mb-2">Barangay Luz</div>
                             <a href="/community-health-tracker/" class="main-title">Health Center Admin Panel</a>
                         </div>
                     </div>
@@ -914,7 +914,7 @@ if (isset($_SESSION['user']['id'])) {
 
                 <div class="bg-[#2B7CC9] py-2 md:py-3">
                     <div
-                        class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 admin-nav-container">
+                        class="px-8 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 admin-nav-container">
                         <div
                             class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
@@ -957,7 +957,15 @@ if (isset($_SESSION['user']['id'])) {
 
         <?php elseif (isStaff()): ?>
             <!-- Staff Header -->
-            <nav class="bg-[#3C96E1] text-white shadow-lg sticky top-0 z-50">
+             <style>
+                .bg-staff-primary {
+                    background-color: #9333EA;
+                }
+                .bg-staff-secondary {
+                    background-color: rgba(185, 143, 224, 0.15);
+                }
+             </style>
+            <nav class="bg-staff-primary border-b-2 text-white shadow-lg sticky top-0 z-50">
                 <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
@@ -970,13 +978,13 @@ if (isset($_SESSION['user']['id'])) {
                     </div>
 
                     <!-- Desktop Nav Content - Hidden on mobile and tablet -->
-                    <div class="hidden lg:block desktop-nav-content">
+                    <!-- <div class="hidden lg:block desktop-nav-content">
                         <ul class="flex flex-row space-x-12 font-light">
                             <li class="hover:text-[#F0F0F0] cursor-pointer">Terms & Conditions</li>
                             <li class="hover:text-[#F0F0F0] cursor-pointer">Contact Us</li>
                             <li class="hover:text-[#F0F0F0] cursor-pointer">Frequently Asked Questions</li>
                         </ul>
-                    </div>
+                    </div> -->
 
                     <div class="flex items-center space-x-4 md:space-x-10">
                         <div class="hidden md:flex items-center gap-4 user-nav-section">
@@ -1001,7 +1009,7 @@ if (isset($_SESSION['user']['id'])) {
                     </div>
                 </div>
 
-                <div class="bg-[#2B7CC9] py-2 md:py-3">
+                <div class="bg-staff-secondary py-2 md:py-3">
                     <div class="px-8 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 staff-nav-container">
                         <div
                             class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">

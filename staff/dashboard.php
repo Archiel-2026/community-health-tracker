@@ -943,16 +943,16 @@ $recordsPerPage = 5;
             font-weight: 500;
             font-size: 14px;
             transition: all 0.3s ease;
-            border: 1px solid #d1d5db;
+            border: 1px solid #3498DB;
             background: white;
-            color: #374151;
+            color: #3498DB;
             text-decoration: none;
         }
 
         .pagination-button:hover {
-            background: #3C96E1;
+            background: #3C96E14D;
             border-color: #3C96E1;
-            transform: translateY(-1px);
+            /* transform: translateY(-1px); */
         }
 
         .pagination-button.active {
@@ -1218,7 +1218,7 @@ $recordsPerPage = 5;
         <!-- Dashboard Header -->
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-semibold text-gray-700 flex items-center">
-                Admin Dashboard
+                Staff Dashboard
             </h1>
         </div>
 
@@ -2103,7 +2103,7 @@ $recordsPerPage = 5;
                         <table class="min-w-full">
                             <thead>
                                 <tr>
-                                    <th class="py-3 px-4 text-left text-lg font-semibold text-gray-600">
+                                    <th class="py-3 text-left text-lg font-semibold text-gray-600">
                                         Patient ID</th>
                                     <th class="py-3 px-4 text-left text-lg font-semibold text-gray-600">
                                         Full Name</th>
@@ -2131,7 +2131,7 @@ $recordsPerPage = 5;
                                         }
                                     </style>
                                     <tr class="hover:bg-gray-50 transition">
-                                        <td class="py-3 px-4 border-b border-gray-200">
+                                        <td class="py-3 border-b border-gray-200">
                                             <span class="font-mono text-base font-semibold text-blue-600">
                                                 <?= htmlspecialchars($user['unique_number'] ?? 'N/A') ?>
                                             </span>
@@ -2217,9 +2217,9 @@ $recordsPerPage = 5;
                                     $pageUrl .= "&sort=" . urlencode($sortOrder);
                                 ?>
                                 <?php if ($i == $currentPage): ?>
-                                    <span class="pagination-button active" style="font-size: 1.1rem; margin: 0 2px;"><?= $i ?></span>
+                                    <span class="pagination-button active" style="font-size: 1.1rem;"><?= $i ?></span>
                                 <?php else: ?>
-                                    <a href="<?= $pageUrl ?>" class="pagination-button" style="font-size: 1.1rem; margin: 0 2px;"><?= $i ?></a>
+                                    <a href="<?= $pageUrl ?>" class="pagination-button" style="font-size: 1.1rem;"><?= $i ?></a>
                                 <?php endif; ?>
                             <?php endfor; ?>
 
@@ -3487,11 +3487,11 @@ $recordsPerPage = 5;
                                     </td>
                                     <td class="py-3 border-b">
                                         ${log.export_type === 'bulk_patient_records' ? (log.action_type === 'export_bulk_pdf' ? `
-                                        <span class="px-4 py-1 text-lg font-bold rounded-full text-red-600 inline-block" style="min-width:60px;text-align:center;">
+                                        <span class="px-4 py-1 text-lg font-bold rounded-md text-red-600 bg-red-200 inline-block" style="min-width:60px;text-align:center; ">
                                             PDF
                                         </span>`
                                 :
-                                `<span class="px-4 py-1 text-lg font-bold rounded-full bg-green-200 text-green-600 inline-block" style="min-width:60px;text-align:center;">
+                                `<span class="px-4 py-1 text-lg font-bold rounded-md bg-green-200 text-green-600 inline-block" style="min-width:60px;text-align:center;">
                                             Excel
                                         </span>`
                             ) : (log.export_type || log.action_type)
@@ -3503,11 +3503,11 @@ $recordsPerPage = 5;
                     // Pagination controls
                     const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
                     if (totalPages > 1) {
-                        html += `<div class='flex items-center justify-center mt-2 gap-1'>`;
+                        html += `<div class='flex items-center justify-center mt-2 gap-2'>`;
 
                         // Previous button
-                        html += `<button 
-                            class='pagination-btn mx-1 w-8 h-8 flex items-center justify-center rounded-full border border-blue-500 bg-white text-blue-500 hover:bg-blue-100 transition ${page === 1 ? "opacity-50 cursor-not-allowed" : ""}'
+                        html += `<button style="font-size: 1.1rem; margin: 0 4px;"
+                            class='mx-1 w-10 h-10 flex items-center justify-center rounded-full border border-blue-500 bg-white hover:bg-blue-100 transition ${page === 1 ? "opacity-50 cursor-not-allowed" : ""}'
                             onclick='window._renderReportLogsPage(${page - 1})'
                             ${page === 1 ? 'disabled' : ''}>
                             <i class="fas fa-chevron-left text-base"></i>
@@ -3515,16 +3515,16 @@ $recordsPerPage = 5;
 
                         for (let i = 1; i <= totalPages; i++) {
                             html += `
-                                <button 
-                                    class='pagination-btn mx-0.5 w-8 h-8 flex items-center justify-center rounded-full border border-blue-500 text-sm font-semibold transition ${i === page ? "bg-blue-500 text-white" : "bg-white text-blue-500 hover:bg-blue-100"}'
+                                <button style="font-size: 1.1rem;"
+                                    class='mx-0.5 w-10 h-10 flex items-center justify-center rounded-full border border-blue-500 text-sm font-medium transition ${i === page ? "bg-blue-500 text-white" : "bg-white text-blue-500 hover:bg-blue-100"}'
                                     onclick='window._renderReportLogsPage(${i})'>
                                     ${i}
                                 </button>`;
                         }
 
                         // Next button
-                        html += `<button 
-                            class='pagination-btn mx-1 w-8 h-8 flex items-center justify-center rounded-full border border-blue-500 bg-white text-blue-500 hover:bg-blue-100 transition ${page === totalPages ? "opacity-50 cursor-not-allowed" : ""}'
+                        html += `<button style="font-size: 1.1rem; margin: 0 4px;"
+                            class='mx-1 w-10 h-10 flex items-center justify-center rounded-full border border-blue-500 bg-white text-blue-500 hover:bg-blue-100 transition ${page === totalPages ? "opacity-50 cursor-not-allowed" : ""}'
                             onclick='window._renderReportLogsPage(${page + 1})'
                             ${page === totalPages ? 'disabled' : ''}>
                             <i class="fas fa-chevron-right text-base"></i>
