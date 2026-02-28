@@ -280,76 +280,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['post_announcement'])
     if ($audience_type === 'specific' && empty($target_users)) {
         $error = 'Please select at least one user for specific announcement.';
     } elseif (!empty($title) && !empty($message)) {
-        // Handle image upload
-        $image_path = null;
-        if (isset($_FILES['announcement_image']) && $_FILES['announcement_image']['error'] === UPLOAD_ERR_OK) {
-            $upload_dir = __DIR__ . '/../uploads/announcements/';
-            if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
-
-            $file_extension = pathinfo($_FILES['announcement_image']['name'], PATHINFO_EXTENSION);
-            $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
-
-            if (in_array(strtolower($file_extension), $allowed_ext)) {
-                $file_name = uniqid() . '.' . $file_extension;
-                $file_path = $upload_dir . $file_name;
-
-                if (move_uploaded_file($_FILES['announcement_image']['tmp_name'], $file_path)) {
-                    $image_path = '/community-health-tracker/uploads/announcements/' . $file_name;
+        // Prevent duplicate announcement (active only)
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_announcements WHERE title = ? AND message = ? AND status = 'active'");
+        $stmt->execute([$title, $message]);
+        $duplicateCount = $stmt->fetchColumn();
+        if ($duplicateCount > 0) {
+            $error = 'Duplicate announcement: An active announcement with the same title and message already exists.';
+        } else {
+            // Handle image upload
+            $image_path = null;
+            if (isset($_FILES['announcement_image']) && $_FILES['announcement_image']['error'] === UPLOAD_ERR_OK) {
+                $upload_dir = __DIR__ . '/../uploads/announcements/';
+                if (!file_exists($upload_dir)) {
+                    mkdir($upload_dir, 0777, true);
                 }
-            }
-        }
 
-        try {
-            $stmt = $pdo->prepare("INSERT INTO sitio1_announcements 
-                                  (staff_id, title, message, priority, expiry_date, status, audience_type, image_path, post_date, announcement_type) 
-                                  VALUES (?, ?, ?, ?, ?, 'active', ?, ?, NOW(), ?)");
-            $stmt->execute([$staffId, $title, $message, $priority, $expiry_date, $audience_type, $image_path, $announcement_type]);
+                $file_extension = pathinfo($_FILES['announcement_image']['name'], PATHINFO_EXTENSION);
+                $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
 
-            $announcementId = $pdo->lastInsertId();
+                if (in_array(strtolower($file_extension), $allowed_ext)) {
+                    $file_name = uniqid() . '.' . $file_extension;
+                    $file_path = $upload_dir . $file_name;
 
-            // Handle target users if specific audience
-            if ($audience_type === 'specific' && !empty($target_users)) {
-                foreach ($target_users as $userId) {
-                    $stmt = $pdo->prepare("INSERT INTO announcement_targets (announcement_id, user_id) VALUES (?, ?)");
-                    $stmt->execute([$announcementId, $userId]);
-                    // Get user email and name
-                    $stmtUser = $pdo->prepare("SELECT email, full_name FROM sitio1_users WHERE id = ? AND approved = TRUE");
-                    $stmtUser->execute([$userId]);
-                    $userInfo = $stmtUser->fetch(PDO::FETCH_ASSOC);
-                    if ($userInfo && !empty($userInfo['email'])) {
-                        sendAnnouncementEmail($userInfo['email'], $userInfo['full_name'], $title, $message, $announcement_type, $image_path);
+                    if (move_uploaded_file($_FILES['announcement_image']['tmp_name'], $file_path)) {
+                        $image_path = '/community-health-tracker/uploads/announcements/' . $file_name;
                     }
                 }
-                createTargetedAnnouncementNotification($announcementId, $title, $target_users);
-                $success = ($announcement_type === 'lab_result') ? 'Lab Result sent to ' . count($target_users) . ' user(s) successfully!' : 'Message sent to ' . count($target_users) . ' user(s) successfully!';
-            } elseif ($audience_type === 'public') {
-                createAnnouncementNotification($announcementId, $title);
-                // Send email to all approved users
-                $stmtAll = $pdo->prepare("SELECT email, full_name FROM sitio1_users WHERE approved = TRUE AND email IS NOT NULL AND email != ''");
-                $stmtAll->execute();
-                $allUserInfos = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
-                $sentCount = 0;
-                foreach ($allUserInfos as $userInfo) {
-                    if (!empty($userInfo['email'])) {
-                        if (sendAnnouncementEmail($userInfo['email'], $userInfo['full_name'], $title, $message, $announcement_type, $image_path)) {
-                            $sentCount++;
+            }
+
+            try {
+                $stmt = $pdo->prepare("INSERT INTO sitio1_announcements 
+                                      (staff_id, title, message, priority, expiry_date, status, audience_type, image_path, post_date, announcement_type) 
+                                      VALUES (?, ?, ?, ?, ?, 'active', ?, ?, NOW(), ?)");
+                $stmt->execute([$staffId, $title, $message, $priority, $expiry_date, $audience_type, $image_path, $announcement_type]);
+
+                $announcementId = $pdo->lastInsertId();
+
+                // Handle target users if specific audience
+                if ($audience_type === 'specific' && !empty($target_users)) {
+                    foreach ($target_users as $userId) {
+                        $stmt = $pdo->prepare("INSERT INTO announcement_targets (announcement_id, user_id) VALUES (?, ?)");
+                        $stmt->execute([$announcementId, $userId]);
+                        // Get user email and name
+                        $stmtUser = $pdo->prepare("SELECT email, full_name FROM sitio1_users WHERE id = ? AND approved = TRUE");
+                        $stmtUser->execute([$userId]);
+                        $userInfo = $stmtUser->fetch(PDO::FETCH_ASSOC);
+                        if ($userInfo && !empty($userInfo['email'])) {
+                            sendAnnouncementEmail($userInfo['email'], $userInfo['full_name'], $title, $message, $announcement_type, $image_path);
                         }
                     }
+                    createTargetedAnnouncementNotification($announcementId, $title, $target_users);
+                    $success = ($announcement_type === 'lab_result') ? 'Lab Result sent to ' . count($target_users) . ' user(s) successfully!' : 'Message sent to ' . count($target_users) . ' user(s) successfully!';
+                } elseif ($audience_type === 'public') {
+                    createAnnouncementNotification($announcementId, $title);
+                    // Send email to all approved users
+                    $stmtAll = $pdo->prepare("SELECT email, full_name FROM sitio1_users WHERE approved = TRUE AND email IS NOT NULL AND email != ''");
+                    $stmtAll->execute();
+                    $allUserInfos = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
+                    $sentCount = 0;
+                    foreach ($allUserInfos as $userInfo) {
+                        if (!empty($userInfo['email'])) {
+                            if (sendAnnouncementEmail($userInfo['email'], $userInfo['full_name'], $title, $message, $announcement_type, $image_path)) {
+                                $sentCount++;
+                            }
+                        }
+                    }
+                    $success = 'Message broadcasted to all users successfully! Email sent to ' . $sentCount . ' user(s).';
+                } else {
+                    // For landing_page announcements, no notifications needed
+                    $success = 'Landing page announcement published successfully!';
                 }
-                $success = 'Message broadcasted to all users successfully! Email sent to ' . $sentCount . ' user(s).';
-            } else {
-                // For landing_page announcements, no notifications needed
-                $success = 'Landing page announcement published successfully!';
-            }
 
-            // Prevent duplicate POST on refresh: redirect to same page with success message
-            $_SESSION['announcement_success'] = $success;
-            header('Location: ' . $_SERVER['REQUEST_URI']);
-            exit();
-        } catch (PDOException $e) {
-            $error = 'Error sending message: ' . $e->getMessage();
+                // Prevent duplicate POST on refresh: redirect to same page with success message
+                $_SESSION['announcement_success'] = $success;
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit();
+            } catch (PDOException $e) {
+                $error = 'Error sending message: ' . $e->getMessage();
+            }
         }
     } else {
         $error = 'Please fill in all required fields.';
@@ -473,6 +481,7 @@ try {
             $announcement['target_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
     }
+    unset($announcement);
 } catch (PDOException $e) {
     $error = 'Error fetching messages: ' . $e->getMessage();
 }
@@ -1295,12 +1304,19 @@ try {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="form-group">
                                     <label class="form-label">Priority <span style="color: #FF5555;">*</span></label>
-                                    <select name="priority" class="form-control">
-                                        <option value="">Select Priority</option>
-                                        <option value="normal">Normal</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                    </select>
+                                        <div class="relative">
+                                            <select name="priority" class="form-control appearance-none w-full text-lg flex items-center justify-center border border-blue-300 rounded-lg py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                                <option value="">Select Priority</option>
+                                                <option value="normal">Normal</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="high">High</option>
+                                            </select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-5">
+                                                <svg class="h-6 w-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6" />
+                                                </svg>
+                                            </div>
+                                        </div>
                                 </div>
 
                                 <div class="form-group">
@@ -1527,14 +1543,7 @@ try {
                             <?php $activeCount = 0; ?>
                             <?php
                             $activeCount = 0;
-                            $seenAnnouncements = [];
                             foreach ($activeAnnouncements as $announcement) {
-                                // Use title and content as a unique key
-                                $uniqueKey = md5($announcement['title'] . (isset($announcement['content']) ? $announcement['content'] : ''));
-                                if (in_array($uniqueKey, $seenAnnouncements)) {
-                                    continue; // skip duplicate
-                                }
-                                $seenAnnouncements[] = $uniqueKey;
                                 if ($activeCount < 3) {
                                     $activeCount++;
                             ?>
@@ -1729,11 +1738,18 @@ try {
 
                             <div class="form-group">
                                 <label class="form-label">Priority</label>
-                                <select name="priority" id="edit-priority" class="form-control">
-                                    <option value="normal">Normal</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                </select>
+                                <div class="relative">
+                                    <select name="priority" id="edit-priority" class="form-control appearance-none w-full text-lg flex items-center justify-center border border-blue-300 rounded-lg py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                        <option value="normal">Normal</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-5">
+                                        <svg class="h-6 w-6 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9l6 6 6-6" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-group">
