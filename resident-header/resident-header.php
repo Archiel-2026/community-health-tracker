@@ -144,11 +144,7 @@
                         </a>
                     </div>
 
-                    <!-- Appointments -->
-                    <div class="div">
-                        <a href="/community-health-tracker/admin/appointments.php">
-                            <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="22.000000pt" height="24.000000pt"
-                                viewBox="0 0 22.000000 24.000000" preserveAspectRatio="xMidYMid meet">
+                    <!-- ...existing code... -->
                                 <g transform="translate(0.000000,24.000000) scale(0.100000,-0.100000)" fill="#FC566C"
                                     stroke="none">
                                     <path
@@ -221,7 +217,7 @@
                     <li><a href="/community-health-tracker/staff/manage_accounts.php" class="hover:bg-red-800 px-3 py-1 rounded">Manage Accounts</a></li>
                     <li><a href="/community-health-tracker/staff/existing_info_patients.php" class="hover:bg-red-800 px-3 py-1 rounded">Progress Tracker</a></li>
                     <li><a href="/community-health-tracker/staff/announcements.php" class="hover:bg-red-800 px-3 py-1 rounded">Announcements</a></li>
-                    <li><a href="/community-health-tracker/staff/appointments.php" class="hover:bg-red-800 px-3 py-1 rounded">Appointments</a></li>
+                    <!-- ...existing code... -->
                 </ul>
             </div>
         </div>
@@ -271,8 +267,7 @@
                 <ul class="flex space-x-6">
                     <li><a href="/community-health-tracker/user/dashboard.php"
                             class="hover:bg-purple-800 px-3 py-1 rounded">Dashboard</a></li>
-                    <li><a href="/community-health-tracker/user/appointments.php"
-                            class="hover:bg-purple-800 px-3 py-1 rounded">Appointments</a></li>
+                        <!-- ...existing code... -->
                     <li><a href="/community-health-tracker/user/health_records.php"
                             class="hover:bg-purple-800 px-3 py-1 rounded">My Record</a></li>
                     <li><a href="/community-health-tracker/user/announcements.php"
@@ -318,10 +313,7 @@
                     class="block px-6 py-4 hover:bg-purple-700 transition-colors">
                     <i class="fas fa-home mr-3"></i>Dashboard
                 </a></li>
-            <li><a href="/community-health-tracker/user/appointments.php"
-                    class="block px-6 py-4 hover:bg-purple-700 transition-colors">
-                    <i class="fas fa-calendar mr-3"></i>Appointments
-                </a></li>
+            <!-- ...existing code... -->
             <li><a href="/community-health-tracker/user/health_records.php"
                     class="block px-6 py-4 hover:bg-purple-700 transition-colors">
                     <i class="fas fa-file-medical mr-3"></i>My Records
@@ -380,8 +372,7 @@
             <div class="flex items-center space-x-4">
                 <a href="#" onclick="openModal()"
                     class="bg-[#FC566C] text-white hover:bg-[#f1233f] px-4 py-2 rounded-lg transition">
-                    Book Appointment
-                </a>
+                    <!-- ...existing code... -->
             </div>
 
             <div id="loginModal"

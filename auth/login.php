@@ -27,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <!-- Tailwind CSS - Offline Local Build -->
             <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
             <style>
                 body {
@@ -35,55 +34,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     padding: 0;
                     min-height: 100vh;
                     width: 100%;
-                    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-                                url('https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
-                    background-size: cover;
-                    background-position: center;
-                    background-repeat: no-repeat;
-                    background-attachment: fixed;
+                    background: #fff;
                 }
-                @keyframes fadeIn {
-                    from { 
-                        opacity: 0; 
-                        transform: translateY(20px) scale(0.95); 
+                .center-modal {
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .warning-icon {
+                    color: #FACC15;
+                    font-size: 3rem;
+                }
+                .pulsing-circle {
+                    display: inline-block;
+                    width: 2.5rem;
+                    height: 2.5rem;
+                    border-radius: 9999px;
+                    opacity: 0.8;
+                    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                }
+                .pulsing-yellow {
+                    background-color: #FACC15;
+                }
+                .pulsing-blue {
+                    background-color: #38BDF8;
+                }
+                @keyframes pulse {
+                    0%, 100% {
+                        transform: scale(1);
+                        opacity: 0.8;
                     }
-                    to { 
-                        opacity: 1; 
-                        transform: translateY(0) scale(1); 
+                    50% {
+                        transform: scale(1.3);
+                        opacity: 0.4;
                     }
-                }
-                .animate-fade-in {
-                    animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-                .animate-spin {
-                    animation: spin 1s linear infinite;
                 }
             </style>
         </head>
         <body>
-            <div class="fixed inset-0 flex items-center justify-center p-4">
-                <div class="relative bg-white/90 backdrop-blur-sm rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 animate-fade-in">
-                    <div class="flex flex-col items-center text-center">
-                        <!-- Error Spinner -->
-                        <div class="relative w-20 h-20 mb-6">
-                            <div class="absolute inset-0 rounded-full border-4 border-red-100"></div>
-                            <div class="absolute inset-0 rounded-full border-4 border-red-400 border-t-transparent animate-spin"></div>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+            <div class="center-modal">
+                <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 text-center">
+                    <div class="flex flex-col items-center">
+                        <div class="mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="warning-icon mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-2.5L13.73 4c-.77-.83-1.96-.83-2.73 0L3.34 16.5c-.77.83.19 2.5 1.73 2.5z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">You have input Invalid and Password</h3>
+                        <p class="text-gray-500 mb-6">Please input valid username and password</p>
+                        <div class="flex flex-col items-center w-full">
+                            <div class="w-full flex justify-center">
+                                <span class="pulsing-circle pulsing-yellow"></span>
                             </div>
                         </div>
-                        
-                        <!-- Title -->
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-3">Missing Information</h3>
-                        
-                        <!-- Instruction -->
-                        <p class="text-gray-600 text-lg">Please fill in all fields</p>
                     </div>
                 </div>
             </div>
@@ -111,7 +115,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
-        </head>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 0;
+                    min-height: 100vh;
+                    width: 100%;
+                    background: #fff;
+                }
+                .center-modal {
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .warning-icon {
+                    color: #FACC15;
+                    font-size: 3rem;
+                }
+                .pulsing-circle {
+                    display: inline-block;
+                    width: 2.5rem;
+                    height: 2.5rem;
+                    border-radius: 9999px;
+                    opacity: 0.8;
+                    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                }
+                .pulsing-yellow {
+                    background-color: #FACC15;
+                }
+                .pulsing-blue {
+                    background-color: #38BDF8;
+                }
+                @keyframes pulse {
+                    0%, 100% {
+                        transform: scale(1);
+                        opacity: 0.8;
+                    }
+                    50% {
+                        transform: scale(1.3);
+                        opacity: 0.4;
+                    }
+                }
+            </style>
         <body>
             <div class="fixed inset-0 flex items-center justify-center p-4">
                 <div class="relative bg-white/90 backdrop-blur-sm rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 animate-fade-in">
@@ -127,6 +173,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <h3 class="text-2xl font-semibold text-gray-800 mb-3">Account Locked</h3>
                         <p class="text-gray-600 text-lg">Your account has been temporarily locked for {$minutes} minutes due to multiple failed login attempts.<br>Please try again later or contact your barangay health center administrator.</p>
+                                            <button onclick="window.location.href='../index.php'" class="mt-6 flex items-center px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white font-semibold rounded-lg shadow transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#FACC15" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                                </svg>
+                                                <span class="text-black text-base font-sm">Back to Home</span>
+                                            </button>
                     </div>
                 </div>
             </div>
@@ -143,7 +195,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <!-- Tailwind CSS - Offline Local Build -->
             <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
             <style>
                 body {
@@ -151,55 +202,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     padding: 0;
                     min-height: 100vh;
                     width: 100%;
-                    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-                                url('/community-health-tracker/asssets/images/Dev.jpg');
-                    background-size: cover;
-                    background-position: center;
-                    background-repeat: no-repeat;
-                    background-attachment: fixed;
+                    background: #fff;
                 }
-                @keyframes fadeIn {
-                    from { 
-                        opacity: 0; 
-                        transform: translateY(20px) scale(0.95); 
+                .center-modal {
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .success-icon {
+                    color: #38BDF8;
+                    font-size: 3rem;
+                }
+                .pulsing-circle {
+                    display: inline-block;
+                    width: 2.5rem;
+                    height: 2.5rem;
+                    border-radius: 9999px;
+                    opacity: 0.8;
+                    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                }
+                .pulsing-yellow {
+                    background-color: #FACC15;
+                }
+                .pulsing-blue {
+                    background-color: #38BDF8;
+                }
+                @keyframes pulse {
+                    0%, 100% {
+                        transform: scale(1);
+                        opacity: 0.8;
                     }
-                    to { 
-                        opacity: 1; 
-                        transform: translateY(0) scale(1); 
+                    50% {
+                        transform: scale(1.3);
+                        opacity: 0.4;
                     }
-                }
-                .animate-fade-in {
-                    animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-                .animate-spin {
-                    animation: spin 1s linear infinite;
                 }
             </style>
         </head>
         <body>
-            <div class="fixed inset-0 flex items-center justify-center p-4">
-                <div class="relative bg-white/90 backdrop-blur-sm rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 animate-fade-in">
-                    <div class="flex flex-col items-center text-center">
-                        <!-- Success Spinner -->
-                        <div class="relative w-20 h-20 mb-6">
-                            <div class="absolute inset-0 rounded-full border-4 border-blue-100"></div>
-                            <div class="absolute inset-0 rounded-full border-4 border-blue-400 border-t-transparent animate-spin"></div>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
+            <div class="center-modal">
+                <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 text-center">
+                    <div class="flex flex-col items-center">
+                        <div class="mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="success-icon mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">You've successfully signed in.</h3>
+                        <p class="text-gray-500 mb-6">Taking you to your dashboard…</p>
+                        <div class="flex flex-col items-center w-full">
+                            <div class="w-full flex justify-center">
+                                <span class="pulsing-circle pulsing-blue"></span>
                             </div>
                         </div>
-                        
-                        <!-- Title -->
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-3">You've successfully signed in.</h3>
-                        
-                        <!-- Instruction -->
-                        <p class="text-gray-600 text-lg">Taking you to your dashboard…</p>
                     </div>
                 </div>
             </div>
@@ -213,13 +269,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         HTML;
         exit();
     } else {
+        // Fetch failed attempts for this user
+        $failedAttempts = 0;
+        if ($role === 'user' && !empty($username)) {
+            $stmt = $pdo->prepare("SELECT failed_login_attempts FROM sitio1_users WHERE username = ? LIMIT 1");
+            $stmt->execute([$username]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && isset($row['failed_login_attempts'])) {
+                $failedAttempts = (int)$row['failed_login_attempts'];
+            }
+        }
         echo <<<HTML
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <!-- Tailwind CSS - Offline Local Build -->
             <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
             <style>
                 body {
@@ -227,55 +292,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     padding: 0;
                     min-height: 100vh;
                     width: 100%;
-                    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-                                url('/community-health-tracker/assets/images/Dev.jpg');
-                    background-size: cover;
-                    background-position: center;
-                    background-repeat: no-repeat;
-                    background-attachment: fixed;
+                    background: #fff;
                 }
-                @keyframes fadeIn {
-                    from { 
-                        opacity: 0; 
-                        transform: translateY(20px) scale(0.95); 
+                .center-modal {
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .warning-icon {
+                    color: #FACC15;
+                    font-size: 3rem;
+                }
+                .pulsing-circle {
+                    display: inline-block;
+                    width: 2.5rem;
+                    height: 2.5rem;
+                    border-radius: 9999px;
+                    opacity: 0.8;
+                    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                }
+                .pulsing-yellow {
+                    background-color: #FACC15;
+                }
+                .pulsing-blue {
+                    background-color: #38BDF8;
+                }
+                @keyframes pulse {
+                    0%, 100% {
+                        transform: scale(1);
+                        opacity: 0.8;
                     }
-                    to { 
-                        opacity: 1; 
-                        transform: translateY(0) scale(1); 
+                    50% {
+                        transform: scale(1.3);
+                        opacity: 0.4;
                     }
-                }
-                .animate-fade-in {
-                    animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-                .animate-spin {
-                    animation: spin 1s linear infinite;
                 }
             </style>
         </head>
         <body>
-            <div class="fixed inset-0 flex items-center justify-center p-4">
-                <div class="relative bg-white/90 backdrop-blur-sm rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 animate-fade-in">
-                    <div class="flex flex-col items-center text-center">
-                        <!-- Error Spinner -->
-                        <div class="relative w-20 h-20 mb-6">
-                            <div class="absolute inset-0 rounded-full border-4 border-red-100"></div>
-                            <div class="absolute inset-0 rounded-full border-4 border-red-400 border-t-transparent animate-spin"></div>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                </svg>
+            <div class="center-modal">
+                <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 text-center">
+                    <div class="flex flex-col items-center">
+                        <div class="mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="warning-icon mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-2.5L13.73 4c-.77-.83-1.96-.83-2.73 0L3.34 16.5c-.77.83.19 2.5 1.73 2.5z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">You have input Invalid and Password</h3>
+                        <p class="text-gray-500 mb-2">Please input valid username and password</p>
+                        <p class="text-red-500 font-semibold mb-4">Attempts: {$failedAttempts} / 5</p>
+                        <div class="flex flex-col items-center w-full">
+                            <div class="w-full flex justify-center">
+                                <span class="pulsing-circle pulsing-yellow"></span>
                             </div>
                         </div>
-                        
-                        <!-- Title -->
-                        <h3 class="text-2xl font-semibold text-gray-800 mb-3">Invalid Credentials</h3>
-                        
-                        <!-- Instruction -->
-                        <p class="text-gray-600 text-lg">Please check your username and password</p>
                     </div>
                 </div>
             </div>

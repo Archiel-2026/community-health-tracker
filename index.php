@@ -658,43 +658,86 @@ try {
                 
                 <!-- Quick Info Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 grid-spacing">
-                    <div class="info-card card-hover">
-                        <div class="flex items-start space-x-4">
-                            <div class="bg-blue-100 p-3 rounded-lg">
-                                <i class="fas fa-map-marker-alt text-blue-600"></i>
+                    <!-- Location Card - matches provided image -->
+                    <div class="rounded-2xl overflow-hidden shadow bg-white border border-blue-100 flex flex-col" style="min-width:280px;">
+                        <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30">
+                                    <i class="fas fa-map-marker-alt text-white text-lg"></i>
+                                </span>
+                                <span class="text-white font-semibold text-lg">Location</span>
                             </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900 mb-2">Location</h3>
-                                <p class="text-gray-600">Barangay Luz, Cebu City</p>
-                                <p class="text-gray-500 text-sm mt-1">Near Luz Elementary School</p>
+                            <span class="bg-green-100 text-green-700 text-xs font-semibold px-4 py-1 rounded-full">Active</span>
+                        </div>
+                        <div class="px-6 pt-4 pb-6 flex-1 flex flex-col">
+                            <div class="font-semibold text-gray-800 text-base mb-0.5">Barangay Luz, Cebu City</div>
+                            <div class="text-gray-400 text-sm mb-3">Near Luz Elementary School</div>
+                            <div class="rounded-lg overflow-hidden border border-gray-200 mb-4" style="min-height:110px;max-height:160px;">
+                                <iframe
+                                    src="https://www.google.com/maps?q=Barangay+Luz,+Cebu+City&output=embed"
+                                    width="100%" height="120" style="border:0; min-width:100%; min-height:110px; max-height:160px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            </div>
+                            <div class="flex gap-2 mt-auto">
+                                <a href="https://www.google.com/maps/place/Barangay+Luz,+Cebu+City" target="_blank" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Location</a>
+                                <a href="https://goo.gl/maps/2w8kQw8kQw8kQw8k8" target="_blank" class="bg-white hover:bg-blue-50 text-[#2563eb] text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">Google Map</a>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="info-card card-hover">
-                        <div class="flex items-start space-x-4">
-                            <div class="bg-blue-100 p-3 rounded-lg">
-                                <i class="fas fa-clock text-blue-600"></i>
+                    <!-- Redesigned Availability Card -->
+                    <!-- Availability Card - matches provided image -->
+                    <div class="rounded-2xl overflow-hidden shadow bg-white border border-blue-100 flex flex-col" style="min-width:240px;">
+                        <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30">
+                                    <i class="fas fa-clock text-white text-lg"></i>
+                                </span>
+                                <span class="text-white font-semibold text-lg">Availability</span>
                             </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900 mb-2">Operating Hours</h3>
-                                <p class="text-gray-600">Mon-Fri: 8:00 AM - 5:00 PM</p>
-                                <p class="text-gray-600">Saturday: 8:00 AM - 12:00 PM</p>
-                                <p class="text-gray-500 text-sm mt-1">Emergency: 24/7</p>
+                            <span class="bg-green-100 text-green-700 text-xs font-semibold px-4 py-1 rounded-full">Open Now</span>
+                        </div>
+                        <div class="px-6 pt-4 pb-6 flex-1 flex flex-col">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i class="fas fa-map-marker-alt text-[#4A90E2] text-base"></i>
+                                <span class="font-semibold text-gray-800 text-base">Barangay Luz, Cebu City</span>
+                            </div>
+                            <div class="text-gray-400 text-sm mb-1">Office Hours :</div>
+                            <div class="text-gray-700 text-sm mb-1">Monday–Friday, 8:00 AM – 5:00 PM</div>
+                            <div class="text-gray-400 text-sm mb-1">Emergency Contact :</div>
+                            <div class="text-gray-700 text-sm mb-1">4357-344-45</div>
+                            <div class="text-gray-400 text-sm mb-1">Contact Person :</div>
+                            <div class="text-gray-700 text-sm mb-4">Maria Santos</div>
+                            <div class="flex gap-2 mt-auto">
+                                <a href="#" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Details</a>
+                                <a href="#" class="bg-white hover:bg-blue-50 text-[#2563eb] text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">More Information</a>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="info-card card-hover">
-                        <div class="flex items-start space-x-4">
-                            <div class="bg-blue-100 p-3 rounded-lg">
-                                <i class="fas fa-phone text-blue-600"></i>
+                    <!-- Redesigned Contact Card -->
+                    <!-- Contact Card - matches provided image -->
+                    <div class="rounded-2xl overflow-hidden shadow bg-white border border-blue-100 flex flex-col" style="min-width:240px;">
+                        <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30">
+                                    <i class="fas fa-paper-plane text-white text-lg"></i>
+                                </span>
+                                <span class="text-white font-semibold text-lg">Contact</span>
                             </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900 mb-2">Contact</h3>
-                                <p class="text-gray-600">(032) 123-4567</p>
-                                <p class="text-gray-600">0917-123-4567</p>
-                                <p class="text-gray-500 text-sm mt-1">healthcenter@barangayluz.gov.ph</p>
+                            <span class="bg-green-100 text-green-700 text-xs font-semibold px-4 py-1 rounded-full">Active</span>
+                        </div>
+                        <div class="px-6 pt-4 pb-6 flex-1 flex flex-col">
+                            <div class="flex items-center gap-2 mb-1">
+                                <i class="fas fa-map-marker-alt text-[#4A90E2] text-base"></i>
+                                <span class="font-semibold text-gray-800 text-base">Barangay Luz, Cebu City</span>
+                            </div>
+                            <div class="text-gray-400 text-sm mb-1">Landline :</div>
+                            <div class="text-gray-700 text-base font-medium mb-1">(032) 123-4567</div>
+                            <div class="text-gray-400 text-sm mb-1">Mobile Number :</div>
+                            <div class="text-gray-700 text-base font-medium mb-1">0917-123-4567</div>
+                            <div class="text-gray-400 text-sm mb-1">Official Email Address :</div>
+                            <div class="text-gray-700 text-base font-medium mb-4">healthcenter@barangayluz.gov.ph</div>
+                            <div class="flex gap-2 mt-auto">
+                                <a href="#" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Details</a>
+                                <a href="#" class="bg-white hover:bg-blue-50 text-[#2563eb] text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Link</a>
                             </div>
                         </div>
                     </div>

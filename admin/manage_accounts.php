@@ -715,13 +715,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Check for dependencies
             $dependencies = [];
             
-            // Check appointments
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_appointments WHERE staff_id = ?");
-            $stmt->execute([$staffId]);
-            $appointmentsCount = $stmt->fetchColumn();
-            if ($appointmentsCount > 0) {
-                $dependencies[] = "$appointmentsCount appointment(s)";
-            }
+            // ...existing code...
             
             // Check announcements
             $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_announcements WHERE staff_id = ?");
@@ -769,9 +763,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $reassignStmt->execute([$reassignTo]);
                         $reassignName = $reassignStmt->fetchColumn();
                         
-                        // Reassign appointments
-                        $stmt = $pdo->prepare("UPDATE sitio1_appointments SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
-                        $stmt->execute([$reassignTo, $staffId]);
+                        // ...existing code...
                         
                         // Reassign consultations
                         $stmt = $pdo->prepare("UPDATE sitio1_consultations SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
@@ -795,9 +787,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         $_SESSION['message'] = 'Staff account deleted and records reassigned to ' . htmlspecialchars($reassignName) . ' successfully!';
                     } else {
-                        // Delete dependent records
-                        $stmt = $pdo->prepare("DELETE FROM sitio1_appointments WHERE staff_id = ?");
-                        $stmt->execute([$staffId]);
+                        // ...existing code...
                         
                         $stmt = $pdo->prepare("DELETE FROM sitio1_consultations WHERE staff_id = ?");
                         $stmt->execute([$staffId]);

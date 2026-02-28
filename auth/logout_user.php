@@ -79,26 +79,15 @@ echo <<<HTML
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
 </head>
 <body class="bg-gray-100">
-    <div class="fixed inset-0 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm"></div>
-        <div class="relative bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl border border-gray-200 animate-fade-in">
-            <div class="flex flex-col items-center text-center">
-                <!-- Loading Spinner -->
-                <div class="relative w-20 h-20 mb-6">
-                    <div class="absolute inset-0 rounded-full border-4 border-blue-100"></div>
-                    <div class="absolute inset-0 rounded-full border-4 border-blue-400 border-t-transparent animate-spin"></div>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                    </div>
+    <div class="fixed inset-0 flex items-center justify-center z-50">
+        <div class="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-8 flex flex-col items-center text-center animate-fade-in" style="min-width:320px;">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">You're now logged out.</h2>
+            <p class="text-gray-500 mb-8">See you next time!</p>
+            <div class="flex flex-col items-center w-full">
+                <div class="w-full flex justify-center">
+                    <span class="pulsing-circle pulsing-blue"></span>
                 </div>
-                
-                <!-- Title -->
-                <h3 class="text-2xl font-semibold text-gray-800 mb-3">You’re now logged out.</h3>
-                
-                <!-- Instruction -->
-                <p class="text-gray-600 text-lg">See you next time!</p>
             </div>
         </div>
     </div>
@@ -109,24 +98,32 @@ echo <<<HTML
     </script>
     <style>
         @keyframes fadeIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(20px) scale(0.95); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0) scale(1); 
-            }
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .animate-fade-in {
             animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .pulsing-circle {
+            display: inline-block;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            opacity: 0.8;
+            animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
-        .animate-spin {
-            animation: spin 1s linear infinite;
+        .pulsing-blue {
+            background-color: #38BDF8;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.4;
+            }
         }
     </style>
 </body>

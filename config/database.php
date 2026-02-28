@@ -93,27 +93,7 @@ try {
             FOREIGN KEY (responded_by) REFERENCES sitio1_staff(id)
         )",
         
-        "CREATE TABLE IF NOT EXISTS sitio1_appointments (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            staff_id INT NOT NULL,
-            date DATE NOT NULL,
-            start_time TIME NOT NULL,
-            end_time TIME NOT NULL,
-            max_slots INT DEFAULT 1,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (staff_id) REFERENCES sitio1_staff(id)
-        )",
-        
-        "CREATE TABLE IF NOT EXISTS user_appointments (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NOT NULL,
-            appointment_id INT NOT NULL,
-            status ENUM('pending', 'approved', 'completed', 'rejected') DEFAULT 'pending',
-            notes TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES sitio1_users(id),
-            FOREIGN KEY (appointment_id) REFERENCES sitio1_appointments(id)
-        )",
+        // ...existing code...
         
         "CREATE TABLE IF NOT EXISTS sitio1_announcements (
             id INT AUTO_INCREMENT PRIMARY KEY,

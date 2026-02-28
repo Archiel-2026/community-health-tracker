@@ -31,36 +31,13 @@ try {
     $approvedPatients = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     // 3. Get regular patients
-    $stmt = $pdo->prepare("
-        SELECT COUNT(DISTINCT u.id) as total 
-        FROM sitio1_users u 
-        JOIN user_appointments ua ON u.id = ua.user_id 
-        JOIN sitio1_appointments a ON ua.appointment_id = a.id
-        WHERE u.role = 'patient' AND a.staff_id = ?
-    ");
-    $stmt->execute([$staffId]);
-    $regularPatients = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $regularPatients = 0; // Removed appointment-related code
     
     // 4. Get total appointments
-    $stmt = $pdo->prepare("
-        SELECT COUNT(*) as total 
-        FROM user_appointments ua
-        JOIN sitio1_appointments a ON ua.appointment_id = a.id
-        WHERE a.staff_id = ?
-    ");
-    $stmt->execute([$staffId]);
-    $totalAppointments = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    $totalAppointments = 0; // Removed appointment-related code
     
     // 5. Get appointment status distribution
-    $stmt = $pdo->prepare("
-        SELECT ua.status, COUNT(*) as count 
-        FROM user_appointments ua
-        JOIN sitio1_appointments a ON ua.appointment_id = a.id
-        WHERE a.staff_id = ?
-        GROUP BY ua.status
-    ");
-    $stmt->execute([$staffId]);
-    $statusData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $statusData = []; // Removed appointment-related code
     
     // Format appointment status data
     $statusLabels = [];
@@ -93,14 +70,7 @@ try {
         $months[] = date('M Y', strtotime($month . '-01'));
         
         // Get appointments for this month
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) as count 
-            FROM user_appointments ua
-            JOIN sitio1_appointments a ON ua.appointment_id = a.id
-            WHERE a.staff_id = ? AND DATE_FORMAT(ua.created_at, '%Y-%m') = ?
-        ");
-        $stmt->execute([$staffId, $month]);
-        $monthlyData[] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $monthlyData[] = 0; // Removed appointment-related code
         
         // Get patient registrations for this month
         $stmt = $pdo->query("
@@ -143,41 +113,10 @@ try {
                 'icon' => 'fas fa-user-friends',
                 'color' => 'text-purple-500'
             ],
-            [
-                'label' => 'Your Appointments',
-                'value' => $totalAppointments,
-                'icon' => 'fas fa-calendar-alt',
-                'color' => 'text-orange-500'
-            ]
+            // Removed appointment-related card
         ],
         'charts' => [
-            'appointmentStatus' => [
-                'type' => 'pie',
-                'data' => [
-                    'labels' => $statusLabels,
-                    'datasets' => [[
-                        'data' => $statusCounts,
-                        'backgroundColor' => $statusColors,
-                        'borderWidth' => 2,
-                        'borderColor' => '#fff'
-                    ]]
-                ]
-            ],
-            'monthlyTrend' => [
-                'type' => 'line',
-                'data' => [
-                    'labels' => $months,
-                    'datasets' => [[
-                        'label' => 'Appointments',
-                        'data' => $monthlyData,
-                        'borderColor' => '#3B82F6',
-                        'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
-                        'borderWidth' => 2,
-                        'fill' => true,
-                        'tension' => 0.4
-                    ]]
-                ]
-            ],
+            // Removed appointment-related charts
             'patientRegistration' => [
                 'type' => 'line',
                 'data' => [

@@ -93,31 +93,40 @@ echo <<<HTML
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logging Out</title>
-    <!-- Tailwind CSS - Offline Local Build -->
+    <title>Logged Out</title>
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            width: 100%;
+            background: #fff;
+        }
+        .center-modal {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logout-icon {
+            color: #38BDF8;
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
 </head>
 <body>
-    <div class="fixed inset-0 flex items-center justify-center">
-        <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm"></div>
-        <div class="relative bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl border border-gray-200 animate-fade-in">
-            <div class="flex flex-col items-center text-center">
-                <!-- Loading Spinner -->
-                <div class="relative w-20 h-20 mb-6">
-                    <div class="absolute inset-0 rounded-full border-4 border-blue-100"></div>
-                    <div class="absolute inset-0 rounded-full border-4 border-blue-400 border-t-transparent animate-spin"></div>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                    </div>
+    <div class="center-modal">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 text-center">
+            <div class="flex flex-col items-center">
+                <div class="logout-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="48" height="48">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
                 </div>
-                
-                <!-- Title -->
-                <h3 class="text-2xl font-semibold text-gray-800 mb-3">Logging Out</h3>
-                
-                <!-- Instruction -->
-                <p class="text-gray-600 text-lg">Please wait while we securely sign you out...</p>
+                <h3 class="text-2xl font-semibold text-gray-800 mb-2">You're now logged out.</h3>
+                <p class="text-gray-500 mb-6">See you next time!</p>
             </div>
         </div>
     </div>
@@ -126,40 +135,6 @@ echo <<<HTML
             window.location.href = '$redirectUrl';
         }, 1500);
     </script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            width: 100%;
-            background: linear-gradient(rgba(66, 66, 66, 0.5), rgba(0, 0, 0, 0.5)),
-                        url('/community-health-tracker/asssets/images/Dev.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        @keyframes fadeIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(20px) scale(0.95); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0) scale(1); 
-            }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
-    </style>
 </body>
 </html>
 HTML;

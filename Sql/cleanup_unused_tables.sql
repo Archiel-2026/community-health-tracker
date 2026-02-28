@@ -24,11 +24,7 @@ DROP TABLE IF EXISTS `account_linking_history`;
 -- These tables are not used in the current system
 -- No code references found for appointment booking functionality
 
--- First remove the dependent table
-DROP TABLE IF EXISTS `user_appointments`;
-
--- Then remove the main appointments table
-DROP TABLE IF EXISTS `sitio1_appointments`;
+-- ...existing code...
 
 -- ============================================
 -- 3. REMOVE UNUSED CONSULTATION SYSTEM (Optional)

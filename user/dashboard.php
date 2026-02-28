@@ -417,8 +417,7 @@ function getTimeAgo($datetime)
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
         border: 1px solid #e5e7eb;
-        min-height: 140px;
-        /* margin-bottom: 8px; */
+        min-height: 60px; /* Desktop only: reduced height */
         display: flex;
         flex-direction: column;
         /* justify-content: center; */
@@ -461,7 +460,7 @@ function getTimeAgo($datetime)
         }
 
         .stats-card {
-            min-height: 100px;
+            min-height: 100px; /* Restore original for mobile/tablet */
             padding: 20px;
         }
     }
@@ -476,7 +475,7 @@ function getTimeAgo($datetime)
         }
 
         .stats-card {
-            min-height: 90px;
+            min-height: 90px; /* Restore original for small screens */
             padding: 16px;
         }
     }
@@ -991,38 +990,38 @@ function getTimeAgo($datetime)
                                             <path
                                                 d="M24.0625 26.25C24.0625 25.6698 24.293 25.1134 24.7032 24.7032C25.1134 24.293 25.6698 24.0625 26.25 24.0625H43.75C44.3302 24.0625 44.8866 24.293 45.2968 24.7032C45.707 25.1134 45.9375 25.6698 45.9375 26.25C45.9375 26.8302 45.707 27.3866 45.2968 27.7968C44.8866 28.207 44.3302 28.4375 43.75 28.4375H26.25C25.6698 28.4375 25.1134 28.207 24.7032 27.7968C24.293 27.3866 24.0625 26.8302 24.0625 26.25ZM26.25 37.1875H43.75C44.3302 37.1875 44.8866 36.957 45.2968 36.5468C45.707 36.1366 45.9375 35.5802 45.9375 35C45.9375 34.4198 45.707 33.8634 45.2968 33.4532C44.8866 33.043 44.3302 32.8125 43.75 32.8125H26.25C25.6698 32.8125 25.1134 33.043 24.7032 33.4532C24.293 33.8634 24.0625 34.4198 24.0625 35C24.0625 35.5802 24.293 36.1366 24.7032 36.5468C25.1134 36.957 25.6698 37.1875 26.25 37.1875ZM35 41.5625H26.25C25.6698 41.5625 25.1134 41.793 24.7032 42.2032C24.293 42.6134 24.0625 43.1698 24.0625 43.75C24.0625 44.3302 24.293 44.8866 24.7032 45.2968C25.1134 45.707 25.6698 45.9375 26.25 45.9375H35C35.5802 45.9375 36.1366 45.707 36.5468 45.2968C36.957 44.8866 37.1875 44.3302 37.1875 43.75C37.1875 43.1698 36.957 42.6134 36.5468 42.2032C36.1366 41.793 35.5802 41.5625 35 41.5625ZM61.25 13.125V42.8449C61.2518 43.4197 61.1394 43.989 60.9193 44.52C60.6991 45.0509 60.3756 45.5327 59.9676 45.9375L45.9375 59.9676C45.5327 60.3756 45.0509 60.6991 44.52 60.9193C43.989 61.1394 43.4197 61.2518 42.8449 61.25H13.125C11.9647 61.25 10.8519 60.7891 10.0314 59.9686C9.21094 59.1481 8.75 58.0353 8.75 56.875V13.125C8.75 11.9647 9.21094 10.8519 10.0314 10.0314C10.8519 9.21094 11.9647 8.75 13.125 8.75H56.875C58.0353 8.75 59.1481 9.21094 59.9686 10.0314C60.7891 10.8519 61.25 11.9647 61.25 13.125ZM13.125 56.875H41.5625V43.75C41.5625 43.1698 41.793 42.6134 42.2032 42.2032C42.6134 41.793 43.1698 41.5625 43.75 41.5625H56.875V13.125H13.125V56.875ZM45.9375 45.9375V53.7852L53.7824 45.9375H45.9375Z"
                                                 fill="black" fill-opacity="0.3" />
-                                        </svg>
-                                        <h3 class="text-gray-500 font-semibold text-xl mb-4">No consultation notes yet</h3>
-                                        <p class="text-gray-500 text-lg">Consultation note missing. Visit health center for
-                                            consultation.</p>
-                                    </div>
-                                <?php else: ?>
-                                    <?php
-                                    $recentNotes = array_slice($consultationNotes, 0, 4);
-                                    foreach ($recentNotes as $note): ?>
-                                        <div class="border border-gray-200 rounded-lg p-4 mb-3 bg-white">
-                                            <div class="flex justify-between items-start w-full">
-                                                <span
-                                                    class="px-4 py-2 rounded bg-second-card text-[#2563EB] font-semibold text-base">Consultation
-                                                    Note</span>
-                                                <div class="flex flex-col items-start">
-                                                    <span class="text-sm text-gray-600 font-semibold mb-0.5">Consultation Date
-                                                        :</span>
-                                                    <span
-                                                        class="inline-block px-3 py-2 rounded bg-gray-200 text-gray-500 text-base font-medium"
-                                                        style="margin-top:2px;"><?= date('F d, Y', strtotime($note['consultation_date'])) ?></span>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <span class="block text-base text-gray-400 font-medium mb-0.5">Consulting Doctor
-                                                    :</span>
-                                                <div class="text-lg text-gray-800 font-medium">
-                                                    <?= htmlspecialchars($note['doctor_name']) ?>
-                                                </div>
-                                            </div>
+                                            </svg>
+                                            <h3 class="text-gray-500 font-semibold text-xl mb-4">No consultation notes yet</h3>
+                                            <p class="text-gray-500 text-lg">Consultation note missing. Visit health center for
+                                                consultation.</p>
                                         </div>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
+                                    <?php else: ?>
+                                        <?php
+                                        $recentNotes = array_slice($consultationNotes, 0, 4);
+                                        foreach ($recentNotes as $note): ?>
+                                            <div class="border border-gray-200 rounded-lg p-4 mb-3 bg-white">
+                                                <div class="flex justify-between items-start w-full">
+                                                    <span
+                                                        class="px-4 py-2 rounded bg-second-card text-[#2563EB] font-semibold text-base">Consultation
+                                                        Note</span>
+                                                    <div class="flex flex-col items-start">
+                                                        <span class="text-sm text-gray-600 font-semibold mb-0.5">Consultation Date
+                                                            :</span>
+                                                        <span
+                                                            class="inline-block px-3 py-2 rounded bg-gray-200 text-gray-500 text-base font-medium"
+                                                            style="margin-top:2px;"><?= date('F d, Y', strtotime($note['consultation_date'])) ?></span>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <span class="block text-base text-gray-400 font-medium mb-0.5">Consulting Doctor
+                                                        :</span>
+                                                    <div class="text-lg text-gray-800 font-medium">
+                                                        <?= htmlspecialchars($note['doctor_name']) ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -1066,8 +1065,9 @@ function getTimeAgo($datetime)
                                                         $labResult['priority'] === 'high' ? 'bg-red-100 text-red-800' :
                                                         ($labResult['priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800')
                                                         ?>">
-                                                        <?= ucfirst($labResult['priority']) ?>
-                                                    </span>
+                                                            <?= ucfirst($labResult['priority']) ?>
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 <p class="text-sm text-green-700 mb-2">
                                                     <i class="fas fa-user-md"></i>

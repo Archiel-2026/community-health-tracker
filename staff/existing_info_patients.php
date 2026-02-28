@@ -1563,7 +1563,7 @@ $searchBy = isset($_GET['search_by']) ? trim($_GET['search_by']) : 'name';
 
 // Get patient type filter
 $patientTypeFilter = isset($_GET['patient_type']) ? strtolower(trim($_GET['patient_type'])) : 'all';
-if (!in_array($patientTypeFilter, ['all', 'registered', 'regular'])) {
+if (!in_array($patientTypeFilter, ['all', 'account_access', 'regular_patient'])) {
     $patientTypeFilter = 'all';
 }
 
@@ -1574,9 +1574,13 @@ $manualSelectMode = isset($_GET['manual_select']) && $_GET['manual_select'] == '
 $viewAll = isset($_GET['view_all']) && $_GET['view_all'] == 'true';
 
 // Pagination setup
-$recordsPerPage = 5;
-$currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$recordsPerPage = 10;
+if (!isset($currentPage)) { $currentPage = 1; }
 $offset = ($currentPage - 1) * $recordsPerPage;
+
+
+if (!isset($currentPage)) { $currentPage = 1; }
+
 
 // Get total count of patients based on filter
 try {
@@ -1584,9 +1588,9 @@ try {
     $countParams = [];
 
     // Apply patient type filter to count query
-    if ($patientTypeFilter === 'registered') {
+    if ($patientTypeFilter === 'account_access') {
         $countQuery .= " AND p.user_id IS NOT NULL";
-    } elseif ($patientTypeFilter === 'regular') {
+    } elseif ($patientTypeFilter === 'regular_patient') {
         $countQuery .= " AND p.user_id IS NULL";
     }
 
@@ -1597,10 +1601,7 @@ try {
     }
 
     // Apply date filter to count query if provided
-    if (!empty($_GET['filter_date'])) {
-        $countQuery .= " AND DATE(p.created_at) = ?";
-        $countParams[] = $_GET['filter_date'];
-    }
+
 
     $stmt = $pdo->prepare($countQuery);
 
@@ -1617,10 +1618,13 @@ try {
 
     $stmt->execute();
     $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    // Fix: Avoid division by zero and undefined variable
+    if (!isset($recordsPerPage) || !$recordsPerPage) {
+        $recordsPerPage = 1; // fallback to 1 to avoid division by zero
+    }
     $totalPages = max(1, ceil($totalRecords / $recordsPerPage));
-
     // Ensure current page is within valid range
-    if ($currentPage > $totalPages) {
+    if (isset($currentPage) && $currentPage > $totalPages) {
         $currentPage = $totalPages;
         $offset = ($currentPage - 1) * $recordsPerPage;
     }
@@ -1680,9 +1684,9 @@ try {
     $selectParams = [];
 
     // Apply patient type filter
-    if ($patientTypeFilter === 'registered') {
+    if ($patientTypeFilter === 'account_access') {
         $selectQuery .= " AND p.user_id IS NOT NULL";
-    } elseif ($patientTypeFilter === 'regular') {
+    } elseif ($patientTypeFilter === 'regular_patient') {
         $selectQuery .= " AND p.user_id IS NULL";
     }
 
@@ -1693,23 +1697,18 @@ try {
     }
 
     // Filter by specific date if provided
-    if (!empty($_GET['filter_date'])) {
-        $filterDate = $_GET['filter_date'];
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $filterDate)) {
-            $selectQuery .= " AND DATE(p.created_at) = ?";
-            $selectParams[] = $filterDate;
-        }
-    }
+
 
     // Determine sort order from filter
     $dateSortOrder = (isset($_GET['date_sort']) && strtolower($_GET['date_sort']) === 'asc') ? 'ASC' : 'DESC';
     $selectQuery .= " ORDER BY p.created_at $dateSortOrder";
 
     // Apply pagination limits only if not in view all or manual select mode
-    $limitNeeded = false;
-    if (!$viewAll && !$manualSelectMode) {
-        $selectQuery .= " LIMIT ? OFFSET ?";
+    if ($viewAll) {
+        $limitNeeded = false;
+    } else {
         $limitNeeded = true;
+        $selectQuery .= " LIMIT ? OFFSET ?";
     }
 
     // DEBUG: Output the query and params for troubleshooting
@@ -1809,7 +1808,7 @@ if (!empty($searchTerm)) {
                 $params[] = $_SESSION['user']['id'];
             }
 
-            $selectQuery .= " ORDER BY p.full_name LIMIT 10";
+            $selectQuery .= " ORDER BY p.full_name";
 
             $stmt = $pdo->prepare($selectQuery);
             $stmt->execute($params);
@@ -1917,7 +1916,7 @@ if (!empty($searchTerm)) {
             display: inline-block;
             padding: 0.5rem 1.2rem;
             border-radius: 9999px; /* fully rounded */
-            font-size: 1rem;
+            font-size: 0.8rem;
             font-weight: 500;
         }
 
@@ -1927,7 +1926,7 @@ if (!empty($searchTerm)) {
             display: inline-block;
             padding: 0.5rem 1.2rem;
             border-radius: 9999px; /* fully rounded */
-            font-size: 1rem;
+            font-size: 0.8rem;
             font-weight: 500;
         }
 
@@ -3290,12 +3289,19 @@ if (!empty($searchTerm)) {
             top: 0;
             z-index: 20;
         }
+        /* Smaller font for Record Type column */
+                        .record-type-col {
+                            font-size: 0.8rem !important;
+                        }
 
         .patient-table th {
+                    /* Smaller font for Record Type column */
+                        
+                    
             padding: 0.75rem 0;
             text-align: left;
             font-weight: 600;
-            font-size: 1.13rem;
+            font-size: 1rem;
             color: #4B5563;
             border-bottom: 2px solid #e2e8f0;
         }
@@ -3471,7 +3477,56 @@ if (!empty($searchTerm)) {
                 <?php endif; ?>
 
                 <!-- Search Form -->
-                <form method="get" action="" class="mb-6">
+                <form method="get" action="" class="mb-6" id="mainSearchForm">
+                    <!-- Loading Overlay -->
+                    <div id="loadingOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(255,255,255,0.8);backdrop-filter:blur(6px);justify-content:center;align-items:center;">
+                        <div style="display:flex;flex-direction:column;align-items:center;">
+                            <div class="loader" style="border:8px solid #f3f3f3;border-top:8px solid #3498db;border-radius:50%;width:80px;height:80px;animation:spin 1s linear infinite;"></div>
+                            <span style="margin-top:24px;font-size:1.5rem;color:#3498db;font-weight:600;">Loading...</span>
+                        </div>
+                    </div>
+                    <style>
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    </style>
+                    <script>
+                    // Show loading overlay on search submit or Enter key
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var searchForm = document.getElementById('mainSearchForm');
+                        var searchInput = document.getElementById('search');
+                        let loadingStart = 0;
+                        function showLoader() {
+                            loadingStart = Date.now();
+                            document.getElementById('loadingOverlay').style.display = 'flex';
+                        }
+                        function hideLoader() {
+                            const elapsed = Date.now() - loadingStart;
+                            const minTime = 2000;
+                            if (elapsed < minTime) {
+                                setTimeout(() => {
+                                    document.getElementById('loadingOverlay').style.display = 'none';
+                                }, minTime - elapsed);
+                            } else {
+                                document.getElementById('loadingOverlay').style.display = 'none';
+                            }
+                        }
+                        if (searchForm) {
+                            searchForm.addEventListener('submit', function() {
+                                showLoader();
+                            });
+                        }
+                        if (searchInput) {
+                            searchInput.addEventListener('keydown', function(e) {
+                                if (e.key === 'Enter') {
+                                    showLoader();
+                                }
+                            });
+                        }
+                        // Hide overlay after page load (in case of back navigation)
+                        window.addEventListener('pageshow', function() {
+                            hideLoader();
+                        });
+                    });
+                    </script>
                     <input type="hidden" name="tab" value="patients-tab">
                     <?php if ($viewAll): ?>
                         <input type="hidden" name="view_all" value="true">
@@ -3533,7 +3588,32 @@ style="border-radius: 4px;">
                                         Export
                                     </button>
                                     <!-- Filter by Date Added/Timestamp -->
-                                    <form method="get" action="" class="flex items-center gap-2">
+                                    <form method="get" action="" class="flex items-center gap-2" id="searchForm">
+                                        <!-- Loading Overlay -->
+                                        <div id="loadingOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:rgba(255,255,255,0.8);backdrop-filter:blur(6px);justify-content:center;align-items:center;">
+                                            <div style="display:flex;flex-direction:column;align-items:center;">
+                                                <div class="loader" style="border:8px solid #f3f3f3;border-top:8px solid #3498db;border-radius:50%;width:80px;height:80px;animation:spin 1s linear infinite;"></div>
+                                                <span style="margin-top:24px;font-size:1.5rem;color:#3498db;font-weight:600;">Loading...</span>
+                                            </div>
+                                        </div>
+                                        <style>
+                                        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                                        </style>
+                                        <script>
+                                        // Show loading overlay on search submit
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            var searchForm = document.getElementById('searchForm');
+                                            if (searchForm) {
+                                                searchForm.addEventListener('submit', function() {
+                                                    document.getElementById('loadingOverlay').style.display = 'flex';
+                                                });
+                                            }
+                                            // Hide overlay after page load (in case of back navigation)
+                                            window.addEventListener('pageshow', function() {
+                                                document.getElementById('loadingOverlay').style.display = 'none';
+                                            });
+                                        });
+                                        </script>
                                         <input type="hidden" name="tab" value="patients-tab">
                                         <?php if ($viewAll): ?>
                                             <input type="hidden" name="view_all" value="true">
@@ -3543,22 +3623,16 @@ style="border-radius: 4px;">
                                         <?php endif; ?>
                                         <select name="patient_type" onchange="this.form.submit()"
                                             class="custom-select-filter">
+                                                                                class="custom-select-filter" style="width: 232px; min-width: 232px; font-size: 18px; font-weight: 500; padding-left: 18px; padding-right: 44px;">
                                             <option value="all" <?= ($patientTypeFilter === 'all' || $patientTypeFilter === '' || !isset($patientTypeFilter)) ? 'selected' : '' ?>>All Patient Types</option>
-                                            <option value="registered" <?= $patientTypeFilter === 'registered' ? 'selected' : '' ?>>Account Access</option>
-                                            <option value="regular" <?= $patientTypeFilter === 'regular' ? 'selected' : '' ?>>
-                                                Regular Patient</option>
+                                            <option value="account_access" <?= $patientTypeFilter === 'account_access' ? 'selected' : '' ?>>Account Access</option>
+                                            <option value="regular_patient" <?= $patientTypeFilter === 'regular_patient' ? 'selected' : '' ?>>Regular Patient</option>
                                         </select>
                                         <select name="date_sort" onchange="this.form.submit()"
                                             class="custom-select-filter ml-2">
                                             <option value="desc" <?= (empty($_GET['date_sort']) || $_GET['date_sort'] === 'desc') ? 'selected' : '' ?>>Newest First</option>
                                             <option value="asc" <?= (isset($_GET['date_sort']) && $_GET['date_sort'] === 'asc') ? 'selected' : '' ?>>Oldest First</option>
                                         </select>
-                                        <input type="date" name="filter_date"
-                                            value="<?= isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : '' ?>"
-                                            class="custom-select-filter ml-2" onchange="this.form.submit()"
-                                            placeholder="Filter by Date">
-                                        <!-- CSS Block: Main UI Styles -->
-                                        <!-- CSS Block: Custom Select Filter Styles -->
                                         <style>
                                             .custom-select-filter {
 
@@ -3627,11 +3701,11 @@ style="border-radius: 4px;">
                                             /* Custom arrow */
                                             /* Custom arrow for select filters only */
                                             select.custom-select-filter {
-                                                background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%2322233b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+                                                background-image: url('data:image/svg+xml;utf8,<svg fill="none" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5" stroke="%232F80ED" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
                                                 background-repeat: no-repeat;
-                                                background-position: right 1.2rem center;
-                                                background-size: 1.5rem 1.5rem;
-                                                padding-right: 2.5rem;
+                                                background-position: right 18px center;
+                                                background-size: 24px 24px;
+                                                padding-right: 44px;
                                             }
 
                                             select.custom-select-filter::-ms-expand {
@@ -3669,7 +3743,7 @@ style="border-radius: 4px;">
                             <!-- PATIENT SEARCH RESULTS -->
                             <?php if (!empty($patients)): ?>
                                 <div class="p-4">
-                                    <div class="overflow-x-auto">
+                                    <div class="overflow-x-auto" style="max-height: 600px; overflow-y: auto;">
                                         <table class="patient-table">
                                             <thead>
                                                 <tr>
@@ -3710,16 +3784,22 @@ style="border-radius: 4px;">
                                                         <?php if ($occupationExists): ?>
                                                             <td><?= htmlspecialchars($patient['occupation'] ?? 'N/A') ?></td>
                                                         <?php endif; ?>
-                                                        <td><span class="text-gray-500">Regular Patient</span></td>
+                                                        <td>
+                                                            <?php if ($patient['patient_type'] === 'Registered Patient'): ?>
+                                                                <span class="user-badge">Account Access</span>
+                                                            <?php else: ?>
+                                                                <span class="regular-badge">Regular Patient</span>
+                                                            <?php endif; ?>
+                                                        </td>
                                                         <td>
                                                             <button onclick="openViewModal(<?= $patient['id'] ?>)"
-                                                                class="btn-view  inline-flex items-center mr-2">
-                                                                <i class="fas fa-eye mr-1"></i> View
+                                                                class="btn-view inline-flex items-center mr-2" style="background:#2196F3;color:#fff;border:none;border-radius:24px;padding:8px 24px;font-weight:500;font-size:16px;">
+                                                                <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><path d="M23.1853 11.6962C23.1525 11.6222 22.3584 9.86062 20.5931 8.09531C18.2409 5.74312 15.27 4.5 12 4.5C8.72999 4.5 5.75905 5.74312 3.40687 8.09531C1.64155 9.86062 0.843741 11.625 0.814679 11.6962C0.772035 11.7922 0.75 11.896 0.75 12.0009C0.75 12.1059 0.772035 12.2097 0.814679 12.3056C0.847491 12.3797 1.64155 14.1403 3.40687 15.9056C5.75905 18.2569 8.72999 19.5 12 19.5C15.27 19.5 18.2409 18.2569 20.5931 15.9056C22.3584 14.1403 23.1525 12.3797 23.1853 12.3056C23.2279 12.2097 23.25 12.1059 23.25 12.0009C23.25 11.896 23.2279 11.7922 23.1853 11.6962ZM12 18C9.11437 18 6.59343 16.9509 4.50655 14.8828C3.65028 14.0313 2.92179 13.0603 2.34374 12C2.92164 10.9396 3.65014 9.9686 4.50655 9.11719C6.59343 7.04906 9.11437 6 12 6C14.8856 6 17.4066 7.04906 19.4934 9.11719C20.3514 9.9684 21.0815 10.9394 21.6609 12C20.985 13.2619 18.0403 18 12 18ZM12 7.5C11.11 7.5 10.2399 7.76392 9.49993 8.25839C8.7599 8.75285 8.18313 9.45566 7.84253 10.2779C7.50194 11.1002 7.41282 12.005 7.58646 12.8779C7.76009 13.7508 8.18867 14.5526 8.81801 15.182C9.44735 15.8113 10.2492 16.2399 11.1221 16.4135C11.995 16.5872 12.8998 16.4981 13.7221 16.1575C14.5443 15.8169 15.2471 15.2401 15.7416 14.5001C16.2361 13.76 16.5 12.89 16.5 12C16.4988 10.8069 16.0242 9.66303 15.1806 8.81939C14.337 7.97575 13.1931 7.50124 12 7.5ZM12 15C11.4066 15 10.8266 14.8241 10.3333 14.4944C9.83993 14.1648 9.45542 13.6962 9.22835 13.1481C9.00129 12.5999 8.94188 11.9967 9.05764 11.4147C9.17339 10.8328 9.45911 10.2982 9.87867 9.87868C10.2982 9.45912 10.8328 9.1734 11.4147 9.05764C11.9967 8.94189 12.5999 9.0013 13.148 9.22836C13.6962 9.45542 14.1648 9.83994 14.4944 10.3333C14.824 10.8266 15 11.4067 15 12C15 12.7956 14.6839 13.5587 14.1213 14.1213C13.5587 14.6839 12.7956 15 12 15Z" fill="white"/></svg> View
                                                             </button>
                                                             <a href="?delete_patient=<?= $patient['id'] ?>"
-                                                                class="btn-archive inline-flex items-center"
+                                                                class="btn-archive inline-flex items-center" style="background:#F44336;color:#fff;border:none;border-radius:24px;padding:8px 24px;font-weight:500;font-size:16px;"
                                                                 onclick="return confirm('Are you sure you want to archive this patient record?')">
-                                                                <i class="fas fa-trash-alt mr-1"></i> Archive
+                                                                <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white"/></svg> Archive
                                                             </a>
                                                         </td>
                                                     </tr>
@@ -3752,7 +3832,7 @@ style="border-radius: 4px;">
                                                     <?php if ($occupationExists): ?>
                                                         <th>Occupation</th>
                                                     <?php endif; ?>
-                                                    <th>Record Type</th>
+                                                    <th class="record-type-col">Record Type</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -3791,15 +3871,11 @@ style="border-radius: 4px;">
                         <?php if (empty($allPatients)): ?>
                             <div class="text-center py-12 rounded-lg">
                                 <div class="flex justify-center py-8">
-                                    <svg width="100" height="100" viewBox="0 0 100 100" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path opacity="0.5"
-                                            d="M84.375 41.6654C84.375 33.7223 84.3652 28.0793 83.7891 23.7983C83.2249 19.6078 82.1705 17.1891 80.4077 15.4243C78.6457 13.6608 76.2297 12.6027 72.0378 12.0389C67.7559 11.463 62.1113 11.457 54.1667 11.457H45.8333C37.8902 11.457 32.2473 11.4668 27.9663 12.043C23.7757 12.6071 21.3571 13.6615 19.5923 15.4243C17.8288 17.1863 16.7707 19.6023 16.2069 23.7943C15.631 28.0761 15.625 33.7207 15.625 41.6654V58.332C15.625 66.2751 15.6348 71.9181 16.2109 76.1991C16.7751 80.3896 17.8295 82.8083 19.5923 84.5731C21.3543 86.3366 23.7703 87.3947 27.9622 87.9585C32.2441 88.5344 37.8887 88.5404 45.8333 88.5404H54.1667C62.1098 88.5404 67.7527 88.5306 72.0337 87.9544C76.2243 87.3903 78.6429 86.3359 80.4077 84.5731C82.1712 82.8111 83.2293 80.3951 83.7931 76.2031C84.369 71.9213 84.375 66.2767 84.375 58.332V41.6654ZM90.625 58.332C90.625 66.0999 90.6311 72.242 89.9862 77.0373C89.3291 81.9213 87.9456 85.8753 84.8267 88.992C81.7082 92.1078 77.7525 93.4939 72.8678 94.1515C68.0733 94.7968 61.9341 94.7904 54.1667 94.7904H45.8333C38.0655 94.7904 31.9234 94.7965 27.1281 94.1515C22.244 93.4945 18.2901 92.1109 15.1733 88.992C12.0575 85.8736 10.6714 81.9179 10.0138 77.0332C9.36857 72.2386 9.375 66.0994 9.375 58.332V41.6654C9.375 33.8975 9.36889 27.7554 10.0138 22.9601C10.6709 18.0761 12.0544 14.1221 15.1733 11.0054C18.2918 7.88956 22.2474 6.50348 27.1322 5.84587C31.9267 5.2006 38.0659 5.20703 45.8333 5.20703H54.1667C61.9345 5.20703 68.0766 5.20092 72.8719 5.84587C77.756 6.5029 81.7099 7.88646 84.8267 11.0054C87.9425 14.1239 89.3286 18.0795 89.9862 22.9642C90.6314 27.7588 90.625 33.898 90.625 41.6654V58.332Z"
-                                            fill="black" fill-opacity="0.6" />
-                                        <path
-                                            d="M54.1663 55.2057C55.8922 55.2057 57.2913 56.6048 57.2913 58.3307C57.2913 60.0566 55.8922 61.4557 54.1663 61.4557H33.333C31.6071 61.4557 30.208 60.0566 30.208 58.3307C30.208 56.6048 31.6071 55.2057 33.333 55.2057H54.1663ZM66.6663 38.5391C68.3922 38.5391 69.7913 39.9382 69.7913 41.6641C69.7913 43.39 68.3922 44.7891 66.6663 44.7891H33.333C31.6071 44.7891 30.208 43.39 30.208 41.6641C30.208 39.9382 31.6071 38.5391 33.333 38.5391H66.6663Z"
-                                            fill="black" fill-opacity="0.5" />
-                                    </svg>
+                                    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M53.6665 29.2372L73.5581 34.533M49.4081 45.0538L59.3498 47.7038M49.904 74.858L53.879 75.9205C65.129 78.9205 70.754 80.4163 75.1873 77.8705C79.6165 75.3288 81.1248 69.733 84.1373 58.5497L88.3998 42.7288C91.4165 31.5413 92.9206 25.9497 90.3623 21.5413C87.804 17.133 82.1831 15.6372 70.929 12.6413L66.954 11.5788C55.704 8.57882 50.079 7.08299 45.6498 9.62882C41.2165 12.1705 39.7081 17.7663 36.6915 28.9497L32.4331 44.7705C29.4165 55.958 27.9081 61.5497 30.4706 65.958C33.029 70.3622 38.654 71.8622 49.904 74.858Z" stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M50.0008 87.273L46.0341 88.3564C34.8091 91.4105 29.2008 92.9397 24.7758 90.3439C20.3591 87.7522 18.8508 82.048 15.8466 70.6439L11.5924 54.5105C8.58409 43.1064 7.07993 37.4022 9.63409 32.9106C11.8424 29.0231 16.6674 29.1647 22.9174 29.1647" stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
                                 </div>
                                 <h3 class="text-xl font-medium text-gray-500 mb-4">No Residents Records Yet</h3>
                                 <p class="mt-1 text-lg text-gray-500">Get started by adding a new resident records.</p>
@@ -3852,10 +3928,6 @@ style="border-radius: 4px;">
                                                         <?php if ($occupationExists): ?>
                                                             <th>Occupation</th>
                                                         <?php endif; ?>
-                                                        <th>PHIC No.</th>
-                                                        <th>BHW</th>
-                                                        <th>4P's</th>
-                                                        <th>Blood Type</th>
                                                         <th>Record Type</th>
                                                         <th>Actions</th>
                                                     </tr>
@@ -3890,24 +3962,18 @@ style="border-radius: 4px;">
                                                                 <td><?= !empty($patient['occupation']) ? htmlspecialchars($patient['occupation']) : (!empty($patient['user_occupation']) ? htmlspecialchars($patient['user_occupation']) : 'N/A') ?>
                                                                 </td>
                                                             <?php endif; ?>
-                                                            <td><?= htmlspecialchars($patient['phic_no'] ?? 'N/A') ?></td>
-                                                            <td><?= htmlspecialchars($patient['bhw_assigned'] ?? 'N/A') ?></td>
-                                                            <td><?= htmlspecialchars($patient['fourps_member'] ?? 'N/A') ?></td>
-                                                            <td class="font-semibold text-primary">
-                                                                <?= htmlspecialchars($patient['blood_type'] ?? 'N/A') ?>
-                                                            </td>
-                                                            <td><?= $patient['patient_type'] === 'Registered Patient' ? '<span class="user-badge">Registered Patient</span>' : '<span class="regular-badge">Regular Patient</span>' ?>
+                                                            <td><?= $patient['patient_type'] === 'Registered Patient' ? '<span class="user-badge">Account Access</span>' : '<span class="regular-badge">Regular Patient</span>' ?>
                                                             </td>
                                                             <td>
                                                                 <button onclick="openViewModal(<?= $patient['id'] ?>)"
                                                                     class="btn-view inline-flex items-center mr-2">
-                                                                    <i class="fas fa-eye mr-1"></i> View
+                                                                    <i class="fas fa-eye mr-1" style="font-size:1.5em;vertical-align:middle;"></i> View
                                                                 </button>
                                                                 <?php if (!$manualSelectMode): ?>
                                                                     <a href="?delete_patient=<?= $patient['id'] ?>"
                                                                         class="btn-archive inline-flex items-center"
                                                                         onclick="return confirm('Are you sure you want to archive this patient record?')">
-                                                                        <i class="fas fa-trash-alt mr-1"></i> Archive
+                                                                        <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white"/></svg> Archive
                                                                     </a>
                                                                 <?php endif; ?>
                                                             </td>
@@ -3944,7 +4010,9 @@ style="border-radius: 4px;">
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php foreach ($allPatients as $index => $patient): ?>
+                                            <?php 
+                                                if (!isset($offset)) { $offset = 0; }
+                                                foreach ($allPatients as $index => $patient): ?>
                                                 <tr data-patient-id="<?= $patient['id'] ?>">
                                                     <td class="patient-id"><?= $offset + $index + 1 ?></td>
                                                     <td><?= htmlspecialchars($patient['full_name']) ?></td>
@@ -3967,9 +4035,9 @@ style="border-radius: 4px;">
                                                     <?php endif; ?>
                                                     <td>
                                                         <?php if ($patient['patient_type'] === 'Registered Patient'): ?>
-                                                            <span class="user-badge">Account Access</span>
+                                                            <span class="user-badge record-type-col">Account Access</span>
                                                         <?php elseif ($patient['patient_type'] === 'Regular Patient'): ?>
-                                                            <span class="regular-badge">Regular Patient</span>
+                                                            <span class="regular-badge record-type-col">Regular Patient</span>
                                                         <?php else: ?>
                                                             <span class="regular-badge">Regular Patient</span>
                                                         <?php endif; ?>
@@ -3977,7 +4045,7 @@ style="border-radius: 4px;">
                                                     <td>
                                                         <button onclick="openViewModal(<?= $patient['id'] ?>)"
                                                                 class="btn-view mr-2">
-                                                            <svg class="w-8 h-8 mr-1" viewBox="0 0 24 24" stroke-width="2"
+                                                            <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" stroke-width="2"
                                                                 xmlns="http://www.w3.org/2000/svg">
                                                                 <path
                                                                     d="M23.1853 11.6962C23.1525 11.6222 22.3584 9.86062 20.5931 8.09531C18.2409 5.74312 15.27 4.5 12 4.5C8.72999 4.5 5.75905 5.74312 3.40687 8.09531C1.64155 9.86062 0.843741 11.625 0.814679 11.6962C0.772035 11.7922 0.75 11.896 0.75 12.0009C0.75 12.1059 0.772035 12.2097 0.814679 12.3056C0.847491 12.3797 1.64155 14.1403 3.40687 15.9056C5.75905 18.2569 8.72999 19.5 12 19.5C15.27 19.5 18.2409 18.2569 20.5931 15.9056C22.3584 14.1403 23.1525 12.3797 23.1853 12.3056C23.2279 12.2097 23.25 12.1059 23.25 12.0009C23.25 11.896 23.2279 11.7922 23.1853 11.6962ZM12 18C9.11437 18 6.59343 16.9509 4.50655 14.8828C3.65028 14.0313 2.92179 13.0603 2.34374 12C2.92164 10.9396 3.65014 9.9686 4.50655 9.11719C6.59343 7.04906 9.11437 6 12 6C14.8856 6 17.4066 7.04906 19.4934 9.11719C20.3514 9.9684 21.0815 10.9394 21.6609 12C20.985 13.2619 18.0403 18 12 18ZM12 7.5C11.11 7.5 10.2399 7.76392 9.49993 8.25839C8.7599 8.75285 8.18313 9.45566 7.84253 10.2779C7.50194 11.1002 7.41282 12.005 7.58646 12.8779C7.76009 13.7508 8.18867 14.5526 8.81801 15.182C9.44735 15.8113 10.2492 16.2399 11.1221 16.4135C11.995 16.5872 12.8998 16.4981 13.7221 16.1575C14.5443 15.8169 15.2471 15.2401 15.7416 14.5001C16.2361 13.76 16.5 12.89 16.5 12C16.4988 10.8069 16.0242 9.66303 15.1806 8.81939C14.337 7.97575 13.1931 7.50124 12 7.5ZM12 15C11.4066 15 10.8266 14.8241 10.3333 14.4944C9.83993 14.1648 9.45542 13.6962 9.22835 13.1481C9.00129 12.5999 8.94188 11.9967 9.05764 11.4147C9.17339 10.8328 9.45911 10.2982 9.87867 9.87868C10.2982 9.45912 10.8328 9.1734 11.4147 9.05764C11.9967 8.94189 12.5999 9.0013 13.148 9.22836C13.6962 9.45542 14.1648 9.83994 14.4944 10.3333C14.824 10.8266 15 11.4067 15 12C15 12.7956 14.6839 13.5587 14.1213 14.1213C13.5587 14.6839 12.7956 15 12 15Z"
@@ -3988,7 +4056,7 @@ style="border-radius: 4px;">
                                                         <a href="?delete_patient=<?= $patient['id'] ?>"
                                                             class="btn-archive"
                                                             onclick="return confirm('Are you sure you want to archive this patient record?')">
-                                                            <svg class="w-8 h-8 mr-1" viewBox="0 0 24 24" fill="none"
+                                                            <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none"
                                                                 xmlns="http://www.w3.org/2000/svg">
                                                                 <path
                                                                     d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z"
@@ -4035,9 +4103,7 @@ style="border-radius: 4px;">
                                         if (!empty($patientTypeFilter) && $patientTypeFilter !== 'all') {
                                             $queryParams[] = 'patient_type=' . urlencode($patientTypeFilter);
                                         }
-                                        if (!empty($_GET['filter_date'])) {
-                                            $queryParams[] = 'filter_date=' . urlencode($_GET['filter_date']);
-                                        }
+                                        // Removed filter_date from query params
                                         if (!empty($_GET['date_sort'])) {
                                             $queryParams[] = 'date_sort=' . urlencode($_GET['date_sort']);
                                         }
@@ -4071,7 +4137,7 @@ style="border-radius: 4px;">
 
                                     <!-- Update the View All button in the header -->
                                     <div class="flex items-center gap-4">
-                                        <a href="?tab=patients-tab&view_all=true&patient_type=<?= urlencode($patientTypeFilter) ?><?= !empty($_GET['filter_date']) ? '&filter_date=' . urlencode($_GET['filter_date']) : '' ?><?= !empty($_GET['date_sort']) ? '&date_sort=' . urlencode($_GET['date_sort']) : '' ?>"
+                                        <a href="?tab=patients-tab&view_all=true&patient_type=<?= urlencode($patientTypeFilter) ?><?= !empty($_GET['date_sort']) ? '&date_sort=' . urlencode($_GET['date_sort']) : '' ?>"
                                             class="btn-view-all">
                                             <svg class="w-8 h-8 mr-2" viewBox="0 0 27 27" fill="none"
                                                 xmlns="http://www.w3.org/2000/svg">
@@ -4574,8 +4640,12 @@ style="border-radius: 4px;">
                         </div>
                         <!-- Searchbar for patient selection -->
                         <div class="mt-4 flex items-center gap-3">
-                            <input type="text" id="patientSearchInput" onkeyup="filterPatientSelectionList()" placeholder="Search patient name..." class="search-input w-full py-3 px-6 text-base font-normal rounded-md focus:outline-none border border-[#3C96E1] focus:ring-2 focus:ring-blue-400 focus:border-blue-500">
+                            <input type="text" id="patientSearchInput" placeholder="Search patient name..." class="search-input w-full py-3 px-6 text-base font-normal rounded-md focus:outline-none border border-[#3C96E1] focus:ring-2 focus:ring-blue-400 focus:border-blue-500">
+                            <button type="button" id="patientSearchBtn" class="btn-primary inline-flex items-center py-3 px-6 ml-2">
+                                <i class="fas fa-search mr-2"></i>Search
+                            </button>
                         </div>
+                            
                     </div>
 
                     <!-- Patients Table -->
@@ -4958,7 +5028,12 @@ style="border-radius: 4px;">
                             </div>
                         </div>
                         <div class="flex justify-end mt-8">
-                            <button type="button" id="nextToMedicalBtn" class="btn-primary px-8 py-3 rounded-full text-white font-medium shadow" disabled>Next</button>
+                                                        <button type="button" id="nextToMedicalBtn" class="btn-primary px-8 py-3 rounded-full text-white font-medium shadow flex items-center gap-2" disabled>
+                                                            Next
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                                            </svg>
+                                                        </button>
                         </div>
                     </div>
 
@@ -5539,8 +5614,10 @@ style="border-radius: 4px;">
             const tbody = document.getElementById('patientSelectionList');
             if (!tbody) return;
 
-            // Get all patient rows from the main table
-            const patientRows = document.querySelectorAll('table tbody tr[data-patient-id]');
+            // Get all patient rows from the main resident patient table (all records)
+            // This assumes the main table contains all resident patient records
+            // If there is pagination, you may need to fetch all records from the backend or ensure all are rendered in the DOM
+            const patientRows = document.querySelectorAll('#patients-tab table.patient-table tbody tr[data-patient-id]');
             tbody.innerHTML = '';
 
             if (patientRows.length === 0) {

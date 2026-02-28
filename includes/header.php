@@ -56,7 +56,9 @@ if (isset($_SESSION['user']['id'])) {
     body,
     .sidebar,
     .nav-tab,
-    .logout-btn,
+    .logout-btn-1,
+    .logout-btn-2,
+    .logout-btn-3,
     .time-display-container,
     .continue-btn,
     .complete-btn,
@@ -149,7 +151,7 @@ if (isset($_SESSION['user']['id'])) {
 
     /* CLEAN: Simple Logout Button - UPDATED FOR FULL ROUND */
     .logout-btn {
-        background: #ef4444;
+        background: white;
         padding: 0.75rem 1.5rem;
         border-radius: 9999px !important;
         /* Full round radius */
@@ -618,8 +620,10 @@ if (isset($_SESSION['user']['id'])) {
             background: rgba(255, 255, 255, 0.1);
         }
 
-        .logout-btn {
-            background: #ef4444;
+        /* Staff Button Color */
+        .logout-btn-3 {
+            background: white;
+            color: #9333EA;
             padding: 0.75rem 1.5rem;
             border-radius: 9999px !important;
             font-weight: 600;
@@ -633,8 +637,55 @@ if (isset($_SESSION['user']['id'])) {
             outline: none;
         }
 
-        .logout-btn:hover {
-            background: #dc2626;
+        .logout-btn-3:hover {
+            background: white;
+            color: #9333EA;
+            transform: translateY(-1px);
+        }
+        
+    /* Admin Button Color */
+    .logout-btn-2 {
+            background: white;
+            color: #9333EA;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .logout-btn-2:hover {
+            background: white;
+            color: #9333EA;
+            transform: translateY(-1px);
+        }
+
+        /* Resident Button Color */
+        .logout-btn-1 {
+            background: white;
+            color: #3C96E1;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .logout-btn-1:hover {
+            background: white;
+            color: #3C96E1;
             transform: translateY(-1px);
         }
 
@@ -802,7 +853,13 @@ if (isset($_SESSION['user']['id'])) {
             display: flex !important;
         }
 
-        .logout-btn {
+        .logout-btn-1 {
+            display: flex !important;
+        }
+        .logout-btn-2 {
+            display: flex !important;
+        }
+        .logout-btn-3 {
             display: flex !important;
         }
 
@@ -900,8 +957,8 @@ if (isset($_SESSION['user']['id'])) {
                         </div>
 
                         <!-- Enhanced Logout Button - Hidden on mobile -->
-                        <button type="button" onclick="showLogoutModal('admin')" class="logout-btn hidden md:block">
-                            <span>Logout</span>
+                        <button type="button" onclick="showLogoutModal('admin')" class="logout-btn-3 hidden md:block">
+                            <span>Signout</span>
                         </button>
 
                         <!-- Hamburger Menu Button - Visible only on mobile -->
@@ -959,10 +1016,10 @@ if (isset($_SESSION['user']['id'])) {
             <!-- Staff Header -->
              <style>
                 .bg-staff-primary {
-                    background-color: #9333EA;
+                    background-color: #9E47EC;
                 }
                 .bg-staff-secondary {
-                    background-color: rgba(185, 143, 224, 0.15);
+                    background-color: #9333EA;
                 }
              </style>
             <nav class="bg-staff-primary border-b-2 text-white shadow-lg sticky top-0 z-50">
@@ -997,7 +1054,7 @@ if (isset($_SESSION['user']['id'])) {
                                 <?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>
                         <button type="button" onclick="showLogoutModal('staff')"
-                            class="logout-btn hidden md:block bg-[#FF5555] text-[#FFFFFF] hover:bg-[#FF5555] hover:text-white">
+                            class="logout-btn-2 hidden md:block bg-white text-[#9333EA] hover:bg-white hover:text-[#9333EA]">
                             <span class="font-medium">Signout</span>
                         </button>
 
@@ -1104,7 +1161,7 @@ if (isset($_SESSION['user']['id'])) {
                         </div>
                         <!-- Enhanced Logout Button - Hidden on mobile -->
                         <button type="button" onclick="showLogoutModal('user')"
-                            class="logout-btn hidden md:block text-[#FFFFFF] hover:bg-[#2B7CC9] hover:text-white">
+                            class="logout-btn-1<?php echo ($current_page == 'health_records.php') ? ' active-record' : ''; ?>">
                             <span>Signout</span>
                         </button>
 
@@ -1263,8 +1320,8 @@ if (isset($_SESSION['user']['id'])) {
                     <!-- Logout Button -->
                     <div class="flex justify-center">
                         <button type="button" onclick="showLogoutModal('admin'); closeAdminMenu();"
-                            class="px-8 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium">
-                            Logout
+                            class="logout-btn-3 transition font-medium">
+                            Signout
                         </button>
                     </div>
                 </div>
@@ -1521,803 +1578,802 @@ if (isset($_SESSION['user']['id'])) {
                 <!-- Current Profile Picture Preview -->
                 <div class="mb-6">
                     <img id="profilePreview"
-                        src="<?php echo $profile_picture ?: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZDFkNWRiIi8+PHBhdGggZD0iTTEyIDExYTIgMiAwIDEgMCAwLTQgMiAyIDAgMCAwIDAgNHoiIGZpbGw9IiM5Y2EzYWYiLz48cGF0aCBkPSJNMTIgMTVhNCA0IDAgMCAwLTQgNGg4YTQgNCAwIDAgMC00LTR6IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+' ?>"
-                        alt="Profile Preview" class="profile-preview">
-                </div>
-
-                <!-- Upload Form -->
-                <form id="profileUploadForm" enctype="multipart/form-data" class="space-y-4">
-                    <input type="hidden" name="user_id"
-                        value="<?php echo isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : '' ?>">
-                    <input type="hidden" name="user_type" id="profileUserType" value="">
-
-                    <div>
-                        <label for="profile_image" class="block text-sm font-medium text-gray-700 mb-2">
-                            Choose Profile Picture
-                        </label>
-                        <input type="file" id="profile_image" name="profile_image" accept=".jpg,.jpeg,.png,.gif"
-                            class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3C96E1] text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <p class="text-xs text-gray-500 mt-2">Max file size: 2MB (JPEG, PNG, GIF)</p>
-                        <div id="profileUploadError" class="text-xs text-red-500 mt-2 hidden"></div>
+                        src="<?php echo $profile_picture ?: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZDFkNWRiIi8+PHBhdGggZD0iTTEyIDExYTIgMiAwIDEgMCAwLTQgMiAyIDAgMCAwIDAgNHoiIGZpbGw9IiM5Y2EzYWYiLz48cGF0aCBkPSJNMTIgMTVhNCA0IDAgMCAwLTQgNGg4YTQgNCAwIDAgMC00LTR6IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+'; ?>" />
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex gap-3 mt-6" style="gap: 5px;">
-                        <button type="button" onclick="removeProfilePicture()"
-                            class="profile-remove-btn <?php echo !$profile_picture ? 'opacity-50 cursor-not-allowed' : '' ?>"
-                            <?php echo !$profile_picture ? 'disabled' : '' ?>>
-                            <i class="fas fa-trash-alt"></i>
-                            Remove
-                        </button>
-                        <button type="submit" class="profile-upload-btn">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            Upload
-                        </button>
-                    </div>
-                </form>
+                    <!-- Upload Form -->
+                    <form id="profileUploadForm" enctype="multipart/form-data" class="space-y-4">
+                        <input type="hidden" name="user_id"
+                            value="<?php echo isset($_SESSION['user']['id']) ? $_SESSION['user']['id'] : '' ?>">
+                        <input type="hidden" name="user_type" id="profileUserType" value="">
 
-                <!-- Loading Indicator -->
-                <div id="profileLoading" class="hidden mt-4 text-center">
-                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3C96E1]"></div>
-                    <p class="text-sm text-gray-600 mt-2">Uploading...</p>
+                        <div>
+                            <label for="profile_image" class="block text-sm font-medium text-gray-700 mb-2">
+                                Choose Profile Picture
+                            </label>
+                            <input type="file" id="profile_image" name="profile_image" accept=".jpg,.jpeg,.png,.gif"
+                                class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3C96E1] text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p class="text-xs text-gray-500 mt-2">Max file size: 2MB (JPEG, PNG, GIF)</p>
+                            <div id="profileUploadError" class="text-xs text-red-500 mt-2 hidden"></div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3 mt-6" style="gap: 5px;">
+                            <button type="button" onclick="removeProfilePicture()"
+                                class="profile-remove-btn <?php echo !$profile_picture ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                                <?php echo !$profile_picture ? 'disabled' : '' ?>>
+                                <i class="fas fa-trash-alt"></i>
+                                Remove
+                            </button>
+                            <button type="submit" class="profile-upload-btn">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Upload
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Loading Indicator -->
+                    <div id="profileLoading" class="hidden mt-4 text-center">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3C96E1]"></div>
+                        <p class="text-sm text-gray-600 mt-2">Uploading...</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Logout Confirmation Modal -->
-        <div id="logoutModal"
-            class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
-            <div
-                class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md mx-auto modal-content logout-modal-content">
-                <!-- Close Button -->
-                <button onclick="closeLogoutModal()"
-                    class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-
-                <!-- Warning Icon -->
-                <div class="flex justify-center mb-4">
-                    <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <!-- Logout Confirmation Modal -->
+            <div id="logoutModal"
+                class="fixed inset-0 hidden z-[60] h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
+                <div
+                    class="relative bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md mx-auto modal-content logout-modal-content">
+                    <!-- Close Button -->
+                    <button onclick="closeLogoutModal()"
+                        class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
+                    </button>
+
+                    <!-- Warning Icon -->
+                    <div class="flex justify-center mb-4">
+                        <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Modal Title -->
+                    <div class="text-center mb-2">
+                        <h3 class="text-xl font-bold text-gray-800">Confirm Logout</h3>
+                    </div>
+
+                    <!-- Modal Message -->
+                    <div class="text-center mb-6">
+                        <p class="text-gray-600">Are you sure you want to logout?</p>
+                        <p class="text-sm text-gray-500 mt-1">You will need to log in again to access your account.</p>
+                    </div>
+
+                    <!-- Modal Buttons -->
+                    <div class="logout-modal-buttons">
+                        <button type="button" onclick="closeLogoutModal()" class="logout-cancel-btn">
+                            Cancel
+                        </button>
+                        <button type="button" id="confirmLogoutBtn" class="logout-confirm-btn">
+                            Yes, Logout
+                        </button>
                     </div>
                 </div>
-
-                <!-- Modal Title -->
-                <div class="text-center mb-2">
-                    <h3 class="text-xl font-bold text-gray-800">Confirm Logout</h3>
-                </div>
-
-                <!-- Modal Message -->
-                <div class="text-center mb-6">
-                    <p class="text-gray-600">Are you sure you want to logout?</p>
-                    <p class="text-sm text-gray-500 mt-1">You will need to log in again to access your account.</p>
-                </div>
-
-                <!-- Modal Buttons -->
-                <div class="logout-modal-buttons">
-                    <button type="button" onclick="closeLogoutModal()" class="logout-cancel-btn">
-                        Cancel
-                    </button>
-                    <button type="button" id="confirmLogoutBtn" class="logout-confirm-btn">
-                        Yes, Logout
-                    </button>
-                </div>
             </div>
-        </div>
 
-        <main class="container mx-auto"> <!-- Added mt-24 to account for the fixed header height -->
-            <!-- Your main content here -->
-        </main>
+            <main class="container mx-auto"> <!-- Added mt-24 to account for the fixed header height -->
+                <!-- Your main content here -->
+            </main>
 
-        <!-- Hidden refresh indicator -->
-        <div id="refreshIndicator" class="refresh-indicator"></div>
+            <!-- Hidden refresh indicator -->
+            <div id="refreshIndicator" class="refresh-indicator"></div>
 
-        <script>
-            // Global variable to store logout URL
-            let logoutUrl = '';
+            <script>
+                // Global variable to store logout URL
+                let logoutUrl = '';
 
-            // Function to open profile picture modal
-            function openProfileModal(userType) {
-                const modal = document.getElementById("profileModal");
-                const modalContent = modal.querySelector('.modal-content');
-                const userTypeInput = document.getElementById('profileUserType');
-                const profilePreview = document.getElementById('profilePreview');
-
-                // Set user type for form submission
-                userTypeInput.value = userType;
-
-                // Refresh the profile preview image with cache-buster to ensure fresh display
-                const currentSrc = profilePreview.src;
-                if (currentSrc && !currentSrc.includes('data:image/svg')) {
-                    // Add timestamp to force refresh from server
-                    const baseSrc = currentSrc.split('?')[0];
-                    profilePreview.src = baseSrc + '?t=' + Date.now();
-                }
-
-                modal.classList.remove("hidden");
-                modal.classList.add("flex");
-
-                // Trigger animation
-                setTimeout(() => {
-                    modalContent.classList.add('open');
-                }, 10);
-
-                // Set focus to upload button for accessibility
-                setTimeout(() => {
-                    document.querySelector('.profile-upload-btn').focus();
-                }, 50);
-            }
-
-            // Function to close profile modal
-            function closeProfileModal() {
-                const modal = document.getElementById("profileModal");
-                const modalContent = modal.querySelector('.modal-content');
-
-                modalContent.classList.remove('open');
-
-                // Wait for animation to complete before hiding
-                setTimeout(() => {
-                    modal.classList.remove("flex");
-                    modal.classList.add("hidden");
-                }, 300);
-            }
-
-            // Function to show logout confirmation modal
-            function showLogoutModal(userType) {
-                // Set the logout URL based on user type
-                switch (userType) {
-                    case 'admin':
-                        logoutUrl = '../auth/logout.php';
-                        break;
-                    case 'staff':
-                        logoutUrl = '/community-health-tracker/auth/logout.php';
-                        break;
-                    case 'user':
-                        logoutUrl = '../auth/logout_user.php';
-                        break;
-                    default:
-                        logoutUrl = '../auth/logout.php';
-                }
-
-                const modal = document.getElementById("logoutModal");
-                const modalContent = modal.querySelector('.modal-content');
-
-                modal.classList.remove("hidden");
-                modal.classList.add("flex");
-
-                // Trigger animation
-                setTimeout(() => {
-                    modalContent.classList.add('open');
-                }, 10);
-
-                // Set focus to cancel button for accessibility
-                setTimeout(() => {
-                    document.querySelector('.logout-cancel-btn').focus();
-                }, 50);
-            }
-
-            // Function to close logout modal
-            function closeLogoutModal() {
-                const modal = document.getElementById("logoutModal");
-                const modalContent = modal.querySelector('.modal-content');
-
-                modalContent.classList.remove('open');
-
-                // Wait for animation to complete before hiding
-                setTimeout(() => {
-                    modal.classList.remove("flex");
-                    modal.classList.add("hidden");
-                }, 300);
-            }
-
-            // Function to toggle user mobile menu
-            function toggleUserMenu() {
-                const modal = document.getElementById("userMobileMenu");
-                if (modal && modal.classList.contains("hidden")) {
-                    openUserMenu();
-                } else {
-                    closeUserMenu();
-                }
-            }
-
-            // Function to open user mobile menu
-            function openUserMenu() {
-                const modal = document.getElementById("userMobileMenu");
-                if (modal) {
+                // Function to open profile picture modal
+                function openProfileModal(userType) {
+                    const modal = document.getElementById("profileModal");
                     const modalContent = modal.querySelector('.modal-content');
+                    const userTypeInput = document.getElementById('profileUserType');
+                    const profilePreview = document.getElementById('profilePreview');
+
+                    // Set user type for form submission
+                    userTypeInput.value = userType;
+
+                    // Refresh the profile preview image with cache-buster to ensure fresh display
+                    const currentSrc = profilePreview.src;
+                    if (currentSrc && !currentSrc.includes('data:image/svg')) {
+                        // Add timestamp to force refresh from server
+                        const baseSrc = currentSrc.split('?')[0];
+                        profilePreview.src = baseSrc + '?t=' + Date.now();
+                    }
+
                     modal.classList.remove("hidden");
                     modal.classList.add("flex");
-                    if (modalContent) {
-                        setTimeout(() => {
-                            modalContent.classList.add('open');
-                        }, 10);
-                    }
-                }
-            }
 
-            // Function to close user mobile menu
-            function closeUserMenu() {
-                const modal = document.getElementById("userMobileMenu");
-                if (modal) {
+                    // Trigger animation
+                    setTimeout(() => {
+                        modalContent.classList.add('open');
+                    }, 10);
+
+                    // Set focus to upload button for accessibility
+                    setTimeout(() => {
+                        document.querySelector('.profile-upload-btn').focus();
+                    }, 50);
+                }
+
+                // Function to close profile modal
+                function closeProfileModal() {
+                    const modal = document.getElementById("profileModal");
                     const modalContent = modal.querySelector('.modal-content');
-                    if (modalContent) {
-                        modalContent.classList.remove('open');
-                        setTimeout(() => {
-                            modal.classList.add("hidden");
-                            modal.classList.remove("flex");
-                        }, 300);
-                    } else {
-                        modal.classList.add("hidden");
+
+                    modalContent.classList.remove('open');
+
+                    // Wait for animation to complete before hiding
+                    setTimeout(() => {
                         modal.classList.remove("flex");
+                        modal.classList.add("hidden");
+                    }, 300);
+                }
+
+                // Function to show logout confirmation modal
+                function showLogoutModal(userType) {
+                    // Set the logout URL based on user type
+                    switch (userType) {
+                        case 'admin':
+                            logoutUrl = '../auth/logout.php';
+                            break;
+                        case 'staff':
+                            logoutUrl = '/community-health-tracker/auth/logout.php';
+                            break;
+                        case 'user':
+                            logoutUrl = '../auth/logout_user.php';
+                            break;
+                        default:
+                            logoutUrl = '../auth/logout.php';
                     }
-                }
-            }
 
-            // Function to toggle admin mobile menu
-            function toggleAdminMenu() {
-                const modal = document.getElementById("adminMobileMenu");
-                if (modal && modal.classList.contains("hidden")) {
-                    openAdminMenu();
-                } else {
-                    closeAdminMenu();
-                }
-            }
-
-            // Function to open admin mobile menu
-            function openAdminMenu() {
-                const modal = document.getElementById("adminMobileMenu");
-                if (modal) {
+                    const modal = document.getElementById("logoutModal");
                     const modalContent = modal.querySelector('.modal-content');
+
                     modal.classList.remove("hidden");
                     modal.classList.add("flex");
-                    if (modalContent) {
-                        setTimeout(() => {
-                            modalContent.classList.add('open');
-                        }, 10);
-                    }
-                }
-            }
 
-            // Function to close admin mobile menu
-            function closeAdminMenu() {
-                const modal = document.getElementById("adminMobileMenu");
-                if (modal) {
+                    // Trigger animation
+                    setTimeout(() => {
+                        modalContent.classList.add('open');
+                    }, 10);
+
+                    // Set focus to cancel button for accessibility
+                    setTimeout(() => {
+                        document.querySelector('.logout-cancel-btn').focus();
+                    }, 50);
+                }
+
+                // Function to close logout modal
+                function closeLogoutModal() {
+                    const modal = document.getElementById("logoutModal");
                     const modalContent = modal.querySelector('.modal-content');
-                    if (modalContent) {
-                        modalContent.classList.remove('open');
-                        setTimeout(() => {
-                            modal.classList.add("hidden");
-                            modal.classList.remove("flex");
-                        }, 300);
-                    } else {
-                        modal.classList.add("hidden");
+
+                    modalContent.classList.remove('open');
+
+                    // Wait for animation to complete before hiding
+                    setTimeout(() => {
                         modal.classList.remove("flex");
-                    }
-                }
-            }
-
-            // Function to toggle staff mobile menu
-            function toggleStaffMenu() {
-                const modal = document.getElementById("staffMobileMenu");
-                if (modal && modal.classList.contains("hidden")) {
-                    openStaffMenu();
-                } else {
-                    closeStaffMenu();
-                }
-            }
-
-            // Function to open staff mobile menu
-            function openStaffMenu() {
-                const modal = document.getElementById("staffMobileMenu");
-                if (modal) {
-                    const modalContent = modal.querySelector('.modal-content');
-                    modal.classList.remove("hidden");
-                    modal.classList.add("flex");
-                    if (modalContent) {
-                        setTimeout(() => {
-                            modalContent.classList.add('open');
-                        }, 10);
-                    }
-                }
-            }
-
-            // Function to close staff mobile menu
-            function closeStaffMenu() {
-                const modal = document.getElementById("staffMobileMenu");
-                if (modal) {
-                    const modalContent = modal.querySelector('.modal-content');
-                    if (modalContent) {
-                        modalContent.classList.remove('open');
-                        setTimeout(() => {
-                            modal.classList.add("hidden");
-                            modal.classList.remove("flex");
-                        }, 300);
-                    } else {
                         modal.classList.add("hidden");
-                        modal.classList.remove("flex");
+                    }, 300);
+                }
+
+                // Function to toggle user mobile menu
+                function toggleUserMenu() {
+                    const modal = document.getElementById("userMobileMenu");
+                    if (modal && modal.classList.contains("hidden")) {
+                        openUserMenu();
+                    } else {
+                        closeUserMenu();
                     }
                 }
-            }
 
-            // Close mobile menus when clicking outside
-            document.addEventListener('click', function (event) {
-                // Close user menu
-                const userMobileMenu = document.getElementById("userMobileMenu");
-                const userHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleUserMenu()"]');
-
-                if (userMobileMenu && userHamburgerBtn &&
-                    !userMobileMenu.contains(event.target) &&
-                    !userHamburgerBtn.contains(event.target) &&
-                    userMobileMenu.classList.contains('flex')) {
-                    closeUserMenu();
-                }
-
-                // Close admin menu
-                const adminMobileMenu = document.getElementById("adminMobileMenu");
-                const adminHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleAdminMenu()"]');
-
-                if (adminMobileMenu && adminHamburgerBtn &&
-                    !adminMobileMenu.contains(event.target) &&
-                    !adminHamburgerBtn.contains(event.target) &&
-                    adminMobileMenu.classList.contains('flex')) {
-                    closeAdminMenu();
-                }
-
-                // Close staff menu
-                const staffMobileMenu = document.getElementById("staffMobileMenu");
-                const staffHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleStaffMenu()"]');
-
-                if (staffMobileMenu && staffHamburgerBtn &&
-                    !staffMobileMenu.contains(event.target) &&
-                    !staffHamburgerBtn.contains(event.target) &&
-                    staffMobileMenu.classList.contains('flex')) {
-                    closeStaffMenu();
-                }
-            });
-
-            // Handle logout confirmation
-            document.getElementById('confirmLogoutBtn').addEventListener('click', function () {
-                // Redirect to logout URL
-                window.location.href = logoutUrl;
-            });
-
-            // Profile picture upload functionality
-            document.addEventListener('DOMContentLoaded', function () {
-                const profileUploadForm = document.getElementById('profileUploadForm');
-                const profileImageInput = document.getElementById('profile_image');
-                const profilePreview = document.getElementById('profilePreview');
-                const profileUploadError = document.getElementById('profileUploadError');
-                const profileLoading = document.getElementById('profileLoading');
-                const removeProfileBtn = document.querySelector('.profile-remove-btn');
-
-                // Preview image when file is selected
-                profileImageInput.addEventListener('change', function (e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        // Validate file size (2MB)
-                        if (file.size > 2 * 1024 * 1024) {
-                            profileUploadError.textContent = 'File size exceeds 2MB limit.';
-                            profileUploadError.classList.remove('hidden');
-                            this.value = '';
-                            return;
+                // Function to open user mobile menu
+                function openUserMenu() {
+                    const modal = document.getElementById("userMobileMenu");
+                    if (modal) {
+                        const modalContent = modal.querySelector('.modal-content');
+                        modal.classList.remove("hidden");
+                        modal.classList.add("flex");
+                        if (modalContent) {
+                            setTimeout(() => {
+                                modalContent.classList.add('open');
+                            }, 10);
                         }
-
-                        // Validate file type
-                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-                        if (!validTypes.includes(file.type)) {
-                            profileUploadError.textContent = 'Invalid file type. Please upload JPEG, PNG, or GIF images.';
-                            profileUploadError.classList.remove('hidden');
-                            this.value = '';
-                            return;
-                        }
-
-                        // Clear any previous errors
-                        profileUploadError.classList.add('hidden');
-
-                        // Create preview
-                        const reader = new FileReader();
-                        reader.onload = function (e) {
-                            profilePreview.src = e.target.result;
-                        }
-                        reader.readAsDataURL(file);
                     }
-                });
+                }
 
-                // Handle form submission
-                profileUploadForm.addEventListener('submit', function (e) {
-                    e.preventDefault();
-
-                    const formData = new FormData(this);
-                    const file = profileImageInput.files[0];
-
-                    if (!file) {
-                        profileUploadError.textContent = 'Please select a file to upload.';
-                        profileUploadError.classList.remove('hidden');
-                        return;
-                    }
-
-                    // Show loading indicator
-                    profileLoading.classList.remove('hidden');
-                    profileUploadForm.classList.add('opacity-50');
-
-                    // Submit via AJAX
-                    fetch('/community-health-tracker/auth/upload_profile.php', {
-                        method: 'POST',
-                        body: formData,
-                        credentials: 'same-origin'
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Update profile picture in header
-                                updateProfilePicture(data.profile_url);
-
-                                // Show success message
-                                alert('Profile picture updated successfully!');
-                                // Reset file input so user can upload again
-                                profileImageInput.value = '';
-                                // Close modal
-                                closeProfileModal();
-                            } else {
-                                // Show error
-                                profileUploadError.textContent = data.message || 'Upload failed. Please try again.';
-                                profileUploadError.classList.remove('hidden');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            profileUploadError.textContent = 'An error occurred. Please try again.';
-                            profileUploadError.classList.remove('hidden');
-                        })
-                        .finally(() => {
-                            // Hide loading indicator
-                            profileLoading.classList.add('hidden');
-                            profileUploadForm.classList.remove('opacity-50');
-                        });
-                });
-
-                // Remove profile picture
-                window.removeProfilePicture = function () {
-                    if (!confirm('Are you sure you want to remove your profile picture?')) {
-                        return;
-                    }
-
-                    const formData = new FormData();
-                    formData.append('user_id', document.querySelector('input[name="user_id"]').value);
-                    formData.append('user_type', document.getElementById('profileUserType').value);
-                    formData.append('remove', '1');
-
-                    // Show loading indicator
-                    profileLoading.classList.remove('hidden');
-                    profileUploadForm.classList.add('opacity-50');
-
-                    fetch('/community-health-tracker/auth/upload_profile.php', {
-                        method: 'POST',
-                        body: formData,
-                        credentials: 'same-origin'
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Update profile picture in header
-                                updateProfilePicture(null);
-
-                                // Reset preview to default
-                                profilePreview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZDFkNWRiIi8+PHBhdGggZD0iTTEyIDExYTIgMiAwIDEgMCAwLTQgMiAyIDAgMCAwIDAgNHoiIGZpbGw9IiM5Y2EzYWYiLz48cGF0aCBkPSJNMTIgMTVhNCA0IDAgMCAwLTQgNGg4YTQgNCAwIDAgMC00LTR6IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+';
-
-                                // Disable remove button
-                                removeProfileBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                                removeProfileBtn.disabled = true;
-
-                                // Show success message
-                                alert('Profile picture removed successfully!');
-                            } else {
-                                alert(data.message || 'Failed to remove profile picture.');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('An error occurred. Please try again.');
-                        })
-                        .finally(() => {
-                            // Hide loading indicator
-                            profileLoading.classList.add('hidden');
-                            profileUploadForm.classList.remove('opacity-50');
-                        });
-                };
-
-                // Function to update profile picture in header
-                function updateProfilePicture(imageUrl) {
-                    const profileAvatars = document.querySelectorAll('.profile-avatar');
-                    // Add cache-busting using current timestamp to ensure new image loads
-                    const cacheBustedUrl = imageUrl ? imageUrl + (imageUrl.includes('?') ? '&' : '?') + 't=' + Date.now() : null;
-                    profileAvatars.forEach(avatar => {
-                        if (cacheBustedUrl) {
-                            avatar.style.backgroundImage = `url('${cacheBustedUrl}')`;
-                            avatar.classList.add('has-image');
-                            // Remove the icon if it exists
-                            const icon = avatar.querySelector('i');
-                            if (icon) {
-                                icon.remove();
-                            }
+                // Function to close user mobile menu
+                function closeUserMenu() {
+                    const modal = document.getElementById("userMobileMenu");
+                    if (modal) {
+                        const modalContent = modal.querySelector('.modal-content');
+                        if (modalContent) {
+                            modalContent.classList.remove('open');
+                            setTimeout(() => {
+                                modal.classList.add("hidden");
+                                modal.classList.remove("flex");
+                            }, 300);
                         } else {
-                            avatar.style.backgroundImage = '';
-                            avatar.classList.remove('has-image');
-                            // Add the default icon
-                            if (!avatar.querySelector('i')) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fas fa-user-circle text-4xl text-white absolute inset-0 flex items-center justify-center';
-                                avatar.appendChild(icon);
+                            modal.classList.add("hidden");
+                            modal.classList.remove("flex");
+                        }
+                    }
+                }
+
+                // Function to toggle admin mobile menu
+                function toggleAdminMenu() {
+                    const modal = document.getElementById("adminMobileMenu");
+                    if (modal && modal.classList.contains("hidden")) {
+                        openAdminMenu();
+                    } else {
+                        closeAdminMenu();
+                    }
+                }
+
+                // Function to open admin mobile menu
+                function openAdminMenu() {
+                    const modal = document.getElementById("adminMobileMenu");
+                    if (modal) {
+                        const modalContent = modal.querySelector('.modal-content');
+                        modal.classList.remove("hidden");
+                        modal.classList.add("flex");
+                        if (modalContent) {
+                            setTimeout(() => {
+                                modalContent.classList.add('open');
+                            }, 10);
+                        }
+                    }
+                }
+
+                // Function to close admin mobile menu
+                function closeAdminMenu() {
+                    const modal = document.getElementById("adminMobileMenu");
+                    if (modal) {
+                        const modalContent = modal.querySelector('.modal-content');
+                        if (modalContent) {
+                            modalContent.classList.remove('open');
+                            setTimeout(() => {
+                                modal.classList.add("hidden");
+                                modal.classList.remove("flex");
+                            }, 300);
+                        } else {
+                            modal.classList.add("hidden");
+                            modal.classList.remove("flex");
+                        }
+                    }
+                }
+
+                // Function to toggle staff mobile menu
+                function toggleStaffMenu() {
+                    const modal = document.getElementById("staffMobileMenu");
+                    if (modal && modal.classList.contains("hidden")) {
+                        openStaffMenu();
+                    } else {
+                        closeStaffMenu();
+                    }
+                }
+
+                // Function to open staff mobile menu
+                function openStaffMenu() {
+                    const modal = document.getElementById("staffMobileMenu");
+                    if (modal) {
+                        const modalContent = modal.querySelector('.modal-content');
+                        modal.classList.remove("hidden");
+                        modal.classList.add("flex");
+                        if (modalContent) {
+                            setTimeout(() => {
+                                modalContent.classList.add('open');
+                            }, 10);
+                        }
+                    }
+                }
+
+                // Function to close staff mobile menu
+                function closeStaffMenu() {
+                    const modal = document.getElementById("staffMobileMenu");
+                    if (modal) {
+                        const modalContent = modal.querySelector('.modal-content');
+                        if (modalContent) {
+                            modalContent.classList.remove('open');
+                            setTimeout(() => {
+                                modal.classList.add("hidden");
+                                modal.classList.remove("flex");
+                            }, 300);
+                        } else {
+                            modal.classList.add("hidden");
+                            modal.classList.remove("flex");
+                        }
+                    }
+                }
+
+                // Close mobile menus when clicking outside
+                document.addEventListener('click', function (event) {
+                    // Close user menu
+                    const userMobileMenu = document.getElementById("userMobileMenu");
+                    const userHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleUserMenu()"]');
+
+                    if (userMobileMenu && userHamburgerBtn &&
+                        !userMobileMenu.contains(event.target) &&
+                        !userHamburgerBtn.contains(event.target) &&
+                        userMobileMenu.classList.contains('flex')) {
+                        closeUserMenu();
+                    }
+
+                    // Close admin menu
+                    const adminMobileMenu = document.getElementById("adminMobileMenu");
+                    const adminHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleAdminMenu()"]');
+
+                    if (adminMobileMenu && adminHamburgerBtn &&
+                        !adminMobileMenu.contains(event.target) &&
+                        !adminHamburgerBtn.contains(event.target) &&
+                        adminMobileMenu.classList.contains('flex')) {
+                        closeAdminMenu();
+                    }
+
+                    // Close staff menu
+                    const staffMobileMenu = document.getElementById("staffMobileMenu");
+                    const staffHamburgerBtn = document.querySelector('.md\\:hidden[onclick="toggleStaffMenu()"]');
+
+                    if (staffMobileMenu && staffHamburgerBtn &&
+                        !staffMobileMenu.contains(event.target) &&
+                        !staffHamburgerBtn.contains(event.target) &&
+                        staffMobileMenu.classList.contains('flex')) {
+                        closeStaffMenu();
+                    }
+                });
+
+                // Handle logout confirmation
+                document.getElementById('confirmLogoutBtn').addEventListener('click', function () {
+                    // Redirect to logout URL
+                    window.location.href = logoutUrl;
+                });
+
+                // Profile picture upload functionality
+                document.addEventListener('DOMContentLoaded', function () {
+                    const profileUploadForm = document.getElementById('profileUploadForm');
+                    const profileImageInput = document.getElementById('profile_image');
+                    const profilePreview = document.getElementById('profilePreview');
+                    const profileUploadError = document.getElementById('profileUploadError');
+                    const profileLoading = document.getElementById('profileLoading');
+                    const removeProfileBtn = document.querySelector('.profile-remove-btn');
+
+                    // Preview image when file is selected
+                    profileImageInput.addEventListener('change', function (e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            // Validate file size (2MB)
+                            if (file.size > 2 * 1024 * 1024) {
+                                profileUploadError.textContent = 'File size exceeds 2MB limit.';
+                                profileUploadError.classList.remove('hidden');
+                                this.value = '';
+                                return;
                             }
+
+                            // Validate file type
+                            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                            if (!validTypes.includes(file.type)) {
+                                profileUploadError.textContent = 'Invalid file type. Please upload JPEG, PNG, or GIF images.';
+                                profileUploadError.classList.remove('hidden');
+                                this.value = '';
+                                return;
+                            }
+
+                            // Clear any previous errors
+                            profileUploadError.classList.add('hidden');
+
+                            // Create preview
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                profilePreview.src = e.target.result;
+                            }
+                            reader.readAsDataURL(file);
                         }
                     });
 
-                    // Also update the preview image in the modal if it exists
-                    const profilePreview = document.getElementById('profilePreview');
-                    if (profilePreview && cacheBustedUrl) {
-                        profilePreview.src = cacheBustedUrl;
+                    // Handle form submission
+                    profileUploadForm.addEventListener('submit', function (e) {
+                        e.preventDefault();
+
+                        const formData = new FormData(this);
+                        const file = profileImageInput.files[0];
+
+                        if (!file) {
+                            profileUploadError.textContent = 'Please select a file to upload.';
+                            profileUploadError.classList.remove('hidden');
+                            return;
+                        }
+
+                        // Show loading indicator
+                        profileLoading.classList.remove('hidden');
+                        profileUploadForm.classList.add('opacity-50');
+
+                        // Submit via AJAX
+                        fetch('/community-health-tracker/auth/upload_profile.php', {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'same-origin'
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Update profile picture in header
+                                    updateProfilePicture(data.profile_url);
+
+                                    // Show success message
+                                    alert('Profile picture updated successfully!');
+                                    // Reset file input so user can upload again
+                                    profileImageInput.value = '';
+                                    // Close modal
+                                    closeProfileModal();
+                                } else {
+                                    // Show error
+                                    profileUploadError.textContent = data.message || 'Upload failed. Please try again.';
+                                    profileUploadError.classList.remove('hidden');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                profileUploadError.textContent = 'An error occurred. Please try again.';
+                                profileUploadError.classList.remove('hidden');
+                            })
+                            .finally(() => {
+                                // Hide loading indicator
+                                profileLoading.classList.add('hidden');
+                                profileUploadForm.classList.remove('opacity-50');
+                            });
+                    });
+
+                    // Remove profile picture
+                    window.removeProfilePicture = function () {
+                        if (!confirm('Are you sure you want to remove your profile picture?')) {
+                            return;
+                        }
+
+                        const formData = new FormData();
+                        formData.append('user_id', document.querySelector('input[name="user_id"]').value);
+                        formData.append('user_type', document.getElementById('profileUserType').value);
+                        formData.append('remove', '1');
+
+                        // Show loading indicator
+                        profileLoading.classList.remove('hidden');
+                        profileUploadForm.classList.add('opacity-50');
+
+                        fetch('/community-health-tracker/auth/upload_profile.php', {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'same-origin'
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Update profile picture in header
+                                    updateProfilePicture(null);
+
+                                    // Reset preview to default
+                                    profilePreview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZDFkNWRiIi8+PHBhdGggZD0iTTEyIDExYTIgMiAwIDEgMCAwLTQgMiAyIDAgMCAwIDAgNHoiIGZpbGw9IiM5Y2EzYWYiLz48cGF0aCBkPSJNMTIgMTVhNCA0IDAgMCAwLTQgNGg4YTQgNCAwIDAgMC00LTR6IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+';
+
+                                    // Disable remove button
+                                    removeProfileBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                                    removeProfileBtn.disabled = true;
+
+                                    // Show success message
+                                    alert('Profile picture removed successfully!');
+                                } else {
+                                    alert(data.message || 'Failed to remove profile picture.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('An error occurred. Please try again.');
+                            })
+                            .finally(() => {
+                                // Hide loading indicator
+                                profileLoading.classList.add('hidden');
+                                profileUploadForm.classList.remove('opacity-50');
+                            });
+                    };
+
+                    // Function to update profile picture in header
+                    function updateProfilePicture(imageUrl) {
+                        const profileAvatars = document.querySelectorAll('.profile-avatar');
+                        // Add cache-busting using current timestamp to ensure new image loads
+                        const cacheBustedUrl = imageUrl ? imageUrl + (imageUrl.includes('?') ? '&' : '?') + 't=' + Date.now() : null;
+                        profileAvatars.forEach(avatar => {
+                            if (cacheBustedUrl) {
+                                avatar.style.backgroundImage = `url('${cacheBustedUrl}')`;
+                                avatar.classList.add('has-image');
+                                // Remove the icon if it exists
+                                const icon = avatar.querySelector('i');
+                                if (icon) {
+                                    icon.remove();
+                                }
+                            } else {
+                                avatar.style.backgroundImage = '';
+                                avatar.classList.remove('has-image');
+                                // Add the default icon
+                                if (!avatar.querySelector('i')) {
+                                    const icon = document.createElement('i');
+                                    icon.className = 'fas fa-user-circle text-4xl text-white absolute inset-0 flex items-center justify-center';
+                                    avatar.appendChild(icon);
+                                }
+                            }
+                        });
+
+                        // Also update the preview image in the modal if it exists
+                        const profilePreview = document.getElementById('profilePreview');
+                        if (profilePreview && cacheBustedUrl) {
+                            profilePreview.src = cacheBustedUrl;
+                        }
                     }
-                }
-            });
+                });
 
-            // Close modal when clicking outside
-            document.getElementById('profileModal')?.addEventListener('click', function (e) {
-                if (e.target === this) {
-                    closeProfileModal();
-                }
-            });
-
-            document.getElementById('logoutModal')?.addEventListener('click', function (e) {
-                if (e.target === this) {
-                    closeLogoutModal();
-                }
-            });
-
-            // Close modals with Escape key
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') {
-                    const profileModal = document.getElementById('profileModal');
-                    const logoutModal = document.getElementById('logoutModal');
-
-                    if (!profileModal.classList.contains('hidden')) {
+                // Close modal when clicking outside
+                document.getElementById('profileModal')?.addEventListener('click', function (e) {
+                    if (e.target === this) {
                         closeProfileModal();
-                    } else if (!logoutModal.classList.contains('hidden')) {
+                    }
+                });
+
+                document.getElementById('logoutModal')?.addEventListener('click', function (e) {
+                    if (e.target === this) {
                         closeLogoutModal();
                     }
-                }
-
-                // Handle Enter key on confirm button
-                if (e.key === 'Enter' && document.activeElement.id === 'confirmLogoutBtn') {
-                    document.getElementById('confirmLogoutBtn').click();
-                }
-            });
-
-            // Function to update Philippine time in real-time
-            function updatePhilippineTime() {
-                const now = new Date();
-
-                // Get the current time in the Philippines (UTC+8)
-                // Since we're using the server's timezone setting (Asia/Manila),
-                // we can use local time methods
-                const hours = now.getHours();
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                const seconds = now.getSeconds().toString().padStart(2, '0');
-                const ampm = hours >= 12 ? 'PM' : 'AM';
-
-                // Convert to 12-hour format
-                let hours12 = hours % 12;
-                hours12 = hours12 ? hours12 : 12; // Convert 0 to 12
-                const hoursStr = hours12.toString().padStart(2, '0');
-
-                // Format date
-                const options = { month: 'short', day: 'numeric', year: 'numeric' };
-                const dateStr = now.toLocaleDateString('en-US', options);
-
-                // Update the elements for user
-                if (document.getElementById('ph-date')) {
-                    document.getElementById('ph-date').textContent = dateStr;
-                    document.getElementById('ph-hours').textContent = hoursStr;
-                    document.getElementById('ph-minutes').textContent = minutes;
-                    document.getElementById('ph-seconds').textContent = seconds;
-                    document.getElementById('ph-ampm').textContent = ampm;
-                }
-
-                // Update the elements for staff
-                if (document.getElementById('staff-ph-date')) {
-                    document.getElementById('staff-ph-date').textContent = dateStr;
-                    document.getElementById('staff-ph-hours').textContent = hoursStr;
-                    document.getElementById('staff-ph-minutes').textContent = minutes;
-                    document.getElementById('staff-ph-seconds').textContent = seconds;
-                    document.getElementById('staff-ph-ampm').textContent = ampm;
-                }
-
-                // Update the elements for admin
-                if (document.getElementById('admin-ph-date')) {
-                    document.getElementById('admin-ph-date').textContent = dateStr;
-                    document.getElementById('admin-ph-hours').textContent = hoursStr;
-                    document.getElementById('admin-ph-minutes').textContent = minutes;
-                    document.getElementById('admin-ph-seconds').textContent = seconds;
-                    document.getElementById('admin-ph-ampm').textContent = ampm;
-                }
-
-                // Update the hidden refresh indicator (for debugging/verification)
-                document.getElementById('refreshIndicator').textContent = `Last refresh: ${now.toLocaleTimeString()}`;
-            }
-
-            // Update time immediately and then every second
-            updatePhilippineTime();
-            let timeInterval = setInterval(updatePhilippineTime, 1000);
-
-            // Advanced time synchronization function
-            function synchronizeTime() {
-                const now = new Date();
-                const milliseconds = now.getMilliseconds();
-
-                // Calculate delay to sync with the next second change
-                const delay = 1000 - milliseconds;
-
-                // Clear existing interval
-                clearInterval(timeInterval);
-
-                // Set new interval that starts at the next second
-                setTimeout(() => {
-                    updatePhilippineTime();
-                    timeInterval = setInterval(updatePhilippineTime, 1000);
-                }, delay);
-            }
-
-            // Start synchronized timekeeping
-            synchronizeTime();
-
-            // Clean Navigation Tab Interaction
-            document.addEventListener('DOMContentLoaded', function () {
-                const navTabs = document.querySelectorAll('.nav-tab');
-
-                navTabs.forEach(tab => {
-                    tab.addEventListener('click', function (e) {
-                        // Prevent default if it's not a link
-                        if (this.getAttribute('href') === '#') {
-                            e.preventDefault();
-                        }
-
-                        // Remove active class from all tabs
-                        navTabs.forEach(t => t.classList.remove('active'));
-
-                        // Add active class to clicked tab
-                        this.classList.add('active');
-
-                        // Store active state in sessionStorage
-                        sessionStorage.setItem('activeNav', this.getAttribute('href'));
-                    });
                 });
 
-                // Check if there's an active nav stored
-                const activeNav = sessionStorage.getItem('activeNav');
-                if (activeNav) {
-                    const activeTab = document.querySelector(`.nav-tab[href="${activeNav}"]`);
-                    if (activeTab) {
-                        // Remove active class from all tabs first
-                        navTabs.forEach(tab => tab.classList.remove('active'));
-                        // Add active class to stored tab
-                        activeTab.classList.add('active');
+                // Close modals with Escape key
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') {
+                        const profileModal = document.getElementById('profileModal');
+                        const logoutModal = document.getElementById('logoutModal');
+
+                        if (!profileModal.classList.contains('hidden')) {
+                            closeProfileModal();
+                        } else if (!logoutModal.classList.contains('hidden')) {
+                            closeLogoutModal();
+                        }
+                    }
+
+                    // Handle Enter key on confirm button
+                    if (e.key === 'Enter' && document.activeElement.id === 'confirmLogoutBtn') {
+                        document.getElementById('confirmLogoutBtn').click();
+                    }
+                });
+
+                // Function to update Philippine time in real-time
+                function updatePhilippineTime() {
+                    const now = new Date();
+
+                    // Get the current time in the Philippines (UTC+8)
+                    // Since we're using the server's timezone setting (Asia/Manila),
+                    // we can use local time methods
+                    const hours = now.getHours();
+                    const minutes = now.getMinutes().toString().padStart(2, '0');
+                    const seconds = now.getSeconds().toString().padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+                    // Convert to 12-hour format
+                    let hours12 = hours % 12;
+                    hours12 = hours12 ? hours12 : 12; // Convert 0 to 12
+                    const hoursStr = hours12.toString().padStart(2, '0');
+
+                    // Format date
+                    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                    const dateStr = now.toLocaleDateString('en-US', options);
+
+                    // Update the elements for user
+                    if (document.getElementById('ph-date')) {
+                        document.getElementById('ph-date').textContent = dateStr;
+                        document.getElementById('ph-hours').textContent = hoursStr;
+                        document.getElementById('ph-minutes').textContent = minutes;
+                        document.getElementById('ph-seconds').textContent = seconds;
+                        document.getElementById('ph-ampm').textContent = ampm;
+                    }
+
+                    // Update the elements for staff
+                    if (document.getElementById('staff-ph-date')) {
+                        document.getElementById('staff-ph-date').textContent = dateStr;
+                        document.getElementById('staff-ph-hours').textContent = hoursStr;
+                        document.getElementById('staff-ph-minutes').textContent = minutes;
+                        document.getElementById('staff-ph-seconds').textContent = seconds;
+                        document.getElementById('staff-ph-ampm').textContent = ampm;
+                    }
+
+                    // Update the elements for admin
+                    if (document.getElementById('admin-ph-date')) {
+                        document.getElementById('admin-ph-date').textContent = dateStr;
+                        document.getElementById('admin-ph-hours').textContent = hoursStr;
+                        document.getElementById('admin-ph-minutes').textContent = minutes;
+                        document.getElementById('admin-ph-seconds').textContent = seconds;
+                        document.getElementById('admin-ph-ampm').textContent = ampm;
+                    }
+
+                    // Update the hidden refresh indicator (for debugging/verification)
+                    document.getElementById('refreshIndicator').textContent = `Last refresh: ${now.toLocaleTimeString()}`;
+                }
+
+                // Update time immediately and then every second
+                updatePhilippineTime();
+                let timeInterval = setInterval(updatePhilippineTime, 1000);
+
+                // Advanced time synchronization function
+                function synchronizeTime() {
+                    const now = new Date();
+                    const milliseconds = now.getMilliseconds();
+
+                    // Calculate delay to sync with the next second change
+                    const delay = 1000 - milliseconds;
+
+                    // Clear existing interval
+                    clearInterval(timeInterval);
+
+                    // Set new interval that starts at the next second
+                    setTimeout(() => {
+                        updatePhilippineTime();
+                        timeInterval = setInterval(updatePhilippineTime, 1000);
+                    }, delay);
+                }
+
+                // Start synchronized timekeeping
+                synchronizeTime();
+
+                // Clean Navigation Tab Interaction
+                document.addEventListener('DOMContentLoaded', function () {
+                    const navTabs = document.querySelectorAll('.nav-tab');
+
+                    navTabs.forEach(tab => {
+                        tab.addEventListener('click', function (e) {
+                            // Prevent default if it's not a link
+                            if (this.getAttribute('href') === '#') {
+                                e.preventDefault();
+                            }
+
+                            // Remove active class from all tabs
+                            navTabs.forEach(t => t.classList.remove('active'));
+
+                            // Add active class to clicked tab
+                            this.classList.add('active');
+
+                            // Store active state in sessionStorage
+                            sessionStorage.setItem('activeNav', this.getAttribute('href'));
+                        });
+                    });
+
+                    // Check if there's an active nav stored
+                    const activeNav = sessionStorage.getItem('activeNav');
+                    if (activeNav) {
+                        const activeTab = document.querySelector(`.nav-tab[href="${activeNav}"]`);
+                        if (activeTab) {
+                            // Remove active class from all tabs first
+                            navTabs.forEach(tab => tab.classList.remove('active'));
+                            // Add active class to stored tab
+                            activeTab.classList.add('active');
+                        }
+                    }
+
+                    // Background time synchronization
+                    function backgroundTimeSync() {
+                        // Check time accuracy every 30 seconds
+                        setInterval(() => {
+                            const now = new Date();
+                            const expectedSeconds = (now.getSeconds() + 1) % 60;
+
+                            // Schedule a check for the next second
+                            setTimeout(() => {
+                                const checkTime = new Date();
+                                if (checkTime.getSeconds() !== expectedSeconds) {
+                                    // Time is out of sync, resynchronize
+                                    synchronizeTime();
+                                }
+                            }, 1000 - now.getMilliseconds());
+                        }, 30000); // Check every 30 seconds
+                    }
+
+                    // Start background time synchronization
+                    backgroundTimeSync();
+
+                    // Handle mobile virtual keyboard issues
+                    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                        const inputs = document.querySelectorAll('input, select');
+                        inputs.forEach(input => {
+                            input.addEventListener('focus', function () {
+                                // Scroll the input into view with some padding
+                                setTimeout(() => {
+                                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 300);
+                            });
+                        });
+                    }
+                });
+
+                // Page visibility API to optimize time updates
+                document.addEventListener('visibilitychange', function () {
+                    if (document.hidden) {
+                        // Page is hidden, reduce update frequency to save resources
+                        clearInterval(timeInterval);
+                        timeInterval = setInterval(updatePhilippineTime, 5000); // Update every 5 seconds when tab is hidden
+                    } else {
+                        // Page is visible, resume normal update frequency
+                        clearInterval(timeInterval);
+                        synchronizeTime(); // Resync time when returning to the tab
+                    }
+                });
+
+                // Enhanced Modal functions with smooth transitions
+                function openModal() {
+                    const modal = document.getElementById("loginModal");
+                    const modalContent = modal.querySelector('.modal-content');
+
+                    modal.classList.remove("hidden");
+                    modal.classList.add("flex");
+
+                    // Trigger animation
+                    setTimeout(() => {
+                        modalContent.classList.add('open');
+                    }, 10);
+                }
+
+                function closeModal() {
+                    const modal = document.getElementById("loginModal");
+                    const modalContent = modal.querySelector('.modal-content');
+
+                    // Reset file input and error on close
+                    const profileImageInput = document.getElementById('profile_image');
+                    const profileUploadError = document.getElementById('profileUploadError');
+                    if (profileImageInput) profileImageInput.value = '';
+                    if (profileUploadError) profileUploadError.classList.add('hidden');
+                    modalContent.classList.remove('open');
+                    // Wait for animation to complete before hiding
+                    setTimeout(() => {
+                        modal.classList.remove("flex");
+                        modal.classList.add("hidden");
+                    }, 300);
+                }
+
+                function toggleLoginPassword() {
+                    const input = document.getElementById("login-password");
+                    const icon = document.getElementById("login-eyeIcon");
+
+                    if (input.type === "password") {
+                        input.type = "text";
+                        icon.classList.remove("fa-eye");
+                        icon.classList.add("fa-eye-slash");
+                    } else {
+                        input.type = "password";
+                        icon.classList.remove("fa-eye-slash");
+                        icon.classList.add("fa-eye");
                     }
                 }
 
-                // Background time synchronization
-                function backgroundTimeSync() {
-                    // Check time accuracy every 30 seconds
-                    setInterval(() => {
-                        const now = new Date();
-                        const expectedSeconds = (now.getSeconds() + 1) % 60;
+                // Close modal when clicking outside
+                document.getElementById('loginModal')?.addEventListener('click', function (e) {
+                    if (e.target === this) {
+                        closeModal();
+                    }
+                });
 
-                        // Schedule a check for the next second
-                        setTimeout(() => {
-                            const checkTime = new Date();
-                            if (checkTime.getSeconds() !== expectedSeconds) {
-                                // Time is out of sync, resynchronize
-                                synchronizeTime();
-                            }
-                        }, 1000 - now.getMilliseconds());
-                    }, 30000); // Check every 30 seconds
-                }
-
-                // Start background time synchronization
-                backgroundTimeSync();
-
-                // Handle mobile virtual keyboard issues
-                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                    const inputs = document.querySelectorAll('input, select');
-                    inputs.forEach(input => {
-                        input.addEventListener('focus', function () {
-                            // Scroll the input into view with some padding
-                            setTimeout(() => {
-                                this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }, 300);
-                        });
-                    });
-                }
-            });
-
-            // Page visibility API to optimize time updates
-            document.addEventListener('visibilitychange', function () {
-                if (document.hidden) {
-                    // Page is hidden, reduce update frequency to save resources
-                    clearInterval(timeInterval);
-                    timeInterval = setInterval(updatePhilippineTime, 5000); // Update every 5 seconds when tab is hidden
-                } else {
-                    // Page is visible, resume normal update frequency
-                    clearInterval(timeInterval);
-                    synchronizeTime(); // Resync time when returning to the tab
-                }
-            });
-
-            // Enhanced Modal functions with smooth transitions
-            function openModal() {
-                const modal = document.getElementById("loginModal");
-                const modalContent = modal.querySelector('.modal-content');
-
-                modal.classList.remove("hidden");
-                modal.classList.add("flex");
-
-                // Trigger animation
-                setTimeout(() => {
-                    modalContent.classList.add('open');
-                }, 10);
-            }
-
-            function closeModal() {
-                const modal = document.getElementById("loginModal");
-                const modalContent = modal.querySelector('.modal-content');
-
-                // Reset file input and error on close
-                const profileImageInput = document.getElementById('profile_image');
-                const profileUploadError = document.getElementById('profileUploadError');
-                if (profileImageInput) profileImageInput.value = '';
-                if (profileUploadError) profileUploadError.classList.add('hidden');
-                modalContent.classList.remove('open');
-                // Wait for animation to complete before hiding
-                setTimeout(() => {
-                    modal.classList.remove("flex");
-                    modal.classList.add("hidden");
-                }, 300);
-            }
-
-            function toggleLoginPassword() {
-                const input = document.getElementById("login-password");
-                const icon = document.getElementById("login-eyeIcon");
-
-                if (input.type === "password") {
-                    input.type = "text";
-                    icon.classList.remove("fa-eye");
-                    icon.classList.add("fa-eye-slash");
-                } else {
-                    input.type = "password";
-                    icon.classList.remove("fa-eye-slash");
-                    icon.classList.add("fa-eye");
-                }
-            }
-
-            // Close modal when clicking outside
-            document.getElementById('loginModal')?.addEventListener('click', function (e) {
-                if (e.target === this) {
-                    closeModal();
-                }
-            });
-
-            // Close modal with Escape key
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') {
-                    closeModal();
-                }
-            });
-        </script>
+                // Close modal with Escape key
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') {
+                        closeModal();
+                    }
+                });
+            </script>
 
     </body>
 

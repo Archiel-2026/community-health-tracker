@@ -156,11 +156,7 @@ TABLES WITH LIMITED/NO USE (Candidates for Cleanup):
 2. sitio1_consultations - UNUSED (different from consultation_notes)
    - Recommendation: REMOVE or clarify purpose (appears to be Q&A, not doctor consultations)
    
-3. sitio1_appointments - UNUSED (no code references found)
-   - Recommendation: REMOVE (system uses no appointment booking)
-   
-4. user_appointments - UNUSED (depends on sitio1_appointments)
-   - Recommendation: REMOVE (no appointment functionality implemented)
+-- ...existing code...
 
 COLUMNS NEWLY ADDED TO deleted_patients:
 -----------------------------------------

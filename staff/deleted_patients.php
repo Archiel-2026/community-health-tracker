@@ -1,3 +1,4 @@
+
 <?php
 
 // --- AUTO DELETE OLD ARCHIVED/SOFT-DELETED RECORDS (older than 5 years/60 months) ---
@@ -460,13 +461,43 @@ try {
     </script>
     <style>
         .user-badge {
-            background-color: #e0e7ff;
-            color: #3730a3;
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
+            background: #e9d8fd;
+            color: #6d28d9;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 12px;
             font-weight: 600;
+            letter-spacing: 0.01em;
+            box-shadow: none;
+        }
+        .regular-badge {
+            background: #bbf7d0;
+            color: #059669;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            box-shadow: none;
+        }
+                .timeleft-badge {
+            background: #fee2e2;
+            color: #b91c1c;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            box-shadow: none;
         }
 
         /* Main container styling */
@@ -799,13 +830,21 @@ try {
                 </div>
 
                 <div class="flex items-center gap-6 ml-auto">
-                    <select name="sort"
-                        class="border border-blue-500 rounded-md py-3 px-6 text-gray-700">
-                        <option value="" <?= $sort === '' ? 'selected' : '' ?>>Sort - Date</option>
-                        <option value="date_asc" <?= $sort === 'date_asc' ? 'selected' : '' ?>>Date (Oldest)</option>
-                        <option value="name_asc" <?= $sort === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
-                        <option value="name_desc" <?= $sort === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)</option>
-                    </select>
+                    <div style="position:relative;display:inline-block;width:200px;">
+                        <select name="sort"
+                            class="border border-blue-500 rounded-md py-3 px-6 text-gray-700 pr-10 w-full" style="appearance: none;">
+                            <option value="" <?= $sort === '' ? 'selected' : '' ?>>Sort - Date</option>
+                            <option value="date_asc" <?= $sort === 'date_asc' ? 'selected' : '' ?>>Date (Oldest)</option>
+                            <option value="name_asc" <?= $sort === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
+                            <option value="name_desc" <?= $sort === 'name_desc' ? 'selected' : '' ?>>Name (Z-A)</option>
+                        </select>
+                        <span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);pointer-events:none;">
+                            <!-- Chevron Down SVG Icon -->
+                            <svg width="20" height="20" fill="none" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 8l4 4 4-4" stroke="#3C96E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                    </div>
                     <button type="submit"
                         class="bg-[#3C96E1] hover:bg-blue-600 text-white font-normal text-base px-6 py-3 rounded-md transition flex items-center gap-2">
                         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -865,19 +904,22 @@ try {
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead>
                             <tr>
-                                <th class="py-6 text-left text-lg font-semibold text-gray-600 tracking-wider">
+                                <th class="py-6 text-left text-md font-semibold text-gray-600 tracking-wider">
                                     Name</th>
-                                <th class="py-6 text-left text-lg font-semibold text-gray-600 tracking-wider">
+                                <th class="py-6 text-left text-md font-semibold text-gray-600 tracking-wider">
                                     Age</th>
-                                <th class="py-6 text-left text-lg font-semibold text-gray-600 tracking-wider">
+                                <th class="py-6 text-left text-md font-semibold text-gray-600 tracking-wider">
                                     Gender</th>
-                                <th class="py-6 text-left text-lg font-semibold text-gray-600 tracking-wider">
-                                    Type of Patient</th>
-                                <th class="py-6 text-left text-lg font-semibold text-gray-600 tracking-wider">
+                                <th class="py-6 text-left text-md font-semibold text-gray-600 tracking-wider">
+                                    Type</th>
+                                <th class="py-6 text-left text-md font-semibold text-gray-600 tracking-wider">
                                     Contact</th>
-                                <th class="py-6 text-left text-lg font-semibold text-gray-600 tracking-wider">
-                                    Deleted On</th>
-                                <th class="py-6 text-left text-lg font-semibold text-gray-600 tracking-wider">
+                                <th class="py-6 text-left text-md font-semibold text-gray-600 tracking-wider">
+                                    Archived On</th>
+                              
+                                <th class="py-6 text-left text-md font-semibold text-gray-600 tracking-wider">
+                                    Days/Months Left</th>
+                                <th class="py-6 text-left text-md font-semibold text-gray-600 tracking-wider">
                                     Actions</th>
                             </tr>
                         </thead>
@@ -893,12 +935,38 @@ try {
                                     <td class="py-4 whitespace-nowrap text-gray-600 text-base font-normal">
                                         <?= htmlspecialchars($patient['gender'] ?? 'N/A') ?>
                                     </td>
-                                    <td class="py-4 whitespace-nowrap text-gray-600 text-base font-normal">Regular</td>
+                                    <td class="py-4 whitespace-nowrap text-gray-600 text-base font-normal">
+                                        <?php
+                                            // Show badge based on patient type (registered or regular)
+                                            if (!empty($patient['is_registered_user']) && $patient['is_registered_user']) {
+                                                echo '<span class="user-badge">Account Access</span>';
+                                            } else {
+                                                echo '<span class="regular-badge">Regular Patient</span>';
+                                            }
+                                        ?>
+                                    </td>
+                                            
                                     <td class="py-4 whitespace-nowrap text-gray-600 text-base font-normal">
                                         <?= htmlspecialchars($patient['contact'] ?? 'N/A') ?>
                                     </td>
+                
                                     <td class="py-4 whitespace-nowrap text-gray-600 text-base font-normal">
                                         <?= date('M d, Y', strtotime($patient['archived_date'])) ?>
+                                    </td>
+                                    <td class="py-4 whitespace-nowrap text-base font-normal">
+                                        <?php
+                                            $deletedAt = strtotime($patient['archived_date']);
+                                            $autoDeleteAt = strtotime('+5 years', $deletedAt);
+                                            $now = time();
+                                            if ($now < $autoDeleteAt) {
+                                                $diff = $autoDeleteAt - $now;
+                                                $monthsLeft = floor($diff / (30 * 24 * 60 * 60));
+                                                $daysLeft = floor(($diff % (30 * 24 * 60 * 60)) / (24 * 60 * 60));
+                                                echo '<span class="timeleft-badge">' . $monthsLeft . ' months, ' . $daysLeft . ' days left</span>';
+                                            } else {
+                                                echo '<span class="timeleft-badge">Pending Deletion</span>';
+                                            }
+                                        ?>
                                     </td>
                                     <td class="py-4 whitespace-nowrap">
                                         <a href="?restore_patient=<?= $patient['original_id'] ?>&search=<?= urlencode($search ?? '') ?>&sort=<?= urlencode($sort ?? '') ?>&page=<?= $page ?>"
