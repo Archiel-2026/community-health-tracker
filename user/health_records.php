@@ -250,6 +250,21 @@ $activeTab = $_GET['tab'] ?? 'consultations';
         line-height: 1.4;
     }
 
+    .record-status-active {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 0.875rem;
+        border-radius: 100px;
+        background: rgba(22, 163, 74, 0.14);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        color: #15803d;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
     /* Card Shadows - Match dashboard style */
     .card-shadow {
         background: white;
@@ -361,8 +376,8 @@ $activeTab = $_GET['tab'] ?? 'consultations';
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        padding: 0.4rem 0.5rem;
-        margin-bottom: 1em;
+        padding: 0.5rem 1rem;
+        margin-bottom: 1.5em;
         border-radius: 4px;
         background: rgba(0, 184, 55, 0.3);
         color: #00B837;
@@ -1116,7 +1131,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     <!-- LEFT: Consultation Info -->
     <div class="flex flex-col gap-4">
         <div class="flex items-center">
-            <span class="consultation-header-group bg-yellow-100 text-yellow-600 rounded-full px-4 py-1.5 text-base font-semibold inline-flex items-center">
+            <span class="consultation-header-group bg-yellow-100 text-yellow-600 px-4 py-1.3 text-base font-semibold inline-flex items-center">
                 Consultation
                 <span class="consultation-count-number bg-white text-yellow-600 font-bold rounded-full w-7 h-7 flex items-center justify-center ml-2 text-base" style="border: 1px solid #F2C450;">
                     <?php echo $consultationIndex; ?>
@@ -1165,7 +1180,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                 <button
                                                     onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)"
                                                     class="rounded-md px-6 py-2 bg-blue-500 text-white font-medium text-md transition hover:bg-blue-600 focus:outline-none">
-                                                    View Doctor's Note
+                                                    View Note
                                                 </button>
                                             </div>
                                         </div>
@@ -1384,9 +1399,8 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     <div>
                                                         <p class="text-label mb-2">Record Status</p>
                                                         <p class="px-4 py-4 bg-gray-100 rounded">
-                                                            <span
-                                                                class="inline-flex items-center bg-green-100 text-green-700 rounded-full text-base font-medium">
-                                                                <i class="fas fa-check-circle icon-xs mr-1.5"></i>Active
+                                                            <span class="record-status-active">
+                                                                <i class="fas fa-check-circle icon-xs"></i>Active
                                                             </span>
                                                         </p>
                                                     </div>
@@ -1767,25 +1781,21 @@ $activeTab = $_GET['tab'] ?? 'consultations';
             if (subTitleEl) subTitleEl.innerHTML = '';
 
             let doctorHtml = note.doctor_name
-                ? `<div class="flex items-center gap-3">
-                        <div class="overflow-hidden">
-                            <p class="text-base font-normal text-gray-500 tracking-wider truncate">Attending Physician</p>
-                            <p class="text-lg font-semibold truncate">${note.doctor_name}</p>
-                        </div>
+                ? `<div class="text-right">
+                        <p class="text-base font-normal text-gray-500 mb-1">Attending Physician</p>
+                        <p class="text-[30px] font-semibold text-gray-900 leading-tight">${note.doctor_name}</p>
                    </div>`
                 : '';
 
             let dateHtml = `
-                    <div class="flex items-center gap-3">
-                        <div class="overflow-hidden">
-                            <p class="text-base font-normal text-gray-500 tracking-wider truncate">Date of Visit</p>
-                            <p class="text-lg font-semibold truncate">${consultationDate}</p>
-                        </div>
+                    <div>
+                        <p class="text-base font-normal text-gray-500 mb-1">Date of Visit</p>
+                        <p class="text-[30px] font-semibold text-gray-900 leading-tight">${consultationDate}</p>
                     </div>
             `;
 
             let headerMeta = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div class="flex items-start justify-between gap-4 mb-5">
                     ${dateHtml}
                     ${doctorHtml}
                 </div>
@@ -1807,12 +1817,10 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                 });
 
                 nextVisitHtml = `
-                    <div class="pb-6">
-                        <div class="pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                            <div>
-                                <p class="text-base font-normal text-gray-500 tracking-wider mb-1">Next Consultation Schedule</p>
-                                <p class="text-lg font-medium" style="color:#059669;">${nextDate}</p>
-                            </div>
+                    <div class="pt-3 pb-2">
+                        <div>
+                            <p class="text-base font-normal text-gray-500 mb-2">Next Consultation Schedule</p>
+                            <p class="inline-block text-[28px] font-semibold text-green-600 bg-emerald-100 px-3 py-1 rounded-[4px] leading-tight">${nextDate}</p>
                         </div>
                     </div>
                 `;
@@ -1823,15 +1831,15 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                     ${headerMeta}
                     <div class="mb-2">
                        <h4 class="inline-flex items-center gap-2 
-                            text-lg font-medium 
-                            py-2 px-4
-                            rounded-md 
+                            text-[30px] font-medium 
+                            py-1 px-4
+                            rounded-[6px] 
                             bg-blue-100 
-                            text-[#3C96E1] 
+                            text-blue-500 
                             mb-4">
                             Consultation Note
                          </h4>
-                        <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm min-h-[190px]">
+                        <div class="bg-white border border-gray-200 rounded-[6px] p-4 min-h-[130px]">
                             ${noteContent}
                         </div>
                     </div>
@@ -1947,7 +1955,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                         color: #F2C450;
                         border-radius: 9999px;
                         font-size: 1rem;
-                        font-weight: 600;
+                        font-weight: 500;
                         display: inline-flex;
                         align-items: center;
                         gap: 0.5rem;

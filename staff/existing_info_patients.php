@@ -1574,7 +1574,7 @@ $manualSelectMode = isset($_GET['manual_select']) && $_GET['manual_select'] == '
 $viewAll = isset($_GET['view_all']) && $_GET['view_all'] == 'true';
 
 // Pagination setup
-$recordsPerPage = 10;
+$recordsPerPage = 5;
 if (!isset($currentPage)) { $currentPage = 1; }
 $offset = ($currentPage - 1) * $recordsPerPage;
 
@@ -1992,7 +1992,7 @@ if (!empty($searchTerm)) {
             align-items: center;
             justify-content: center;
             border-radius: 9999px;
-            padding: 0.5rem 1.5rem;
+            padding: 0.625rem 1.5rem;
             font-size: 1rem;
         }
 
@@ -2012,7 +2012,7 @@ if (!empty($searchTerm)) {
             align-items: center;
             justify-content: center;
             border-radius: 9999px;
-            padding: 0.5rem 1.5rem;
+            padding: 0.625rem 1.5rem;
             font-size: 1rem;
         }
 
@@ -3289,6 +3289,13 @@ if (!empty($searchTerm)) {
             top: 0;
             z-index: 20;
         }
+
+        .view-all-patients-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            background: #ffffff;
+        }
         /* Smaller font for Record Type column */
                         .record-type-col {
                             font-size: 0.8rem !important;
@@ -3493,7 +3500,15 @@ if (!empty($searchTerm)) {
                     document.addEventListener('DOMContentLoaded', function() {
                         var searchForm = document.getElementById('mainSearchForm');
                         var searchInput = document.getElementById('search');
+                        var searchSubmitBtn = document.getElementById('searchSubmitBtn');
                         let loadingStart = 0;
+                        function updateSearchButtonState() {
+                            if (!searchInput || !searchSubmitBtn) return;
+                            var hasInput = searchInput.value.trim().length > 0;
+                            searchSubmitBtn.disabled = !hasInput;
+                            searchSubmitBtn.classList.toggle('opacity-50', !hasInput);
+                            searchSubmitBtn.classList.toggle('cursor-not-allowed', !hasInput);
+                        }
                         function showLoader() {
                             loadingStart = Date.now();
                             document.getElementById('loadingOverlay').style.display = 'flex';
@@ -3510,13 +3525,20 @@ if (!empty($searchTerm)) {
                             }
                         }
                         if (searchForm) {
-                            searchForm.addEventListener('submit', function() {
+                            searchForm.addEventListener('submit', function(e) {
+                                if (searchInput && searchInput.value.trim().length === 0) {
+                                    e.preventDefault();
+                                    updateSearchButtonState();
+                                    return;
+                                }
                                 showLoader();
                             });
                         }
                         if (searchInput) {
+                            updateSearchButtonState();
+                            searchInput.addEventListener('input', updateSearchButtonState);
                             searchInput.addEventListener('keydown', function(e) {
-                                if (e.key === 'Enter') {
+                                if (e.key === 'Enter' && searchInput.value.trim().length > 0) {
                                     showLoader();
                                 }
                             });
@@ -3559,7 +3581,7 @@ if (!empty($searchTerm)) {
                                     <!-- Search Button -->
                                     <div class="flex-shrink-0">
                                         <?php if (empty($searchTerm)): ?>
-                                            <button type="submit" class="btn-primary inline-flex items-center py-3 px-10">
+                                            <button type="submit" id="searchSubmitBtn" class="btn-primary inline-flex items-center py-3 px-10" disabled>
                                                 <!-- <i class="fas fa-search mr-2"></i>  -->
                                                 Search
                                             </button>
@@ -3792,12 +3814,12 @@ style="border-radius: 4px;">
                                                             <?php endif; ?>
                                                         </td>
                                                         <td>
-                                                            <button onclick="openViewModal(<?= $patient['id'] ?>)"
-                                                                class="btn-view inline-flex items-center mr-2" style="background:#2196F3;color:#fff;border:none;border-radius:24px;padding:8px 24px;font-weight:500;font-size:16px;">
+                                                            <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
+                                                                class="btn-view inline-flex items-center mr-2" style="background:#2196F3;color:#fff;border:none;border-radius:24px;padding:10px 24px;font-weight:500;font-size:16px;">
                                                                 <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><path d="M23.1853 11.6962C23.1525 11.6222 22.3584 9.86062 20.5931 8.09531C18.2409 5.74312 15.27 4.5 12 4.5C8.72999 4.5 5.75905 5.74312 3.40687 8.09531C1.64155 9.86062 0.843741 11.625 0.814679 11.6962C0.772035 11.7922 0.75 11.896 0.75 12.0009C0.75 12.1059 0.772035 12.2097 0.814679 12.3056C0.847491 12.3797 1.64155 14.1403 3.40687 15.9056C5.75905 18.2569 8.72999 19.5 12 19.5C15.27 19.5 18.2409 18.2569 20.5931 15.9056C22.3584 14.1403 23.1525 12.3797 23.1853 12.3056C23.2279 12.2097 23.25 12.1059 23.25 12.0009C23.25 11.896 23.2279 11.7922 23.1853 11.6962ZM12 18C9.11437 18 6.59343 16.9509 4.50655 14.8828C3.65028 14.0313 2.92179 13.0603 2.34374 12C2.92164 10.9396 3.65014 9.9686 4.50655 9.11719C6.59343 7.04906 9.11437 6 12 6C14.8856 6 17.4066 7.04906 19.4934 9.11719C20.3514 9.9684 21.0815 10.9394 21.6609 12C20.985 13.2619 18.0403 18 12 18ZM12 7.5C11.11 7.5 10.2399 7.76392 9.49993 8.25839C8.7599 8.75285 8.18313 9.45566 7.84253 10.2779C7.50194 11.1002 7.41282 12.005 7.58646 12.8779C7.76009 13.7508 8.18867 14.5526 8.81801 15.182C9.44735 15.8113 10.2492 16.2399 11.1221 16.4135C11.995 16.5872 12.8998 16.4981 13.7221 16.1575C14.5443 15.8169 15.2471 15.2401 15.7416 14.5001C16.2361 13.76 16.5 12.89 16.5 12C16.4988 10.8069 16.0242 9.66303 15.1806 8.81939C14.337 7.97575 13.1931 7.50124 12 7.5ZM12 15C11.4066 15 10.8266 14.8241 10.3333 14.4944C9.83993 14.1648 9.45542 13.6962 9.22835 13.1481C9.00129 12.5999 8.94188 11.9967 9.05764 11.4147C9.17339 10.8328 9.45911 10.2982 9.87867 9.87868C10.2982 9.45912 10.8328 9.1734 11.4147 9.05764C11.9967 8.94189 12.5999 9.0013 13.148 9.22836C13.6962 9.45542 14.1648 9.83994 14.4944 10.3333C14.824 10.8266 15 11.4067 15 12C15 12.7956 14.6839 13.5587 14.1213 14.1213C13.5587 14.6839 12.7956 15 12 15Z" fill="white"/></svg> View
                                                             </button>
                                                             <a href="?delete_patient=<?= $patient['id'] ?>"
-                                                                class="btn-archive inline-flex items-center" style="background:#F44336;color:#fff;border:none;border-radius:24px;padding:8px 24px;font-weight:500;font-size:16px;"
+                                                                class="btn-archive inline-flex items-center" style="background:#F44336;color:#fff;border:none;border-radius:24px;padding:10px 24px;font-weight:500;font-size:16px;"
                                                                 onclick="return confirm('Are you sure you want to archive this patient record?')">
                                                                 <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white"/></svg> Archive
                                                             </a>
@@ -3905,7 +3927,7 @@ style="border-radius: 4px;">
                                     <?php endif; ?>
                                     <div class="scrollable-table-container">
                                         <form method="POST" action="" id="patientSelectionForm">
-                                            <table class="patient-table">
+                                            <table class="patient-table view-all-patients-table">
                                                 <thead>
                                                     <tr>
                                                         <?php if ($manualSelectMode): ?>
@@ -3965,9 +3987,15 @@ style="border-radius: 4px;">
                                                             <td><?= $patient['patient_type'] === 'Registered Patient' ? '<span class="user-badge">Account Access</span>' : '<span class="regular-badge">Regular Patient</span>' ?>
                                                             </td>
                                                             <td>
-                                                                <button onclick="openViewModal(<?= $patient['id'] ?>)"
+                                                                <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
                                                                     class="btn-view inline-flex items-center mr-2">
-                                                                    <i class="fas fa-eye mr-1" style="font-size:1.5em;vertical-align:middle;"></i> View
+                                                                    <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" stroke-width="2"
+                                                                        xmlns="http://www.w3.org/2000/svg">
+                                                                        <path
+                                                                            d="M23.1853 11.6962C23.1525 11.6222 22.3584 9.86062 20.5931 8.09531C18.2409 5.74312 15.27 4.5 12 4.5C8.72999 4.5 5.75905 5.74312 3.40687 8.09531C1.64155 9.86062 0.843741 11.625 0.814679 11.6962C0.772035 11.7922 0.75 11.896 0.75 12.0009C0.75 12.1059 0.772035 12.2097 0.814679 12.3056C0.847491 12.3797 1.64155 14.1403 3.40687 15.9056C5.75905 18.2569 8.72999 19.5 12 19.5C15.27 19.5 18.2409 18.2569 20.5931 15.9056C22.3584 14.1403 23.1525 12.3797 23.1853 12.3056C23.2279 12.2097 23.25 12.1059 23.25 12.0009C23.25 11.896 23.2279 11.7922 23.1853 11.6962ZM12 18C9.11437 18 6.59343 16.9509 4.50655 14.8828C3.65028 14.0313 2.92179 13.0603 2.34374 12C2.92164 10.9396 3.65014 9.9686 4.50655 9.11719C6.59343 7.04906 9.11437 6 12 6C14.8856 6 17.4066 7.04906 19.4934 9.11719C20.3514 9.9684 21.0815 10.9394 21.6609 12C20.985 13.2619 18.0403 18 12 18ZM12 7.5C11.11 7.5 10.2399 7.76392 9.49993 8.25839C8.7599 8.75285 8.18313 9.45566 7.84253 10.2779C7.50194 11.1002 7.41282 12.005 7.58646 12.8779C7.76009 13.7508 8.18867 14.5526 8.81801 15.182C9.44735 15.8113 10.2492 16.2399 11.1221 16.4135C11.995 16.5872 12.8998 16.4981 13.7221 16.1575C14.5443 15.8169 15.2471 15.2401 15.7416 14.5001C16.2361 13.76 16.5 12.89 16.5 12C16.4988 10.8069 16.0242 9.66303 15.1806 8.81939C14.337 7.97575 13.1931 7.50124 12 7.5ZM12 15C11.4066 15 10.8266 14.8241 10.3333 14.4944C9.83993 14.1648 9.45542 13.6962 9.22835 13.1481C9.00129 12.5999 8.94188 11.9967 9.05764 11.4147C9.17339 10.8328 9.45911 10.2982 9.87867 9.87868C10.2982 9.45912 10.8328 9.1734 11.4147 9.05764C11.9967 8.94189 12.5999 9.0013 13.148 9.22836C13.6962 9.45542 14.1648 9.83994 14.4944 10.3333C14.824 10.8266 15 11.4067 15 12C15 12.7956 14.6839 13.5587 14.1213 14.1213C13.5587 14.6839 12.7956 15 12 15Z"
+                                                                            fill="white" />
+                                                                    </svg>
+                                                                    View
                                                                 </button>
                                                                 <?php if (!$manualSelectMode): ?>
                                                                     <a href="?delete_patient=<?= $patient['id'] ?>"
@@ -4043,7 +4071,7 @@ style="border-radius: 4px;">
                                                         <?php endif; ?>
                                                     </td>
                                                     <td>
-                                                        <button onclick="openViewModal(<?= $patient['id'] ?>)"
+                                                        <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
                                                                 class="btn-view mr-2">
                                                             <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" stroke-width="2"
                                                                 xmlns="http://www.w3.org/2000/svg">
@@ -4212,7 +4240,7 @@ style="border-radius: 4px;">
                     </div>
                     <div class="flex space-x-4">
                         <div class="flex flex-col items-center mt-2">
-                            <button onclick="printPatientRecord()" class="btn-export text-lg px-8 py-3 font-semibold">
+                            <button id="printRecordBtn" onclick="printPatientRecord()" class="btn-export text-lg px-8 py-3 font-semibold">
                                 <i class="fas fa-print mr-3"></i>Print Patient Records
                             </button>
                         </div>
@@ -5193,7 +5221,7 @@ style="border-radius: 4px;">
                             Clear Form
                         </button>
                         <button type="submit" name="add_patient" form="patientForm"
-                            class="flex items-center text-center gap-3 px-8 py-4 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium shadow">
+                            class="flex items-center text-center gap-3 px-8 py-4 rounded-[6px] bg-blue-600 hover:bg-blue-700 text-white font-medium shadow">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -5899,7 +5927,7 @@ style="border-radius: 4px;">
                             <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
                             <h3 class="text-xl font-semibold text-red-700 mb-2">Error Loading Patient Data</h3>
                             <p class="text-red-600 mb-4">Unable to load patient information. Please try again.</p>
-                            <button onclick="openViewModal(${patientId})" class="btn-primary px-6 py-3">
+                            <button type="button" onclick="openViewModal(${patientId})" class="btn-primary px-6 py-3">
                                 <i class="fas fa-redo mr-2"></i>Retry
                             </button>
                         </div>
@@ -6033,6 +6061,8 @@ style="border-radius: 4px;">
         // Print Patient Record Function
         function printPatientRecord() {
             const patientId = getPatientId();
+            const printBtn = document.getElementById('printRecordBtn');
+            const originalPrintBtnHtml = printBtn ? printBtn.innerHTML : '';
 
             // Get the current consultation note ID if viewing a specific note
             let noteId = null;
@@ -6051,18 +6081,51 @@ style="border-radius: 4px;">
                     url += `&note_id=${noteId}`;
                 }
 
-                const printWindow = window.open(url, '_blank', 'width=1200,height=800');
+                if (printBtn) {
+                    printBtn.disabled = true;
+                    printBtn.innerHTML = '<span class="inline-flex items-center"><span class="loading-spinner mr-2" style="width:18px;height:18px;border-width:2px;"></span>Preparing Print...</span>';
+                }
+
+                const popupWidth = 1200;
+                const popupHeight = 800;
+                const screenWidth = window.screen.availWidth || window.screen.width;
+                const screenHeight = window.screen.availHeight || window.screen.height;
+                const left = Math.max(0, Math.floor((screenWidth - popupWidth) / 2));
+                const top = Math.max(0, Math.floor((screenHeight - popupHeight) / 2));
+
+                const windowFeatures = `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`;
+
+                const printWindow = window.open(url, '_blank', windowFeatures);
                 if (printWindow) {
                     printWindow.focus();
                     printWindow.onload = function () {
                         setTimeout(() => {
                             printWindow.print();
+                            if (printBtn) {
+                                printBtn.disabled = false;
+                                printBtn.innerHTML = originalPrintBtnHtml;
+                            }
                         }, 1000);
                     };
+
+                    setTimeout(() => {
+                        if (printBtn && printBtn.disabled) {
+                            printBtn.disabled = false;
+                            printBtn.innerHTML = originalPrintBtnHtml;
+                        }
+                    }, 6000);
                 } else {
+                    if (printBtn) {
+                        printBtn.disabled = false;
+                        printBtn.innerHTML = originalPrintBtnHtml;
+                    }
                     showNotification('error', 'Please allow pop-ups for this site to print');
                 }
             } else {
+                if (printBtn) {
+                    printBtn.disabled = false;
+                    printBtn.innerHTML = originalPrintBtnHtml;
+                }
                 showNotification('error', 'No patient selected for printing');
             }
         }

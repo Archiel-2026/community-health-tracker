@@ -419,17 +419,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
             
-            // Update password
+            // Update password, clear reset token, and UNLOCK account
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("UPDATE sitio1_users SET password = ?, updated_at = NOW() WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE sitio1_users SET password = ?, failed_login_attempts = 0, last_failed_login = NULL, account_locked_until = NULL, password_reset_token = NULL, password_reset_token_expires = NULL, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$hashedPassword, $residentId]);
             
             // Log the password reset
             ensureActivityLogTable($pdo);
             $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
-            $logStmt->execute([$_SESSION['user_id'], 'password_reset', 'Reset password for resident: ' . $resident['full_name'], $_SERVER['REMOTE_ADDR']]);
+            $logStmt->execute([$_SESSION['user_id'], 'password_reset', 'Reset password for resident: ' . $resident['full_name'] . ' (Account unlocked automatically)', $_SERVER['REMOTE_ADDR']]);
             
-            $_SESSION['message'] = 'Resident password reset successfully for ' . htmlspecialchars($resident['full_name']) . '! New password: ' . htmlspecialchars($newPassword);
+            $_SESSION['message'] = 'Resident password reset successfully';
             $_SESSION['message_type'] = 'success';
             header('Location: manage_accounts.php');
             exit();
@@ -1644,780 +1644,598 @@ try {
     endif; 
     ?>
 
-    <main class="container mx-auto px-4 py-8 mt-16 max-w-7xl">
-        <!-- Modern Header -->
-        <div class="section-header">
-            <div class="section-title-modern">
-                <i class="fas fa-users-cog"></i>
-                <span>Account Management</span>
-            </div>
-            <div class="flex flex-wrap gap-3">
-                <div class="stat-card-modern">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); color: var(--primary);">
-                        <i class="fas fa-user-md"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Active Staff</h3>
-                        <div class="number"><?= count($activeStaff) ?></div>
-                    </div>
-                </div>
-                <div class="stat-card-modern">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); color: var(--secondary);">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Residents</h3>
-                        <div class="number"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></div>
-                    </div>
-                </div>
-                <?php if (count($unlinkedResidents) > 0): ?>
-                <div class="stat-card-modern">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); color: var(--warning);">
-                        <i class="fas fa-unlink"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>Unlinked</h3>
-                        <div class="number"><?= count($unlinkedResidents) ?></div>
-                    </div>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- Modern Tabs -->
-        <div class="modern-tabs mb-8">
-            <button class="modern-tab active" onclick="switchTab('staff')" id="staffTab">
-                <i class="fas fa-user-md mr-2"></i>
-                Staff Management
-                <span class="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs"><?= count($activeStaff) + count($inactiveStaff) ?></span>
-            </button>
-            <button class="modern-tab" onclick="switchTab('resident')" id="residentTab">
-                <i class="fas fa-users mr-2"></i>
-                Resident Management
-                <span class="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></span>
-            </button>
-            <?php if (count($unlinkedResidents) > 0 || count($unlinkedPatients) > 0): ?>
-            <button class="modern-tab" onclick="switchTab('linking')" id="linkingTab">
-                <i class="fas fa-link mr-2"></i>
-                Manual Linking
-                <span class="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs"><?= count($unlinkedResidents) + count($unlinkedPatients) ?></span>
-            </button>
-            <?php endif; ?>
-        </div>
-
-        <!-- Staff Section -->
-        <div id="staffSection" class="tab-section">
-            <!-- Create Staff Form -->
-            <div class="modern-card p-8 mb-8">
-                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                    <i class="fas fa-plus-circle text-primary"></i>
-                    Create New Staff Account
-                </h2>
+    <main style="background: linear-gradient(135deg, #f0f9ff 0%, #f9fafb 100%); min-height: 100vh; padding-top: 5rem;">
+        <div style="width: 100%; padding: 2.5rem;">
+            <!-- Page Header -->
+            <div style="margin-bottom: 3rem;">
+                <h1 style="font-size: 2.25rem; font-weight: 800; color: #111827; margin: 0 0 2rem 0;">Account Management</h1>
                 
-                <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                    <div>
-                        <label class="modern-label">Username <span class="text-danger">*</span></label>
-                        <input type="text" name="username" required class="modern-input" placeholder="Enter username">
+                <!-- Statistics Cards Row -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+                    <!-- Active Admin Card -->
+                    <div style="background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+                            <div>
+                                <p style="font-size: 0.875rem; color: #9ca3af; font-weight: 600; margin: 0 0 0.75rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Active Admin</p>
+                                <p style="font-size: 2.5rem; font-weight: 800; color: #111827; margin: 0;"><?= count($activeStaff) ?></p>
+                            </div>
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%); display: flex; align-items: center; justify-content: center; color: #1e40af; font-size: 1.75rem;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
                     </div>
-                    
+
+                    <!-- Resident Accounts Card -->
+                    <div style="background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+                            <div>
+                                <p style="font-size: 0.875rem; color: #9ca3af; font-weight: 600; margin: 0 0 0.75rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Resident Accounts</p>
+                                <p style="font-size: 2.5rem; font-weight: 800; color: #111827; margin: 0;"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></p>
+                            </div>
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); display: flex; align-items: center; justify-content: center; color: #92400e; font-size: 1.75rem;">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Pending Card -->
+                    <div style="background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+                            <div>
+                                <p style="font-size: 0.875rem; color: #9ca3af; font-weight: 600; margin: 0 0 0.75rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Pending Approvals</p>
+                                <p style="font-size: 2.5rem; font-weight: 800; color: #111827; margin: 0;"><?= count($pendingResidents) ?></p>
+                            </div>
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%); display: flex; align-items: center; justify-content: center; color: #7c3aed; font-size: 1.75rem;">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Linked Accounts Card -->
+                    <div style="background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+                            <div>
+                                <p style="font-size: 0.875rem; color: #9ca3af; font-weight: 600; margin: 0 0 0.75rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Linked Accounts</p>
+                                <p style="font-size: 2.5rem; font-weight: 800; color: #111827; margin: 0;"><?= count($approvedResidents) - count($unlinkedResidents) ?></p>
+                            </div>
+                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); display: flex; align-items: center; justify-content: center; color: #6d28d9; font-size: 1.75rem;">
+                                <i class="fas fa-link"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                    <button class="modern-tab active" onclick="switchTab('staff')" id="staffTab" style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; color: white; transition: all 0.3s ease; cursor: pointer; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-user-tie"></i> Staff Management
+                    </button>
+                    <button class="modern-tab" onclick="switchTab('resident')" id="residentTab" style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; color: #6b7280; transition: all 0.3s ease; cursor: pointer; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-users"></i> Resident Management
+                    </button>
+                    <?php if (count($unlinkedResidents) > 0 || count($unlinkedPatients) > 0): ?>
+                    <button class="modern-tab" onclick="switchTab('linking')" id="linkingTab" style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; color: #6b7280; transition: all 0.3s ease; cursor: pointer; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-link"></i> Manual Linking
+                    </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div>
+                <!-- Main Content -->
+                <div>
+                    <!-- Staff Section -->
+                    <div id="staffSection" class="tab-section" style="display: block;">
+                        <div style="display: grid; grid-template-columns: 500px 1fr; gap: 2rem;">
+                            <!-- Left Column: Create Staff Form -->
+                            <div class="modern-card" style="padding: 2rem; height: fit-content; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: sticky; top: 6rem;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                                    <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); display: flex; align-items: center; justify-content: center; color: #2563eb;">
+                                        <i class="fas fa-plus-circle" style="font-size: 1.25rem;"></i>
+                                    </div>
+                                    <h2 style="font-size: 1.125rem; font-weight: 700; color: #111827; margin: 0;">
+                                        Create Staff
+                                    </h2>
+                                </div>
+                                
+                                <p style="font-size: 0.875rem; color: #6b7280; margin: 0 0 1.5rem 0;">Fill in details to add new staff</p>
+                                
+                                <form method="POST" action="" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Username <span style="color: #ef4444;">*</span></label>
+                                        <input type="text" name="username" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="e.g., john.doe">
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Full Name <span style="color: #ef4444;">*</span></label>
+                                        <input type="text" name="full_name" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="John Doe">
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Position <span style="color: #ef4444;">*</span></label>
+                                        <select name="position" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                            <option value="">Select Position</option>
+                                            <option value="Nurse">Nurse</option>
+                                            <option value="Midwife">Midwife</option>
+                                            <option value="Doctor">Doctor</option>
+                                            <option value="Encoder">Encoder</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Password <span style="color: #ef4444;">*</span></label>
+                                        <div style="position: relative;">
+                                            <input type="text" name="password" required id="staff-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: monospace;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                            <button type="button" onclick="togglePasswordVisibility('staff-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; transition: all 0.2s;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Specialization</label>
+                                        <input type="text" name="specialization" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="e.g., Pediatrics">
+                                    </div>
+                                    
+                                    <div>
+                                        <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">License Number</label>
+                                        <input type="text" name="license_number" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="e.g., LIC-2024-001">
+                                    </div>
+                                    
+                                    <button type="submit" name="create_staff" style="width: 100%; padding: 1rem; border-radius: 10px; font-weight: 700; font-size: 0.9375rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; cursor: pointer; transition: all 0.3s; margin-top: 1rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(37, 99, 235, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.3)'">
+                                        <i class="fas fa-user-plus"></i>Create Staff
+                                    </button>
+                                </form>
+                            </div>
+
+                    <!-- Right Column: Staff Grid -->
                     <div>
-                        <label class="modern-label">Password <span class="text-danger">*</span></label>
-                        <div class="password-field">
-                            <input type="text" name="password" required id="staff-password" class="modern-input" value="<?= bin2hex(random_bytes(4)) ?>">
-                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('staff-password')">
-                                <i class="fas fa-eye"></i>
+                        <!-- Staff Tabs -->
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem;">
+                            <button class="modern-tab active" onclick="showStaffTab('active')" id="activeStaffTab" style="padding: 0.875rem 1.5rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                                <i class="fas fa-check-circle"></i>Active <span style="background: rgba(255,255,255,0.3); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8125rem; font-weight: 700;"><?= count($activeStaff) ?></span>
+                            </button>
+                            <button class="modern-tab" onclick="showStaffTab('inactive')" id="inactiveStaffTab" style="padding: 0.875rem 1.5rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; background: white; color: #6b7280; border: 1.5px solid #e5e7eb; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-pause-circle"></i>Inactive <span style="background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8125rem; font-weight: 700;"><?= count($inactiveStaff) ?></span>
                             </button>
                         </div>
-                        <div class="password-strength">
-                            <div class="password-strength-bar strength-strong"></div>
+
+                        <!-- Active Staff Grid -->
+                        <div id="activeStaffGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                            <?php if (empty($activeStaff)): ?>
+                                <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                                    <i class="fas fa-inbox" style="font-size: 2.5rem; color: #d1d5db; display: block; margin-bottom: 1rem;"></i>
+                                    <p style="color: #9ca3af; margin: 0; font-weight: 500;">Pending to display</p>
+                                </div>
+                            <?php else: ?>
+                                <?php foreach ($activeStaff as $staff): ?>
+                                    <div style="background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid #e5e7eb; transition: all 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.boxShadow='0 10px 30px rgba(0,0,0,0.1)'; this.style.transform='translateY(-4px)'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.transform='translateY(0)'">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                            <div>
+                                                <h3 style="font-weight: 700; font-size: 1rem; color: #111827; margin: 0;"><?= htmlspecialchars($staff['full_name']) ?></h3>
+                                                <p style="font-size: 0.875rem; color: #6b7280; margin: 0.5rem 0 0 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-briefcase" style="color: #9ca3af;"></i><?= htmlspecialchars($staff['position'] ?? 'N/A') ?></p>
+                                            </div>
+                                            <span style="background: #d1fae5; color: #065f46; padding: 0.375rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.375rem;">
+                                                <i class="fas fa-circle" style="font-size: 0.5rem;"></i>Active
+                                            </span>
+                                        </div>
+                                        
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <button onclick="openStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')" style="flex: 1; padding: 0.625rem; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.25rem;" onmouseover="this.style.background='#059669'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='#10b981'; this.style.transform='scale(1)'">
+                                                <i class="fas fa-check"></i>Manage
+                                            </button>
+                                            <button onclick="openDeleteModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')" style="flex: 1; padding: 0.625rem; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.25rem;" onmouseover="this.style.background='#dc2626'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='#ef4444'; this.style.transform='scale(1)'">
+                                                <i class="fas fa-trash"></i>Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Inactive Staff Grid -->
+                        <div id="inactiveStaffGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                            <?php if (empty($inactiveStaff)): ?>
+                                <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                                    <i class="fas fa-inbox" style="font-size: 2.5rem; color: #d1d5db; display: block; margin-bottom: 1rem;"></i>
+                                    <p style="color: #9ca3af; margin: 0; font-weight: 500;">No inactive staff accounts</p>
+                                </div>
+                            <?php else: ?>
+                                <?php foreach ($inactiveStaff as $staff): ?>
+                                    <div style="background: #f9fafb; border-radius: 16px; padding: 1.5rem; border: 1px solid #e5e7eb; opacity: 0.8; transition: all 0.3s;">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                            <div>
+                                                <h3 style="font-weight: 700; font-size: 1rem; color: #6b7280; margin: 0;"><?= htmlspecialchars($staff['full_name']) ?></h3>
+                                                <p style="font-size: 0.875rem; color: #9ca3af; margin: 0.5rem 0 0 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-briefcase" style="color: #d1d5db;"></i><?= htmlspecialchars($staff['position'] ?? 'N/A') ?></p>
+                                            </div>
+                                            <span style="background: #fee2e2; color: #991b1b; padding: 0.375rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.375rem;">
+                                                <i class="fas fa-circle" style="font-size: 0.5rem;"></i>Inactive
+                                            </span>
+                                        </div>
+                                        
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <form method="POST" action="" style="flex: 1;">
+                                                <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
+                                                <input type="hidden" name="action" value="activate">
+                                                <button type="submit" name="toggle_staff_status" style="width: 100%; padding: 0.625rem; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#1d4ed8'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='#2563eb'; this.style.transform='scale(1)'">
+                                                    <i class="fas fa-play" style="margin-right: 0.25rem;"></i>Activate
+                                                </button>
+                                            </form>
+                                            <button onclick="openDeleteModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')" style="flex: 1; padding: 0.625rem; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#dc2626'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='#ef4444'; this.style.transform='scale(1)'">
+                                                <i class="fas fa-trash" style="margin-right: 0.25rem;"></i>Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
-                    
-                    <div>
-                        <label class="modern-label">Full Name <span class="text-danger">*</span></label>
-                        <input type="text" name="full_name" required class="modern-input" placeholder="Enter full name">
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">Position <span class="text-danger">*</span></label>
-                        <select name="position" required class="modern-input">
-                            <option value="">Select Position</option>
-                            <option value="Nurse">Nurse</option>
-                            <option value="Midwife">Midwife</option>
-                            <option value="Doctor">Doctor</option>
-                            <option value="Encoder">Encoder</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">Specialization</label>
-                        <input type="text" name="specialization" class="modern-input" placeholder="e.g., Pediatrics">
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">License Number</label>
-                        <input type="text" name="license_number" class="modern-input" placeholder="Enter license number">
-                    </div>
-                    
-                    <div class="md:col-span-2 lg:col-span-3">
-                        <button type="submit" name="create_staff" class="btn-modern btn-modern-primary px-8">
-                            <i class="fas fa-user-plus"></i>
-                            Create Staff Account
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
 
-            <!-- Staff Tabs -->
-            <div class="modern-tabs mb-6">
-                <button class="modern-tab active" onclick="showStaffTab('active')" id="activeStaffTab">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    Active (<?= count($activeStaff) ?>)
-                </button>
-                <button class="modern-tab" onclick="showStaffTab('inactive')" id="inactiveStaffTab">
-                    <i class="fas fa-pause-circle mr-2"></i>
-                    Inactive (<?= count($inactiveStaff) ?>)
-                </button>
-            </div>
-
-            <!-- Active Staff Grid -->
-            <div id="activeStaffGrid" class="modern-grid">
-                <?php if (empty($activeStaff)): ?>
-                    <div class="col-span-full text-center py-12">
-                        <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-user-md text-3xl text-gray-400"></i>
+            <!-- Resident Section -->
+            <div id="residentSection" class="tab-section" style="display: none;">
+                <div style="display: grid; grid-template-columns: 500px 1fr; gap: 2rem;">
+                    <!-- Left Column: Create Resident Form -->
+                    <div class="modern-card" style="padding: 2rem; height: fit-content; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: sticky; top: 6rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); display: flex; align-items: center; justify-content: center; color: #15803d;">
+                                <i class="fas fa-plus-circle" style="font-size: 1.25rem;"></i>
+                            </div>
+                            <h2 style="font-size: 1.125rem; font-weight: 700; color: #111827; margin: 0;">
+                                Create Resident
+                            </h2>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No active staff accounts</h3>
-                        <p class="text-gray-500">Create your first staff account above</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($activeStaff as $staff): ?>
-                        <div class="account-card-modern">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($staff['full_name']) ?></h3>
-                                    <p class="text-sm text-primary">@<?= htmlspecialchars($staff['username']) ?></p>
-                                </div>
-                                <span class="modern-badge badge-success">Active</span>
+                        
+                        <p style="font-size: 0.875rem; color: #6b7280; margin: 0 0 1.5rem 0;">Fill in details to add new resident</p>
+                        
+                        <form method="POST" action="" id="residentForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                            
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Full Name <span style="color: #ef4444;">*</span></label>
+                                <input type="text" name="full_name" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="Juan De la Cruz">
                             </div>
                             
-                            <div class="space-y-2 mb-6">
-                                <?php if ($staff['position']): ?>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-briefcase w-5 text-gray-400"></i>
-                                        <?= htmlspecialchars($staff['position']) ?>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <?php if ($staff['specialization']): ?>
-                                    <div class="flex items-center text-sm text-gray-600">
-                                        <i class="fas fa-stethoscope w-5 text-gray-400"></i>
-                                        <?= htmlspecialchars($staff['specialization']) ?>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <div class="flex items-center text-xs text-gray-400">
-                                    <i class="fas fa-calendar-alt w-5"></i>
-                                    Added <?= date('M j, Y', strtotime($staff['created_at'])) ?>
-                                </div>
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Email <span style="color: #ef4444;">*</span></label>
+                                <input type="email" name="email" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="juan@example.com">
                             </div>
                             
-                            <div class="flex flex-wrap gap-2 w-full">
-                                <button onclick="openStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
-                                        class="btn-modern btn-modern-outline flex-1">
-                                    <i class="fas fa-key"></i>
-                                    Change Password
-                                </button>
-                                
-                                <form method="POST" action="" class="flex-1">
-                                    <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
-                                    <input type="hidden" name="action" value="deactivate">
-                                    <button type="submit" name="toggle_staff_status" 
-                                            class="btn-modern btn-modern-warning w-full"
-                                            onclick="return confirm('Deactivate this staff account?')">
-                                        <i class="fas fa-pause"></i>
-                                        Deactivate
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Password <span style="color: #ef4444;">*</span></label>
+                                <div style="position: relative;">
+                                    <input type="text" name="password" required id="resident-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: monospace;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                    <button type="button" onclick="togglePasswordVisibility('resident-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; transition: all 0.2s;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'">
+                                        <i class="fas fa-eye"></i>
                                     </button>
-                                </form>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <!-- Inactive Staff Grid -->
-            <div id="inactiveStaffGrid" class="modern-grid" style="display: none;">
-                <?php if (empty($inactiveStaff)): ?>
-                    <div class="col-span-full text-center py-12">
-                        <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-user-slash text-3xl text-gray-400"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No inactive staff accounts</h3>
-                        <p class="text-gray-500">All staff accounts are currently active</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($inactiveStaff as $staff): ?>
-                        <div class="account-card-modern">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($staff['full_name']) ?></h3>
-                                    <p class="text-sm text-gray-500">@<?= htmlspecialchars($staff['username']) ?></p>
-                                </div>
-                                <span class="modern-badge badge-danger">Inactive</span>
-                            </div>
-                            
-                            <div class="space-y-2 mb-6">
-                                <?php if ($staff['position']): ?>
-                                    <div class="flex items-center text-sm text-gray-500">
-                                        <i class="fas fa-briefcase w-5 text-gray-400"></i>
-                                        <?= htmlspecialchars($staff['position']) ?>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <div class="flex items-center text-xs text-gray-400">
-                                    <i class="fas fa-calendar-alt w-5"></i>
-                                    Added <?= date('M j, Y', strtotime($staff['created_at'])) ?>
                                 </div>
                             </div>
                             
-                            <div class="flex gap-2">
-                                <button onclick="openStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
-                                        class="btn-modern btn-modern-outline flex-1">
-                                    <i class="fas fa-key"></i>
-                                    Change Password
-                                </button>
-                                
-                                <form method="POST" action="" class="flex-1">
-                                    <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
-                                    <input type="hidden" name="action" value="activate">
-                                    <button type="submit" name="toggle_staff_status" 
-                                            class="btn-modern btn-modern-secondary w-full">
-                                        <i class="fas fa-play"></i>
-                                        Activate
-                                    </button>
-                                </form>
-                                
-                                <button onclick="openDeleteModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
-                                        class="btn-modern btn-modern-danger">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Phone</label>
+                                <input type="tel" name="phone" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="+63 912 345 6789">
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-        </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Gender</label>
+                                <select name="gender" id="gender" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Date of Birth</label>
+                                <input type="date" name="date_of_birth" id="dob" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" onchange="calculateAge()">
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Sitio</label>
+                                <select name="sitio" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                    <option value="">Select Sitio</option>
+                                    <option value="Kalinao">Kalinao</option>
+                                    <option value="Nangka">Nangka</option>
+                                    <option value="Lubi">Lubi</option>
+                                    <option value="Sta. Cruz">Sta. Cruz</option>
+                                    <option value="Regla">Regla</option>
+                                    <option value="Abellana">Abellana</option>
+                                    <option value="Sto.niño l">Sto.niño l</option>
+                                    <option value="Sto.niño ll">Sto.niño ll</option>
+                                    <option value="Sto.niño lll">Sto.niño lll</option>
+                                    <option value="Zapatera">Zapatera</option>
+                                    <option value="Mabuhay">Mabuhay</option>
+                                    <option value="San Vicente">San Vicente</option>
+                                    <option value="City Central">City Central</option>
+                                    <option value="San. Antonio">San. Antonio</option>
+                                    <option value="San Roque">San Roque</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" name="create_resident" style="width: 100%; padding: 1rem; border-radius: 10px; font-weight: 700; font-size: 0.9375rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; cursor: pointer; transition: all 0.3s; margin-top: 1rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(16, 185, 129, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.3)'">
+                                <i class="fas fa-user-plus"></i>Create Resident
+                            </button>
+                        </form>
+                    </div>
 
-        <!-- Resident Section -->
-        <div id="residentSection" class="tab-section" style="display: none;">
-            <!-- Create Resident Form -->
-            <div class="modern-card p-8 mb-8">
-                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                    <i class="fas fa-plus-circle text-secondary"></i>
-                    Create New Resident Account
-                </h2>
-                
-                <form method="POST" action="" id="residentForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                    <!-- Right Column: Resident Grid -->
                     <div>
-                        <label class="modern-label">Full Name <span class="text-danger">*</span></label>
-                        <input type="text" name="full_name" required class="modern-input" placeholder="e.g., Juan Dela Cruz">
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">Email <span class="text-danger">*</span></label>
-                        <input type="email" name="email" required class="modern-input" placeholder="juan@example.com">
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">Username</label>
-                        <input type="text" name="username" class="modern-input" placeholder="Auto-generated from email">
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">Password <span class="text-danger">*</span></label>
-                        <div class="password-field">
-                            <input type="text" name="password" required id="resident-password" class="modern-input" value="<?= bin2hex(random_bytes(4)) ?>">
-                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility('resident-password')">
-                                <i class="fas fa-eye"></i>
+                        <!-- Resident Tabs -->
+                        <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem;">
+                            <button class="modern-tab active" onclick="showResidentTab('pending')" id="pendingResidentTab" style="padding: 0.875rem 1.5rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                                <i class="fas fa-hourglass-half"></i>Pending <span style="background: rgba(255,255,255,0.3); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8125rem; font-weight: 700;"><?= count($pendingResidents) ?></span>
+                            </button>
+                            <button class="modern-tab" onclick="showResidentTab('approved')" id="approvedResidentTab" style="padding: 0.875rem 1.5rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; background: white; color: #6b7280; border: 1.5px solid #e5e7eb; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-check-circle"></i>Approved <span style="background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8125rem; font-weight: 700;"><?= count($approvedResidents) ?></span>
+                            </button>
+                            <button class="modern-tab" onclick="showResidentTab('declined')" id="declinedResidentTab" style="padding: 0.875rem 1.5rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; background: white; color: #6b7280; border: 1.5px solid #e5e7eb; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-times-circle"></i>Declined <span style="background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8125rem; font-weight: 700;"><?= count($declinedResidents) ?></span>
                             </button>
                         </div>
-                        <div class="password-strength">
-                            <div class="password-strength-bar strength-strong"></div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">Phone</label>
-                        <input type="tel" name="phone" class="modern-input" placeholder="+63 912 345 6789">
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">Date of Birth</label>
-                        <input type="date" name="date_of_birth" id="dob" class="modern-input" onchange="calculateAge()">
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">Gender</label>
-                        <select name="gender" id="gender" class="modern-input">
-                            <option value="">Select Gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="modern-label">Sitio</label>
-                        <select name="sitio" class="modern-input">
-                            <option value="">Select Sitio</option>
-                            <option value="Kalinao">Kalinao</option>
-                            <option value="Nangka">Nangka</option>
-                            <option value="Lubi">Lubi</option>
-                            <option value="Sta. Cruz">Sta. Cruz</option>
-                            <option value="Regla">Regla</option>
-                            <option value="Abellana">Abellana</option>
-                            <option value="Sto.niño l">Sto.niño l</option>
-                            <option value="Sto.niño ll">Sto.niño ll</option>
-                            <option value="Sto.niño lll">Sto.niño lll</option>
-                            <option value="Zapatera">Zapatera</option>
-                            <option value="Mabuhay">Mabuhay</option>
-                            <option value="San Vicente">San Vicente</option>
-                            <option value="City Central">City Central</option>
-                            <option value="San. Antonio">San. Antonio</option>
-                            <option value="San Roque">San Roque</option>
-                            <option value="Others">Others</option>
-                        </select>
-                    </div>
-                    
-                    <div class="lg:col-span-3">
-                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                            <div class="flex items-start gap-3">
-                                <i class="fas fa-info-circle text-blue-500 mt-1"></i>
-                                <div>
-                                    <p class="font-medium text-blue-800 mb-1">Important Information</p>
-                                    <p class="text-sm text-blue-600">
-                                        Account will be created without a patient record. 
-                                        Use the Manual Linking tab to connect this account to a patient record.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="lg:col-span-3">
-                        <button type="submit" name="create_resident" class="btn-modern btn-modern-secondary px-8">
-                            <i class="fas fa-user-plus"></i>
-                            Create Resident Account
-                        </button>
-                    </div>
-                </form>
-            </div>
 
-            <!-- Resident Tabs -->
-            <div class="modern-tabs mb-6 flex-wrap">
-                <button class="modern-tab active" onclick="showResidentTab('pending')" id="pendingResidentTab">
-                    <i class="fas fa-clock mr-2"></i>
-                    Pending (<?= count($pendingResidents) ?>)
-                </button>
-                <button class="modern-tab" onclick="showResidentTab('approved')" id="approvedResidentTab">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    Approved (<?= count($approvedResidents) ?>)
-                </button>
-                <button class="modern-tab" onclick="showResidentTab('declined')" id="declinedResidentTab">
-                    <i class="fas fa-times-circle mr-2"></i>
-                    Declined (<?= count($declinedResidents) ?>)
-                </button>
-                <?php if (count($unlinkedResidents) > 0): ?>
-                <button class="modern-tab" onclick="showResidentTab('unlinked')" id="unlinkedResidentTab">
-                    <i class="fas fa-unlink mr-2"></i>
-                    Unlinked (<?= count($unlinkedResidents) ?>)
-                </button>
-                <?php endif; ?>
-            </div>
-
-            <!-- Pending Residents Grid -->
-            <div id="pendingResidentGrid" class="modern-grid">
-                <?php if (empty($pendingResidents)): ?>
-                    <div class="col-span-full text-center py-12">
-                        <div class="w-20 h-20 mx-auto bg-yellow-50 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-clock text-3xl text-yellow-400"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No pending residents</h3>
-                        <p class="text-gray-500">All applications have been processed</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($pendingResidents as $resident): ?>
-                        <div class="account-card-modern">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                    <p class="text-sm text-gray-500">@<?= htmlspecialchars($resident['username']) ?></p>
+                        <!-- Pending Residents Grid -->
+                        <div id="pendingResidentGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                            <?php if (empty($pendingResidents)): ?>
+                                <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                                    <p style="color: #6b7280;">Pending to display</p>
                                 </div>
-                                <span class="modern-badge badge-warning">Pending</span>
-                            </div>
-                            
-                            <div class="space-y-2 mb-6">
-                                <div class="flex items-center text-sm">
-                                    <i class="fas fa-envelope w-5 text-gray-400"></i>
-                                    <?= htmlspecialchars($resident['email']) ?>
-                                </div>
-                                <?php if ($resident['sitio']): ?>
-                                    <div class="flex items-center text-sm">
-                                        <i class="fas fa-map-marker-alt w-5 text-gray-400"></i>
-                                        <?= htmlspecialchars($resident['sitio']) ?>
+                            <?php else: ?>
+                                <?php foreach ($pendingResidents as $resident): ?>
+                                    <div style="background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid #e5e7eb; transition: all 0.2s;">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                            <div>
+                                                <h3 style="font-weight: 700; font-size: 1rem; color: #111827; margin: 0;"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                                <p style="font-size: 0.75rem; background: #fef3c7; color: #b45309; padding: 0.25rem 0.5rem; border-radius: 6px; display: inline-block; margin-top: 0.25rem; font-weight: 600;">Pending</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="font-size: 0.875rem; color: #6b7280; margin: 0 0 1rem 0;">Email : <?= htmlspecialchars($resident['email']) ?></p>
+                                        
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <form method="POST" action="" style="flex: 1;">
+                                                <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                                <input type="hidden" name="action" value="approve">
+                                                <button type="submit" name="toggle_resident_status" style="width: 100%; padding: 0.5rem; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                                                    <i class="fas fa-check" style="font-size: 0.625rem; margin-right: 0.25rem;"></i>Approve
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="" style="flex: 1;">
+                                                <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                                <input type="hidden" name="action" value="decline">
+                                                <button type="submit" name="toggle_resident_status" style="width: 100%; padding: 0.5rem; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                                                    <i class="fas fa-times" style="font-size: 0.625rem; margin-right: 0.25rem;"></i>Decline
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
-                                <?php endif; ?>
-                                <div class="flex items-center text-xs text-gray-400">
-                                    <i class="fas fa-calendar-plus w-5"></i>
-                                    Applied <?= date('M j, Y', strtotime($resident['created_at'])) ?>
-                                </div>
-                            </div>
-                            
-                            <div class="flex gap-2">
-                                <form method="POST" action="" class="flex-1">
-                                    <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                    <input type="hidden" name="action" value="approve">
-                                    <button type="submit" name="toggle_resident_status" class="btn-modern btn-modern-secondary w-full">
-                                        <i class="fas fa-check"></i>
-                                        Approve
-                                    </button>
-                                </form>
-                                
-                                <form method="POST" action="" class="flex-1">
-                                    <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                    <input type="hidden" name="action" value="decline">
-                                    <button type="submit" name="toggle_resident_status" class="btn-modern btn-modern-danger w-full">
-                                        <i class="fas fa-times"></i>
-                                        Decline
-                                    </button>
-                                </form>
-                            </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+
+                        <!-- Approved Residents Grid -->
+                        <div id="approvedResidentGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                            <?php if (empty($approvedResidents)): ?>
+                                <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                                    <p style="color: #6b7280;">No Approved Residents</p>
+                                </div>
+                            <?php else: ?>
+                                <?php foreach ($approvedResidents as $resident): 
+                                    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
+                                    $stmt->execute([$resident['id']]);
+                                    $hasPatientRecord = $stmt->fetch();
+                                ?>
+                                    <div style="background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid #e5e7eb; transition: all 0.2s;">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                            <div>
+                                                <h3 style="font-weight: 700; font-size: 1rem; color: #111827; margin: 0;"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                                <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;">Email : <?= htmlspecialchars($resident['email']) ?></p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="margin-bottom: 1rem;">
+                                            <?php if (!$hasPatientRecord): ?>
+                                                <p style="font-size: 0.75rem; background: #fed7aa; color: #92400e; padding: 0.25rem 0.5rem; border-radius: 6px; display: inline-block; font-weight: 600; margin: 0;">Unlinked</p>
+                                            <?php else: ?>
+                                                <p style="font-size: 0.75rem; background: #d1fae5; color: #065f46; padding: 0.25rem 0.5rem; border-radius: 6px; display: inline-block; font-weight: 600; margin: 0;">Linked</p>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                            <button type="button" onclick="openResidentRecoveryModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')" style="width: 100%; padding: 0.5rem; background: #f59e0b; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                                                <i class="fas fa-unlock-alt" style="font-size: 0.625rem; margin-right: 0.25rem;"></i>Reset Pass
+                                            </button>
+                                            
+                                            <?php if (!$hasPatientRecord): ?>
+                                            <button onclick="switchToLinking(<?= $resident['id'] ?>)" style="width: 100%; padding: 0.5rem; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                                                <i class="fas fa-link" style="font-size: 0.625rem; margin-right: 0.25rem;"></i>Link
+                                            </button>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Declined Residents Grid -->
+                        <div id="declinedResidentGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                            <?php if (empty($declinedResidents)): ?>
+                                <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                                    <p style="color: #6b7280;">No Declined Residents</p>
+                                </div>
+                            <?php else: ?>
+                                <?php foreach ($declinedResidents as $resident): ?>
+                                    <div style="background: #f9fafb; border-radius: 16px; padding: 1.5rem; border: 1px solid #e5e7eb; opacity: 0.75;">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                            <div>
+                                                <h3 style="font-weight: 700; font-size: 1rem; color: #111827; margin: 0;"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                                <p style="font-size: 0.75rem; background: #fecaca; color: #991b1b; padding: 0.25rem 0.5rem; border-radius: 6px; display: inline-block; margin-top: 0.25rem; font-weight: 600;">Declined</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <p style="font-size: 0.875rem; color: #6b7280; margin: 0 0 1rem 0;">Email : <?= htmlspecialchars($resident['email']) ?></p>
+                                        
+                                        <form method="POST" action="">
+                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" name="toggle_resident_status" style="width: 100%; padding: 0.5rem; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
+                                                <i class="fas fa-check" style="font-size: 0.625rem; margin-right: 0.25rem;"></i>Reconsider
+                                            </button>
+                                        </form>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Approved Residents Grid -->
-            <div id="approvedResidentGrid" class="modern-grid" style="display: none;">
-                <?php if (empty($approvedResidents)): ?>
-                    <div class="col-span-full text-center py-12">
-                        <div class="w-20 h-20 mx-auto bg-green-50 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-check-circle text-3xl text-green-400"></i>
+            <!-- Linking Section -->
+            <div id="linkingSection" class="tab-section" style="display: none;">
+                <div style="background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: #111827; margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fas fa-link" style="color: #8b5cf6; font-size: 1.5rem;"></i>
+                        Link Accounts to Patient Records
+                    </h2>
+                    <p style="color: #6b7280; margin: 0 0 2rem 0; font-size: 0.95rem;">Select a resident account and a patient record to link them together</p>
+
+                    <?php if (count($unlinkedResidents) === 0 && count($unlinkedPatients) === 0): ?>
+                        <div style="text-align: center; padding: 3rem;">
+                            <div style="width: 96px; height: 96px; margin: 0 auto 1rem; background: #d1fae5; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-check-double" style="font-size: 2.5rem; color: #10b981;"></i>
+                            </div>
+                            <h3 style="font-size: 1.25rem; font-weight: 600; color: #374151; margin: 0 0 0.5rem 0;">All accounts linked!</h3>
+                            <p style="color: #9ca3af; margin: 0;">Every resident account is properly connected to a patient record.</p>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No approved residents</h3>
-                        <p class="text-gray-500">Approve pending accounts to see them here</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($approvedResidents as $resident): 
-                        $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
-                        $stmt->execute([$resident['id']]);
-                        $hasPatientRecord = $stmt->fetch();
-                    ?>
-                        <div class="account-card-modern">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                    <p class="text-sm text-secondary">@<?= htmlspecialchars($resident['username']) ?></p>
+                    <?php else: ?>
+                        <!-- Linking Content -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                            <!-- Unlinked Residents Column -->
+                            <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);">
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="width: 40px; height: 40px; background: #2563eb; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="font-weight: 700; font-size: 1rem; color: #111827; margin: 0;">Unlinked Residents</h3>
+                                        <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;"><?= count($unlinkedResidents) ?> account(s) waiting</p>
+                                    </div>
                                 </div>
-                                <div class="flex flex-col gap-1">
-                                    <?php if (!$hasPatientRecord): ?>
-                                        <span class="modern-badge badge-warning">Unlinked</span>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 384px; overflow-y: auto;">
+                                    <?php if (count($unlinkedResidents) > 0): ?>
+                                        <?php foreach ($unlinkedResidents as $resident): ?>
+                                            <div class="link-card" onclick="selectResident(<?= $resident['id'] ?>, this)" data-resident-id="<?= $resident['id'] ?>" style="background: white; border-radius: 10px; padding: 1rem; cursor: pointer; transition: all 0.2s; display: flex; gap: 0.75rem;">
+                                                <div style="width: 40px; height: 40px; border-radius: 8px; background: #dbeafe; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #2563eb;">
+                                                    <i class="fas fa-user" style="font-weight: bold;"></i>
+                                                </div>
+                                                <div style="flex: 1; min-width: 0;">
+                                                    <div style="font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($resident['full_name']) ?></div>
+                                                    <div style="font-size: 0.875rem; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($resident['email']) ?></div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     <?php else: ?>
-                                        <span class="modern-badge badge-success">Linked</span>
+                                        <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                                            <i class="fas fa-check-circle" style="font-size: 1.5rem; color: #10b981; margin-bottom: 0.5rem; display: block;"></i>
+                                            <p style="margin: 0;">All residents are linked!</p>
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
-                            
-                            <div class="space-y-2 mb-6">
-                                <div class="flex items-center text-sm">
-                                    <i class="fas fa-envelope w-5 text-gray-400"></i>
-                                    <?= htmlspecialchars($resident['email']) ?>
-                                </div>
-                                <?php if ($resident['contact']): ?>
-                                    <div class="flex items-center text-sm">
-                                        <i class="fas fa-phone w-5 text-gray-400"></i>
-                                        <?= htmlspecialchars($resident['contact']) ?>
+
+                            <!-- Unlinked Patients Column -->
+                            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);">
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div style="width: 40px; height: 40px; background: #10b981; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+                                        <i class="fas fa-file-medical"></i>
                                     </div>
-                                <?php endif; ?>
-                                <div class="flex items-center text-xs text-gray-400">
-                                    <i class="fas fa-id-card w-5"></i>
-                                    ID: <?= htmlspecialchars($resident['unique_number']) ?>
-                                </div>
-                            </div>
-                            
-
-                            <div class="flex gap-2 flex-wrap">
-
-
-                                <button type="button" onclick="openResidentRecoveryModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')" class="btn-modern btn-modern-warning flex-1">
-                                    <i class="fas fa-unlock-alt"></i>
-                                    Recover Password
-                                </button>
-
-                                <form method="POST" action="" class="flex-1">
-                                    <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                    <input type="hidden" name="action" value="suspend">
-                                    <button type="submit" name="toggle_resident_status" 
-                                            class="btn-modern btn-modern-warning w-full"
-                                            onclick="return confirm('Suspend this account?')">
-                                        <i class="fas fa-pause"></i>
-                                        Suspend
-                                    </button>
-                                </form>
-
-                                <?php if (!$hasPatientRecord): ?>
-                                <button onclick="switchToLinking(<?= $resident['id'] ?>)"
-                                        class="btn-modern btn-modern-primary">
-                                    <i class="fas fa-link"></i>
-                                </button>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <!-- Declined Residents Grid -->
-            <div id="declinedResidentGrid" class="modern-grid" style="display: none;">
-                <?php if (empty($declinedResidents)): ?>
-                    <div class="col-span-full text-center py-12">
-                        <div class="w-20 h-20 mx-auto bg-red-50 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-times-circle text-3xl text-red-400"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">No declined residents</h3>
-                        <p class="text-gray-500">No applications have been declined</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($declinedResidents as $resident): ?>
-                        <div class="account-card-modern">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                    <p class="text-sm text-gray-500">@<?= htmlspecialchars($resident['username']) ?></p>
-                                </div>
-                                <span class="modern-badge badge-danger">Declined</span>
-                            </div>
-                            
-                            <div class="space-y-2 mb-6">
-                                <div class="flex items-center text-sm">
-                                    <i class="fas fa-envelope w-5 text-gray-400"></i>
-                                    <?= htmlspecialchars($resident['email']) ?>
-                                </div>
-                                <div class="flex items-center text-xs text-gray-400">
-                                    <i class="fas fa-calendar-times w-5"></i>
-                                    Declined <?= date('M j, Y', strtotime($resident['updated_at'])) ?>
-                                </div>
-                            </div>
-                            
-                            <div class="flex gap-2">
-                                <form method="POST" action="" class="flex-1">
-                                    <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                    <input type="hidden" name="action" value="approve">
-                                    <button type="submit" name="toggle_resident_status" class="btn-modern btn-modern-secondary w-full">
-                                        <i class="fas fa-check"></i>
-                                        Approve
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <!-- Unlinked Residents Grid -->
-            <div id="unlinkedResidentGrid" class="modern-grid" style="display: none;">
-                <?php if (empty($unlinkedResidents)): ?>
-                    <div class="col-span-full text-center py-12">
-                        <div class="w-20 h-20 mx-auto bg-orange-50 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-link text-3xl text-orange-400"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">All accounts are linked!</h3>
-                        <p class="text-gray-500">All resident accounts have patient records</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($unlinkedResidents as $resident): ?>
-                        <div class="account-card-modern">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="font-bold text-lg"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                    <p class="text-sm text-warning">@<?= htmlspecialchars($resident['username']) ?></p>
-                                </div>
-                                <span class="modern-badge badge-warning">Unlinked</span>
-                            </div>
-                            
-                            <div class="space-y-2 mb-6">
-                                <div class="flex items-center text-sm">
-                                    <i class="fas fa-envelope w-5 text-gray-400"></i>
-                                    <?= htmlspecialchars($resident['email']) ?>
-                                </div>
-                                <?php if ($resident['age'] > 0): ?>
-                                    <div class="flex items-center text-sm">
-                                        <i class="fas fa-user w-5 text-gray-400"></i>
-                                        Age: <?= htmlspecialchars($resident['age']) ?> years
+                                    <div>
+                                        <h3 style="font-weight: 700; font-size: 1rem; color: #111827; margin: 0;">Patient Records</h3>
+                                        <p style="font-size: 0.875rem; color: #6b7280; margin: 0.25rem 0 0 0;"><?= count($unlinkedPatients) ?> record(s) unlinked</p>
                                     </div>
-                                <?php endif; ?>
-                                <?php if ($resident['sitio']): ?>
-                                    <div class="flex items-center text-sm">
-                                        <i class="fas fa-map-marker-alt w-5 text-gray-400"></i>
-                                        <?= htmlspecialchars($resident['sitio']) ?>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <div class="flex gap-2">
-                                <button onclick="openResidentPasswordModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
-                                        class="btn-modern btn-modern-outline flex-1">
-                                    <i class="fas fa-key"></i>
-                                    Change Password
-                                </button>
+                                </div>
                                 
-                                <button onclick="switchToLinking(<?= $resident['id'] ?>)"
-                                        class="btn-modern btn-modern-primary flex-1">
-                                    <i class="fas fa-link"></i>
-                                    Link Record
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 384px; overflow-y: auto;">
+                                    <?php if (count($unlinkedPatients) > 0): ?>
+                                        <?php foreach ($unlinkedPatients as $patient): ?>
+                                            <div class="link-card patient" onclick="selectPatient(<?= $patient['id'] ?>, this)" data-patient-id="<?= $patient['id'] ?>" style="background: white; border-radius: 10px; padding: 1rem; cursor: pointer; transition: all 0.2s; display: flex; gap: 0.75rem;">
+                                                <div style="width: 40px; height: 40px; border-radius: 8px; background: #d1fae5; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #10b981;">
+                                                    <i class="fas fa-file" style="font-weight: bold;"></i>
+                                                </div>
+                                                <div style="flex: 1; min-width: 0;">
+                                                    <div style="font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                                    <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
+                                                        <?php if ($patient['age']): ?>
+                                                            <span style="display: inline-block; background: white; padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.25rem; border: 1px solid #e5e7eb;">Age: <?= htmlspecialchars($patient['age']) ?></span>
+                                                        <?php endif; ?>
+                                                        <?php if ($patient['gender']): ?>
+                                                            <span style="display: inline-block; background: white; padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #e5e7eb;"><?= htmlspecialchars(strtoupper($patient['gender'][0])) ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <div style="text-align: center; padding: 2rem; color: #6b7280;">
+                                            <i class="fas fa-check-circle" style="font-size: 1.5rem; color: #10b981; margin-bottom: 0.5rem; display: block;"></i>
+                                            <p style="margin: 0;">All records are linked!</p>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected Items Panel -->
+                        <div id="selectedPanel" style="background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 50%, #dbeafe 100%); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 16px rgba(136, 85, 247, 0.2); display: none;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div style="width: 40px; height: 40px; background: #a855f7; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <h4 style="font-weight: 700; font-size: 1rem; color: #111827; margin: 0;">Ready to Link</h4>
+                                </div>
+                                <button onclick="clearSelection()" style="color: #6b7280; background: transparent; border: none; cursor: pointer; padding: 0.5rem; border-radius: 8px; transition: all 0.2s;">
+                                    <i class="fas fa-times"></i> Clear
+                                </button>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                                <div style="background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 600; color: #6b7280;">
+                                        <i class="fas fa-user" style="color: #2563eb;"></i>
+                                        <span>Resident:</span>
+                                    </div>
+                                    <div style="font-weight: 700; color: #111827; margin-bottom: 0.5rem;" id="selectedResidentName">No resident selected</div>
+                                    <div style="font-size: 0.875rem; color: #9ca3af;" id="selectedResidentDetails"></div>
+                                </div>
+
+                                <div style="background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 600; color: #6b7280;">
+                                        <i class="fas fa-file-medical" style="color: #10b981;"></i>
+                                        <span>Patient:</span>
+                                    </div>
+                                    <div style="font-weight: 700; color: #111827; margin-bottom: 0.5rem;" id="selectedPatientName">No patient selected</div>
+                                    <div style="font-size: 0.875rem; color: #9ca3af;" id="selectedPatientDetails"></div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 0.75rem; padding-top: 1rem; border-top: none; position: relative; margin-top: 0.5rem;">
+                                <button onclick="performLinking()" id="linkButton" disabled style="flex: 1; padding: 0.75rem 1.25rem; border-radius: 10px; font-weight: 700; font-size: 0.9375rem; background: #8b5cf6; color: white; border: none; cursor: not-allowed; transition: all 0.3s; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);" onmouseover="if(!this.disabled) { this.style.background='#7c3aed'; this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.4)'; this.style.transform='translateY(-2px)'; }" onmouseout="if(!this.disabled) { this.style.background='#8b5cf6'; this.style.boxShadow='0 2px 8px rgba(139, 92, 246, 0.2)'; this.style.transform='translateY(0)'; }" title="Select both a resident and patient to link">
+                                    <i class="fas fa-link"></i>Link Accounts
+                                </button>
+                                <button onclick="clearSelection()" style="flex: 1; padding: 0.75rem 1.25rem; border-radius: 10px; font-weight: 700; font-size: 0.9375rem; background: white; color: #6b7280; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.background='#f3f4f6'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)';" onmouseout="this.style.background='white'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)';">
+                                    <i class="fas fa-redo"></i>Reset
                                 </button>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- Linking Section -->
-        <div id="linkingSection" class="tab-section" style="display: none;">
-            <div class="modern-card p-8">
-                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                    <i class="fas fa-link text-purple-600"></i>
-                    Manual Account-Patient Linking
-                </h2>
-
-                <?php if (count($unlinkedResidents) === 0 && count($unlinkedPatients) === 0): ?>
-                    <div class="text-center py-12">
-                        <div class="w-20 h-20 mx-auto bg-green-50 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-check-circle text-3xl text-green-400"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-700 mb-2">All accounts are properly linked!</h3>
-                        <p class="text-gray-500">No manual linking needed at this time.</p>
-                    </div>
-                <?php else: ?>
-                    <!-- Linking Grid -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                        <!-- Unlinked Residents Column -->
-                        <div>
-                            <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                                <i class="fas fa-user-circle text-blue-500"></i>
-                                Unlinked Residents
-                                <span class="modern-badge badge-info"><?= count($unlinkedResidents) ?></span>
-                            </h3>
-                            
-                            <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                                <?php foreach ($unlinkedResidents as $resident): ?>
-                                    <div class="link-card" onclick="selectResident(<?= $resident['id'] ?>, this)" data-resident-id="<?= $resident['id'] ?>">
-                                        <div class="flex items-start gap-3">
-                                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                                <i class="fas fa-user text-blue-500"></i>
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="font-semibold"><?= htmlspecialchars($resident['full_name']) ?></div>
-                                                <div class="text-sm text-gray-500"><?= htmlspecialchars($resident['email']) ?></div>
-                                                <div class="flex gap-2 mt-2">
-                                                    <?php if ($resident['sitio']): ?>
-                                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                                                            <?= htmlspecialchars($resident['sitio']) ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <?php if ($resident['age'] > 0): ?>
-                                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                                                            Age: <?= htmlspecialchars($resident['age']) ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-
-                        <!-- Unlinked Patients Column -->
-                        <div>
-                            <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
-                                <i class="fas fa-file-medical text-green-500"></i>
-                                Unlinked Patient Records
-                                <span class="modern-badge badge-success"><?= count($unlinkedPatients) ?></span>
-                            </h3>
-                            
-                            <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                                <?php foreach ($unlinkedPatients as $patient): ?>
-                                    <div class="link-card patient" onclick="selectPatient(<?= $patient['id'] ?>, this)" data-patient-id="<?= $patient['id'] ?>">
-                                        <div class="flex items-start gap-3">
-                                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                                                <i class="fas fa-file-medical text-green-500"></i>
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="font-semibold"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                                <div class="flex gap-2 mt-2">
-                                                    <?php if ($patient['age']): ?>
-                                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                                                            Age: <?= htmlspecialchars($patient['age']) ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <?php if ($patient['gender']): ?>
-                                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                                                            <?= htmlspecialchars($patient['gender']) ?>
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Selected Items Panel -->
-                    <div id="selectedPanel" class="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-6 border-2 border-blue-200" style="display: none;">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-semibold flex items-center gap-2">
-                                <i class="fas fa-handshake text-blue-600"></i>
-                                Ready to Link
-                            </h4>
-                            <button onclick="clearSelection()" class="text-sm text-gray-600 hover:text-gray-800">
-                                <i class="fas fa-times mr-1"></i> Clear
-                            </button>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div class="bg-white rounded-xl p-4 border-2 border-blue-200">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <i class="fas fa-user text-blue-500"></i>
-                                    <span class="font-medium" id="selectedResidentName">No resident selected</span>
-                                </div>
-                                <div class="text-sm text-gray-500" id="selectedResidentDetails"></div>
-                            </div>
-
-                            <div class="bg-white rounded-xl p-4 border-2 border-green-200">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <i class="fas fa-file-medical text-green-500"></i>
-                                    <span class="font-medium" id="selectedPatientName">No patient selected</span>
-                                </div>
-                                <div class="text-sm text-gray-500" id="selectedPatientDetails"></div>
-                            </div>
-                        </div>
-
-                        <button onclick="performLinking()" id="linkButton" disabled
-                                class="btn-modern btn-modern-primary w-full md:w-auto px-8">
-                            <i class="fas fa-link mr-2"></i>
-                            Link Accounts
-                        </button>
-                    </div>
-
-                    <input type="hidden" id="selectedResidentId" value="0">
-                    <input type="hidden" id="selectedPatientId" value="0">
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </main>
@@ -2801,28 +2619,76 @@ try {
                 document.getElementById('linkingSection').style.display = 'none';
             }
             
-            // Remove active class from all tabs
-            document.querySelectorAll('.modern-tab').forEach(t => t.classList.remove('active'));
+            // Reset all tabs to inactive state
+            const allTabs = document.querySelectorAll('.modern-tab.active');
+            allTabs.forEach(t => {
+                t.classList.remove('active');
+                t.style.background = 'white';
+                t.style.color = '#6b7280';
+                t.style.border = '1.5px solid #e5e7eb';
+                t.style.boxShadow = 'none';
+            });
             
             // Show selected section and activate tab
             if (tab === 'staff') {
                 document.getElementById('staffSection').style.display = 'block';
-                document.getElementById('staffTab').classList.add('active');
+                const staffTab = document.getElementById('staffTab');
+                staffTab.classList.add('active');
+                staffTab.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+                staffTab.style.color = 'white';
+                staffTab.style.border = 'none';
+                staffTab.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.3)';
             } else if (tab === 'resident') {
                 document.getElementById('residentSection').style.display = 'block';
-                document.getElementById('residentTab').classList.add('active');
+                const residentTab = document.getElementById('residentTab');
+                residentTab.classList.add('active');
+                residentTab.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+                residentTab.style.color = 'white';
+                residentTab.style.border = 'none';
+                residentTab.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.3)';
             } else if (tab === 'linking') {
                 document.getElementById('linkingSection').style.display = 'block';
-                document.getElementById('linkingTab').classList.add('active');
+                const linkingTab = document.getElementById('linkingTab');
+                linkingTab.classList.add('active');
+                linkingTab.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+                linkingTab.style.color = 'white';
+                linkingTab.style.border = 'none';
+                linkingTab.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.3)';
             }
         }
 
         function showStaffTab(tab) {
+            // Show/hide grids
             document.getElementById('activeStaffGrid').style.display = tab === 'active' ? 'grid' : 'none';
             document.getElementById('inactiveStaffGrid').style.display = tab === 'inactive' ? 'grid' : 'none';
             
-            document.getElementById('activeStaffTab').classList.toggle('active', tab === 'active');
-            document.getElementById('inactiveStaffTab').classList.toggle('active', tab === 'inactive');
+            // Update active tab styling
+            const activeBtn = document.getElementById('activeStaffTab');
+            const inactiveBtn = document.getElementById('inactiveStaffTab');
+            
+            if (tab === 'active') {
+                activeBtn.classList.add('active');
+                activeBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                activeBtn.style.color = 'white';
+                activeBtn.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                
+                inactiveBtn.classList.remove('active');
+                inactiveBtn.style.background = 'white';
+                inactiveBtn.style.color = '#6b7280';
+                inactiveBtn.style.border = '1.5px solid #e5e7eb';
+                inactiveBtn.style.boxShadow = 'none';
+            } else {
+                inactiveBtn.classList.add('active');
+                inactiveBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                inactiveBtn.style.color = 'white';
+                inactiveBtn.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+                
+                activeBtn.classList.remove('active');
+                activeBtn.style.background = 'white';
+                activeBtn.style.color = '#6b7280';
+                activeBtn.style.border = '1.5px solid #e5e7eb';
+                activeBtn.style.boxShadow = 'none';
+            }
         }
 
         function showResidentTab(tab) {
@@ -2835,8 +2701,23 @@ try {
             const selectedGrid = document.getElementById(tab + 'ResidentGrid');
             if (selectedGrid) selectedGrid.style.display = 'grid';
             
-            document.querySelectorAll('#residentSection .modern-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(tab + 'ResidentTab').classList.add('active');
+            // Update tab styling
+            document.querySelectorAll('#residentSection .modern-tab').forEach(t => {
+                t.classList.remove('active');
+                t.style.background = 'white';
+                t.style.color = '#6b7280';
+                t.style.border = '1.5px solid #e5e7eb';
+                t.style.boxShadow = 'none';
+            });
+            
+            const activeTab = document.getElementById(tab + 'ResidentTab');
+            if (activeTab) {
+                activeTab.classList.add('active');
+                activeTab.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                activeTab.style.color = 'white';
+                activeTab.style.border = 'none';
+                activeTab.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
+            }
         }
 
         // ===== AGE CALCULATION =====
@@ -2866,24 +2747,23 @@ try {
         function selectResident(id, element) {
             // Remove selection from all resident cards
             document.querySelectorAll('.link-card').forEach(card => {
-                card.classList.remove('selected');
+                card.style.background = 'white';
+                card.style.borderLeft = 'none';
             });
             
             // Add selection to clicked card
-            element.classList.add('selected');
+            element.style.background = '#dbeafe';
+            element.style.borderLeft = '4px solid #2563eb';
             selectedResidentId = id;
-            document.getElementById('selectedResidentId').value = id;
             
             // Update selected panel
-            const name = element.querySelector('.font-semibold').textContent;
-            const email = element.querySelector('.text-sm.text-gray-500')?.textContent || '';
-            const details = element.querySelector('.flex.gap-2')?.innerHTML || '';
+            const nameDiv = element.querySelector('div[style*="flex: 1"] > div:first-child');
+            const emailDiv = element.querySelector('div[style*="flex: 1"] > div:last-child');
+            const name = nameDiv ? nameDiv.textContent : 'Unknown';
+            const email = emailDiv ? emailDiv.textContent : '';
             
             document.getElementById('selectedResidentName').textContent = name;
-            document.getElementById('selectedResidentDetails').innerHTML = `
-                <div>${email}</div>
-                <div class="flex gap-2 mt-2">${details}</div>
-            `;
+            document.getElementById('selectedResidentDetails').textContent = email;
             
             document.getElementById('selectedPanel').style.display = 'block';
             updateLinkButton();
@@ -2892,22 +2772,21 @@ try {
         function selectPatient(id, element) {
             // Remove selection from all patient cards
             document.querySelectorAll('.link-card.patient').forEach(card => {
-                card.classList.remove('selected');
+                card.style.background = 'white';
+                card.style.borderLeft = 'none';
             });
             
             // Add selection to clicked card
-            element.classList.add('selected');
+            element.style.background = '#d1fae5';
+            element.style.borderLeft = '4px solid #10b981';
             selectedPatientId = id;
-            document.getElementById('selectedPatientId').value = id;
             
             // Update selected panel
-            const name = element.querySelector('.font-semibold').textContent;
-            const details = element.querySelector('.flex.gap-2')?.innerHTML || '';
+            const nameDiv = element.querySelector('div[style*="flex: 1"] > div:first-child');
+            const name = nameDiv ? nameDiv.textContent : 'Unknown';
             
             document.getElementById('selectedPatientName').textContent = name;
-            document.getElementById('selectedPatientDetails').innerHTML = `
-                <div class="flex gap-2 mt-2">${details}</div>
-            `;
+            document.getElementById('selectedPatientDetails').textContent = '';
             
             document.getElementById('selectedPanel').style.display = 'block';
             updateLinkButton();
@@ -2916,21 +2795,29 @@ try {
         function updateLinkButton() {
             const linkButton = document.getElementById('linkButton');
             if (linkButton) {
-                linkButton.disabled = !(selectedResidentId > 0 && selectedPatientId > 0);
+                if (selectedResidentId > 0 && selectedPatientId > 0) {
+                    linkButton.disabled = false;
+                    linkButton.style.opacity = '1';
+                    linkButton.style.cursor = 'pointer';
+                } else {
+                    linkButton.disabled = true;
+                    linkButton.style.opacity = '0.6';
+                    linkButton.style.cursor = 'not-allowed';
+                }
             }
         }
 
         function clearSelection() {
             selectedResidentId = 0;
             selectedPatientId = 0;
-            document.getElementById('selectedResidentId').value = '0';
-            document.getElementById('selectedPatientId').value = '0';
             
             document.querySelectorAll('.link-card').forEach(card => {
-                card.classList.remove('selected');
+                card.style.background = 'white';
+                card.style.borderLeft = 'none';
             });
             
             document.getElementById('selectedPanel').style.display = 'none';
+            updateLinkButton();
         }
 
         function performLinking() {

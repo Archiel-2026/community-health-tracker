@@ -43,6 +43,16 @@ unset($_SESSION['flash_error'], $_SESSION['flash_success']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['respond_to_announcement'])) {
     $announcementId = $_POST['announcement_id'];
     $status = $_POST['respond_to_announcement'];
+    $activeSubTab = $_POST['active_sub_tab'] ?? 'lab';
+    $activeMainTab = $_POST['active_main_tab'] ?? 'announcements';
+
+    if (!in_array($activeSubTab, ['lab', 'general'])) {
+        $activeSubTab = 'lab';
+    }
+
+    if (!in_array($activeMainTab, ['announcements', 'stats'])) {
+        $activeMainTab = 'announcements';
+    }
 
     // Validate status
     if (!in_array($status, ['accepted', 'dismissed'])) {
@@ -89,8 +99,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['respond_to_announceme
             $_SESSION['flash_error'] = 'Error recording response: ' . $e->getMessage();
         }
     }
-    // Redirect to avoid form resubmission and show flash message
-    header('Location: ' . $_SERVER['REQUEST_URI']);
+    // Redirect to avoid form resubmission and preserve selected announcement sub-tab
+    $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $requestQuery = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+    $queryParams = [];
+
+    if (!empty($requestQuery)) {
+        parse_str($requestQuery, $queryParams);
+    }
+
+    $queryParams['tab'] = $activeMainTab;
+    $queryParams['sub_tab'] = $activeSubTab;
+
+    $redirectUrl = $requestPath . '?' . http_build_query($queryParams);
+    header('Location: ' . $redirectUrl);
     exit();
 }
 
@@ -148,6 +170,11 @@ $basicAnnouncementsCount = count($basicAnnouncements);
 $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($a) {
     return empty($a['user_status']);
 }));
+
+$activeTab = $_GET['tab'] ?? 'announcements';
+if (!in_array($activeTab, ['announcements', 'stats'])) {
+    $activeTab = 'announcements';
+}
 ?>
 
 <!DOCTYPE html>
@@ -162,7 +189,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                 left: 0;
                 width: 100vw;
                 height: 100vh;
-                background: rgba(0, 0, 0, 0.25);
+                background: rgba(0, 0, 0, 0.52);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -178,71 +205,99 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             }
 
             .modal-success-box {
-                background: #fff;
+                background: #ececec;
                 color: #222;
-                padding: 2.2rem 2.5rem 1.5rem 2.5rem;
-                border-radius: 1rem;
-                box-shadow: 0 8px 32px rgba(16, 185, 129, 0.18);
+                padding: 52px 34px 34px;
+                border-radius: 20px;
                 text-align: center;
-                min-width: 340px;
-                max-width: 95vw;
+                width: min(560px, calc(100vw - 12px));
                 animation: modalFadeIn 0.5s cubic-bezier(.4, 0, .2, 1);
                 position: relative;
             }
 
+            .modal-success-box.dismissed {
+                padding: 54px 30px 30px;
+                border-radius: 14px;
+            }
+
             .modal-success-icon {
-                margin-bottom: 1.1rem;
+                margin-bottom: 26px;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 width: 100%;
+            }
+
+            .modal-success-icon.dismissed {
+                margin-bottom: 24px;
             }
 
             .modal-success-title {
-                color: #1992d4;
-                font-size: 1.35rem;
-                font-weight: 400;
-                margin-bottom: 0.5rem;
+                color: #0086c8;
+                font-size: 20px;
+                font-weight: 500;
+                line-height: 1.3;
+                margin-bottom: 10px;
+            }
+
+            .modal-success-title.dismissed {
+                color: #4f4f4f;
+                font-size: 20px;
+                font-weight: 500;
+                line-height: 1.28;
+                margin-bottom: 8px;
             }
 
             .modal-success-subtitle {
-                color: #888;
+                color: #8f8f8f;
                 font-weight: 400;
-                font-size: 1.10rem;
-                margin-bottom: 1.5rem;
+                font-size: 16px;
+                line-height: 1.35;
+                margin-bottom: 36px;
+            }
+
+            .modal-success-subtitle.dismissed {
+                color: #8f8f8f;
+                font-size: 16px;
+                line-height: 1.34;
+                margin-bottom: 34px;
             }
 
             .modal-success-btn {
-                display: flex;
+                display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 text-align: center;
-                width: 100%;
-                gap: 0.6em;
-                background: #1992d4;
+                width: auto;
+                background: #0086c8;
                 color: #fff;
                 border: none;
-                border-radius: 2em;
-                font-size: 1.1rem;
-                font-weight: 500;
-                padding: 0.7em 2.2em;
-                margin: 0 auto 0.2em auto;
+                border-radius: 9999px;
+                font-size: 18px;
+                font-weight: 600;
+                line-height: 1.2;
+                padding: 13px 36px;
+                margin: 0 auto;
                 cursor: pointer;
                 transition: background 0.2s;
-                box-shadow: 0 2px 8px rgba(25, 146, 212, 0.10);
+                box-shadow: none;
+                white-space: nowrap;
             }
 
             .modal-success-btn.dismissed {
-                background: #111;
+                background: #58585a;
                 color: #fff;
+                font-size: 18px;
+                font-weight: 600;
+                padding: 13px 36px;
             }
 
             .modal-success-btn.dismissed:hover {
-                background: #333;
+                background: #4a4a4c;
             }
 
             .modal-success-btn:not(.dismissed):hover {
-                background: #1273a6;
+                background: #0672a7;
             }
 
             @keyframes modalFadeIn {
@@ -264,10 +319,6 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                     setTimeout(function () {
                         overlay.classList.add('active');
                     }, 50);
-                    // Remove modal after 5s if not closed manually
-                    setTimeout(function () {
-                        if (overlay.classList.contains('active')) overlay.classList.remove('active');
-                    }, 5000);
                 }
             });
             function closeSuccessModal() {
@@ -277,43 +328,39 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
         </script>
     <?php endif; ?>
     <?php if (!empty($success)): ?>
+        <?php $isDismissed = strpos($success, 'Dismissed') !== false; ?>
         <div id="success-modal-overlay" class="modal-success-overlay">
-            <div class="modal-success-box">
-                <div class="modal-success-icon">
-                    <?php if (strpos($success, 'Dismissed') !== false): ?>
-                        <!-- Dismissed: Gray X icon -->
-                        <svg class="w-20 h-20" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M38.8266 23.8266L32.6508 30L38.8266 36.1734C39.0008 36.3476 39.139 36.5545 39.2332 36.7821C39.3275 37.0097 39.3761 37.2536 39.3761 37.5C39.3761 37.7464 39.3275 37.9903 39.2332 38.2179C39.139 38.4455 39.0008 38.6524 38.8266 38.8266C38.6524 39.0008 38.4456 39.139 38.2179 39.2332C37.9903 39.3275 37.7464 39.376 37.5 39.376C37.2536 39.376 37.0097 39.3275 36.7821 39.2332C36.5545 39.139 36.3477 39.0008 36.1734 38.8266L30 32.6508L23.8266 38.8266C23.6524 39.0008 23.4456 39.139 23.2179 39.2332C22.9903 39.3275 22.7464 39.376 22.5 39.376C22.2536 39.376 22.0097 39.3275 21.7821 39.2332C21.5545 39.139 21.3477 39.0008 21.1734 38.8266C20.9992 38.6524 20.8611 38.4455 20.7668 38.2179C20.6725 37.9903 20.624 37.7464 20.624 37.5C20.624 37.2536 20.6725 37.0097 20.7668 36.7821C20.8611 36.5545 20.9992 36.3476 21.1734 36.1734L27.3492 30L21.1734 23.8266C20.8216 23.4747 20.624 22.9976 20.624 22.5C20.624 22.0024 20.8216 21.5253 21.1734 21.1734C21.5253 20.8216 22.0025 20.624 22.5 20.624C22.9976 20.624 23.4747 20.8216 23.8266 21.1734L30 27.3492L36.1734 21.1734C36.3477 20.9992 36.5545 20.861 36.7821 20.7668C37.0097 20.6725 37.2536 20.624 37.5 20.624C37.7464 20.624 37.9903 20.6725 38.2179 20.7668C38.4456 20.861 38.6524 20.9992 38.8266 21.1734C39.0008 21.3476 39.139 21.5545 39.2332 21.7821C39.3275 22.0097 39.3761 22.2536 39.3761 22.5C39.3761 22.7464 39.3275 22.9903 39.2332 23.2179C39.139 23.4455 39.0008 23.6524 38.8266 23.8266ZM54.375 30C54.375 34.8209 52.9454 39.5336 50.2671 43.542C47.5887 47.5505 43.7819 50.6747 39.3279 52.5196C34.874 54.3644 29.973 54.8472 25.2447 53.9066C20.5164 52.9661 16.1732 50.6446 12.7643 47.2357C9.35538 43.8268 7.03388 39.4836 6.09337 34.7553C5.15286 30.027 5.63556 25.126 7.48045 20.6721C9.32533 16.2181 12.4495 12.4113 16.458 9.73293C20.4664 7.05457 25.1791 5.625 30 5.625C36.4626 5.63182 42.6585 8.20209 47.2282 12.7718C51.7979 17.3415 54.3682 23.5374 54.375 30ZM50.625 30C50.625 25.9208 49.4154 21.9331 47.1491 18.5414C44.8828 15.1496 41.6616 12.506 37.8929 10.945C34.1241 9.38393 29.9771 8.97548 25.9763 9.7713C21.9754 10.5671 18.3004 12.5315 15.4159 15.4159C12.5315 18.3004 10.5671 21.9754 9.77131 25.9763C8.97549 29.9771 9.38394 34.1241 10.945 37.8928C12.5061 41.6616 15.1496 44.8828 18.5414 47.1491C21.9331 49.4154 25.9208 50.625 30 50.625C35.4682 50.6188 40.7106 48.4438 44.5772 44.5772C48.4438 40.7106 50.6188 35.4682 50.625 30Z"
-                                fill="black" fill-opacity="0.5" />
+            <div class="modal-success-box<?php if ($isDismissed)
+                echo ' dismissed'; ?>">
+                <div class="modal-success-icon<?php if ($isDismissed)
+                    echo ' dismissed'; ?>">
+                    <?php if ($isDismissed): ?>
+                        <svg width="54" height="54" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M14 14L42 42" stroke="#595959" stroke-width="3.6" stroke-linecap="round" />
+                            <path d="M42 14L14 42" stroke="#595959" stroke-width="3.6" stroke-linecap="round" />
                         </svg>
                     <?php else: ?>
-                        <!-- Accepted: Blue check icon -->
-                        <svg class="h-20 w-20" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M52.9359 24.0984C52.0523 23.175 51.1383 22.2234 50.7938 21.3867C50.475 20.6203 50.4562 19.35 50.4375 18.1195C50.4023 15.832 50.3648 13.2398 48.5625 11.4375C46.7602 9.63516 44.168 9.59766 41.8805 9.5625C40.65 9.54375 39.3797 9.525 38.6133 9.20625C37.7789 8.86172 36.825 7.94766 35.9016 7.06406C34.2844 5.51016 32.4469 3.75 30 3.75C27.5531 3.75 25.718 5.51016 24.0984 7.06406C23.175 7.94766 22.2234 8.86172 21.3867 9.20625C20.625 9.525 19.35 9.54375 18.1195 9.5625C15.832 9.59766 13.2398 9.63516 11.4375 11.4375C9.63516 13.2398 9.60938 15.832 9.5625 18.1195C9.54375 19.35 9.525 20.6203 9.20625 21.3867C8.86172 22.2211 7.94766 23.175 7.06406 24.0984C5.51016 25.7156 3.75 27.5531 3.75 30C3.75 32.4469 5.51016 34.282 7.06406 35.9016C7.94766 36.825 8.86172 37.7766 9.20625 38.6133C9.525 39.3797 9.54375 40.65 9.5625 41.8805C9.59766 44.168 9.63516 46.7602 11.4375 48.5625C13.2398 50.3648 15.832 50.4023 18.1195 50.4375C19.35 50.4562 20.6203 50.475 21.3867 50.7938C22.2211 51.1383 23.175 52.0523 24.0984 52.9359C25.7156 54.4898 27.5531 56.25 30 56.25C32.4469 56.25 34.282 54.4898 35.9016 52.9359C36.825 52.0523 37.7766 51.1383 38.6133 50.7938C39.3797 50.475 40.65 50.4562 41.8805 50.4375C44.168 50.4023 46.7602 50.3648 48.5625 48.5625C50.3648 46.7602 50.4023 44.168 50.4375 41.8805C50.4562 40.65 50.475 39.3797 50.7938 38.6133C51.1383 37.7789 52.0523 36.825 52.9359 35.9016C54.4898 34.2844 56.25 32.4469 56.25 30C56.25 27.5531 54.4898 25.718 52.9359 24.0984ZM50.2289 33.307C49.1063 34.4789 47.9437 35.6906 47.3273 37.1789C46.7367 38.6086 46.7109 40.2422 46.6875 41.8242C46.6641 43.4648 46.6383 45.1828 45.9094 45.9094C45.1805 46.6359 43.4742 46.6641 41.8242 46.6875C40.2422 46.7109 38.6086 46.7367 37.1789 47.3273C35.6906 47.9437 34.4789 49.1063 33.307 50.2289C32.1352 51.3516 30.9375 52.5 30 52.5C29.0625 52.5 27.8555 51.3469 26.693 50.2289C25.5305 49.1109 24.3094 47.9437 22.8211 47.3273C21.3914 46.7367 19.7578 46.7109 18.1758 46.6875C16.5352 46.6641 14.8172 46.6383 14.0906 45.9094C13.3641 45.1805 13.3359 43.4742 13.3125 41.8242C13.2891 40.2422 13.2633 38.6086 12.6727 37.1789C12.0562 35.6906 10.8937 34.4789 9.77109 33.307C8.64844 32.1352 7.5 30.9375 7.5 30C7.5 29.0625 8.65312 27.8555 9.77109 26.693C10.8891 25.5305 12.0562 24.3094 12.6727 22.8211C13.2633 21.3914 13.2891 19.7578 13.3125 18.1758C13.3359 16.5352 13.3617 14.8172 14.0906 14.0906C14.8195 13.3641 16.5258 13.3359 18.1758 13.3125C19.7578 13.2891 21.3914 13.2633 22.8211 12.6727C24.3094 12.0562 25.5211 10.8937 26.693 9.77109C27.8648 8.64844 29.0625 7.5 30 7.5C30.9375 7.5 32.1445 8.65312 33.307 9.77109C34.4695 10.8891 35.6906 12.0562 37.1789 12.6727C38.6086 13.2633 40.2422 13.2891 41.8242 13.3125C43.4648 13.3359 45.1828 13.3617 45.9094 14.0906C46.6359 14.8195 46.6641 16.5258 46.6875 18.1758C46.7109 19.7578 46.7367 21.3914 47.3273 22.8211C47.9437 24.3094 49.1063 25.5211 50.2289 26.693C51.3516 27.8648 52.5 29.0625 52.5 30C52.5 30.9375 51.3469 32.1445 50.2289 33.307ZM40.7016 23.0484C40.8759 23.2226 41.0142 23.4294 41.1086 23.657C41.2029 23.8846 41.2515 24.1286 41.2515 24.375C41.2515 24.6214 41.2029 24.8654 41.1086 25.093C41.0142 25.3206 40.8759 25.5274 40.7016 25.7016L27.5766 38.8266C27.4024 39.0009 27.1956 39.1392 26.968 39.2336C26.7404 39.3279 26.4964 39.3765 26.25 39.3765C26.0036 39.3765 25.7596 39.3279 25.532 39.2336C25.3044 39.1392 25.0976 39.0009 24.9234 38.8266L19.2984 33.2016C18.9466 32.8497 18.749 32.3726 18.749 31.875C18.749 31.3774 18.9466 30.9003 19.2984 30.5484C19.6503 30.1966 20.1274 29.999 20.625 29.999C21.1226 29.999 21.5997 30.1966 21.9516 30.5484L26.25 34.8492L38.0484 23.0484C38.2226 22.8741 38.4294 22.7358 38.657 22.6415C38.8846 22.5471 39.1286 22.4985 39.375 22.4985C39.6214 22.4985 39.8654 22.5471 40.093 22.6415C40.3206 22.7358 40.5274 22.8741 40.7016 23.0484Z"
-                                fill="#0080B7" />
+                        <svg width="74" height="74" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle cx="48" cy="48" r="31" stroke="#0086C8" stroke-width="7" />
+                            <path d="M35 49.5L44 58L61.5 39.5" stroke="#0086C8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                     <?php endif; ?>
                 </div>
-                <div class="modal-success-title">
+                <div class="modal-success-title<?php if ($isDismissed)
+                    echo ' dismissed'; ?>">
                     <?= htmlspecialchars($success) ?>
                 </div>
-                <div class="modal-success-subtitle">
-                    <?php if (strpos($success, 'Dismissed') !== false): ?>
+                <div class="modal-success-subtitle<?php if ($isDismissed)
+                    echo ' dismissed'; ?>">
+                    <?php if ($isDismissed): ?>
                         Your announcement has been dismissed <br> and recorded successfully.
                     <?php else: ?>
                         Your announcement has been accepted and <br> recorded successfully.
                     <?php endif; ?>
                 </div>
-                <button class="modal-success-btn<?php if (strpos($success, 'Dismissed') !== false)
+                <button class="modal-success-btn<?php if ($isDismissed)
                     echo ' dismissed'; ?>" onclick="closeSuccessModal()">
-                    <svg class="h-8 w-8" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M18.4287 2.875L16.445 4.945L8.4525 12.9375L6.12375 10.695L4.05375 8.625L0 12.6787L2.07 14.7488L6.3825 19.0613L8.36625 21.1313L10.4363 19.0613L20.4988 8.99875L22.5688 6.92875L18.4287 2.875Z"
-                            fill="white" />
-                    </svg>
-                    Okay
+                    Got it!
                 </button>
             </div>
         </div>
@@ -936,6 +983,269 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             padding: 1rem 2rem;
         }
 
+        #viewModal {
+            background: rgba(0, 0, 0, 0.68);
+        }
+
+        #viewModal .modal {
+            background: #f3f3f3;
+            width: min(680px, calc(100vw - 24px));
+            max-width: 680px;
+            border-radius: 10px;
+            max-height: calc(100vh - 24px);
+            overflow: hidden;
+        }
+
+        #viewModal .modal-header {
+            margin: 0;
+            padding: 22px 28px 14px;
+            border-bottom: 1px solid #d8d8d8;
+            background: #f3f3f3;
+        }
+
+        #viewModal .modal-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #111111;
+            line-height: 1.1;
+        }
+
+        #viewModal .modal-close {
+            width: auto;
+            height: auto;
+            padding: 0;
+            border-radius: 0;
+            color: #161616;
+            font-weight: 300;
+            line-height: 1;
+        }
+
+        #viewModal .modal-close-icon {
+            width: 24px;
+            height: 24px;
+            display: block;
+        }
+
+        #viewModal .modal-close-icon line {
+            stroke: #161616;
+            stroke-width: 1.6;
+            stroke-linecap: round;
+        }
+
+        #viewModal .modal-close:hover,
+        #viewModal .modal-close:active {
+            background: transparent;
+            color: #161616;
+            transform: none;
+        }
+
+        #viewModal .modal-body {
+            padding: 12px 28px 26px;
+        }
+
+        .announcement-detail-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .announcement-detail-title {
+            color: #131313;
+            font-size: 24px;
+            font-weight: 500;
+            line-height: 1.15;
+            margin: 0;
+        }
+
+        .announcement-detail-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 1.18rem;
+            font-weight: 500;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .announcement-detail-pill.date {
+            background: #c9f5e5;
+            color: #11b684;
+        }
+
+        .announcement-detail-pill.expiry {
+            background: #cfe1f7;
+            color: #3a8ed8;
+            margin-top: 8px;
+        }
+
+        .announcement-detail-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .announcement-detail-posted {
+            color: #646464;
+            font-size: 1.15rem;
+            line-height: 1.2;
+            margin-bottom: 5px;
+        }
+
+        .announcement-detail-role {
+            display: inline-flex;
+            align-items: center;
+            background: #bcdcff;
+            color: #258ee9;
+            border-radius: 999px;
+            padding: 3px 12px;
+            font-size: 1.02rem;
+            font-weight: 500;
+            margin-left: 6px;
+        }
+
+        .announcement-detail-name {
+            color: #171717;
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+
+        .announcement-detail-message {
+            background: #f5f5f5;
+            border: 1px solid #dddddd;
+            border-radius: 8px;
+            min-height: 132px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 14px 16px;
+            color: #222222;
+            font-size: 1.18rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            margin-bottom: 18px;
+        }
+
+        .announcement-detail-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .announcement-detail-btn {
+            border: none;
+            border-radius: 4px;
+            height: 48px;
+            padding: 0 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: filter 0.2s ease;
+            line-height: 1;
+        }
+
+        .announcement-detail-btn:hover {
+            filter: brightness(0.95);
+        }
+
+        .announcement-detail-btn.accept {
+            background: #12b981;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .announcement-detail-btn.dismiss {
+            background: #8f8f93;
+            color: #ededed;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .announcement-detail-btn-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.92rem;
+            line-height: 1;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .announcement-response-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .announcement-response-badge.accepted {
+            background: linear-gradient(180deg, #d9f9ec 0%, #cef6e6 100%);
+            color: #10b981;
+            box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.12), 0 1px 2px rgba(16, 185, 129, 0.08);
+        }
+
+        .announcement-response-badge.dismissed {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .announcement-response-badge-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .announcement-response-badge.accepted .announcement-response-badge-icon {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+            color: #10b981;
+        }
+
+        .announcement-response-badge.dismissed .announcement-response-badge-icon {
+            background: #6b7280;
+            color: #ffffff;
+        }
+
+        .announcement-detail-btn-icon i {
+            line-height: 1;
+        }
+
+        .announcement-detail-btn.accept .announcement-detail-btn-icon {
+            background: transparent;
+            border: 3px solid rgba(255, 255, 255, 0.95);
+            color: #ffffff;
+        }
+
+        .announcement-detail-btn.dismiss .announcement-detail-btn-icon {
+            background: #f2f2f2;
+            border: 0;
+            color: #8f8f93;
+        }
+
         /* Empty State */
         .empty-state-icon {
             width: 80px;
@@ -1025,6 +1335,53 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
             .modal-body {
                 padding: 1.5rem;
             }
+
+            #viewModal .modal {
+                width: calc(100vw - 16px);
+                max-height: calc(100vh - 16px);
+            }
+
+            #viewModal .modal-header {
+                padding: 16px;
+            }
+
+            #viewModal .modal-body {
+                padding: 12px 16px 16px;
+            }
+
+            #viewModal .modal-title {
+                font-size: 1.2rem;
+            }
+
+            .announcement-detail-title {
+                font-size: 1.45rem;
+            }
+
+            .announcement-detail-pill {
+                font-size: 0.84rem;
+                padding: 7px 10px;
+            }
+
+            .announcement-detail-posted,
+            .announcement-detail-name {
+                font-size: 0.95rem;
+            }
+
+            .announcement-detail-title-row,
+            .announcement-detail-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .announcement-detail-message {
+                font-size: 0.95rem;
+                min-height: 110px;
+            }
+
+            .announcement-detail-btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         @media (min-width: 641px) and (max-width: 1023px) {
@@ -1096,7 +1453,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                     <span>All Announcements</span>
                 </button>
                 <button class="tab-header <?= $activeTab === 'stats' ? 'active' : '' ?>" data-tab="stats">
-                    <span>Response Stats</span>
+                    <span>Response Statistics</span>
                 </button>
             </div>
 
@@ -1220,7 +1577,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                         background: #fff;
                                         border-radius: 12px;
                                         border: 1px solid #e5e7eb;
-                                        padding: 1.5rem;
+                                        padding: 1rem;
                                         display: flex;
                                         flex-direction: column;
                                         gap: 0.3rem;
@@ -1389,7 +1746,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                                                     border-radius: 12px;
                                                     border: 1px solid #e5e7eb;
                                                     /* box-shadow removed */
-                                                    padding: 1.5rem;
+                                                    padding: 1rem;
                                                     display: flex;
                                                     flex-direction: column;
                                                     gap: 0.3rem;
@@ -1671,7 +2028,7 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
                             <!-- VIEW -->
                             <div class="announcement-actions">
                                 <button
-                                    onclick="openViewModal(<?= htmlspecialchars(json_encode($a, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>)"
+                                                            onclick="openViewModal(<?= htmlspecialchars(json_encode($a, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)) ?>, 'stats', false)"
                                     class="btn-primary" style="background: #2563eb;">
                                     View
                                 </button>
@@ -1704,11 +2061,14 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
 
     <!-- View Announcement Modal -->
     <div id="viewModal" class="modal-overlay">
-        <div class="modal">
+        <div class="modal announcement-detail-modal">
             <div class="modal-header">
                 <h2 class="modal-title">Announcement Details</h2>
                 <button class="modal-close" onclick="closeViewModal()" title="Close">
-                    <i class="fas fa-times"></i>
+                    <svg class="modal-close-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <line x1="5" y1="5" x2="19" y2="19"></line>
+                        <line x1="19" y1="5" x2="5" y2="19"></line>
+                    </svg>
                 </button>
             </div>
             <div class="modal-body">
@@ -1733,146 +2093,94 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
     </div>
 
     <script>
-        // View Announcement Modal
-        function openViewModal(announcement) {
-            const modal = document.getElementById('viewModal');
-            const modalContent = document.getElementById('modalContent');
+        function escapeHtml(value) {
+            const stringValue = value == null ? '' : String(value);
+            return stringValue
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
-            const postDate = new Date(announcement.post_date).toLocaleDateString('en-US', {
+        function formatAnnouncementDate(value) {
+            if (!value) {
+                return '';
+            }
+
+            const parsedDate = new Date(value);
+            if (Number.isNaN(parsedDate.getTime())) {
+                return '';
+            }
+
+            return parsedDate.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric',
+                day: 'numeric'
             });
+        }
+
+        // View Announcement Modal
+        function openViewModal(announcement, activeMainTab = 'announcements', showActions = true) {
+            const modal = document.getElementById('viewModal');
+            const modalContent = document.getElementById('modalContent');
+            const activeSubTab = announcement.announcement_type === 'lab_result' ? 'lab' : 'general';
+            const selectedMainTab = activeMainTab === 'stats' ? 'stats' : 'announcements';
+            const responseStatus = announcement.user_status === 'accepted'
+                ? 'Accepted'
+                : (announcement.user_status === 'dismissed' ? 'Dismissed' : 'No response yet');
+            const safeTitle = escapeHtml(announcement.title || 'Announcement');
+            const safeMessage = escapeHtml(announcement.message || 'No message provided');
+            const safeRole = escapeHtml(announcement.staff_position || 'Staff');
+            const safeName = escapeHtml(announcement.staff_name || 'Unknown');
+            const postDate = formatAnnouncementDate(announcement.post_date) || 'N/A';
+            const expiryDate = formatAnnouncementDate(announcement.expiry_date) || 'N/A';
 
             let content = `
-                <div style="space-y: 1.5rem;">
-                    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; text-align: center;">
-                        <h3 style="font-size: 1.3rem; font-weight: 500; color: #111827; ">${announcement.title || 'Announcement'}</h3>
-                        <div style="background: rgba(16, 185, 129, 0.3); padding: 0.5rem 0.7rem; border-radius: 0.5rem; display: flex; gap: 1rem; font-size: 1.2rem;">
-                            <span style="color: #10B981;">Date Posted: ${postDate}</span>
-                        </div>
+                <div class="announcement-detail-title-row">
+                    <h3 class="announcement-detail-title">${safeTitle}</h3>
+                    <div class="announcement-detail-pill date">Date Posted : ${escapeHtml(postDate)}</div>
+                </div>
+
+                <div class="announcement-detail-meta">
+                    <div>
+                        <div class="announcement-detail-posted">Posted By : <span class="announcement-detail-role">${safeRole}</span></div>
+                        <div class="announcement-detail-name">${safeName}</div>
                     </div>
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; text-align: left;">
-                        <div>
-                            <span style="font-weight: 300; color: #374151;">Posted by:</span>
-                            <span style="
-                                display: inline-block;
-                                background: #cce6ff;
-                                color: #3390e6;
-                                border-radius: 999px;
-                                padding: 0.15em 1em;
-                                font-weight: 500;
-                                font-size: 1em;
-                                margin-left: 0.5em;
-                                margin-bottom: 0.2em;">
-                                ${announcement.staff_position ? announcement.staff_position : 'Staff'}
-                            </span><br>
-                            <span style="color: #0f172a; font-size: 1.2em; font-weight: 500;">${announcement.staff_name ? announcement.staff_name : 'Unknown'}</span>
-                        </div>
-
-                        <div>
-                            ${announcement.expiry_date ? `
-                                <div style="background: #DBEAFE; padding: 0.5rem 0.7rem; border-radius: 8px; margin-bottom: 1rem;">
-                                    <div style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.75rem;">
-                                        <p style="font-weight: 500; color: #3C96E1; margin: 0;">Expiration Date: ${new Date(announcement.expiry_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
+                    <div>
+                        <div class="announcement-detail-pill expiry">Expiration Date : ${escapeHtml(expiryDate)}</div>
                     </div>
+                </div>
 
-                    
+                <div class="announcement-detail-message">${safeMessage}</div>
+            `;
 
-                    ${announcement.image_path ? `
-                        <div style="margin-bottom: 1rem;">
-                            <img src="${announcement.image_path}" 
-                                 alt="Announcement Image" 
-                                 style="width: 100%; height: auto; max-height: 300px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; cursor: pointer;"
-                                 onclick="openImageModal('${announcement.image_path}')">
-                        </div>
-                    ` : ''}
-
-                    <div style="background: #f9fafb; padding: 1.5rem 1.5rem; border-radius: 8px; border: 1px solid #e5e7eb; line-height: 1.6; color: #000000; font-size: 1rem">
-                        ${announcement.message || 'No message provided'}
-                    </div>
-                    `;
-
-            if (announcement.user_status === 'accepted') {
+            if (showActions) {
                 content += `
-                    <div style="
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 0.5rem;
-                        padding: 0.5rem 1rem;
-                        background: #D1FAE5;
-                        border-radius: 9999px;
-                        margin-top: 1rem;
-                    ">
-                        <svg class="w-8 h-8" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14.2456 8.06695C14.3066 8.1279 14.355 8.20028 14.388 8.27994C14.421 8.35961 14.438 8.44501 14.438 8.53125C14.438 8.61749 14.421 8.70289 14.388 8.78255C14.355 8.86222 14.3066 8.9346 14.2456 8.99555L9.6518 13.5893C9.59085 13.6503 9.51848 13.6987 9.43881 13.7317C9.35914 13.7648 9.27374 13.7818 9.1875 13.7818C9.10126 13.7818 9.01587 13.7648 8.9362 13.7317C8.85653 13.6987 8.78415 13.6503 8.72321 13.5893L6.75446 11.6205C6.63132 11.4974 6.56214 11.3304 6.56214 11.1562C6.56214 10.9821 6.63132 10.8151 6.75446 10.692C6.8776 10.5688 7.04461 10.4996 7.21875 10.4996C7.3929 10.4996 7.55991 10.5688 7.68305 10.692L9.1875 12.1972L13.317 8.06695C13.3779 8.00594 13.4503 7.95753 13.5299 7.92451C13.6096 7.89148 13.695 7.87448 13.7813 7.87448C13.8675 7.87448 13.9529 7.89148 14.0326 7.92451C14.1122 7.95753 14.1846 8.00594 14.2456 8.06695ZM19.0313 10.5C19.0313 12.1873 18.5309 13.8368 17.5935 15.2397C16.6561 16.6427 15.3237 17.7361 13.7648 18.3818C12.2059 19.0276 10.4905 19.1965 8.83564 18.8673C7.18074 18.5381 5.66062 17.7256 4.4675 16.5325C3.27438 15.3394 2.46186 13.8193 2.13268 12.1644C1.8035 10.5095 1.97245 8.79411 2.61816 7.23523C3.26387 5.67635 4.35734 4.34395 5.76029 3.40652C7.16325 2.4691 8.81268 1.96875 10.5 1.96875C12.7619 1.97114 14.9305 2.87073 16.5299 4.47013C18.1293 6.06954 19.0289 8.2381 19.0313 10.5ZM17.7188 10.5C17.7188 9.07227 17.2954 7.67659 16.5022 6.48948C15.709 5.30236 14.5816 4.37711 13.2625 3.83074C11.9434 3.28437 10.492 3.14142 9.09169 3.41996C7.69139 3.69849 6.40514 4.38601 5.39558 5.39557C4.38602 6.40513 3.6985 7.69139 3.41996 9.09169C3.14142 10.492 3.28438 11.9434 3.83075 13.2625C4.37712 14.5815 5.30236 15.709 6.48948 16.5022C7.6766 17.2954 9.07227 17.7187 10.5 17.7187C12.4139 17.7166 14.2487 16.9553 15.602 15.602C16.9553 14.2487 17.7166 12.4139 17.7188 10.5Z" fill="#10B981"/>
-                        </svg>
-
-                        <span style="
-                            font-weight: 500;
-                            color: #10B981;
-                            line-height: 1;
-                        ">
-                            Accepted
-                        </span>
-                    </div>`;
-
-            } else if (announcement.user_status === 'dismissed') {
-                content += `
-                    <div style="
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 0.5rem;
-                        padding: 0.5rem 1rem;
-                        background: #F3F4F6;
-                        border-radius: 9999px;
-                        margin-top: 1rem;
-                    ">
-                        <svg class="w-8 h-8" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M10.5 1.75C15.3326 1.75 19.25 5.66738 19.25 10.5C19.25 15.3326 15.3326 19.25 10.5 19.25C5.66738 19.25 1.75 15.3326 1.75 10.5C1.75 5.66738 5.66738 1.75 10.5 1.75ZM13.5887 7.41125L13.5153 7.34738C13.4038 7.26496 13.269 7.21997 13.1304 7.21887C12.9917 7.21777 12.8563 7.26061 12.7435 7.34125L12.6613 7.41125L10.5 9.57163L8.33875 7.41037L8.26525 7.34738C8.15375 7.26496 8.01902 7.21997 7.88037 7.21887C7.74172 7.21777 7.60629 7.26061 7.4935 7.34125L7.41125 7.41125L7.34738 7.48475C7.26496 7.59625 7.21997 7.73098 7.21887 7.86963C7.21777 8.00828 7.26061 8.14371 7.34125 8.2565L7.41125 8.33875L9.57163 10.5L7.41037 12.6613L7.34738 12.7347C7.26496 12.8462 7.21997 12.981 7.21887 13.1196C7.21777 13.2583 7.26061 13.3937 7.34125 13.5065L7.41125 13.5887L7.48475 13.6526C7.59625 13.735 7.73098 13.78 7.86963 13.7811C8.00828 13.7822 8.14371 13.7394 8.2565 13.6587L8.33875 13.5887L10.5 11.4284L12.6613 13.5896L12.7347 13.6526C12.8462 13.735 12.981 13.78 13.1196 13.7811C13.2583 13.7822 13.3937 13.7394 13.5065 13.6587L13.5887 13.5887L13.6526 13.5153C13.735 13.4038 13.78 13.269 13.7811 13.1304C13.7822 12.9917 13.7394 12.8563 13.6587 12.7435L13.5887 12.6613L11.4284 10.5L13.5896 8.33875L13.6526 8.26525C13.735 8.15375 13.78 8.01902 13.7811 7.88037C13.7822 7.74172 13.7394 7.60629 13.6587 7.4935L13.5887 7.41125Z" fill="black" fill-opacity="0.5"/>
-                        </svg>
-                        <span style="
-                            font-weight: 500;
-                            color: #374151;
-                            line-height: 1;
-                        ">
-                            Dismissed
-                        </span>
-                    </div>`;
-            } else {
-                content += `
-                    <form method="POST" action="">
-                        <div class="flex flex-col md:flex-row mt-4 gap-4">
-                            <div>
-                                <input type="hidden" name="announcement_id" value="${announcement.id}">
-                                <button type="submit" name="respond_to_announcement" value="accepted" 
-                                        class="btn-response btn-accept">
-                                    <svg class="h-8 w-8" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M14.2456 8.06695C14.3066 8.1279 14.355 8.20028 14.388 8.27994C14.421 8.35961 14.438 8.44501 14.438 8.53125C14.438 8.61749 14.421 8.70289 14.388 8.78255C14.355 8.86222 14.3066 8.9346 14.2456 8.99555L9.6518 13.5893C9.59085 13.6503 9.51848 13.6987 9.43881 13.7317C9.35914 13.7648 9.27374 13.7818 9.1875 13.7818C9.10126 13.7818 9.01587 13.7648 8.9362 13.7317C8.85653 13.6987 8.78415 13.6503 8.72321 13.5893L6.75446 11.6205C6.63132 11.4974 6.56214 11.3304 6.56214 11.1562C6.56214 10.9821 6.63132 10.8151 6.75446 10.692C6.8776 10.5688 7.04461 10.4996 7.21875 10.4996C7.3929 10.4996 7.55991 10.5688 7.68305 10.692L9.1875 12.1972L13.317 8.06695C13.3779 8.00594 13.4503 7.95753 13.5299 7.92451C13.6096 7.89148 13.695 7.87448 13.7813 7.87448C13.8675 7.87448 13.9529 7.89148 14.0326 7.92451C14.1122 7.95753 14.1846 8.00594 14.2456 8.06695ZM19.0313 10.5C19.0313 12.1873 18.5309 13.8368 17.5935 15.2397C16.6561 16.6427 15.3237 17.7361 13.7648 18.3818C12.2059 19.0276 10.4905 19.1965 8.83564 18.8673C7.18074 18.5381 5.66062 17.7256 4.4675 16.5325C3.27438 15.3394 2.46186 13.8193 2.13268 12.1644C1.8035 10.5095 1.97245 8.79411 2.61816 7.23523C3.26387 5.67635 4.35734 4.34395 5.76029 3.40652C7.16325 2.4691 8.81268 1.96875 10.5 1.96875C12.7619 1.97114 14.9305 2.87073 16.5299 4.47013C18.1293 6.06954 19.0289 8.2381 19.0313 10.5ZM17.7188 10.5C17.7188 9.07227 17.2954 7.67659 16.5022 6.48948C15.709 5.30236 14.5816 4.37711 13.2625 3.83074C11.9434 3.28437 10.492 3.14142 9.09169 3.41996C7.69139 3.69849 6.40514 4.38601 5.39558 5.39557C4.38602 6.40513 3.6985 7.69139 3.41996 9.09169C3.14142 10.492 3.28438 11.9434 3.83075 13.2625C4.37712 14.5815 5.30236 15.709 6.48948 16.5022C7.6766 17.2954 9.07227 17.7187 10.5 17.7187C12.4139 17.7166 14.2487 16.9553 15.602 15.602C16.9553 14.2487 17.7166 12.4139 17.7188 10.5Z" fill="white"/>
-                                    </svg>
-                                    Accept
-                                </button>
-                            </div>
-                            <div>
-                                <input type="hidden" name="announcement_id" value="${announcement.id}">
-                                <button type="submit" name="respond_to_announcement" value="dismissed" 
-                                        class="btn-response btn-dismiss">
-                                    <svg class="h-8 w-8" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M10.5 1.75C15.3326 1.75 19.25 5.66738 19.25 10.5C19.25 15.3326 15.3326 19.25 10.5 19.25C5.66738 19.25 1.75 15.3326 1.75 10.5C1.75 5.66738 5.66738 1.75 10.5 1.75ZM13.5887 7.41125L13.5153 7.34738C13.4038 7.26496 13.269 7.21997 13.1304 7.21887C12.9917 7.21777 12.8563 7.26061 12.7435 7.34125L12.6613 7.41125L10.5 9.57163L8.33875 7.41037L8.26525 7.34738C8.15375 7.26496 8.01902 7.21997 7.88037 7.21887C7.74172 7.21777 7.60629 7.26061 7.4935 7.34125L7.41125 7.41125L7.34738 7.48475C7.26496 7.59625 7.21997 7.73098 7.21887 7.86963C7.21777 8.00828 7.26061 8.14371 7.34125 8.2565L7.41125 8.33875L9.57163 10.5L7.41037 12.6613L7.34738 12.7347C7.26496 12.8462 7.21997 12.981 7.21887 13.1196C7.21777 13.2583 7.26061 13.3937 7.34125 13.5065L7.41125 13.5887L7.48475 13.6526C7.59625 13.735 7.73098 13.78 7.86963 13.7811C8.00828 13.7822 8.14371 13.7394 8.2565 13.6587L8.33875 13.5887L10.5 11.4284L12.6613 13.5896L12.7347 13.6526C12.8462 13.735 12.981 13.78 13.1196 13.7811C13.2583 13.7822 13.3937 13.7394 13.5065 13.6587L13.5887 13.5887L13.6526 13.5153C13.735 13.4038 13.78 13.269 13.7811 13.1304C13.7822 12.9917 13.7394 12.8563 13.6587 12.7435L13.5887 12.6613L11.4284 10.5L13.5896 8.33875L13.6526 8.26525C13.735 8.15375 13.78 8.01902 13.7811 7.88037C13.7822 7.74172 13.7394 7.60629 13.6587 7.4935L13.5887 7.41125Z" fill="white" fill-opacity="0.5"/>
-                                    </svg>
-                                    Dismiss
-                                </button>
-                            </div>
-                        </div>
+                    <form method="POST" action="" class="announcement-detail-actions">
+                        <input type="hidden" name="announcement_id" value="${announcement.id}">
+                        <input type="hidden" name="active_sub_tab" value="${activeSubTab}">
+                        <input type="hidden" name="active_main_tab" value="${selectedMainTab}">
+                        <button type="submit" name="respond_to_announcement" value="accepted" class="announcement-detail-btn accept">
+                            <span class="announcement-detail-btn-icon"><i class="fas fa-check" aria-hidden="true"></i></span>
+                            Accept
+                        </button>
+                        <button type="submit" name="respond_to_announcement" value="dismissed" class="announcement-detail-btn dismiss">
+                            <span class="announcement-detail-btn-icon"><i class="fas fa-times" aria-hidden="true"></i></span>
+                            Dismiss
+                        </button>
                     </form>`;
+            } else {
+                const badgeClass = announcement.user_status === 'accepted' ? 'accepted' : 'dismissed';
+                const iconClass = announcement.user_status === 'accepted' ? 'fa-check' : 'fa-times';
+                content += `
+                    <div class="announcement-detail-actions" style="justify-content:flex-start;">
+                        <span class="announcement-response-badge ${badgeClass}">
+                            <span class="announcement-response-badge-icon" aria-hidden="true"><i class="fas ${iconClass}"></i></span>
+                            ${escapeHtml(responseStatus)}
+                        </span>
+                    </div>`;
             }
-            content += `</div>`;
 
             modalContent.innerHTML = content;
             modal.classList.add('active');
@@ -1989,18 +2297,44 @@ $basicAnnouncementsPending = count(array_filter($basicAnnouncements, function ($
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Always default to All Announcements tab on load
+            // Set active top tab based on query parameter
             setTimeout(function () {
+                var params = new URLSearchParams(window.location.search);
+                var requestedTab = params.get('tab') === 'stats' ? 'stats' : 'announcements';
+
                 document.querySelectorAll('.tab-header[data-tab]').forEach(btn => {
                     btn.classList.remove('active');
                 });
-                var allTabBtn = document.querySelector('.tab-header[data-tab="announcements"]');
-                if (allTabBtn) allTabBtn.classList.add('active');
+
+                var activeTabBtn = document.querySelector('.tab-header[data-tab="' + requestedTab + '"]');
+                if (activeTabBtn) activeTabBtn.classList.add('active');
+
                 document.querySelectorAll('.tab-content').forEach(content => {
                     content.classList.remove('active');
                 });
-                var allTabContent = document.getElementById('announcements');
-                if (allTabContent) allTabContent.classList.add('active');
+
+                var activeTabContent = document.getElementById(requestedTab);
+                if (activeTabContent) activeTabContent.classList.add('active');
+
+                var requestedSubTab = params.get('sub_tab');
+                var btnLab = document.getElementById('btnLabResults');
+                var btnGen = document.getElementById('btnGeneralAnnouncements');
+                var labSection = document.getElementById('labResultsSection');
+                var genSection = document.getElementById('generalAnnouncementsSection');
+
+                if (requestedTab === 'announcements' && btnLab && btnGen && labSection && genSection) {
+                    if (requestedSubTab === 'general') {
+                        btnGen.classList.add('active');
+                        btnLab.classList.remove('active');
+                        genSection.style.display = '';
+                        labSection.style.display = 'none';
+                    } else {
+                        btnLab.classList.add('active');
+                        btnGen.classList.remove('active');
+                        labSection.style.display = '';
+                        genSection.style.display = 'none';
+                    }
+                }
             }, 100);
 
             // Tab switching functionality

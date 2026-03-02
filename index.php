@@ -158,7 +158,7 @@ try {
         .service-icon {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+           
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -634,38 +634,29 @@ try {
         <section id="home" class="hero-gradient text-white hero-section">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
                 <div class="text-center mb-12">
-                    <div class="inline-flex items-center space-x-2 bg-white/10 px-4 py-2 rounded-full mb-6">
-                        <i class="fas fa-medkit"></i>
-                        <span class="text-sm font-medium">B0. Luz Health Center</span>
-                    </div>
                     
-                    <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-6">
-                        Barangay Luz Health Monitoring System
+                    
+                    <h1 class="text-4xl md:text-5xl font-md leading-tight mb-6 mt-14">
+                        BO. Luz Health Monitoring and Tracking System
                     </h1>
                     
                     <p class="text-xl text-white mb-8 max-w-3xl mx-auto">
                         Your trusted partner in community healthcare. Providing accessible, quality healthcare services for every resident of Barangay Luz, Cebu City.
                     </p>
                     
-                    <div class="flex flex-wrap justify-center gap-4 mb-12">
-                        <button onclick="openLearnMoreModal()" 
-                                class="btn-primary bg-white text-[#3a7bd5] hover:bg-blue-50">
-                            <i class="fas fa-info-circle mr-2"></i>Learn More
-                        </button>
-                       
-                    </div>
+                    
                 </div>
                 
                 <!-- Quick Info Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 grid-spacing">
                     <!-- Location Card - matches provided image -->
-                    <div class="rounded-2xl overflow-hidden shadow bg-white border border-blue-100 flex flex-col" style="min-width:280px;">
+                    <div class="rounded-2xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:280px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
                                     <i class="fas fa-map-marker-alt text-white text-lg"></i>
                                 </span>
-                                <span class="text-white font-semibold text-lg">Location</span>
+                                <span class="text-white font-md text-lg">Location</span>
                             </div>
                             <span class="bg-green-100 text-green-700 text-xs font-semibold px-4 py-1 rounded-full">Active</span>
                         </div>
@@ -679,19 +670,18 @@ try {
                             </div>
                             <div class="flex gap-2 mt-auto">
                                 <a href="https://www.google.com/maps/place/Barangay+Luz,+Cebu+City" target="_blank" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Location</a>
-                                <a href="https://goo.gl/maps/2w8kQw8kQw8kQw8k8" target="_blank" class="bg-white hover:bg-blue-50 text-[#2563eb] text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">Google Map</a>
                             </div>
                         </div>
                     </div>
                     <!-- Redesigned Availability Card -->
                     <!-- Availability Card - matches provided image -->
-                    <div class="rounded-2xl overflow-hidden shadow bg-white border border-blue-100 flex flex-col" style="min-width:240px;">
+                    <div class="rounded-2xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:240px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
                                     <i class="fas fa-clock text-white text-lg"></i>
                                 </span>
-                                <span class="text-white font-semibold text-lg">Availability</span>
+                                <span class="text-white font-md text-lg">Availability</span>
                             </div>
                             <span class="bg-green-100 text-green-700 text-xs font-semibold px-4 py-1 rounded-full">Open Now</span>
                         </div>
@@ -708,19 +698,19 @@ try {
                             <div class="text-gray-700 text-sm mb-4">Maria Santos</div>
                             <div class="flex gap-2 mt-auto">
                                 <a href="#" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Details</a>
-                                <a href="#" class="bg-white hover:bg-blue-50 text-[#2563eb] text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">More Information</a>
+                               
                             </div>
                         </div>
                     </div>
                     <!-- Redesigned Contact Card -->
                     <!-- Contact Card - matches provided image -->
-                    <div class="rounded-2xl overflow-hidden shadow bg-white border border-blue-100 flex flex-col" style="min-width:240px;">
+                    <div class="rounded-2xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:240px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/30">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
                                     <i class="fas fa-paper-plane text-white text-lg"></i>
                                 </span>
-                                <span class="text-white font-semibold text-lg">Contact</span>
+                                <span class="text-white font-md text-lg">Contact</span>
                             </div>
                             <span class="bg-green-100 text-green-700 text-xs font-semibold px-4 py-1 rounded-full">Active</span>
                         </div>
@@ -769,7 +759,7 @@ try {
         <section id="services" class="bg-white section-padding-lg">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
-                    <h2 class="section-title01 text-3xl md:text-4xl font-bold text-gray-900">
+                    <h2 class="section-title01 text-3xl md:text-4xl font-md text-gray-900">
                         Our Health Services
                     </h2>
                     <p class="text-gray-600 max-w-3xl mx-auto text-lg text-lead">
@@ -781,10 +771,14 @@ try {
                     <!-- Service 1 -->
                     <div class="info-card text-center card-hover">
                         <div class="service-icon mx-auto">
-                            <i class="fas fa-stethoscope text-2xl warm-blue-text"></i>
+                            <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M16.4991 7.5C17.0924 7.5 17.6724 7.32405 18.1658 6.99441C18.6591 6.66477 19.0436 6.19623 19.2707 5.64805C19.4978 5.09987 19.5572 4.49667 19.4414 3.91473C19.3257 3.33279 19.0399 2.79824 18.6204 2.37868C18.2008 1.95912 17.6663 1.6734 17.0843 1.55765C16.5024 1.44189 15.8992 1.5013 15.351 1.72836C14.8028 1.95543 14.3343 2.33994 14.0046 2.83329C13.675 3.32664 13.4991 3.90666 13.4991 4.5C13.4991 5.29565 13.8151 6.05871 14.3777 6.62132C14.9403 7.18393 15.7034 7.5 16.4991 7.5ZM16.4991 3C16.7957 3 17.0857 3.08797 17.3324 3.2528C17.5791 3.41762 17.7713 3.65189 17.8849 3.92598C17.9984 4.20007 18.0281 4.50167 17.9702 4.79264C17.9124 5.08361 17.7695 5.35088 17.5597 5.56066C17.3499 5.77044 17.0827 5.9133 16.7917 5.97118C16.5007 6.02906 16.1991 5.99935 15.925 5.88582C15.6509 5.77229 15.4167 5.58003 15.2518 5.33336C15.087 5.08668 14.9991 4.79667 14.9991 4.5C14.9991 4.10218 15.1571 3.72065 15.4384 3.43934C15.7197 3.15804 16.1012 3 16.4991 3ZM15.7491 15.75C15.7491 16.9367 15.3972 18.0967 14.7379 19.0834C14.0786 20.0701 13.1415 20.8392 12.0452 21.2933C10.9488 21.7474 9.7424 21.8662 8.57851 21.6347C7.41462 21.4032 6.34553 20.8318 5.50641 19.9926C4.6673 19.1535 4.09585 18.0844 3.86434 16.9205C3.63283 15.7567 3.75165 14.5503 4.20577 13.4539C4.6599 12.3575 5.42894 11.4205 6.41563 10.7612C7.40233 10.1019 8.56236 9.75 9.74905 9.75C9.94796 9.75 10.1387 9.82902 10.2794 9.96967C10.42 10.1103 10.4991 10.3011 10.4991 10.5C10.4991 10.6989 10.42 10.8897 10.2794 11.0303C10.1387 11.171 9.94796 11.25 9.74905 11.25C8.85904 11.25 7.98901 11.5139 7.24899 12.0084C6.50896 12.5029 5.93219 13.2057 5.59159 14.0279C5.251 14.8502 5.16188 15.755 5.33552 16.6279C5.50915 17.5008 5.93774 18.3026 6.56707 18.932C7.19641 19.5613 7.99823 19.9899 8.87115 20.1635C9.74406 20.3372 10.6489 20.2481 11.4711 19.9075C12.2934 19.5669 12.9962 18.9901 13.4907 18.2501C13.9851 17.51 14.2491 16.64 14.2491 15.75C14.2491 15.5511 14.3281 15.3603 14.4687 15.2197C14.6094 15.079 14.8001 15 14.9991 15C15.198 15 15.3887 15.079 15.5294 15.2197C15.67 15.3603 15.7491 15.5511 15.7491 15.75ZM19.3294 12.2747C19.3996 12.3606 19.4499 12.4609 19.4766 12.5686C19.5034 12.6762 19.5059 12.7884 19.4841 12.8972L17.9841 20.3972C17.95 20.5671 17.8582 20.72 17.7242 20.8299C17.5903 20.9398 17.4223 20.9999 17.2491 21C17.1993 21.0001 17.1497 20.995 17.1009 20.985C16.906 20.9459 16.7347 20.831 16.6245 20.6656C16.5142 20.5001 16.4742 20.2977 16.5131 20.1028L17.8341 13.5H11.9991C11.8673 13.5002 11.7378 13.4657 11.6237 13.3999C11.5095 13.3342 11.4147 13.2395 11.3487 13.1255C11.2827 13.0114 11.248 12.882 11.2479 12.7503C11.2479 12.6185 11.2826 12.4891 11.3484 12.375L13.2291 9.10313C11.9215 8.42015 10.4418 8.13746 8.97457 8.29035C7.50735 8.44324 6.11768 9.02494 4.97905 9.96281C4.90471 10.0338 4.81655 10.0888 4.72006 10.1244C4.62357 10.1599 4.52081 10.1752 4.41815 10.1693C4.3155 10.1635 4.21514 10.1365 4.12333 10.0903C4.03151 10.044 3.95019 9.9793 3.88442 9.90027C3.81866 9.82123 3.76984 9.72951 3.74102 9.63081C3.71219 9.53211 3.70396 9.42854 3.71685 9.32653C3.72974 9.22452 3.76347 9.12624 3.81594 9.03782C3.86841 8.94939 3.9385 8.8727 4.02186 8.8125C5.49984 7.59288 7.32852 6.87682 9.24168 6.76857C11.1548 6.66031 13.0526 7.16552 14.6587 8.21063C14.8194 8.31524 14.9338 8.47739 14.9786 8.66377C15.0235 8.85015 14.9952 9.04662 14.8997 9.21281L13.2947 12H18.7491C18.8601 12 18.9697 12.0246 19.0701 12.0721C19.1704 12.1196 19.259 12.1888 19.3294 12.2747Z" fill="#3879D3"/>
+</svg>
+
+
                         </div>
-                        <h4 class="text-xl font-bold text-gray-900 mb-3">Primary Care Consultation</h4>
-                        <p class="text-gray-600 text-lead">
+                        <h4 class="text-xl font-sm text-gray-900 mb-3">Primary Care Consultation</h4>
+                        <p class="text-gray-200 text-lead">
                             Comprehensive medical check-ups, diagnosis, and treatment for common illnesses.
                         </p>
                     </div>
@@ -792,10 +786,13 @@ try {
                     <!-- Service 2 -->
                     <div class="info-card text-center card-hover">
                         <div class="service-icon mx-auto">
-                            <i class="fas fa-syringe text-2xl warm-blue-text"></i>
+                            <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M22.281 6.21979L17.781 1.71979C17.7114 1.65011 17.6286 1.59483 17.5376 1.55712C17.4465 1.51941 17.349 1.5 17.2504 1.5C17.1519 1.5 17.0543 1.51941 16.9632 1.55712C16.8722 1.59483 16.7895 1.65011 16.7198 1.71979C16.6501 1.78947 16.5948 1.8722 16.5571 1.96324C16.5194 2.05429 16.5 2.15187 16.5 2.25042C16.5 2.34896 16.5194 2.44654 16.5571 2.53759C16.5948 2.62863 16.6501 2.71136 16.7198 2.78104L18.4401 4.50042L15.7504 7.1901L12.531 3.96979C12.3903 3.82906 12.1994 3.75 12.0004 3.75C11.8014 3.75 11.6105 3.82906 11.4698 3.96979C11.3291 4.11052 11.25 4.30139 11.25 4.50042C11.25 4.69944 11.3291 4.89031 11.4698 5.03104L12.0651 5.62542L4.1901 13.5004C4.05021 13.6392 3.9393 13.8044 3.86382 13.9864C3.78833 14.1685 3.74979 14.3637 3.75042 14.5607V19.1901L1.71979 21.2198C1.65011 21.2895 1.59483 21.3722 1.55712 21.4632C1.51941 21.5543 1.5 21.6519 1.5 21.7504C1.5 21.849 1.51941 21.9465 1.55712 22.0376C1.59483 22.1286 1.65011 22.2114 1.71979 22.281C1.86052 22.4218 2.05139 22.5008 2.25042 22.5008C2.34896 22.5008 2.44654 22.4814 2.53759 22.4437C2.62863 22.406 2.71136 22.3507 2.78104 22.281L4.81073 20.2504H9.4401C9.63716 20.251 9.83237 20.2125 10.0144 20.137C10.1964 20.0615 10.3616 19.9506 10.5004 19.8107L18.3754 11.9357L18.9698 12.531C19.0395 12.6007 19.1222 12.656 19.2132 12.6937C19.3043 12.7314 19.4019 12.7508 19.5004 12.7508C19.599 12.7508 19.6965 12.7314 19.7876 12.6937C19.8786 12.656 19.9614 12.6007 20.031 12.531C20.1007 12.4614 20.156 12.3786 20.1937 12.2876C20.2314 12.1965 20.2508 12.099 20.2508 12.0004C20.2508 11.9019 20.2314 11.8043 20.1937 11.7132C20.156 11.6222 20.1007 11.5395 20.031 11.4698L16.8107 8.25042L19.5004 5.56073L21.2198 7.28104C21.3605 7.42177 21.5514 7.50083 21.7504 7.50083C21.9494 7.50083 22.1403 7.42177 22.281 7.28104C22.4218 7.14031 22.5008 6.94944 22.5008 6.75042C22.5008 6.55139 22.4218 6.36052 22.281 6.21979ZM9.4401 18.7504H5.25042V14.5607L6.93792 12.8732L8.84479 14.781C8.91447 14.8507 8.9972 14.906 9.08824 14.9437C9.17929 14.9814 9.27687 15.0008 9.37542 15.0008C9.47396 15.0008 9.57154 14.9814 9.66259 14.9437C9.75363 14.906 9.83636 14.8507 9.90604 14.781C9.97573 14.7114 10.031 14.6286 10.0687 14.5376C10.1064 14.4465 10.1258 14.349 10.1258 14.2504C10.1258 14.1519 10.1064 14.0543 10.0687 13.9632C10.031 13.8722 9.97573 13.7895 9.90604 13.7198L7.99823 11.8129L9.18792 10.6232L11.0948 12.531C11.2355 12.6718 11.4264 12.7508 11.6254 12.7508C11.8244 12.7508 12.0153 12.6718 12.156 12.531C12.2968 12.3903 12.3758 12.1994 12.3758 12.0004C12.3758 11.8014 12.2968 11.6105 12.156 11.4698L10.2482 9.56292L13.1254 6.68573L17.3151 10.8754L9.4401 18.7504Z" fill="#3879D3"/>
+</svg>
+
                         </div>
-                        <h4 class="text-xl font-bold text-gray-900 mb-3">Immunization Program</h4>
-                        <p class="text-gray-600 text-lead">
+                        <h4 class="text-xl font-sm text-gray-900 mb-3">Immunization Program</h4>
+                        <p class="text-gray-200 text-lead">
                             Complete vaccination schedule for children, adults, and senior citizens.
                         </p>
                     </div>
@@ -803,46 +800,18 @@ try {
                     <!-- Service 3 -->
                     <div class="info-card text-center card-hover">
                         <div class="service-icon mx-auto">
-                            <i class="fas fa-user-injured text-2xl warm-blue-text"></i>
+                            <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20.625 15C20.625 15.2225 20.559 15.44 20.4354 15.625C20.3118 15.81 20.1361 15.9542 19.9305 16.0394C19.725 16.1245 19.4988 16.1468 19.2805 16.1034C19.0623 16.06 18.8618 15.9528 18.7045 15.7955C18.5472 15.6382 18.44 15.4377 18.3966 15.2195C18.3532 15.0012 18.3755 14.775 18.4606 14.5695C18.5458 14.3639 18.69 14.1882 18.875 14.0646C19.06 13.941 19.2775 13.875 19.5 13.875C19.7984 13.875 20.0845 13.9935 20.2955 14.2045C20.5065 14.4155 20.625 14.7016 20.625 15ZM20.1984 18.6834C20.0337 19.7455 19.4949 20.7137 18.6793 21.4135C17.8636 22.1133 16.8247 22.4986 15.75 22.5H13.5C12.3069 22.4988 11.163 22.0243 10.3194 21.1806C9.47575 20.337 9.00124 19.1931 9 18V14.2022C7.55018 14.0195 6.21686 13.3141 5.25025 12.2182C4.28364 11.1223 3.75018 9.71128 3.75 8.25V3.75C3.75 3.55109 3.82902 3.36032 3.96967 3.21967C4.11032 3.07902 4.30109 3 4.5 3H6.75C6.94891 3 7.13968 3.07902 7.28033 3.21967C7.42098 3.36032 7.5 3.55109 7.5 3.75C7.5 3.94891 7.42098 4.13968 7.28033 4.28033C7.13968 4.42098 6.94891 4.5 6.75 4.5H5.25V8.25C5.24995 8.84603 5.3683 9.43614 5.59819 9.98605C5.82808 10.536 6.16492 11.0347 6.58916 11.4534C7.0134 11.872 7.51658 12.2022 8.06949 12.4248C8.6224 12.6474 9.21402 12.7579 9.81 12.75C12.2578 12.7181 14.25 10.6641 14.25 8.17219V4.5H12.75C12.5511 4.5 12.3603 4.42098 12.2197 4.28033C12.079 4.13968 12 3.94891 12 3.75C12 3.55109 12.079 3.36032 12.2197 3.21967C12.3603 3.07902 12.5511 3 12.75 3H15C15.1989 3 15.3897 3.07902 15.5303 3.21967C15.671 3.36032 15.75 3.55109 15.75 3.75V8.17219C15.75 11.2509 13.4503 13.8244 10.5 14.2012V18C10.5 18.7956 10.8161 19.5587 11.3787 20.1213C11.9413 20.6839 12.7044 21 13.5 21H15.75C16.4313 20.9989 17.0919 20.7663 17.6237 20.3405C18.1555 19.9147 18.5269 19.3208 18.6769 18.6562C17.7711 18.4528 16.973 17.9206 16.437 17.1626C15.9009 16.4046 15.6651 15.4748 15.7752 14.553C15.8852 13.6312 16.3332 12.7829 17.0326 12.1724C17.7319 11.5619 18.6329 11.2325 19.5611 11.2479C20.4893 11.2634 21.3788 11.6226 22.0575 12.256C22.7362 12.8895 23.1557 13.7521 23.235 14.6771C23.3143 15.602 23.0477 16.5235 22.4868 17.2633C21.9259 18.003 21.1105 18.5083 20.1984 18.6816V18.6834ZM21.75 15C21.75 14.555 21.618 14.12 21.3708 13.75C21.1236 13.38 20.7722 13.0916 20.361 12.9213C19.9499 12.751 19.4975 12.7064 19.061 12.7932C18.6246 12.88 18.2237 13.0943 17.909 13.409C17.5943 13.7237 17.38 14.1246 17.2932 14.561C17.2064 14.9975 17.251 15.4499 17.4213 15.861C17.5916 16.2722 17.88 16.6236 18.25 16.8708C18.62 17.118 19.055 17.25 19.5 17.25C20.0967 17.25 20.669 17.0129 21.091 16.591C21.5129 16.169 21.75 15.5967 21.75 15Z" fill="#3879D3"/>
+</svg>
+
                         </div>
-                        <h4 class="text-xl font-bold text-gray-900 mb-3">Emergency Services</h4>
-                        <p class="text-gray-600 text-lead">
+                        <h4 class="text-xl font-sm text-gray-900 mb-3">Emergency Services</h4>
+                        <p class="text-gray-200 text-lead">
                             24/7 emergency medical services with basic life support.
                         </p>
                     </div>
                     
-                    <!-- Service 4 -->
-                    <div class="info-card text-center card-hover">
-                        <div class="service-icon mx-auto">
-                            <i class="fas fa-heartbeat text-2xl warm-blue-text"></i>
-                        </div>
-                        <h4 class="text-xl font-bold text-gray-900 mb-3">Maternal & Child Health</h4>
-                        <p class="text-gray-600 text-lead">
-                            Prenatal and postnatal care, family planning services.
-                        </p>
-                    </div>
                     
-                    <!-- Service 5 -->
-                    <div class="info-card text-center card-hover">
-                        <div class="service-icon mx-auto">
-                            <i class="fas fa-brain text-2xl warm-blue-text"></i>
-                        </div>
-                        <h4 class="text-xl font-bold text-gray-900 mb-3">Mental Health Services</h4>
-                        <p class="text-gray-600 text-lead">
-                            Counseling services and mental health awareness programs.
-                        </p>
-                    </div>
-                    
-                    <!-- Service 6 -->
-                    <div class="info-card text-center card-hover">
-                        <div class="service-icon mx-auto">
-                            <i class="fas fa-tablets text-2xl warm-blue-text"></i>
-                        </div>
-                        <h4 class="text-xl font-bold text-gray-900 mb-3">Pharmacy Services</h4>
-                        <p class="text-gray-600 text-lead">
-                            Basic medicines available at subsidized rates for residents.
-                        </p>
-                    </div>
                 </div>
             </div>
         </section>
@@ -851,21 +820,23 @@ try {
         <section id="announcementsSection" class="warm-blue-light-bg text-white section-padding">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
-                    <h2 class="section-title02 text-3xl md:text-4xl font-bold text-gray-900">
+                    <h2 class="section-title02 text-3xl md:text-4xl font-md text-white">
                         Latest Announcements
                     </h2>
-                    <p class="text-gray-600 max-w-3xl mx-auto text-lg">
+                    <p class="text-white max-w-3xl mx-auto text-lg">
                         Stay informed with important updates, health advisories, and community events
                     </p>
                 </div>
 
                 <?php if (empty($announcements)): ?>
                     <div class="bg-white rounded-2xl p-16 text-center border border-gray-200">
-                        <div class="mb-6">
-                            <i class="fas fa-bullhorn text-6xl text-gray-300"></i>
+                        <div class="mb-6 flex justify-center">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21.4256 8.1225L4.92 3.06C4.6966 2.99484 4.4611 2.98255 4.23213 3.02411C4.00316 3.06567 3.787 3.15993 3.60075 3.29944C3.41449 3.43895 3.26325 3.61988 3.15899 3.82792C3.05472 4.03597 3.00029 4.26542 3 4.49813V17.9981C3 18.396 3.15804 18.7775 3.43934 19.0588C3.72064 19.3401 4.10218 19.4981 4.5 19.4981C4.64344 19.4982 4.78614 19.4777 4.92375 19.4372L12.75 17.0353V17.9981C12.75 18.396 12.908 18.7775 13.1893 19.0588C13.4706 19.3401 13.8522 19.4981 14.25 19.4981H17.25C17.6478 19.4981 18.0294 19.3401 18.3107 19.0588C18.592 18.7775 18.75 18.396 18.75 17.9981V15.195L21.4256 14.3747C21.7353 14.2816 22.0069 14.0916 22.2003 13.8325C22.3937 13.5734 22.4988 13.259 22.5 12.9356V9.56063C22.4986 9.23745 22.3934 8.92326 22.2 8.66435C22.0066 8.40544 21.7351 8.2155 21.4256 8.1225ZM12.75 15.4669L4.5 17.9981V4.49813L12.75 7.02938V15.4669ZM17.25 17.9981H14.25V16.575L17.25 15.6544V17.9981ZM21 12.9356H20.9897L14.25 15.0056V7.49063L20.9897 9.55313H21V12.9281V12.9356Z" fill="#d1d5db"/>
+                            </svg>
                         </div>
-                        <h3 class="text-2xl font-semibold text-gray-700 mb-3">No Announcements Yet</h3>
-                        <p class="text-gray-500 max-w-md mx-auto text-lg">
+                        <h3 class="text-2xl font-md text-gray-300 mb-3">No Announcements Yet</h3>
+                        <p class="text-gray-300 max-w-md mx-auto text-sm">
                             Check back soon for important health updates and community announcements.
                         </p>
                     </div>
@@ -931,7 +902,7 @@ try {
         <section id="about" class="bg-white section-padding">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
-                    <h2 class="section-title text-3xl md:text-4xl font-bold text-gray-900">
+                    <h2 class="section-title text-3xl md:text-4xl font-md text-gray-900">
                         What Our Community Says
                     </h2>
                     <p class="text-gray-600 max-w-3xl mx-auto text-lg text-lead">
@@ -943,8 +914,11 @@ try {
                     <!-- Testimonial 1 -->
                     <div class="info-card card-hover">
                         <div class="flex items-center mb-4">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                                <i class="fas fa-user-md text-blue-600"></i>
+                            <div class="w-12 h-12 rounded-full  flex items-center justify-center mr-4">
+                                <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M19.5 3.75H4.5C4.10218 3.75 3.72064 3.90804 3.43934 4.18934C3.15804 4.47064 3 4.85218 3 5.25V10.5C3 15.4425 5.3925 18.4378 7.39969 20.0803C9.56156 21.8484 11.7122 22.4494 11.8059 22.4738C11.9348 22.5088 12.0708 22.5088 12.1997 22.4738C12.2934 22.4494 14.4413 21.8484 16.6059 20.0803C18.6075 18.4378 21 15.4425 21 10.5V5.25C21 4.85218 20.842 4.47064 20.5607 4.18934C20.2794 3.90804 19.8978 3.75 19.5 3.75ZM19.5 10.5C19.5 13.9753 18.2194 16.7962 15.6937 18.8831C14.5943 19.7885 13.344 20.493 12 20.9644C10.6736 20.5012 9.4387 19.8092 8.35125 18.9197C5.79563 16.8291 4.5 13.9969 4.5 10.5V5.25H19.5V10.5Z" fill="#3879D3"/>
+</svg>
+
                             </div>
                             <div>
                                 <h4 class="text-lg font-bold text-gray-900">Dr. Maria Santos</h4>
@@ -959,8 +933,10 @@ try {
                     <!-- Testimonial 2 -->
                     <div class="info-card card-hover">
                         <div class="flex items-center mb-4">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                                <i class="fas fa-user-tie text-blue-600"></i>
+                            <div class="w-12 h-12 rounded-full  flex items-center justify-center mr-4">
+                                <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M19.5 3.75H4.5C4.10218 3.75 3.72064 3.90804 3.43934 4.18934C3.15804 4.47064 3 4.85218 3 5.25V10.5C3 15.4425 5.3925 18.4378 7.39969 20.0803C9.56156 21.8484 11.7122 22.4494 11.8059 22.4738C11.9348 22.5088 12.0708 22.5088 12.1997 22.4738C12.2934 22.4494 14.4413 21.8484 16.6059 20.0803C18.6075 18.4378 21 15.4425 21 10.5V5.25C21 4.85218 20.842 4.47064 20.5607 4.18934C20.2794 3.90804 19.8978 3.75 19.5 3.75ZM19.5 10.5C19.5 13.9753 18.2194 16.7962 15.6937 18.8831C14.5943 19.7885 13.344 20.493 12 20.9644C10.6736 20.5012 9.4387 19.8092 8.35125 18.9197C5.79563 16.8291 4.5 13.9969 4.5 10.5V5.25H19.5V10.5Z" fill="#3879D3"/>
+</svg>
                             </div>
                             <div>
                                 <h4 class="text-lg font-bold text-gray-900">Capt. Juan Dela Cruz</h4>
@@ -975,8 +951,10 @@ try {
                     <!-- Testimonial 3 -->
                     <div class="info-card card-hover">
                         <div class="flex items-center mb-4">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                                <i class="fas fa-user-nurse text-blue-600"></i>
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center mr-4">
+                                <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M19.5 3.75H4.5C4.10218 3.75 3.72064 3.90804 3.43934 4.18934C3.15804 4.47064 3 4.85218 3 5.25V10.5C3 15.4425 5.3925 18.4378 7.39969 20.0803C9.56156 21.8484 11.7122 22.4494 11.8059 22.4738C11.9348 22.5088 12.0708 22.5088 12.1997 22.4738C12.2934 22.4494 14.4413 21.8484 16.6059 20.0803C18.6075 18.4378 21 15.4425 21 10.5V5.25C21 4.85218 20.842 4.47064 20.5607 4.18934C20.2794 3.90804 19.8978 3.75 19.5 3.75ZM19.5 10.5C19.5 13.9753 18.2194 16.7962 15.6937 18.8831C14.5943 19.7885 13.344 20.493 12 20.9644C10.6736 20.5012 9.4387 19.8092 8.35125 18.9197C5.79563 16.8291 4.5 13.9969 4.5 10.5V5.25H19.5V10.5Z" fill="#3879D3"/>
+</svg>
                             </div>
                             <div>
                                 <h4 class="text-lg font-bold text-gray-900">Nurse Lisa Mendoza</h4>
@@ -999,8 +977,8 @@ try {
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
                     <!-- Column 1: About -->
                     <div>
-                        <h3 class="text-xl font-bold mb-6">Barangay Luz Health Center</h3>
-                        <p class="text-blue-100 mb-6 text-lead">
+                        <h3 class="text-xl font-md mb-6">Barangay Luz Health Center</h3>
+                        <p class="text-white mb-6 text-lead">
                             Providing quality healthcare services to Barangay Luz residents with compassion and excellence.
                         </p>
                         <div class="flex space-x-4">

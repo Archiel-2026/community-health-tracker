@@ -57,6 +57,8 @@ try {
                 failed_login_attempts INT DEFAULT 0,
                 last_failed_login DATETIME DEFAULT NULL,
                 account_locked_until DATETIME DEFAULT NULL,
+                password_reset_token VARCHAR(255) DEFAULT NULL,
+                password_reset_token_expires DATETIME DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
                 verified_at TIMESTAMP NULL DEFAULT NULL,
@@ -213,6 +215,17 @@ try {
         $stmt = $pdo->query("SHOW COLUMNS FROM existing_info_patients LIKE 'medical_history'");
         if ($stmt->rowCount() == 0) {
             $pdo->exec("ALTER TABLE existing_info_patients ADD COLUMN medical_history TEXT DEFAULT NULL");
+        }
+
+        // Check and add password reset token columns to sitio1_users if they don't exist
+        $stmt = $pdo->query("SHOW COLUMNS FROM sitio1_users LIKE 'password_reset_token'");
+        if ($stmt->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE sitio1_users ADD COLUMN password_reset_token VARCHAR(255) DEFAULT NULL");
+        }
+
+        $stmt = $pdo->query("SHOW COLUMNS FROM sitio1_users LIKE 'password_reset_token_expires'");
+        if ($stmt->rowCount() == 0) {
+            $pdo->exec("ALTER TABLE sitio1_users ADD COLUMN password_reset_token_expires DATETIME DEFAULT NULL");
         }
     } catch (PDOException $e) {
         // Columns might already exist, continue
