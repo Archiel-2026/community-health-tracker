@@ -381,9 +381,36 @@ try {
             }
         }
         
-        /* Gradient background for hero */
+        /* Image background for hero with blur effect */
         .hero-gradient {
             background: linear-gradient(135deg, #3a7bd5 0%, #2a6bc5 100%);
+        }
+
+        /* Services Section Background */
+        .services-bg {
+            position: relative;
+            background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), url('./asssets/images/brgyluz.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        /* Announcements Section Background */
+        .announcements-bg {
+            position: relative;
+            background: linear-gradient(rgba(74, 144, 226, 0.85), rgba(58, 123, 213, 0.85)), url('./asssets/images/brgyluz.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        /* About Section Background */
+        .about-bg {
+            position: relative;
+            background: linear-gradient(rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.93)), url('./asssets/images/brgyluz.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
         
         /* Smooth transitions */
@@ -528,22 +555,22 @@ try {
                         <!-- Desktop navigation - centered nav list -->
                         <div class="hidden md:flex items-center flex-1 justify-center">
                             <!-- Centered nav links -->
-                            <ul class="flex items-center space-x-8 font-semibold">
+                            <ul class="flex items-center space-x-8 font-md">
                                 <li>
                                     <a href="#home"
-                                        class="nav-link text-gray-700 hover:text-[#4A90E2] hover:underline underline-offset-4 transition-all duration-300 ease-in-out">Home</a>
+                                        class="nav-link text-gray-800 hover:text-[#4A90E2] transition-all duration-300 ease-in-out">Home</a>
                                 </li>
                                 <li>
                                     <a href="#about"
-                                        class="nav-link text-gray-700 hover:text-[#4A90E2] hover:underline underline-offset-4 transition-all duration-300 ease-in-out">About</a>
+                                        class="nav-link text-gray-800 hover:text-[#4A90E2] transition-all duration-300 ease-in-out">About</a>
                                 </li>
                                 <li>
                                     <a href="#services"
-                                        class="nav-link text-gray-700 hover:text-[#4A90E2] hover:underline underline-offset-4 transition-all duration-300 ease-in-out">Services</a>
+                                        class="nav-link text-gray-800 hover:text-[#4A90E2] transition-all duration-300 ease-in-out">Services</a>
                                 </li>
                                 <li>
-                                    <a href="#contact"
-                                        class="nav-link text-gray-700 hover:text-[#4A90E2] hover:underline underline-offset-4 transition-all duration-300 ease-in-out">Contact</a>
+                                    <a href="#footer"
+                                        class="nav-link text-gray-800 hover:text-[#4A90E2] transition-all duration-300 ease-in-out">Contact</a>
                                 </li>
                             </ul>
                         </div>
@@ -551,7 +578,7 @@ try {
                         <!-- Login button - positioned to the right -->
                         <div class="hidden md:flex items-center">
                             <a href="#" onclick="openLoginModal()"
-                                class="complete-btn bg-[#4A90E2] text-lg text-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg px-6 py-3">
+                                class="complete-btn bg-[#4A90E2] text-lg text-white flex items-center justify-center shadow-md hover:shadow-lg px-6 py-3">
                                 Resident Login
                             </a>
                         </div>
@@ -568,7 +595,7 @@ try {
                 <a href="#services" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">Services</a>
                 <a href="#contact" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">Contact</a>
                 <a href="#" onclick="openLoginModal(); toggleMobileMenu();"
-                    class="complete-btn bg-[#4A90E2] text-white px-5 py-3 rounded-full transition-all text-center mt-4 flex items-center justify-center gap-2 nav-link shadow-md hover:shadow-lg">
+                    class="complete-btn bg-[#4A90E2] text-white px-5 py-3 transition-all text-center mt-4 flex items-center justify-center gap-2 nav-link shadow-md hover:shadow-lg">
                     <i class="fas fa-sign-in-alt"></i>
                     Login
                 </a>
@@ -605,16 +632,17 @@ try {
                         class="w-14 h-14 bg-gradient-to-br from-[#3a7bd5] to-[#2a6bc5] rounded-full shadow-xl hover:shadow-2xl transform hover:scale-110 transition-all duration-300 flex items-center justify-center group relative border-3 border-white ring-3 ring-blue-300 ring-opacity-50 animate-float">
                         
                         <div class="relative">
-                            <i class="fa-solid fa-bullhorn text-xl text-white"></i>
+                            <svg width="35" height="35" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M37.4948 14.2183L8.61 5.35891C8.21905 5.24488 7.80693 5.22338 7.40623 5.2961C7.00554 5.36883 6.62726 5.53378 6.30131 5.77792C5.97537 6.02206 5.71069 6.33869 5.52823 6.70277C5.34576 7.06685 5.25051 7.46838 5.25 7.87563V31.5006C5.25 32.1968 5.52656 32.8645 6.01884 33.3568C6.51113 33.8491 7.17881 34.1256 7.875 34.1256C8.12601 34.1257 8.37575 34.0898 8.61656 34.019L22.3125 29.8157V31.5006C22.3125 32.1968 22.5891 32.8645 23.0813 33.3568C23.5736 33.8491 24.2413 34.1256 24.9375 34.1256H30.1875C30.8837 34.1256 31.5514 33.8491 32.0437 33.3568C32.5359 32.8645 32.8125 32.1968 32.8125 31.5006V26.5952L37.4948 25.1596C38.0368 24.9968 38.512 24.6641 38.8505 24.2107C39.1891 23.7573 39.3729 23.2071 39.375 22.6413V16.735C39.3726 16.1694 39.1885 15.6196 38.85 15.1665C38.5116 14.7134 38.0365 14.381 37.4948 14.2183ZM22.3125 27.0709L7.875 31.5006V7.87563L22.3125 12.3053V27.0709ZM30.1875 31.5006H24.9375V29.0102L30.1875 27.3991V31.5006ZM36.75 22.6413H36.732L24.9375 26.2638V13.1125L36.732 16.7219H36.75V22.6281V22.6413Z" fill="white"/>
+</svg>
+
                             
-                            <?php if ($hasHighPriority): ?>
-                                <i class="fas fa-exclamation text-xs text-red-300 absolute -top-1 -right-1 bg-white rounded-full p-0.5"></i>
-                            <?php endif; ?>
+                            
                         </div>
                         
-                        <div class="absolute left-full ml-3 top-1/2 transform -translate-y-1/2 hidden group-hover:block min-w-max z-50">
+                        <div class="absolute right-full ml-3 top-1/2 transform -translate-y-1/2 hidden group-hover:block min-w-max z-50">
                             <div class="bg-gray-900 text-white text-sm rounded-lg py-2 px-3 shadow-xl">
-                                <span class="font-semibold">View Announcements</span>
+                                <span class="font-md">View Announcements</span>
                                 <div class="text-xs text-gray-300 mt-1"><?= count($announcements) ?> new update(s)</div>
                             </div>
                             <div class="absolute right-full top-1/2 transform -translate-y-1/2">
@@ -636,11 +664,11 @@ try {
                 <div class="text-center mb-12">
                     
                     
-                    <h1 class="text-4xl md:text-5xl font-md leading-tight mb-6 mt-14">
+                    <h1 class="text-4xl md:text-4xl font-semibold font-md leading-tight mb-6 mt-14">
                         BO. Luz Health Monitoring and Tracking System
                     </h1>
                     
-                    <p class="text-xl text-white mb-8 max-w-3xl mx-auto">
+                    <p class="text-xl text-white mb-24 max-w-3xl mx-auto">
                         Your trusted partner in community healthcare. Providing accessible, quality healthcare services for every resident of Barangay Luz, Cebu City.
                     </p>
                     
@@ -650,7 +678,7 @@ try {
                 <!-- Quick Info Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 grid-spacing">
                     <!-- Location Card - matches provided image -->
-                    <div class="rounded-2xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:280px;">
+                    <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:280px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
@@ -665,17 +693,17 @@ try {
                             <div class="text-gray-400 text-sm mb-3">Near Luz Elementary School</div>
                             <div class="rounded-lg overflow-hidden border border-gray-200 mb-4" style="min-height:110px;max-height:160px;">
                                 <iframe
-                                    src="https://www.google.com/maps?q=Barangay+Luz,+Cebu+City&output=embed"
+                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3925.2468265508577!2d123.88340332346936!3d10.315665574621914!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a9993d16c5932d%3A0x9ad8b888ffcd2aa7!2sBarangay%20Luz%2C%20Cebu%20City!5e0!3m2!1sen!2sph!4v1677840000000"
                                     width="100%" height="120" style="border:0; min-width:100%; min-height:110px; max-height:160px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                             </div>
                             <div class="flex gap-2 mt-auto">
-                                <a href="https://www.google.com/maps/place/Barangay+Luz,+Cebu+City" target="_blank" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Location</a>
+                                <a href="https://www.google.com/maps/place/Luz+Barangay+Hall/@10.3234786,123.9051946,17z/data=!4m14!1m7!3m6!1s0x33a9993d16c5932d:0x9ad8b888ffcd2aa7!2sLuz+Barangay+Hall!8m2!3d10.3237636!4d123.9061173!16s%2Fg%2F11bw7r3h1m!3m5!1s0x33a9993d16c5932d:0x9ad8b888ffcd2aa7!8m2!3d10.3237636!4d123.9061173!16s%2Fg%2F11bw7r3h1m?entry=ttu&g_ep=EgoyMDI2MDIyNS4wIKXMDSoASAFQAw%3D%3D" target="_blank" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Location</a>
                             </div>
                         </div>
                     </div>
                     <!-- Redesigned Availability Card -->
                     <!-- Availability Card - matches provided image -->
-                    <div class="rounded-2xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:240px;">
+                    <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:240px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
@@ -704,7 +732,7 @@ try {
                     </div>
                     <!-- Redesigned Contact Card -->
                     <!-- Contact Card - matches provided image -->
-                    <div class="rounded-2xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:240px;">
+                    <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:240px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
@@ -756,7 +784,7 @@ try {
         </section>
 
         <!-- SECTION 2: Health Services -->
-        <section id="services" class="bg-white section-padding-lg">
+        <section id="services" class="services-bg section-padding-lg">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
                     <h2 class="section-title01 text-3xl md:text-4xl font-md text-gray-900">
@@ -817,7 +845,7 @@ try {
         </section>
 
         <!-- SECTION 3: Announcements Display -->
-        <section id="announcementsSection" class="warm-blue-light-bg text-white section-padding">
+        <section id="announcementsSection" class="announcements-bg text-white section-padding">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
                     <h2 class="section-title02 text-3xl md:text-4xl font-md text-white">
@@ -832,11 +860,11 @@ try {
                     <div class="bg-white rounded-2xl p-16 text-center border border-gray-200">
                         <div class="mb-6 flex justify-center">
                             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M21.4256 8.1225L4.92 3.06C4.6966 2.99484 4.4611 2.98255 4.23213 3.02411C4.00316 3.06567 3.787 3.15993 3.60075 3.29944C3.41449 3.43895 3.26325 3.61988 3.15899 3.82792C3.05472 4.03597 3.00029 4.26542 3 4.49813V17.9981C3 18.396 3.15804 18.7775 3.43934 19.0588C3.72064 19.3401 4.10218 19.4981 4.5 19.4981C4.64344 19.4982 4.78614 19.4777 4.92375 19.4372L12.75 17.0353V17.9981C12.75 18.396 12.908 18.7775 13.1893 19.0588C13.4706 19.3401 13.8522 19.4981 14.25 19.4981H17.25C17.6478 19.4981 18.0294 19.3401 18.3107 19.0588C18.592 18.7775 18.75 18.396 18.75 17.9981V15.195L21.4256 14.3747C21.7353 14.2816 22.0069 14.0916 22.2003 13.8325C22.3937 13.5734 22.4988 13.259 22.5 12.9356V9.56063C22.4986 9.23745 22.3934 8.92326 22.2 8.66435C22.0066 8.40544 21.7351 8.2155 21.4256 8.1225ZM12.75 15.4669L4.5 17.9981V4.49813L12.75 7.02938V15.4669ZM17.25 17.9981H14.25V16.575L17.25 15.6544V17.9981ZM21 12.9356H20.9897L14.25 15.0056V7.49063L20.9897 9.55313H21V12.9281V12.9356Z" fill="#d1d5db"/>
+                                <path d="M21.4256 8.1225L4.92 3.06C4.6966 2.99484 4.4611 2.98255 4.23213 3.02411C4.00316 3.06567 3.787 3.15993 3.60075 3.29944C3.41449 3.43895 3.26325 3.61988 3.15899 3.82792C3.05472 4.03597 3.00029 4.26542 3 4.49813V17.9981C3 18.396 3.15804 18.7775 3.43934 19.0588C3.72064 19.3401 4.10218 19.4981 4.5 19.4981C4.64344 19.4982 4.78614 19.4777 4.92375 19.4372L12.75 17.0353V17.9981C12.75 18.396 12.908 18.7775 13.1893 19.0588C13.4706 19.3401 13.8522 19.4981 14.25 19.4981H17.25C17.6478 19.4981 18.0294 19.3401 18.3107 19.0588C18.592 18.7775 18.75 18.396 18.75 17.9981V15.195L21.4256 14.3747C21.7353 14.2816 22.0069 14.0916 22.2003 13.8325C22.3937 13.5734 22.4988 13.259 22.5 12.9356V9.56063C22.4986 9.23745 22.3934 8.92326 22.2 8.66435C22.0066 8.40544 21.7351 8.2155 21.4256 8.1225ZM12.75 15.4669L4.5 17.9981V4.49813L12.75 7.02938V15.4669ZM17.25 17.9981H14.25V16.575L17.25 15.6544V17.9981ZM21 12.9356H20.9897L14.25 15.0056V7.49063L20.9897 9.55313H21V12.9281V12.9356Z" fill="#9C9C9C"/>
                             </svg>
                         </div>
-                        <h3 class="text-2xl font-md text-gray-300 mb-3">No Announcements Yet</h3>
-                        <p class="text-gray-300 max-w-md mx-auto text-sm">
+                        <h3 class="text-2xl font-md text-gray-500 mb-3">No Announcements Yet</h3>
+                        <p class="text-gray-400 max-w-md mx-auto text-md">
                             Check back soon for important health updates and community announcements.
                         </p>
                     </div>
@@ -890,7 +918,6 @@ try {
                     <div class="text-center">
                         <button onclick="openAnnouncementsModal()"
                                 class="btn-primary bg-white text-[#3a7bd5] hover:bg-blue-50">
-                            <i class="fas fa-newspaper mr-3"></i>
                             View All Announcements
                         </button>
                     </div>
@@ -899,7 +926,7 @@ try {
         </section>
 
         <!-- SECTION 4: Testimonials -->
-        <section id="about" class="bg-white section-padding">
+        <section id="about" class="about-bg section-padding">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
                     <h2 class="section-title text-3xl md:text-4xl font-md text-gray-900">
@@ -921,7 +948,7 @@ try {
 
                             </div>
                             <div>
-                                <h4 class="text-lg font-bold text-gray-900">Dr. Maria Santos</h4>
+                                <h4 class="text-lg font-semibold text-gray-900">Dr. Maria Santos</h4>
                                 <p class="text-gray-600 text-sm">Barangay Health Officer</p>
                             </div>
                         </div>
@@ -939,7 +966,7 @@ try {
 </svg>
                             </div>
                             <div>
-                                <h4 class="text-lg font-bold text-gray-900">Capt. Juan Dela Cruz</h4>
+                                <h4 class="text-lg font-semibold text-gray-900">Capt. Juan Dela Cruz</h4>
                                 <p class="text-gray-600 text-sm">Barangay Captain</p>
                             </div>
                         </div>
@@ -957,7 +984,7 @@ try {
 </svg>
                             </div>
                             <div>
-                                <h4 class="text-lg font-bold text-gray-900">Nurse Lisa Mendoza</h4>
+                                <h4 class="text-lg font-semibold text-gray-900">Nurse Lisa Mendoza</h4>
                                 <p class="text-gray-600 text-sm">Head Nurse</p>
                             </div>
                         </div>
@@ -972,13 +999,13 @@ try {
        
 
         <!-- Footer -->
-        <footer class="warm-blue-bg text-white">
+        <footer class="warm-blue-bg text-white" id="footer">
             <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
                     <!-- Column 1: About -->
                     <div>
                         <h3 class="text-xl font-md mb-6">Barangay Luz Health Center</h3>
-                        <p class="text-white mb-6 text-lead">
+                        <p class="text-white mb-6">
                             Providing quality healthcare services to Barangay Luz residents with compassion and excellence.
                         </p>
                         <div class="flex space-x-4">
@@ -994,7 +1021,7 @@ try {
 
                     <!-- Column 2: Quick Links -->
                     <div>
-                        <h3 class="text-xl font-bold mb-6">Quick Links</h3>
+                        <h3 class="text-xl font-semibold mb-6">Quick Links</h3>
                         <ul class="space-y-3">
                             <li>
                                 <a href="#home" class="text-blue-100 hover:text-white transition flex items-center">
@@ -1021,7 +1048,7 @@ try {
 
                     <!-- Column 3: Contact Info -->
                     <div>
-                        <h3 class="text-xl font-bold mb-6">Contact Info</h3>
+                        <h3 class="text-xl font-semibold mb-6">Contact Info</h3>
                         <ul class="space-y-3">
                             <li class="flex items-start">
                                 <i class="fas fa-map-marker-alt mt-1 mr-3 text-blue-200"></i>
@@ -1033,14 +1060,14 @@ try {
                             </li>
                             <li class="flex items-center">
                                 <i class="fas fa-envelope mr-3 text-blue-200"></i>
-                                <span class="text-blue-100">healthcenter@barangayluz.gov.ph</span>
+                                <span class="text-blue-100">barangayluz.gov.ph</span>
                             </li>
                         </ul>
                     </div>
 
                     <!-- Column 4: Hours -->
                     <div>
-                        <h3 class="text-xl font-bold mb-6">Operating Hours</h3>
+                        <h3 class="text-xl font-semibold mb-6">Operating Hours</h3>
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <span class="text-blue-100">Monday - Friday</span>
@@ -1130,7 +1157,7 @@ try {
                     <!-- Login Button -->
                     <div class="mt-8">
                         <button type="submit"
-                            class="complete-btn bg-[#3C96E1] w-full p-3 rounded-full text-white transition-all duration-200 font-medium shadow-md hover:shadow-lg text-lg h-14">
+                            class="complete-btn bg-[#3C96E1] w-full p-3 text-white transition-all duration-200 font-medium shadow-md hover:shadow-lg text-lg h-14">
                             Login
                         </button>
                     </div>

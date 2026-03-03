@@ -469,17 +469,41 @@ try {
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM sitio1_users WHERE role = 'patient' AND approved = TRUE");
     $analytics['approved_patients'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-    // Patient records trend (last 6 months)
+    // Patient records trend (last 12 months)
     $stmt = $pdo->query("
         SELECT 
             DATE_FORMAT(created_at, '%Y-%m') as month,
             COUNT(*) as count
         FROM sitio1_patients 
-        WHERE deleted_at IS NULL AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        WHERE deleted_at IS NULL AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
         GROUP BY DATE_FORMAT(created_at, '%Y-%m')
         ORDER BY month
     ");
     $analytics['patient_registration_trend'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Active Staff trend (last 12 months)
+    $stmt = $pdo->query("
+        SELECT 
+            DATE_FORMAT(created_at, '%Y-%m') as month,
+            COUNT(*) as count
+        FROM sitio1_staff 
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month
+    ");
+    $analytics['staff_registration_trend'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Resident Accounts trend (last 12 months)
+    $stmt = $pdo->query("
+        SELECT 
+            DATE_FORMAT(created_at, '%Y-%m') as month,
+            COUNT(*) as count
+        FROM sitio1_users 
+        WHERE role = 'patient' AND approved = TRUE AND created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month
+    ");
+    $analytics['resident_accounts_trend'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Consultations per month (last 6 months)
     $stmt = $pdo->query("
@@ -1834,7 +1858,7 @@ $recordsPerPage = 5;
             <!-- Analytics Dashboard Section -->
             <div class="<?= $activeTab === 'analytics' ? '' : 'hidden' ?>" id="analytics" role="tabpanel"
                 aria-labelledby="analytics-tab">
-                <div class="flex justify-between items-center mb-8 pb-4 border-b-2 border-gray-300">
+                <div class="flex justify-between items-center mb-8 pb-4 border-b-2 border-gray-100">
                     <h2 class="text-2xl font-semibold mt-5 mb-6">Analytics Dashboard</h2>
                     <button onclick="refreshAnalytics()" class="btn-blue flex items-center">
                         <i class="fas fa-sync-alt mr-2"></i> Refresh Data
@@ -3104,108 +3128,157 @@ $recordsPerPage = 5;
             Chart.getChart(healthIssuesCanvas)?.destroy();
             Chart.getChart(genderDistributionCanvas)?.destroy();
             Chart.getChart(ageDistributionCanvas)?.destroy();
-            // 1. Patient Records Trend (Line) & Consultations per Month (Bar)
+            // 1. Patient Records Trend (Line Chart with three datasets)
             try {
                 const patientRegCtx = patientRegistrationCanvas.getContext('2d');
                 let patientData = <?= json_encode($analytics['patient_registration_trend']) ?>;
-                let consultData = <?= json_encode($analytics['consultations_per_month']) ?>;
-                // Merge months for both datasets
+                let staffData = <?= json_encode($analytics['staff_registration_trend']) ?>;
+                let residentData = <?= json_encode($analytics['resident_accounts_trend']) ?>;
+                
+                // Merge months for all datasets
                 let allMonths = Array.from(new Set([
                     ...patientData.map(item => item.month),
-                    ...consultData.map(item => item.month)
+                    ...staffData.map(item => item.month),
+                    ...residentData.map(item => item.month)
                 ])).sort();
+                
                 const patientLabels = allMonths.map(month => {
                     const date = new Date(month + '-01');
-                    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                    return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
                 });
+                
+                const staffValues = allMonths.map(month => {
+                    const found = staffData.find(item => item.month === month);
+                    return found ? found.count : 0;
+                });
+                
+                const residentValues = allMonths.map(month => {
+                    const found = residentData.find(item => item.month === month);
+                    return found ? found.count : 0;
+                });
+                
                 const patientValues = allMonths.map(month => {
                     const found = patientData.find(item => item.month === month);
                     return found ? found.count : 0;
                 });
-                const consultValues = allMonths.map(month => {
-                    const found = consultData.find(item => item.month === month);
-                    return found ? found.count : 0;
-                });
+                
                 new Chart(patientRegCtx, {
-                    type: 'doughnut',
+                    type: 'line',
                     data: {
-                        labels: ['New Patient Records', 'Doctor Consultations'],
+                        labels: patientLabels,
                         datasets: [
                             {
-                                data: [
-                                    patientValues.reduce((a, b) => a + b, 0),
-                                    consultValues.reduce((a, b) => a + b, 0)
-                                ],
-                                backgroundColor: [
-                                    '#42a5f5', // Blue from provided image
-                                    '#ec4899'  // Pink
-                                ],
-                                borderColor: [
-                                    '#42a5f5',
-                                    '#ec4899'
-                                ],
+                                label: 'Active Staff (created)',
+                                data: staffValues,
+                                borderColor: '#2563EB',
+                                backgroundColor: 'rgba(37, 99, 235, 0.05)',
                                 borderWidth: 3,
-                                hoverOffset: 16
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#2563EB',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointHoverRadius: 6,
+                                pointHoverBackgroundColor: '#2563EB'
+                            },
+                            {
+                                label: 'Resident Accounts (created)',
+                                data: residentValues,
+                                borderColor: '#10B981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#10B981',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointHoverRadius: 6,
+                                pointHoverBackgroundColor: '#10B981'
+                            },
+                            {
+                                label: 'Patient Records (created)',
+                                data: patientValues,
+                                borderColor: '#A855F7',
+                                backgroundColor: 'rgba(168, 85, 247, 0.05)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#A855F7',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                pointHoverRadius: 6,
+                                pointHoverBackgroundColor: '#A855F7'
                             }
                         ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutout: '70%',
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
                         plugins: {
                             legend: {
                                 display: true,
-                                position: 'bottom',
+                                position: 'top',
                                 labels: {
                                     color: '#374151',
-                                    font: { size: 16, weight: 'bold', family: 'Segoe UI, Arial' },
-                                    padding: 24,
-                                    boxWidth: 24
+                                    font: { size: 13, weight: '500', family: 'Segoe UI, Arial' },
+                                    padding: 16,
+                                    boxWidth: 12,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
                                 }
                             },
                             tooltip: {
                                 enabled: true,
                                 backgroundColor: '#fff',
-                                titleColor: '#6366F1',
-                                bodyColor: '#10B981',
-                                borderColor: '#6366F1',
+                                titleColor: '#1F2937',
+                                bodyColor: '#374151',
+                                borderColor: '#E5E7EB',
                                 borderWidth: 2,
-                                padding: 16,
-                                caretSize: 8,
-                                displayColors: true
-                            },
-                            datalabels: {
-                                display: true,
-                                color: function (context) {
-                                    return context.dataIndex === 0 ? '#6366F1' : '#10B981';
-                                },
-                                font: { size: 38, weight: 'bold', family: 'Segoe UI, Arial' },
-                                anchor: 'center',
-                                align: 'center',
-                                offset: 24,
-                                padding: 16,
-                                borderRadius: 8,
-                                backgroundColor: 'rgba(255,255,255,0.85)',
-                                borderWidth: 2,
-                                borderColor: function (context) {
-                                    return context.dataIndex === 0 ? '#42a5f5' : '#ec4899';
-                                },
-                                formatter: (value, ctx) => {
-                                    // Only show the count, not the label
-                                    return value;
+                                padding: 12,
+                                caretSize: 0,
+                                displayColors: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += context.parsed.y;
+                                        return label;
+                                    }
                                 }
-                            },
-                            shadow: {
-                                shadowOffsetX: 0,
-                                shadowOffsetY: 8,
-                                shadowBlur: 24,
-                                shadowColor: 'rgba(49, 46, 129, 0.18)'
                             }
                         },
-                        animation: {
-                            animateRotate: true,
-                            animateScale: true
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(229, 231, 235, 0.4)',
+                                    drawBorder: true
+                                },
+                                ticks: {
+                                    color: '#6B7280',
+                                    font: { size: 12 },
+                                    stepSize: 5
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false,
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    color: '#6B7280',
+                                    font: { size: 12 }
+                                }
+                            }
                         }
                     }
                 });

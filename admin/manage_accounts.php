@@ -1353,7 +1353,7 @@ try {
 
         .modern-modal-content {
             background: white;
-            border-radius: 28px;
+            border-radius: 4px;
             padding: 2rem;
             max-width: 500px;
             width: 100%;
@@ -1644,78 +1644,24 @@ try {
     endif; 
     ?>
 
-    <main style="background: linear-gradient(135deg, #f0f9ff 0%, #f9fafb 100%); min-height: 100vh; padding-top: 5rem;">
+    <main style="background: linear-gradient(135deg, #f0f9ff 0%, #f9fafb 100%); min-height: 100vh; padding-top: 1rem;">
         <div style="width: 100%; padding: 2.5rem;">
             <!-- Page Header -->
             <div style="margin-bottom: 3rem;">
-                <h1 style="font-size: 2.25rem; font-weight: 800; color: #111827; margin: 0 0 2rem 0;">Account Management</h1>
+                <h1 style="font-size: 1.5rem; font-weight: 600; color: #111827; margin: 0 0 2rem 0;">Account Management</h1>
                 
-                <!-- Statistics Cards Row -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
-                    <!-- Active Admin Card -->
-                    <div style="background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s;">
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
-                            <div>
-                                <p style="font-size: 0.875rem; color: #9ca3af; font-weight: 600; margin: 0 0 0.75rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Active Admin</p>
-                                <p style="font-size: 2.5rem; font-weight: 800; color: #111827; margin: 0;"><?= count($activeStaff) ?></p>
-                            </div>
-                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%); display: flex; align-items: center; justify-content: center; color: #1e40af; font-size: 1.75rem;">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Resident Accounts Card -->
-                    <div style="background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s;">
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
-                            <div>
-                                <p style="font-size: 0.875rem; color: #9ca3af; font-weight: 600; margin: 0 0 0.75rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Resident Accounts</p>
-                                <p style="font-size: 2.5rem; font-weight: 800; color: #111827; margin: 0;"><?= count($pendingResidents) + count($approvedResidents) + count($declinedResidents) ?></p>
-                            </div>
-                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); display: flex; align-items: center; justify-content: center; color: #92400e; font-size: 1.75rem;">
-                                <i class="fas fa-users"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Total Pending Card -->
-                    <div style="background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s;">
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
-                            <div>
-                                <p style="font-size: 0.875rem; color: #9ca3af; font-weight: 600; margin: 0 0 0.75rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Pending Approvals</p>
-                                <p style="font-size: 2.5rem; font-weight: 800; color: #111827; margin: 0;"><?= count($pendingResidents) ?></p>
-                            </div>
-                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%); display: flex; align-items: center; justify-content: center; color: #7c3aed; font-size: 1.75rem;">
-                                <i class="fas fa-hourglass-half"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Linked Accounts Card -->
-                    <div style="background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s;">
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
-                            <div>
-                                <p style="font-size: 0.875rem; color: #9ca3af; font-weight: 600; margin: 0 0 0.75rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Linked Accounts</p>
-                                <p style="font-size: 2.5rem; font-weight: 800; color: #111827; margin: 0;"><?= count($approvedResidents) - count($unlinkedResidents) ?></p>
-                            </div>
-                            <div style="width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); display: flex; align-items: center; justify-content: center; color: #6d28d9; font-size: 1.75rem;">
-                                <i class="fas fa-link"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+                
                 <!-- Tabs Navigation -->
                 <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
-                    <button class="modern-tab active" onclick="switchTab('staff')" id="staffTab" style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; color: white; transition: all 0.3s ease; cursor: pointer; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-user-tie"></i> Staff Management
+                    <button class="modern-tab active" onclick="switchTab('staff')" id="staffTab" style="padding: 0.875rem 1.75rem; border-radius: 4px; font-weight: 700; font-size: 0.9375rem; color: white; transition: all 0.3s ease; cursor: pointer; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; gap: 0.5rem;">
+                     Staff Management
                     </button>
-                    <button class="modern-tab" onclick="switchTab('resident')" id="residentTab" style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; color: #6b7280; transition: all 0.3s ease; cursor: pointer; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-users"></i> Resident Management
+                    <button class="modern-tab" onclick="switchTab('resident')" id="residentTab" style="padding: 0.875rem 1.75rem; border-radius: 4px; font-weight: 700; font-size: 0.9375rem; color: #6b7280; transition: all 0.3s ease; cursor: pointer; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 0.5rem;">
+                         Resident Management
                     </button>
                     <?php if (count($unlinkedResidents) > 0 || count($unlinkedPatients) > 0): ?>
-                    <button class="modern-tab" onclick="switchTab('linking')" id="linkingTab" style="padding: 0.875rem 1.75rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; color: #6b7280; transition: all 0.3s ease; cursor: pointer; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-link"></i> Manual Linking
+                    <button class="modern-tab" onclick="switchTab('linking')" id="linkingTab" style="padding: 0.875rem 1.75rem; border-radius: 4px; font-weight: 700; font-size: 0.9375rem; color: #6b7280; transition: all 0.3s ease; cursor: pointer; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 0.5rem;">
+                        Manual Linking
                     </button>
                     <?php endif; ?>
                 </div>
@@ -1731,9 +1677,7 @@ try {
                             <!-- Left Column: Create Staff Form -->
                             <div class="modern-card" style="padding: 2rem; height: fit-content; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: sticky; top: 6rem;">
                                 <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                                    <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); display: flex; align-items: center; justify-content: center; color: #2563eb;">
-                                        <i class="fas fa-plus-circle" style="font-size: 1.25rem;"></i>
-                                    </div>
+                                    
                                     <h2 style="font-size: 1.125rem; font-weight: 700; color: #111827; margin: 0;">
                                         Create Staff
                                     </h2>
@@ -1746,17 +1690,17 @@ try {
                                     
                                     <div>
                                         <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Username <span style="color: #ef4444;">*</span></label>
-                                        <input type="text" name="username" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="e.g., john.doe">
+                                        <input type="text" name="username" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="Enter Username">
                                     </div>
                                     
                                     <div>
                                         <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Full Name <span style="color: #ef4444;">*</span></label>
-                                        <input type="text" name="full_name" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="John Doe">
+                                        <input type="text" name="full_name" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="Enter Full Name">
                                     </div>
                                     
                                     <div>
                                         <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Position <span style="color: #ef4444;">*</span></label>
-                                        <select name="position" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                        <select name="position" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
                                             <option value="">Select Position</option>
                                             <option value="Nurse">Nurse</option>
                                             <option value="Midwife">Midwife</option>
@@ -1768,7 +1712,7 @@ try {
                                     <div>
                                         <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Password <span style="color: #ef4444;">*</span></label>
                                         <div style="position: relative;">
-                                            <input type="text" name="password" required id="staff-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: monospace;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                            <input type="text" name="password" required id="staff-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: monospace;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
                                             <button type="button" onclick="togglePasswordVisibility('staff-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; transition: all 0.2s;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'">
                                                 <i class="fas fa-eye"></i>
                                             </button>
@@ -1777,16 +1721,16 @@ try {
                                     
                                     <div>
                                         <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Specialization</label>
-                                        <input type="text" name="specialization" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="e.g., Pediatrics">
+                                        <input type="text" name="specialization" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="e.g., Pediatrics">
                                     </div>
                                     
                                     <div>
                                         <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">License Number</label>
-                                        <input type="text" name="license_number" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="e.g., LIC-2024-001">
+                                        <input type="text" name="license_number" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#2563eb'; this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="e.g., LIC-2024-001">
                                     </div>
                                     
-                                    <button type="submit" name="create_staff" style="width: 100%; padding: 1rem; border-radius: 10px; font-weight: 700; font-size: 0.9375rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; cursor: pointer; transition: all 0.3s; margin-top: 1rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(37, 99, 235, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.3)'">
-                                        <i class="fas fa-user-plus"></i>Create Staff
+                                    <button type="submit" name="create_staff" style="width: 100%; padding: 1rem; border-radius: 4px; font-weight: 500; font-size: 1rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; cursor: pointer; transition: all 0.3s; margin-top: 1rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(37, 99, 235, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.3)'">
+                                       Create Staff
                                     </button>
                                 </form>
                             </div>
@@ -1851,7 +1795,7 @@ try {
                                                 <h3 style="font-weight: 700; font-size: 1rem; color: #6b7280; margin: 0;"><?= htmlspecialchars($staff['full_name']) ?></h3>
                                                 <p style="font-size: 0.875rem; color: #9ca3af; margin: 0.5rem 0 0 0; display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-briefcase" style="color: #d1d5db;"></i><?= htmlspecialchars($staff['position'] ?? 'N/A') ?></p>
                                             </div>
-                                            <span style="background: #fee2e2; color: #991b1b; padding: 0.375rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.375rem;">
+                                            <span style="background: #fee2e2; color: #991b1b; padding: 0.375rem 0.75rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.375rem;">
                                                 <i class="fas fa-circle" style="font-size: 0.5rem;"></i>Inactive
                                             </span>
                                         </div>
@@ -1860,7 +1804,7 @@ try {
                                             <form method="POST" action="" style="flex: 1;">
                                                 <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
                                                 <input type="hidden" name="action" value="activate">
-                                                <button type="submit" name="toggle_staff_status" style="width: 100%; padding: 0.625rem; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#1d4ed8'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='#2563eb'; this.style.transform='scale(1)'">
+                                                <button type="submit" name="toggle_staff_status" style="width: 100%; padding: 0.625rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#1d4ed8'; this.style.transform='scale(1.05)'" onmouseout="this.style.background='#2563eb'; this.style.transform='scale(1)'">
                                                     <i class="fas fa-play" style="margin-right: 0.25rem;"></i>Activate
                                                 </button>
                                             </form>
@@ -1882,9 +1826,7 @@ try {
                     <!-- Left Column: Create Resident Form -->
                     <div class="modern-card" style="padding: 2rem; height: fit-content; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: sticky; top: 6rem;">
                         <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                            <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); display: flex; align-items: center; justify-content: center; color: #15803d;">
-                                <i class="fas fa-plus-circle" style="font-size: 1.25rem;"></i>
-                            </div>
+                            
                             <h2 style="font-size: 1.125rem; font-weight: 700; color: #111827; margin: 0;">
                                 Create Resident
                             </h2>
@@ -1897,18 +1839,18 @@ try {
                             
                             <div>
                                 <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Full Name <span style="color: #ef4444;">*</span></label>
-                                <input type="text" name="full_name" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="Juan De la Cruz">
+                                <input type="text" name="full_name" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="Enter Full Name">
                             </div>
                             
                             <div>
                                 <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Email <span style="color: #ef4444;">*</span></label>
-                                <input type="email" name="email" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="juan@example.com">
+                                <input type="email" name="email" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="Enter Email Address">
                             </div>
                             
                             <div>
                                 <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Password <span style="color: #ef4444;">*</span></label>
                                 <div style="position: relative;">
-                                    <input type="text" name="password" required id="resident-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: monospace;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                    <input type="text" name="password" required id="resident-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: monospace;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
                                     <button type="button" onclick="togglePasswordVisibility('resident-password')" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af; cursor: pointer; padding: 4px; transition: all 0.2s;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'">
                                         <i class="fas fa-eye"></i>
                                     </button>
@@ -1917,12 +1859,12 @@ try {
                             
                             <div>
                                 <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Phone</label>
-                                <input type="tel" name="phone" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="+63 912 345 6789">
+                                <input type="tel" name="phone" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" placeholder="Enter Phone Number">
                             </div>
                             
                             <div>
                                 <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Gender</label>
-                                <select name="gender" id="gender" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                <select name="gender" id="gender" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
                                     <option value="">Select Gender</option>
                                     <option value="male">Male</option>
                                     <option value="female">Female</option>
@@ -1932,12 +1874,12 @@ try {
                             
                             <div>
                                 <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Date of Birth</label>
-                                <input type="date" name="date_of_birth" id="dob" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" onchange="calculateAge()">
+                                <input type="date" name="date_of_birth" id="dob" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'" onchange="calculateAge()">
                             </div>
                             
                             <div>
                                 <label style="display: block; font-size: 0.875rem; font-weight: 700; color: #374151; margin-bottom: 0.625rem; text-transform: uppercase; letter-spacing: 0.5px;">Sitio</label>
-                                <select name="sitio" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
+                                <select name="sitio" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e5e7eb; border-radius: 4px; font-size: 0.9375rem; transition: all 0.2s; background: white; font-family: inherit; cursor: pointer;" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'">
                                     <option value="">Select Sitio</option>
                                     <option value="Kalinao">Kalinao</option>
                                     <option value="Nangka">Nangka</option>
@@ -1968,22 +1910,16 @@ try {
                     <div>
                         <!-- Resident Tabs -->
                         <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem;">
-                            <button class="modern-tab active" onclick="showResidentTab('pending')" id="pendingResidentTab" style="padding: 0.875rem 1.5rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
-                                <i class="fas fa-hourglass-half"></i>Pending <span style="background: rgba(255,255,255,0.3); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8125rem; font-weight: 700;"><?= count($pendingResidents) ?></span>
-                            </button>
-                            <button class="modern-tab" onclick="showResidentTab('approved')" id="approvedResidentTab" style="padding: 0.875rem 1.5rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; background: white; color: #6b7280; border: 1.5px solid #e5e7eb; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fas fa-check-circle"></i>Approved <span style="background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8125rem; font-weight: 700;"><?= count($approvedResidents) ?></span>
-                            </button>
-                            <button class="modern-tab" onclick="showResidentTab('declined')" id="declinedResidentTab" style="padding: 0.875rem 1.5rem; border-radius: 12px; font-weight: 700; font-size: 0.9375rem; background: white; color: #6b7280; border: 1.5px solid #e5e7eb; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fas fa-times-circle"></i>Declined <span style="background: #f3f4f6; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8125rem; font-weight: 700;"><?= count($declinedResidents) ?></span>
+                            <button class="modern-tab active" onclick="showResidentTab('approved')" id="approvedResidentTab" style="padding: 0.875rem 1.5rem; border-radius: 4px; font-weight: 700; font-size: 0.9375rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                                Approved <span style="background: rgba(255,255,255,0.3); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8125rem; font-weight: 700;"><?= count($approvedResidents) ?></span>
                             </button>
                         </div>
 
                         <!-- Pending Residents Grid -->
-                        <div id="pendingResidentGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                        <div id="pendingResidentGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
                             <?php if (empty($pendingResidents)): ?>
                                 <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
-                                    <p style="color: #6b7280;">Pending to display</p>
+                                    <p style="color: #6b7280;">No pending residents to display</p>
                                 </div>
                             <?php else: ?>
                                 <?php foreach ($pendingResidents as $resident): ?>
@@ -2019,7 +1955,7 @@ try {
                         </div>
 
                         <!-- Approved Residents Grid -->
-                        <div id="approvedResidentGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                        <div id="approvedResidentGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
                             <?php if (empty($approvedResidents)): ?>
                                 <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
                                     <p style="color: #6b7280;">No Approved Residents</p>

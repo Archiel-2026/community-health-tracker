@@ -1002,15 +1002,15 @@ function getTimeAgo($datetime)
                                                         class="px-4 py-2 rounded bg-second-card text-[#2563EB] font-semibold text-base">Consultation
                                                         Note</span>
                                                     <div class="flex flex-col items-start">
-                                                        <span class="text-sm text-gray-600 font-semibold mb-0.5">Consultation Date
+                                                        <span class="text-sm text-gray-400 font-semibold mb-2">Consultation Date
                                                             :</span>
                                                         <span
-                                                            class="inline-block px-3 py-2 rounded bg-gray-200 text-gray-500 text-base font-medium"
+                                                            class="inline-block px-3 py-2 rounded bg-gray-200 text-gray-600 text-base font-medium"
                                                             style="margin-top:2px;"><?= date('F d, Y', strtotime($note['consultation_date'])) ?></span>
                                                     </div>
                                                 </div>
                                                 <div class="mt-2">
-                                                    <span class="block text-base text-gray-400 font-medium mb-0.5">Consulting Doctor
+                                                    <span class="block text-base text-gray-400 font-sm mb-0.5">Consulting Doctor
                                                         :</span>
                                                     <div class="text-lg text-gray-800 font-medium">
                                                         <?= htmlspecialchars($note['doctor_name']) ?>
@@ -1194,15 +1194,15 @@ function getTimeAgo($datetime)
                                                         <?= $badge ?>         <?= $priorityBadge ?>
                                                     </div>
                                                     <div class="flex flex-col items-start">
-                                                        <span class="text-sm text-gray-600 font-semibold mb-0.5">Date Posted
+                                                        <span class="text-sm text-gray-400 font-semibold mb-2">Date Posted
                                                             :</span>
                                                         <span
-                                                            class="inline-block px-4 py-2 rounded bg-gray-200 text-gray-500 text-base font-semibold"
+                                                            class="inline-block px-4 py-2 rounded bg-gray-200 text-gray-600 text-base font-semibold"
                                                             style="margin-top:2px;"><?= date('F d, Y', strtotime($announcement['post_date'])) ?></span>
                                                     </div>
                                                 </div>
                                                 <div class="flex items-center gap-2 mb-0.5 mt-1">
-                                                    <span class="text-base text-gray-400 font-medium">Posted By :</span>
+                                                    <span class="text-base text-gray-400 font-sm">Posted By :</span>
                                                     <?php if ($staffPosition): ?>
                                                         <span
                                                             class="inline-block items-center py-0.5 rounded font-medium text-base ml-0.5 align-middle"

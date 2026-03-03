@@ -3566,7 +3566,7 @@ if (!empty($searchTerm)) {
 
                             <!-- SEARCH RECORD / EXPORT RECORDS / FILTER  -->
                             <div
-                                class="flex flex-col md:flex-row border-b-2 pb-6 border-gray-300 justify-between items-center">
+                                class="flex flex-col md:flex-row border-b-2 pb-6 border-gray-100 justify-between items-center">
                                 <!-- LEFT CONTENT -->
                                 <div class="flex gap-4">
                                     <div class="relative">
@@ -3678,14 +3678,14 @@ style="border-radius: 4px;">
                                                     background-repeat: no-repeat;
                                                     background-position: right 2rem center;
                                                     background-size: 1.5rem 1.5rem;
-                                                    padding-right: 3.5rem; /* Reduced to ensure text is visible and not hidden by icon */
+                                                    padding-right: 4.5rem; /* Increased to add gap between text and arrow icon */
                                                 }
 
                                                 select.custom-select-filter::-ms-expand {
                                                     display: none;
                                                 }
 
-                                                width: 100%;
+                                                width: auto;
                                                 font-size: 1rem;
                                                 font-weight: 500;
                                                 color: #22223b;
@@ -3727,7 +3727,7 @@ style="border-radius: 4px;">
                                                 background-repeat: no-repeat;
                                                 background-position: right 18px center;
                                                 background-size: 24px 24px;
-                                                padding-right: 44px;
+                                                padding-right: 60px; /* Increased to add gap between text and arrow icon */
                                             }
 
                                             select.custom-select-filter::-ms-expand {

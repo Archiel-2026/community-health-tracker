@@ -1209,7 +1209,7 @@ try {
 
         <!-- CREATE ANNOUNCEMENT TITLE HEADER -->
         <div>
-            <div class="border-b-2 border-gray-300 pb-4 mb-6">
+            <div class="border-b-2 border-gray-100 pb-4 mb-6">
                 <h2 class="text-2xl font-bold mb-2">Create New Announcement</h2>
             </div>
         </div>

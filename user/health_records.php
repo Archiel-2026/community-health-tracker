@@ -276,29 +276,29 @@ $activeTab = $_GET['tab'] ?? 'consultations';
 
     /* Tab Styling - Original pill-style buttons */
     .tab-header {
-        position: relative;
-        padding: 0.875rem 1.75rem;
-        background: linear-gradient(135deg, #e8f0fe 0%, #f0f4f8 100%);
-        border: none;
-        border-radius: 8px;
-        color: #6b7280;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        text-align: center;
-        letter-spacing: 0.3px;
-        min-height: 44px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
+    position: relative;
+    padding: 0.875rem 1.75rem;
+    background: rgba(60, 150, 225, 0.3); /* 30% opacity */
+    border: none;
+    border-radius: 4px;
+    color: #3C96E1;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+    letter-spacing: 0.3px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
     .tab-header.active {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: white !important;
         box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        
     }
 
     .tab-header:hover {
@@ -396,7 +396,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
         color: #2563eb !important;
         width: 36px;
         height: 36px;
-        border-radius: 50%;
+        border-radius: 4px;
         box-shadow: 0 4px 15px rgba(255, 255, 255, 0.6);
     }
 
@@ -939,9 +939,9 @@ $activeTab = $_GET['tab'] ?? 'consultations';
         }
     }
     .consultation-header-group {
-    background: #FEF3C7;  /* yellow-100 */
-    color: #F2C450;        /* yellow-600 */
-    border-radius: 9999px;
+    background: rgba(37, 99, 235, 0.3);
+    color: #2563EB;
+    border-radius: 4px;
     font-size: 1rem;
     font-weight: 600;
     display: inline-flex;
@@ -952,8 +952,8 @@ $activeTab = $_GET['tab'] ?? 'consultations';
 
 .consultation-count-number {
     background: #fff;
-    color: #F2C450;
-    border-radius: 9999px;
+    color: #2563EB;
+    border-radius: 50%;
     width: 1.75rem;
     height: 1.75rem;
     min-width: 1.75rem;
@@ -964,7 +964,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     font-size: 1rem;
     font-weight: 700;
     margin-left: 0.5rem;
-    border: 1px solid #F2C450;
+    border: 1px solid #2563EB;
 }
 </style>
 
@@ -987,7 +987,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                 <!-- Tab Counts at the top -->
                 <div class="tab-counts-mobile">
                     <div class="count-item-mobile">
-                        <span class="count-label-mobile">Doctor's Notes</span>
+                        <span class="count-label-mobile">Doctor's Note</span>
                         <span class="count-badge count-badge-primary"><?php echo $totalConsultationNotes; ?></span>
                     </div>
                     <div class="count-item-mobile">
@@ -1053,7 +1053,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
             <div class="tab-nav-container">
                 <button class="tab-header <?= $activeTab === 'consultations' ? 'active' : '' ?>"
                     data-tab="consultations">
-                    <span>Doctor's Notes</span>
+                    <span>Doctor's Note</span>
                     <span class="tab-badge tab-badge-count"><?php echo $totalConsultationNotes; ?></span>
                 </button>
                 <button class="tab-header <?= $activeTab === 'patients' ? 'active' : '' ?>" data-tab="patients">
@@ -1131,22 +1131,22 @@ $activeTab = $_GET['tab'] ?? 'consultations';
     <!-- LEFT: Consultation Info -->
     <div class="flex flex-col gap-4">
         <div class="flex items-center">
-            <span class="consultation-header-group bg-yellow-100 text-yellow-600 px-4 py-1.3 text-base font-semibold inline-flex items-center">
+            <span class="consultation-header-group px-4 py-1.3 text-base font-semibold inline-flex items-center">
                 Consultation
-                <span class="consultation-count-number bg-white text-yellow-600 font-bold rounded-full w-7 h-7 flex items-center justify-center ml-2 text-base" style="border: 1px solid #F2C450;">
+                <span class="consultation-count-number font-bold rounded-full w-7 h-7 flex items-center justify-center ml-2 text-base">
                     <?php echo $consultationIndex; ?>
                 </span>
             </span>
         </div>
         <!-- Rest of the consultation info... -->
                                             <div class="mb-2">
-                                                <span class="text-gray-500 text-base">Consultation on :</span><br>
-                                                <span class="text-lg font-semibold tracking-wide leading-tight">
+                                                <span class="text-gray-400 text-base">Consultation on :</span><br>
+                                                <span class="text-lg font-medium tracking-wide leading-tight">
                                                     <?php echo date('F d, Y', strtotime($note['consultation_date'] ?? 'now')); ?>
                                                 </span>
                                             </div>
                                             <div>
-                                                <span class="text-gray-500 text-base">Doctor Assigned :</span><br>
+                                                <span class="text-gray-400 text-base">Doctor Assigned :</span><br>
                                                 <span
                                                     class="doctor-name-auto-shrink text-lg font-medium tracking-wide leading-tight">
                                                     <span style="
@@ -1168,7 +1168,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                         <div class="flex flex-col items-end justify-between">
                                             <div>
                                                 <?php if (!empty($note['next_consultation_date'])): ?>
-                                                    <span class="text-gray-500 text-sm mb-1 block">Next Consultation</span>
+                                                    <span class="text-gray-400 text-sm mb-2 block">Next Consultation :</span>
                                                     <span
                                                         class="block px-3 py-1 rounded-md bg-emerald-100 text-emerald-700 font-medium text-base"
                                                         style="background-color:#B1F3D4;color:#059669;">
@@ -1834,9 +1834,8 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                             text-[30px] font-medium 
                             py-1 px-4
                             rounded-[6px] 
-                            bg-blue-100 
-                            text-blue-500 
-                            mb-4">
+                            text-blue-600 
+                            mb-4" style="background-color: rgba(37, 99, 235, 0.3);">
                             Consultation Note
                          </h4>
                         <div class="bg-white border border-gray-200 rounded-[6px] p-4 min-h-[130px]">
@@ -1951,9 +1950,9 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                             body { padding: 20px; }
                         }
                     .consultation-header-group {
-                        background: #FEF3C7;
-                        color: #F2C450;
-                        border-radius: 9999px;
+                        background: rgba(37, 99, 235, 0.3);
+                        color: #2563EB;
+                        border-radius: 4px;
                         font-size: 1rem;
                         font-weight: 500;
                         display: inline-flex;
@@ -1963,8 +1962,8 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                     }
                     .consultation-count-number {
                         background: #fff;
-                        color: #F2C450;
-                        border-radius: 9999px;
+                        color: #2563EB;
+                        border-radius: 50%;
                         width: 1.75rem;
                         height: 1.75rem;
                         min-width: 1.75rem;
