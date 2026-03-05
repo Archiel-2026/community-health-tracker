@@ -548,17 +548,29 @@
                                     <!-- Password Field -->
                                     <div class="max-w-md">
                                         <label for="password">Password <span class="text-red-500">*</span></label>
-                                        <input type="password" placeholder="Password"
-                                            class="w-full mt-2 p-4 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3C96E1]" />
+                                        <div class="relative mt-2">
+                                            <input id="regPassword" type="password" placeholder="Password"
+                                                class="w-full p-4 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3C96E1]" />
+                                            <button type="button" onclick="toggleRegPassword()"
+                                                class="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500">
+                                                <i id="regEyeIcon" class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <!-- Confirm Password Field -->
                                     <div class="max-w-md mt-2">
-                                        <label for="confirm-password" class="mt-4"> <!-- Move mt-4 here -->
+                                        <label for="confirm-password" class="mt-4">
                                             Confirm Password <span class="text-red-500">*</span>
                                         </label>
-                                        <input type="password" placeholder="Confirm Password"
-                                            class="w-full mt-2 p-4 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3C96E1]" />
+                                        <div class="relative mt-2">
+                                            <input id="regConfirmPassword" type="password" placeholder="Confirm Password"
+                                                class="w-full p-4 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#3C96E1]" />
+                                            <button type="button" onclick="toggleRegConfirmPassword()"
+                                                class="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500">
+                                                <i id="regConfirmEyeIcon" class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -644,6 +656,36 @@
     function togglePassword() {
         const input = document.getElementById("password");
         const icon = document.getElementById("eyeIcon");
+
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+
+    function toggleRegPassword() {
+        const input = document.getElementById("regPassword");
+        const icon = document.getElementById("regEyeIcon");
+
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+
+    function toggleRegConfirmPassword() {
+        const input = document.getElementById("regConfirmPassword");
+        const icon = document.getElementById("regConfirmEyeIcon");
 
         if (input.type === "password") {
             input.type = "text";

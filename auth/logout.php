@@ -94,37 +94,19 @@ echo <<<HTML
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logged Out</title>
+    <!-- Tailwind CSS - Offline Local Build -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            width: 100%;
-            background: #fff;
-        }
-        .center-modal {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .logout-icon {
-            color: #38BDF8;
-            font-size: 3rem;
-            margin-bottom: 1.5rem;
-        }
-    </style>
 </head>
-<body>
-    <div class="center-modal">
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 text-center">
-            <div class="flex flex-col items-center">
-                <div class="logout-icon">
-                    
+<body class="bg-gray-100">
+    <div class="fixed inset-0 flex items-center justify-center z-50">
+        <div class="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-8 flex flex-col items-center text-center animate-fade-in" style="min-width:320px;">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">You're now logged out.</h2>
+            <p class="text-gray-500 mb-8">See you next time!</p>
+            <div class="flex flex-col items-center w-full">
+                <div class="w-full flex justify-center">
+                    <span class="pulsing-circle pulsing-blue"></span>
                 </div>
-                <h3 class="text-2xl font-semibold text-gray-800 mb-2">You're now logged out.</h3>
-                <p class="text-gray-500 mb-6">See you next time!</p>
             </div>
         </div>
     </div>
@@ -133,6 +115,36 @@ echo <<<HTML
             window.location.href = '$redirectUrl';
         }, 1500);
     </script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .pulsing-circle {
+            display: inline-block;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            opacity: 0.8;
+            animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .pulsing-blue {
+            background-color: #38BDF8;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.4;
+            }
+        }
+    </style>
 </body>
 </html>
 HTML;

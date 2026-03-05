@@ -399,12 +399,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="form-group">
                         <label class="form-label">Password <span class="required">*</span></label>
-                        <input type="password" name="password" class="form-input" placeholder="Enter Password" required>
+                        <div style="position: relative;">
+                            <input type="password" id="staffPassword" name="password" class="form-input" placeholder="Enter Password" required>
+                            <button type="button" onclick="toggleStaffPassword()" style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); background: none; border: none; color: #6b7280; cursor: pointer;">
+                                <i id="staffEyeIcon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-login" id="loginButton" disabled>
                         <span id="roleText">Select Role Type</span>
-                        <i class="fas fa-arrow-right"></i>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21.7372 10.6865L5.98724 1.69679C5.72157 1.54724 5.41664 1.48218 5.11307 1.5103C4.8095 1.53841 4.52171 1.65836 4.28803 1.85417C4.05435 2.04997 3.88588 2.31233 3.80506 2.60629C3.72425 2.90026 3.73493 3.21187 3.83568 3.49961L6.70724 11.999L3.83568 20.4993C3.75576 20.7255 3.73126 20.9675 3.76424 21.2052C3.79721 21.4428 3.8867 21.669 4.02519 21.8649C4.16367 22.0608 4.34712 22.2206 4.56014 22.3309C4.77316 22.4413 5.00953 22.4989 5.24943 22.499C5.51005 22.4984 5.76613 22.4306 5.99286 22.3021L21.7354 13.2974C21.9676 13.1673 22.161 12.9778 22.2957 12.7483C22.4305 12.5188 22.5018 12.2576 22.5023 11.9914C22.5028 11.7253 22.4324 11.4638 22.2985 11.2338C22.1645 11.0038 21.9718 10.8136 21.74 10.6827L21.7372 10.6865ZM5.24943 20.999C5.24983 20.9952 5.24983 20.9915 5.24943 20.9877L8.03755 12.749H13.4994C13.6983 12.749 13.8891 12.67 14.0298 12.5293C14.1704 12.3887 14.2494 12.1979 14.2494 11.999C14.2494 11.8001 14.1704 11.6093 14.0298 11.4687C13.8891 11.328 13.6983 11.249 13.4994 11.249H8.03755L5.25505 3.01398C5.25413 3.00867 5.25222 3.00359 5.24943 2.99898L20.9994 11.983L5.24943 20.999Z" fill="white"/>
+</svg>
+
                     </button>
                 </form>
                 <div class="support-text">Production Version • Version 1.0</div>
@@ -511,6 +519,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setTimeout(() => {
                 modal.style.display = 'none';
             }, 400);
+        }
+
+        function toggleStaffPassword() {
+            const input = document.getElementById("staffPassword");
+            const icon = document.getElementById("staffEyeIcon");
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
         }
     </script>
 </body>

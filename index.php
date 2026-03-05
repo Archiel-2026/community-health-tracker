@@ -24,8 +24,7 @@ try {
                                 WHEN 'medium' THEN 2
                                 WHEN 'normal' THEN 3
                             END,
-                            post_date DESC 
-                          LIMIT 5");
+                            post_date DESC");
     $stmt->execute();
     $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $hasAnnouncements = !empty($announcements);
@@ -392,7 +391,11 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
         
         /* Image background for hero with blur effect */
         .hero-gradient {
-            background: linear-gradient(135deg, #3a7bd5 0%, #2a6bc5 100%);
+            position: relative;
+            background: linear-gradient(135deg, rgba(58, 123, 213, 0.85) 0%, rgba(42, 107, 197, 0.85) 100%), url('./asssets/images/brgyluz.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
 
         /* Services Section Background */
@@ -535,6 +538,10 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
     </style>
+    <script>
+        // Store announcements data for modal display
+        const announcementsData = <?php echo json_encode($announcements); ?>;
+    </script>
 </head>
 <body class="font-sans antialiased">
     <!-- Header Navigation - FIXED AT TOP -->
@@ -685,9 +692,9 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                 </div>
                 
                 <!-- Quick Info Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12 grid-spacing w-full">
+                <div class="flex flex-wrap gap-12 mb-12 w-full justify-center">
                     <!-- Location Card - matches provided image -->
-                    <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:280px;">
+                    <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow flex-1" style="min-width:320px; max-width:420px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
@@ -715,7 +722,7 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                     </div>
                     <!-- Redesigned Availability Card -->
                     <!-- Availability Card - matches provided image -->
-                    <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:240px;">
+                    <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow flex-1" style="min-width:320px; max-width:420px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
@@ -747,7 +754,7 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                     </div>
                     <!-- Redesigned Contact Card -->
                     <!-- Contact Card - matches provided image -->
-                    <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:240px;">
+                    <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow flex-1" style="min-width:320px; max-width:420px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
@@ -807,7 +814,7 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
         <section id="services" class="services-bg section-padding-lg">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-12">
-                    <h2 class="section-title01 text-3xl md:text-4xl font-md text-gray-900">
+                    <h2 class="section-title01 text-2xl md:text-4xl font-md text-gray-900">
                         Our Health Services
                     </h2>
                     <p class="text-gray-600 max-w-3xl mx-auto text-lg text-lead">
@@ -889,47 +896,50 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                         </p>
                     </div>
                 <?php else: ?>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 grid-spacing">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 mb-12">
                         <?php foreach ($announcements as $index => $announcement): ?>
-                            <div class="bg-white rounded-xl overflow-hidden border border-gray-200 info-card card-hover">
-                                <div class="p-6">
-                                    <div class="flex items-start justify-between mb-4">
+                            <?php if ($index >= 4) break; ?>
+                            <div class="bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                                <div class="p-6 flex flex-col h-full">
+                                    <!-- Badge and Date Header -->
+                                    <div class="flex items-start justify-between mb-6">
                                         <div>
                                             <?php if ($announcement['priority'] == 'high'): ?>
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
-                                                    <i class="fas fa-exclamation-triangle mr-1"></i> High Priority
+                                                <span class="inline-block px-4 py-2 rounded text-sm font-semibold bg-red-100 text-red-700">
+                                                    High Priority
                                                 </span>
                                             <?php elseif ($announcement['priority'] == 'medium'): ?>
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
-                                                    <i class="fas fa-exclamation-circle mr-1"></i> Medium Priority
+                                                <span class="inline-block px-4 py-2 rounded text-sm font-semibold bg-yellow-100 text-yellow-700">
+                                                    Medium Priority
                                                 </span>
                                             <?php else: ?>
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                                                    <i class="fas fa-info-circle mr-1"></i> Announcement
+                                                <span class="inline-block px-4 py-2 rounded text-sm font-semibold bg-blue-100 text-blue-700">
+                                                    Announcement
                                                 </span>
                                             <?php endif; ?>
                                         </div>
-                                        <div class="text-sm text-gray-500">
-                                            <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                                        <div class="text-right">
+                                            <div class="text-sm text-gray-400 font-medium">Date Posted :</div>
+                                            <div class="text-md font-medium text-blue-500">
+                                                <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
+                                            </div>
                                         </div>
                                     </div>
-                                    <h3 class="text-xl font-medium text-gray-700 mb-3">
+                                    
+                                    <!-- Title -->
+                                    <h3 class="text-1xl font-bold text-gray-700 mb-4">
                                         <?= htmlspecialchars($announcement['title']) ?>
                                     </h3>
-                                    <?php if ($announcement['image_path']): ?>
-                                        <div class="mb-4 rounded-lg overflow-hidden">
-                                            <img src="<?= htmlspecialchars($announcement['image_path']) ?>" 
-                                                 alt="<?= htmlspecialchars($announcement['title']) ?>"
-                                                 class="responsive-img h-48 object-cover">
-                                        </div>
-                                    <?php endif; ?>
-                                    <div class="text-gray-700 whitespace-pre-line mb-8 b text-lead">
-                                        <?= nl2br(htmlspecialchars(substr($announcement['message'], 0, 150))) ?>...
+                                    
+                                    <!-- Message -->
+                                    <div class="text-gray-700 mb-6 text-base leading-relaxed flex-grow">
+                                        <?= nl2br(htmlspecialchars(substr($announcement['message'], 0, 180))) ?>
                                     </div>
+                                    
+                                    <!-- Button -->
                                     <button onclick="openAnnouncementModal(<?= $index ?>)"
-                                            class="text-white bg-blue-500 rounded-md py-3 px-5 hover:text-white font-semibold flex items-center text-sm">
-                                        Read Full Announcement
-                                        <i class="fas fa-arrow-right ml-2"></i>
+                                            class="bg-blue-500 backdrop-blur hover:bg-blue-600 text-white font-md py-2 px-6 rounded text-base transition-colors duration-200 self-start">
+                                        Read Announcement
                                     </button>
                                 </div>
                             </div>
@@ -963,12 +973,13 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                         <div class="flex items-center mb-4">
                             <div class="w-12 h-12 rounded-full  flex items-center justify-center mr-4">
                                 <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M19.5 3.75H4.5C4.10218 3.75 3.72064 3.90804 3.43934 4.18934C3.15804 4.47064 3 4.85218 3 5.25V10.5C3 15.4425 5.3925 18.4378 7.39969 20.0803C9.56156 21.8484 11.7122 22.4494 11.8059 22.4738C11.9348 22.5088 12.0708 22.5088 12.1997 22.4738C12.2934 22.4494 14.4413 21.8484 16.6059 20.0803C18.6075 18.4378 21 15.4425 21 10.5V5.25C21 4.85218 20.842 4.47064 20.5607 4.18934C20.2794 3.90804 19.8978 3.75 19.5 3.75ZM19.5 10.5C19.5 13.9753 18.2194 16.7962 15.6937 18.8831C14.5943 19.7885 13.344 20.493 12 20.9644C10.6736 20.5012 9.4387 19.8092 8.35125 18.9197C5.79563 16.8291 4.5 13.9969 4.5 10.5V5.25H19.5V10.5Z" fill="#3879D3"/>
+<path d="M20.2897 3.7124C19.3533 2.77604 18.0833 2.25 16.7591 2.25C15.4348 2.25 14.1648 2.77604 13.2284 3.7124L3.71281 13.2271C2.79602 14.1675 2.28664 15.4312 2.29502 16.7445C2.30341 18.0578 2.82888 19.3149 3.75761 20.2435C4.68634 21.1721 5.94352 21.6974 7.25683 21.7057C8.57013 21.7139 9.83379 21.2043 10.7741 20.2874L20.2906 10.7727C21.2254 9.83563 21.7503 8.56599 21.7502 7.24237C21.75 5.91874 21.2247 4.64924 20.2897 3.7124ZM9.71375 19.2271C9.0587 19.8823 8.17022 20.2504 7.24376 20.2505C6.31731 20.2506 5.42876 19.8826 4.77359 19.2276C4.11842 18.5725 3.7503 17.684 3.75022 16.7576C3.75013 15.8311 4.11808 14.9426 4.77312 14.2874L9.00031 10.0602L13.9409 14.9999L9.71375 19.2271ZM19.2294 9.7124L15.0003 13.9396L10.0616 8.9999L14.2897 4.77272C14.9473 4.13027 15.8317 3.77299 16.7511 3.77836C17.6704 3.78373 18.5506 4.15132 19.2007 4.80141C19.8508 5.4515 20.2184 6.33166 20.2237 7.25101C20.2291 8.17036 19.8718 9.05476 19.2294 9.7124ZM17.7828 7.71928C17.8525 7.78893 17.9079 7.87165 17.9456 7.9627C17.9833 8.05375 18.0028 8.15134 18.0028 8.2499C18.0028 8.34847 17.9833 8.44606 17.9456 8.53711C17.9079 8.62816 17.8525 8.71087 17.7828 8.78053L15.5328 11.0305C15.4631 11.1002 15.3804 11.1554 15.2894 11.193C15.1984 11.2307 15.1008 11.25 15.0023 11.25C14.9038 11.2499 14.8063 11.2305 14.7153 11.1928C14.6243 11.155 14.5416 11.0997 14.472 11.0301C14.4024 10.9604 14.3472 10.8777 14.3095 10.7866C14.2719 10.6956 14.2525 10.5981 14.2526 10.4996C14.2526 10.4011 14.2721 10.3035 14.3098 10.2126C14.3475 10.1216 14.4028 10.0389 14.4725 9.96928L16.7225 7.71928C16.8631 7.57873 17.0538 7.49978 17.2527 7.49978C17.4515 7.49978 17.6422 7.57873 17.7828 7.71928Z" fill="#3B82F6"/>
 </svg>
+
 
                             </div>
                             <div>
-                                <h4 class="text-lg font-semibold text-gray-900">Dr. Maria Santos</h4>
+                                <h4 class="text-lg font-medium text-gray-900">Dr. Maria Santos</h4>
                                 <p class="text-gray-600 text-sm">Barangay Health Officer</p>
                             </div>
                         </div>
@@ -982,11 +993,12 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                         <div class="flex items-center mb-4">
                             <div class="w-12 h-12 rounded-full  flex items-center justify-center mr-4">
                                 <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M19.5 3.75H4.5C4.10218 3.75 3.72064 3.90804 3.43934 4.18934C3.15804 4.47064 3 4.85218 3 5.25V10.5C3 15.4425 5.3925 18.4378 7.39969 20.0803C9.56156 21.8484 11.7122 22.4494 11.8059 22.4738C11.9348 22.5088 12.0708 22.5088 12.1997 22.4738C12.2934 22.4494 14.4413 21.8484 16.6059 20.0803C18.6075 18.4378 21 15.4425 21 10.5V5.25C21 4.85218 20.842 4.47064 20.5607 4.18934C20.2794 3.90804 19.8978 3.75 19.5 3.75ZM19.5 10.5C19.5 13.9753 18.2194 16.7962 15.6937 18.8831C14.5943 19.7885 13.344 20.493 12 20.9644C10.6736 20.5012 9.4387 19.8092 8.35125 18.9197C5.79563 16.8291 4.5 13.9969 4.5 10.5V5.25H19.5V10.5Z" fill="#3879D3"/>
+<path d="M17.25 3H6.75C6.35218 3 5.97064 3.15804 5.68934 3.43934C5.40804 3.72064 5.25 4.10218 5.25 4.5V21C5.25007 21.1338 5.28595 21.2652 5.35393 21.3805C5.42191 21.4958 5.5195 21.5908 5.63659 21.6557C5.75367 21.7206 5.88598 21.7529 6.01978 21.7494C6.15358 21.7458 6.284 21.7066 6.3975 21.6356L12 18.1341L17.6034 21.6356C17.7169 21.7063 17.8472 21.7454 17.9809 21.7488C18.1146 21.7522 18.2467 21.7198 18.3636 21.655C18.4806 21.5902 18.5781 21.4953 18.646 21.3801C18.7139 21.2649 18.7498 21.1337 18.75 21V4.5C18.75 4.10218 18.592 3.72064 18.3107 3.43934C18.0294 3.15804 17.6478 3 17.25 3ZM17.25 4.5V15.1472L12.3966 12.1144C12.2774 12.0399 12.1396 12.0004 11.9991 12.0004C11.8585 12.0004 11.7208 12.0399 11.6016 12.1144L6.75 15.1462V4.5H17.25ZM12.3966 16.6144C12.2774 16.5399 12.1396 16.5004 11.9991 16.5004C11.8585 16.5004 11.7208 16.5399 11.6016 16.6144L6.75 19.6472V16.9153L12 13.6341L17.25 16.9153V19.6472L12.3966 16.6144Z" fill="#3B82F6"/>
 </svg>
+
                             </div>
                             <div>
-                                <h4 class="text-lg font-semibold text-gray-900">Capt. Juan Dela Cruz</h4>
+                                <h4 class="text-lg font-medium text-gray-900">Capt. Juan Dela Cruz</h4>
                                 <p class="text-gray-600 text-sm">Barangay Captain</p>
                             </div>
                         </div>
@@ -1000,11 +1012,12 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                         <div class="flex items-center mb-4">
                             <div class="w-12 h-12 rounded-full flex items-center justify-center mr-4">
                                 <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M19.5 3.75H4.5C4.10218 3.75 3.72064 3.90804 3.43934 4.18934C3.15804 4.47064 3 4.85218 3 5.25V10.5C3 15.4425 5.3925 18.4378 7.39969 20.0803C9.56156 21.8484 11.7122 22.4494 11.8059 22.4738C11.9348 22.5088 12.0708 22.5088 12.1997 22.4738C12.2934 22.4494 14.4413 21.8484 16.6059 20.0803C18.6075 18.4378 21 15.4425 21 10.5V5.25C21 4.85218 20.842 4.47064 20.5607 4.18934C20.2794 3.90804 19.8978 3.75 19.5 3.75ZM19.5 10.5C19.5 13.9753 18.2194 16.7962 15.6937 18.8831C14.5943 19.7885 13.344 20.493 12 20.9644C10.6736 20.5012 9.4387 19.8092 8.35125 18.9197C5.79563 16.8291 4.5 13.9969 4.5 10.5V5.25H19.5V10.5Z" fill="#3879D3"/>
+<path d="M22.4893 18.5737L21.1525 7.32375C21.1091 6.95721 20.9321 6.61952 20.6554 6.37529C20.3786 6.13106 20.0215 5.99744 19.6525 6H16.4996C16.4996 4.80653 16.0255 3.66193 15.1816 2.81802C14.3377 1.97411 13.1931 1.5 11.9996 1.5C10.8062 1.5 9.66157 1.97411 8.81766 2.81802C7.97374 3.66193 7.49964 4.80653 7.49964 6H4.34308C3.97399 5.99744 3.61691 6.13106 3.34016 6.37529C3.06342 6.61952 2.88644 6.95721 2.84308 7.32375L1.5062 18.5737C1.4817 18.7837 1.50186 18.9965 1.56536 19.1981C1.62885 19.3998 1.73425 19.5857 1.87464 19.7438C2.01604 19.9025 2.18932 20.0296 2.38317 20.1168C2.57701 20.204 2.78707 20.2494 2.99964 20.25H20.9921C21.206 20.2505 21.4175 20.2056 21.6127 20.1183C21.8079 20.0311 21.9824 19.9034 22.1246 19.7438C22.2644 19.5854 22.3691 19.3993 22.4319 19.1977C22.4948 18.9961 22.5143 18.7835 22.4893 18.5737ZM11.9996 3C12.7953 3 13.5583 3.31607 14.121 3.87868C14.6836 4.44129 14.9996 5.20435 14.9996 6H8.99964C8.99964 5.20435 9.31571 4.44129 9.87832 3.87868C10.4409 3.31607 11.204 3 11.9996 3ZM2.99964 18.75L4.34308 7.5H7.49964V9.75C7.49964 9.94891 7.57866 10.1397 7.71931 10.2803C7.85996 10.421 8.05073 10.5 8.24964 10.5C8.44855 10.5 8.63932 10.421 8.77997 10.2803C8.92062 10.1397 8.99964 9.94891 8.99964 9.75V7.5H14.9996V9.75C14.9996 9.94891 15.0787 10.1397 15.2193 10.2803C15.36 10.421 15.5507 10.5 15.7496 10.5C15.9486 10.5 16.1393 10.421 16.28 10.2803C16.4206 10.1397 16.4996 9.94891 16.4996 9.75V7.5H19.6637L20.9921 18.75H2.99964Z" fill="#3B82F6"/>
 </svg>
+
                             </div>
                             <div>
-                                <h4 class="text-lg font-semibold text-gray-900">Nurse Lisa Mendoza</h4>
+                                <h4 class="text-lg font-medium text-gray-900">Nurse Lisa Mendoza</h4>
                                 <p class="text-gray-600 text-sm">Head Nurse</p>
                             </div>
                         </div>
@@ -1041,7 +1054,7 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
 
                     <!-- Column 2: Quick Links -->
                     <div>
-                        <h3 class="text-xl font-semibold mb-6">Quick Links</h3>
+                        <h3 class="text-xl font-medium mb-6">Quick Links</h3>
                         <ul class="space-y-3">
                             <li>
                                 <a href="#home" class="text-blue-100 hover:text-white transition flex items-center">
@@ -1068,7 +1081,7 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
 
                     <!-- Column 3: Contact Info -->
                     <div>
-                        <h3 class="text-xl font-semibold mb-6">Contact Info</h3>
+                        <h3 class="text-xl font-medium mb-6">Contact Info</h3>
                         <ul class="space-y-3">
                             <li class="flex items-start">
                                 <i class="fas fa-map-marker-alt mt-1 mr-3 text-blue-200"></i>
@@ -1087,7 +1100,7 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
 
                     <!-- Column 4: Hours -->
                     <div>
-                        <h3 class="text-xl font-semibold mb-6">Operating Hours</h3>
+                        <h3 class="text-xl font-medium mb-6">Operating Hours</h3>
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <span class="text-blue-100">Monday - Friday</span>
@@ -1239,6 +1252,27 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                             <li>• Chronic condition monitoring</li>
                             <li>• Dental exams twice a year</li>
                         </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Single Announcement Modal -->
+    <div id="singleAnnouncementModal" class="fixed inset-0 hidden z-50 bg-black/30">
+        <div class="absolute inset-0 flex items-center justify-center p-4 z-[1050]">
+            <div class="relative bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[75vh] flex flex-col overflow-y-auto modal-content" style="z-index:1051; transition: opacity 0.3s, transform 0.3s; opacity:0; transform:scale(0.95);">
+                <button onclick="closeSingleAnnouncementModal()"
+                    class="absolute top-4 right-4 z-50 text-gray-500 hover:text-gray-700 bg-white rounded-full p-2 shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <div class="overflow-y-auto flex-1 p-8">
+                    <div id="announcementContent">
+                        <!-- Content will be populated by JavaScript -->
                     </div>
                 </div>
             </div>
@@ -1446,7 +1480,93 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
         }
 
         function openAnnouncementModal(index) {
-            openAnnouncementsModal();
+            // Check if the announcement exists
+            if (!announcementsData || !announcementsData[index]) {
+                console.error('Announcement not found at index:', index);
+                return;
+            }
+
+            const announcement = announcementsData[index];
+            const contentDiv = document.getElementById('announcementContent');
+            
+            // Format date
+            const postDate = new Date(announcement.post_date);
+            const formattedDate = postDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Determine priority badge styling
+            let badgeClass = 'bg-blue-100 text-blue-700';
+            let badgeText = 'Announcement';
+            if (announcement.priority === 'high') {
+                badgeClass = 'bg-red-100 text-red-700';
+                badgeText = 'High Priority';
+            } else if (announcement.priority === 'medium') {
+                badgeClass = 'bg-yellow-100 text-yellow-700';
+                badgeText = 'Medium Priority';
+            }
+
+            // Build announcement HTML matching the display announcement card layout
+            let html = `
+                <div class="announcement-detail">
+                    <!-- Badge and Date Header -->
+                    <div class="flex items-start justify-between mb-8">
+                        <div>
+                            <span class="inline-block px-4 py-2 rounded text-sm font-semibold ${badgeClass}">
+                                ${badgeText}
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm text-gray-500 font-medium">Date Posted :</div>
+                            <div class="text-lg font-semibold text-blue-600">
+                                ${formattedDate}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Title -->
+                    <h2 class="text-3xl font-medium text-gray-900 mb-6 leading-tight">${announcement.title}</h2>
+                    
+                    <!-- Image -->
+                    ${announcement.image_path ? `
+                        <div class="mb-8 rounded-lg overflow-hidden">
+                            <img src="${announcement.image_path}" alt="${announcement.title}" class="w-full rounded-lg max-h-96 object-cover">
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Message -->
+                    <div class="text-gray-800 mb-6 text-lg leading-relaxed whitespace-pre-wrap break-words overflow-wrap-break-word">
+                        ${announcement.message}
+                    </div>
+                </div>
+            `;
+
+            contentDiv.innerHTML = html;
+
+            // Show the modal
+            const modal = document.getElementById('singleAnnouncementModal');
+            const modalContent = modal.querySelector('.modal-content');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                modalContent.style.opacity = '1';
+                modalContent.style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        function closeSingleAnnouncementModal() {
+            const modal = document.getElementById('singleAnnouncementModal');
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.style.opacity = '0';
+            modalContent.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }, 300);
         }
 
         // Learn More Modal Functions
@@ -1477,12 +1597,18 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
         // Close modals when clicking outside
         document.addEventListener('click', function(event) {
             const announcementsModal = document.getElementById('announcementsModal');
+            const singleAnnouncementModal = document.getElementById('singleAnnouncementModal');
             const learnMoreModal = document.getElementById('learnMoreModal');
             const loginModal = document.getElementById('loginModal');
             
             if (announcementsModal && !announcementsModal.classList.contains('hidden') && 
                 event.target === announcementsModal) {
                 closeAnnouncementsModal();
+            }
+            
+            if (singleAnnouncementModal && !singleAnnouncementModal.classList.contains('hidden') && 
+                event.target === singleAnnouncementModal) {
+                closeSingleAnnouncementModal();
             }
             
             if (learnMoreModal && !learnMoreModal.classList.contains('hidden') && 
@@ -1500,6 +1626,7 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeAnnouncementsModal();
+                closeSingleAnnouncementModal();
                 closeLearnMoreModal();
                 closeLoginModal();
             }
