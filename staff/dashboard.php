@@ -3542,7 +3542,7 @@ $recordsPerPage = 5;
                     let filteredLogs = filterLogsByDate(logs);
                     const start = (page - 1) * logsPerPage;
                     const end = start + logsPerPage;
-                    let html = `<h3 class='text-xl font-bold text-gray-700 mb-4'>Generated Report Logs</h3>
+                    let html = `<h3 class='text-xl font-sm text-gray-700 mb-4'>Generated Report Logs</h3>
                         <div class='overflow-x-auto mb-6'>
                                     <table class='min-w-full text-sm text-left'>
                                         <thead>

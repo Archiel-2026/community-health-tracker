@@ -1063,10 +1063,10 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 1.18rem;
-            font-weight: 500;
+            padding: 12px 18px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 400;
             line-height: 1;
             white-space: nowrap;
         }
@@ -1092,7 +1092,7 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
 
         .announcement-detail-posted {
             color: #646464;
-            font-size: 1.15rem;
+            font-size: 1rem;
             line-height: 1.2;
             margin-bottom: 5px;
         }
@@ -1161,20 +1161,20 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
         .announcement-detail-btn.accept {
             background: #12b981;
             color: #ffffff;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 500;
         }
 
         .announcement-detail-btn.dismiss {
             background: #8f8f93;
             color: #ededed;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 500;
         }
 
         .announcement-detail-btn-icon {
-            width: 24px;
-            height: 24px;
+            width: 26px;
+            height: 26px;
             border-radius: 999px;
             display: inline-flex;
             align-items: center;
@@ -1358,7 +1358,7 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
             }
 
             .announcement-detail-pill {
-                font-size: 0.84rem;
+                font-size: 0.30rem;
                 padding: 7px 10px;
             }
 

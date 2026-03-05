@@ -46,6 +46,17 @@ try {
     // Silently fail - announcements are not critical for page load
     error_log("Error fetching announcements: " . $e->getMessage());
 }
+
+// Function to check if today is a weekend
+function isWeekend() {
+    $dayOfWeek = date('N'); // 1-7, Monday to Sunday
+    return $dayOfWeek >= 6; // 6 = Saturday, 7 = Sunday
+}
+
+// Determine availability status
+$isWeekend = isWeekend();
+$badgeStatus = $isWeekend ? 'Closed' : 'Open Now';
+$badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-500';
 ?>
 
 <!DOCTYPE html>
@@ -236,7 +247,7 @@ try {
 
         .complete-btn {
             padding: 12px 28px;
-            font-weight: 600;
+            font-weight: 500;
             transition: all 0.3s ease;
         }
 
@@ -252,8 +263,6 @@ try {
 
         .nav-link.active {
             color: #4A90E2;
-            text-decoration: underline;
-            text-underline-offset: 4px;
         }
 
         /* Modal Styles */
@@ -457,8 +466,8 @@ try {
         .btn-primary {
             background-color: white;
             color: var(--warm-blue);
-            padding: 1.5rem 2.2rem;
-            border-radius: 30rem;
+            padding: 1rem 2rem;
+            border-radius: 8px;
             font-weight: 600;
             transition: all 0.3s ease;
         }
@@ -578,7 +587,7 @@ try {
                         <!-- Login button - positioned to the right -->
                         <div class="hidden md:flex items-center">
                             <a href="#" onclick="openLoginModal()"
-                                class="complete-btn bg-[#4A90E2] text-lg text-white flex items-center justify-center shadow-md hover:shadow-lg px-6 py-3">
+                                class="bg-[#4A90E2] text-lg rounded-lg text-white flex items-center justify-center shadow-md hover:shadow-lg px-6 py-3">
                                 Resident Login
                             </a>
                         </div>
@@ -593,7 +602,7 @@ try {
                 <a href="#home" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">Home</a>
                 <a href="#about" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">About</a>
                 <a href="#services" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">Services</a>
-                <a href="#contact" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">Contact</a>
+                <a href="#footer" onclick="toggleMobileMenu()" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#4A90E2] rounded-lg transition-all duration-300 nav-link">Contact</a>
                 <a href="#" onclick="openLoginModal(); toggleMobileMenu();"
                     class="complete-btn bg-[#4A90E2] text-white px-5 py-3 transition-all text-center mt-4 flex items-center justify-center gap-2 nav-link shadow-md hover:shadow-lg">
                     <i class="fas fa-sign-in-alt"></i>
@@ -676,17 +685,20 @@ try {
                 </div>
                 
                 <!-- Quick Info Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 grid-spacing">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12 grid-spacing w-full">
                     <!-- Location Card - matches provided image -->
                     <div class="rounded-xl overflow-hidden bg-white flex flex-col shadow-lg hover:shadow-xl transition-shadow" style="min-width:280px;">
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
-                                    <i class="fas fa-map-marker-alt text-white text-lg"></i>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M10.5 7.5C10.5 7.20333 10.588 6.91332 10.7528 6.66664C10.9176 6.41997 11.1519 6.22771 11.426 6.11418C11.7001 6.00065 12.0017 5.97094 12.2926 6.02882C12.5836 6.0867 12.8509 6.22956 13.0607 6.43934C13.2704 6.64912 13.4133 6.91639 13.4712 7.20736C13.5291 7.49834 13.4994 7.79994 13.3858 8.07402C13.2723 8.34811 13.08 8.58238 12.8334 8.7472C12.5867 8.91203 12.2967 9 12 9C11.6022 9 11.2206 8.84196 10.9393 8.56066C10.658 8.27936 10.5 7.89782 10.5 7.5ZM6 7.5C6 5.9087 6.63214 4.38258 7.75736 3.25736C8.88258 2.13214 10.4087 1.5 12 1.5C13.5913 1.5 15.1174 2.13214 16.2426 3.25736C17.3679 4.38258 18 5.9087 18 7.5C18 13.1203 12.6019 16.2694 12.375 16.4016C12.2617 16.4663 12.1334 16.5004 12.0028 16.5004C11.8723 16.5004 11.744 16.4663 11.6306 16.4016C11.3981 16.2694 6 13.125 6 7.5ZM7.5 7.5C7.5 11.4563 10.86 14.0822 12 14.8594C13.1391 14.0831 16.5 11.4563 16.5 7.5C16.5 6.30653 16.0259 5.16193 15.182 4.31802C14.3381 3.47411 13.1935 3 12 3C10.8065 3 9.66193 3.47411 8.81802 4.31802C7.97411 5.16193 7.5 6.30653 7.5 7.5ZM19.0097 13.8403C18.8251 13.7793 18.624 13.7924 18.4489 13.8768C18.2738 13.9612 18.1382 14.1102 18.0709 14.2926C18.0035 14.475 18.0096 14.6764 18.0879 14.8543C18.1661 15.0323 18.3104 15.1729 18.4903 15.2466C20.0381 15.8194 21 16.5863 21 17.25C21 18.5025 17.5762 20.25 12 20.25C6.42375 20.25 3 18.5025 3 17.25C3 16.5863 3.96188 15.8194 5.50969 15.2475C5.6896 15.1739 5.8339 15.0332 5.91215 14.8553C5.99039 14.6773 5.99648 14.4759 5.92913 14.2935C5.86178 14.1112 5.72624 13.9621 5.5511 13.8777C5.37596 13.7933 5.1749 13.7803 4.99031 13.8412C2.73937 14.6709 1.5 15.8822 1.5 17.25C1.5 20.1731 6.91031 21.75 12 21.75C17.0897 21.75 22.5 20.1731 22.5 17.25C22.5 15.8822 21.2606 14.6709 19.0097 13.8403Z" fill="#FFFFFF"/>
+</svg>
+
                                 </span>
                                 <span class="text-white font-md text-lg">Location</span>
                             </div>
-                            <span class="bg-green-100 text-green-700 text-xs font-semibold px-4 py-1 rounded-full">Active</span>
+                            <span class="bg-green-100 text-green-500 text-xs font-semibold px-3 py-1 rounded-full">Active</span>
                         </div>
                         <div class="px-6 pt-4 pb-6 flex-1 flex flex-col">
                             <div class="font-semibold text-gray-800 text-base mb-0.5">Barangay Luz, Cebu City</div>
@@ -697,7 +709,7 @@ try {
                                     width="100%" height="120" style="border:0; min-width:100%; min-height:110px; max-height:160px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                             </div>
                             <div class="flex gap-2 mt-auto">
-                                <a href="https://www.google.com/maps/place/Luz+Barangay+Hall/@10.3234786,123.9051946,17z/data=!4m14!1m7!3m6!1s0x33a9993d16c5932d:0x9ad8b888ffcd2aa7!2sLuz+Barangay+Hall!8m2!3d10.3237636!4d123.9061173!16s%2Fg%2F11bw7r3h1m!3m5!1s0x33a9993d16c5932d:0x9ad8b888ffcd2aa7!8m2!3d10.3237636!4d123.9061173!16s%2Fg%2F11bw7r3h1m?entry=ttu&g_ep=EgoyMDI2MDIyNS4wIKXMDSoASAFQAw%3D%3D" target="_blank" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Location</a>
+                                <a href="https://www.google.com/maps/place/Luz+Barangay+Hall/@10.3234786,123.9051946,17z/data=!4m14!1m7!3m6!1s0x33a9993d16c5932d:0x9ad8b888ffcd2aa7!2sLuz+Barangay+Hall!8m2!3d10.3237636!4d123.9061173!16s%2Fg%2F11bw7r3h1m!3m5!1s0x33a9993d16c5932d:0x9ad8b888ffcd2aa7!8m2!3d10.3237636!4d123.9061173!16s%2Fg%2F11bw7r3h1m?entry=ttu&g_ep=EgoyMDI2MDIyNS4wIKXMDSoASAFQAw%3D%3D" target="_blank" class="bg-[#4A90E2] hover:bg-[#4A90E2] text-white text-sm font-medium px-4 py-1.5 rounded border transition">View Location</a>
                             </div>
                         </div>
                     </div>
@@ -707,11 +719,14 @@ try {
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
-                                    <i class="fas fa-clock text-white text-lg"></i>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2.25C10.0716 2.25 8.18657 2.82183 6.58319 3.89317C4.97982 4.96452 3.73013 6.48726 2.99218 8.26884C2.25422 10.0504 2.06114 12.0108 2.43735 13.9021C2.81355 15.7934 3.74215 17.5307 5.10571 18.8943C6.46928 20.2579 8.20656 21.1865 10.0979 21.5627C11.9892 21.9389 13.9496 21.7458 15.7312 21.0078C17.5127 20.2699 19.0355 19.0202 20.1068 17.4168C21.1782 15.8134 21.75 13.9284 21.75 12C21.7473 9.41498 20.7192 6.93661 18.8913 5.10872C17.0634 3.28084 14.585 2.25273 12 2.25ZM12 20.25C10.3683 20.25 8.77326 19.7661 7.41655 18.8596C6.05984 17.9531 5.00242 16.6646 4.378 15.1571C3.75358 13.6496 3.5902 11.9908 3.90853 10.3905C4.22685 8.79016 5.01259 7.32015 6.16637 6.16637C7.32016 5.01259 8.79017 4.22685 10.3905 3.90852C11.9909 3.59019 13.6497 3.75357 15.1571 4.37799C16.6646 5.00242 17.9531 6.05984 18.8596 7.41655C19.7662 8.77325 20.25 10.3683 20.25 12C20.2475 14.1873 19.3775 16.2843 17.8309 17.8309C16.2843 19.3775 14.1873 20.2475 12 20.25ZM18 12C18 12.1989 17.921 12.3897 17.7803 12.5303C17.6397 12.671 17.4489 12.75 17.25 12.75H12C11.8011 12.75 11.6103 12.671 11.4697 12.5303C11.329 12.3897 11.25 12.1989 11.25 12V6.75C11.25 6.55109 11.329 6.36032 11.4697 6.21967C11.6103 6.07902 11.8011 6 12 6C12.1989 6 12.3897 6.07902 12.5303 6.21967C12.671 6.36032 12.75 6.55109 12.75 6.75V11.25H17.25C17.4489 11.25 17.6397 11.329 17.7803 11.4697C17.921 11.6103 18 11.8011 18 12Z" fill="white"/>
+</svg>
+
                                 </span>
                                 <span class="text-white font-md text-lg">Availability</span>
                             </div>
-                            <span class="bg-green-100 text-green-700 text-xs font-semibold px-4 py-1 rounded-full">Open Now</span>
+                            <span class="<?php echo $badgeClass; ?> text-xs font-semibold px-3 py-1 rounded-full"><?php echo $badgeStatus; ?></span>
                         </div>
                         <div class="px-6 pt-4 pb-6 flex-1 flex flex-col">
                             <div class="flex items-center gap-2 mb-1">
@@ -719,13 +734,13 @@ try {
                                 <span class="font-semibold text-gray-800 text-base">Barangay Luz, Cebu City</span>
                             </div>
                             <div class="text-gray-400 text-sm mb-1">Office Hours :</div>
-                            <div class="text-gray-700 text-sm mb-1">Monday–Friday, 8:00 AM – 5:00 PM</div>
+                            <div class="text-gray-700 text-base font-medium mb-1">Monday–Friday, 8:00 AM – 5:00 PM</div>
                             <div class="text-gray-400 text-sm mb-1">Emergency Contact :</div>
-                            <div class="text-gray-700 text-sm mb-1">4357-344-45</div>
+                            <div class="text-gray-700 text-base font-medium mb-1">4357-344-45</div>
                             <div class="text-gray-400 text-sm mb-1">Contact Person :</div>
-                            <div class="text-gray-700 text-sm mb-4">Maria Santos</div>
+                            <div class="text-gray-700 text-base font-medium mb-4">Maria Santos</div>
                             <div class="flex gap-2 mt-auto">
-                                <a href="#" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Details</a>
+                                <a href="#" class="bg-[#4A90E2] hover:bg-[#4A90E2] text-white text-sm font-medium px-4 py-1.5 rounded border transition">Preview</a>
                                
                             </div>
                         </div>
@@ -736,11 +751,17 @@ try {
                         <div class="bg-[#4A90E2] px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full">
-                                    <i class="fas fa-paper-plane text-white text-lg"></i>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <g clip-path="url(#clip0_2181_13657)"><path d="M22.2497 9.95765L5.75724 3.84421L5.74224 3.83953C5.47677 3.74812 5.19097 3.73306 4.91737 3.79605C4.64376 3.85905 4.39333 3.99756 4.19455 4.19585C3.99578 4.39413 3.85664 4.64423 3.79298 4.91768C3.72931 5.19113 3.74367 5.47696 3.83442 5.74265C3.83556 5.74777 3.83713 5.75279 3.83911 5.75765L9.95724 22.2502C10.0577 22.5442 10.2483 22.7991 10.5019 22.9787C10.7556 23.1583 11.0593 23.2534 11.37 23.2505H11.3982C11.7151 23.248 12.0228 23.1439 12.276 22.9533C12.5292 22.7627 12.7144 22.4959 12.8044 22.192L12.81 22.1733L14.8575 14.8608L22.17 12.8133L22.1888 12.8077C22.4904 12.7148 22.755 12.5293 22.9451 12.2774C23.1351 12.0255 23.2409 11.7201 23.2473 11.4046C23.2538 11.0891 23.1605 10.7796 22.9809 10.5202C22.8013 10.2608 22.5445 10.0646 22.2469 9.95953L22.2497 9.95765ZM14.0475 13.5286C13.9237 13.5634 13.8109 13.6294 13.7199 13.7203C13.629 13.8113 13.5629 13.9241 13.5282 14.048L11.3719 21.7505L11.3663 21.7345L5.25005 5.25046L21.7332 11.3648L21.7482 11.3705L14.0475 13.5286Z" fill="#FFFFFF"/></g>
+<defs>
+<clipPath id="clip0_2181_13657">
+<rect width="24" height="24" fill="#FFFFFF"/>
+</clipPath>
+</defs>
+</svg>
                                 </span>
                                 <span class="text-white font-md text-lg">Contact</span>
                             </div>
-                            <span class="bg-green-100 text-green-700 text-xs font-semibold px-4 py-1 rounded-full">Active</span>
+                            <span class="bg-green-100 text-green-500 text-xs font-semibold px-3 py-1 rounded-full">Active</span>
                         </div>
                         <div class="px-6 pt-4 pb-6 flex-1 flex flex-col">
                             <div class="flex items-center gap-2 mb-1">
@@ -754,8 +775,7 @@ try {
                             <div class="text-gray-400 text-sm mb-1">Official Email Address :</div>
                             <div class="text-gray-700 text-base font-medium mb-4">healthcenter@barangayluz.gov.ph</div>
                             <div class="flex gap-2 mt-auto">
-                                <a href="#" class="bg-[#2563eb] hover:bg-[#174ea6] text-white text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Details</a>
-                                <a href="#" class="bg-white hover:bg-blue-50 text-[#2563eb] text-sm font-medium px-4 py-1.5 rounded border border-[#2563eb] transition">View Link</a>
+                                <a href="#" class="bg-[#4A90E2] hover:bg-[#4A90E2] text-white text-sm font-medium px-4 py-1.5 rounded border transition">Preview</a>
                             </div>
                         </div>
                     </div>
@@ -857,7 +877,7 @@ try {
                 </div>
 
                 <?php if (empty($announcements)): ?>
-                    <div class="bg-white rounded-2xl p-16 text-center border border-gray-200">
+                    <div class="bg-white rounded-2xl p-16 text-center border border-gray-200 backdrop-blur-md">
                         <div class="mb-6 flex justify-center">
                             <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M21.4256 8.1225L4.92 3.06C4.6966 2.99484 4.4611 2.98255 4.23213 3.02411C4.00316 3.06567 3.787 3.15993 3.60075 3.29944C3.41449 3.43895 3.26325 3.61988 3.15899 3.82792C3.05472 4.03597 3.00029 4.26542 3 4.49813V17.9981C3 18.396 3.15804 18.7775 3.43934 19.0588C3.72064 19.3401 4.10218 19.4981 4.5 19.4981C4.64344 19.4982 4.78614 19.4777 4.92375 19.4372L12.75 17.0353V17.9981C12.75 18.396 12.908 18.7775 13.1893 19.0588C13.4706 19.3401 13.8522 19.4981 14.25 19.4981H17.25C17.6478 19.4981 18.0294 19.3401 18.3107 19.0588C18.592 18.7775 18.75 18.396 18.75 17.9981V15.195L21.4256 14.3747C21.7353 14.2816 22.0069 14.0916 22.2003 13.8325C22.3937 13.5734 22.4988 13.259 22.5 12.9356V9.56063C22.4986 9.23745 22.3934 8.92326 22.2 8.66435C22.0066 8.40544 21.7351 8.2155 21.4256 8.1225ZM12.75 15.4669L4.5 17.9981V4.49813L12.75 7.02938V15.4669ZM17.25 17.9981H14.25V16.575L17.25 15.6544V17.9981ZM21 12.9356H20.9897L14.25 15.0056V7.49063L20.9897 9.55313H21V12.9281V12.9356Z" fill="#9C9C9C"/>
@@ -893,7 +913,7 @@ try {
                                             <?= date('M d, Y', strtotime($announcement['post_date'])) ?>
                                         </div>
                                     </div>
-                                    <h3 class="text-xl font-bold text-gray-900 mb-3">
+                                    <h3 class="text-xl font-medium text-gray-700 mb-3">
                                         <?= htmlspecialchars($announcement['title']) ?>
                                     </h3>
                                     <?php if ($announcement['image_path']): ?>
@@ -903,11 +923,11 @@ try {
                                                  class="responsive-img h-48 object-cover">
                                         </div>
                                     <?php endif; ?>
-                                    <div class="text-gray-700 whitespace-pre-line mb-4 text-lead">
+                                    <div class="text-gray-700 whitespace-pre-line mb-8 b text-lead">
                                         <?= nl2br(htmlspecialchars(substr($announcement['message'], 0, 150))) ?>...
                                     </div>
                                     <button onclick="openAnnouncementModal(<?= $index ?>)"
-                                            class="text-blue-700 hover:text-blue-900 font-semibold flex items-center text-sm">
+                                            class="text-white bg-blue-500 rounded-md py-3 px-5 hover:text-white font-semibold flex items-center text-sm">
                                         Read Full Announcement
                                         <i class="fas fa-arrow-right ml-2"></i>
                                     </button>
@@ -1241,12 +1261,15 @@ try {
                         <div class="text-center">
                             <div class="flex items-center justify-center gap-3 mb-4">
                                 <div class="bg-blue-100 p-3 rounded-full">
-                                    <i class="fas fa-bullhorn text-2xl text-blue-600"></i>
+                                    <svg width="35" height="35" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21.4256 8.1225L4.92 3.06C4.6966 2.99484 4.4611 2.98255 4.23213 3.02411C4.00316 3.06567 3.787 3.15993 3.60075 3.29944C3.41449 3.43895 3.26325 3.61988 3.15899 3.82792C3.05472 4.03597 3.00029 4.26542 3 4.49813V17.9981C3 18.396 3.15804 18.7775 3.43934 19.0588C3.72064 19.3401 4.10218 19.4981 4.5 19.4981C4.64344 19.4982 4.78614 19.4777 4.92375 19.4372L12.75 17.0353V17.9981C12.75 18.396 12.908 18.7775 13.1893 19.0588C13.4706 19.3401 13.8522 19.4981 14.25 19.4981H17.25C17.6478 19.4981 18.0294 19.3401 18.3107 19.0588C18.592 18.7775 18.75 18.396 18.75 17.9981V15.195L21.4256 14.3747C21.7353 14.2816 22.0069 14.0916 22.2003 13.8325C22.3937 13.5734 22.4988 13.259 22.5 12.9356V9.56063C22.4986 9.23745 22.3934 8.92326 22.2 8.66435C22.0066 8.40544 21.7351 8.2155 21.4256 8.1225ZM12.75 15.4669L4.5 17.9981V4.49813L12.75 7.02938V15.4669ZM17.25 17.9981H14.25V16.575L17.25 15.6544V17.9981ZM21 12.9356H20.9897L14.25 15.0056V7.49063L20.9897 9.55313H21V12.9281V12.9356Z" fill="#0EA4EE"/>
+</svg>
+
                                 </div>
-                                <h2 class="text-3xl font-bold text-gray-900">All Announcements</h2>
+                                <h2 class="text-2xl font-semibold text-gray-700">All Announcements</h2>
                             </div>
-                            <p class="text-gray-600 max-w-2xl mx-auto text-lead">
-                                Stay updated with all important announcements from Barangay Luz Health Center
+                            <p class="text-gray-400 max-w-1xl mx-auto text-lead">
+                                Stay updated with all important announcements from BO. Luz Health Center
                             </p>
                         </div>
                     </div>
@@ -1319,7 +1342,7 @@ try {
                 
                 <div class="p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
                     <div class="text-center">
-                        <p class="text-gray-600 mb-4 text-lead">
+                        <p class="text-gray-500 mb-4">
                             For the latest updates, please check this section regularly or contact the Barangay Health Center.
                         </p>
                     </div>

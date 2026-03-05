@@ -121,9 +121,7 @@ echo <<<HTML
         <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl border border-gray-200 text-center">
             <div class="flex flex-col items-center">
                 <div class="logout-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="48" height="48">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
+                    
                 </div>
                 <h3 class="text-2xl font-semibold text-gray-800 mb-2">You're now logged out.</h3>
                 <p class="text-gray-500 mb-6">See you next time!</p>

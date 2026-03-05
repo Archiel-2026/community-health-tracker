@@ -264,7 +264,7 @@ if (isset($_SESSION['user']['id'])) {
     .continue-btn,
     .complete-btn {
         width: 100%;
-        border-radius: 9999px !important;
+        border-radius: 8px !important;
         /* rounded-full equivalent */
         padding: 0.75rem 2.8rem !important;
         font-size: 1rem !important;
@@ -1161,7 +1161,7 @@ if (isset($_SESSION['user']['id'])) {
                         </div>
                         <!-- Enhanced Logout Button - Hidden on mobile -->
                         <button type="button" onclick="showLogoutModal('user')"
-                            class="logout-btn-1<?php echo ($current_page == 'health_records.php') ? ' active-record' : ''; ?>">
+                            class="logout-btn-1">
                             <span>Signout</span>
                         </button>
 
@@ -1320,7 +1320,7 @@ if (isset($_SESSION['user']['id'])) {
                     <!-- Logout Button -->
                     <div class="flex justify-center">
                         <button type="button" onclick="showLogoutModal('admin'); closeAdminMenu();"
-                            class="logout-btn-3 transition font-medium">
+                            class="logout-btn-1 transition font-medium">
                             Signout
                         </button>
                     </div>
@@ -1538,7 +1538,7 @@ if (isset($_SESSION['user']['id'])) {
                             <!-- Login Button -->
                             <div class="mt-8">
                                 <button type="submit"
-                                    class="complete-btn bg-[#3C96E1] w-full p-3 rounded-full text-white transition-all duration-200 font-medium shadow-md hover:shadow-lg text-lg h-14">
+                                    class="complete-btn bg-[#3C96E1] w-full p-3 rounded-md text-white transition-all duration-200 font-medium shadow-md hover:shadow-lg text-lg h-14">
                                     Login
                                 </button>
                             </div>

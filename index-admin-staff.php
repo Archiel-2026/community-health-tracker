@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             align-items: center;
             padding: 0;
             margin: 0;
-            background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('./asssets/images/brgyluz.jpg') no-repeat center center/cover fixed;
+            background: white; /* Changed to white background */
             position: relative;
         }
 
@@ -80,10 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             z-index: 1;
         }
 
-        /* --- Left Branding --- */
+        /* --- Left Branding with Background Image --- */
         .left-section {
             flex: 1;
-            background: linear-gradient(135deg, rgba(58, 148, 223, 0.95) 0%, rgba(46, 124, 192, 0.95) 100%);
+            background: linear-gradient(135deg, rgba(58, 148, 223, 0.85) 0%, rgba(46, 124, 192, 0.85) 100%), 
+                        url('./asssets/images/brgyluz.jpg') no-repeat center center/cover;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -92,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: white;
             text-align: center;
             min-height: 100vh;
+            position: relative;
         }
 
         .logo-container {
@@ -161,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flex-shrink: 0;
         }
 
-        /* --- Right Login Section --- */
+        /* --- Right Login Section with White Background --- */
         .right-section { 
             flex: 1; 
             padding: 0;
@@ -169,9 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flex-direction: column; 
             justify-content: center;
             align-items: center;
-            background: rgba(255, 255, 255, 0.88);
+            background: white; /* Changed to solid white */
             min-height: 100vh;
-            backdrop-filter: blur(6px);
         }
         
         .login-box {
@@ -181,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 45px 40px;
         }
 
-        .login-title { font-size: 24px; font-weight: 600; color: #1f2937; text-align: center; margin-bottom: 10px; letter-spacing: -0.3px; }
+        .login-title { font-size: 24px; font-weight: 500; color: #1f2937; text-align: center; margin-bottom: 10px; letter-spacing: -0.3px; }
         .login-subtitle { color: black; font-size: 14px; text-align: center; margin-bottom: 32px; font-weight: 200; }
 
         .form-group { margin-bottom: 20px; position: relative; }
@@ -359,7 +360,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="instruction-item">
                     <i class="fas fa-check-circle"></i>
-                    <span>Select your appropriate role (Admin/Staff)</span>
+                    <span>Select your appropriate role (Admin)</span>
                 </div>
                 <div class="instruction-item">
                     <i class="fas fa-check-circle"></i>
@@ -387,7 +388,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <select id="role" name="role" class="form-select" required>
                             <option value="">Select Role Type</option>
                             <option value="admin">Super Admin</option>
-                            <option value="staff">Admin / Staff</option>
+                            <option value="staff">Admin</option>
                         </select>
                     </div>
 
@@ -439,7 +440,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Toggle button state and text
         roleSelect.addEventListener('change', function() {
             if (this.value) {
-                roleText.textContent = 'Login as ' + (this.value === 'admin' ? 'Super Admin' : 'Admin/Staff');
+                roleText.textContent = 'Login as ' + (this.value === 'admin' ? 'Super Admin' : 'Admin');
                 loginButton.disabled = false;
             } else {
                 roleText.textContent = 'Select Role Type';
