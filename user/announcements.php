@@ -1251,7 +1251,6 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: #f3f4f6;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1881,7 +1880,10 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
                             <?php if (empty($labResults) && empty($basicAnnouncements)): ?>
                                 <div class="text-center py-10 sm:py-20">
                                     <div class="empty-state-icon">
-                                        <i class="fas fa-bullhorn icon-3xl"></i>
+                                        <svg width="70" height="70" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21.4256 8.1225L4.92 3.06C4.6966 2.99484 4.4611 2.98255 4.23213 3.02411C4.00316 3.06567 3.787 3.15993 3.60075 3.29944C3.41449 3.43895 3.26325 3.61988 3.15899 3.82792C3.05472 4.03597 3.00029 4.26542 3 4.49813V17.9981C3 18.396 3.15804 18.7775 3.43934 19.0588C3.72064 19.3401 4.10218 19.4981 4.5 19.4981C4.64344 19.4982 4.78614 19.4777 4.92375 19.4372L12.75 17.0353V17.9981C12.75 18.396 12.908 18.7775 13.1893 19.0588C13.4706 19.3401 13.8522 19.4981 14.25 19.4981H17.25C17.6478 19.4981 18.0294 19.3401 18.3107 19.0588C18.592 18.7775 18.75 18.396 18.75 17.9981V15.195L21.4256 14.3747C21.7353 14.2816 22.0069 14.0916 22.2003 13.8325C22.3937 13.5734 22.4988 13.259 22.5 12.9356V9.56063C22.4986 9.23745 22.3934 8.92326 22.2 8.66435C22.0066 8.40544 21.7351 8.2155 21.4256 8.1225ZM12.75 15.4669L4.5 17.9981V4.49813L12.75 7.02938V15.4669ZM17.25 17.9981H14.25V16.575L17.25 15.6544V17.9981ZM21 12.9356H20.9897L14.25 15.0056V7.49063L20.9897 9.55313H21V12.9281V12.9356Z" fill="#9ca3af"/>
+</svg>
+
                                     </div>
                                     <h3 class="empty-state-title">No Announcements</h3>
                                     <p class="empty-state-text">There are currently no active announcements. Check back

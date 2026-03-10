@@ -63,33 +63,7 @@ if (!function_exists('ensureActivityLogTable')) {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     }
 }
-// ============================================================================
-// Account Management - Barangay Luz Health Center
-// This file handles staff and resident account management, including:
-// - Password changes and resets
-// - Account creation and status toggling
-// - Manual linking of resident and patient records
-// - Security, validation, and error handling
-// ============================================================================
-// --- Security and session management ---
-// --- CSRF token generation and validation ---
-// --- Main POST handler for all account management actions ---
-// --- Helper for error message and redirect (DRY principle) ---
-// --- Staff password change with current password verification ---
-// --- Resident password change with current password verification ---
-// --- Staff password reset by admin (no current password required) ---
-// --- Resident password reset by admin (no current password required) ---
-// --- Staff account creation ---
-// --- Resident account creation (no automatic patient record creation) ---
-// --- Resident status toggle (approve, decline, suspend) ---
-// --- Staff status toggle (activate, deactivate) ---
-// --- Staff deletion with dependency checks and reassignment ---
-// --- Function to manually link resident account to patient records ---
-// --- Function to get unlinked residents (accounts without patient records) ---
-// --- Function to get unlinked patient records (without user accounts) ---
-// --- Data loading for staff and resident accounts, and unlinked records ---
-// --- HTML and UI rendering starts here ---
-// Helper for error message and redirect
+
 function setErrorAndRedirect($msg, $type = 'error', $redirect = 'manage_accounts.php')
 {
     $_SESSION['message'] = $msg;
@@ -700,143 +674,199 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     // Handle staff deletion
-    elseif (isset($_POST['hard_delete'])) {
-        $staffId = intval($_POST['staff_id']);
+elseif (isset($_POST['hard_delete'])) {
+    $staffId = intval($_POST['staff_id']);
 
+    try {
+        // Get staff name for log
+        $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
+        $nameStmt->execute([$staffId]);
+        $staffName = $nameStmt->fetchColumn();
+
+        // Check for dependencies with dynamic column detection
+        $dependencies = [];
+
+        // Helper function to check column existence
+        function getStaffColumn($pdo, $table, $possibleColumns = ['staff_id', 'created_by', 'user_id', 'added_by']) {
+            try {
+                $columns = $pdo->query("SHOW COLUMNS FROM $table")->fetchAll(PDO::FETCH_COLUMN);
+                foreach ($possibleColumns as $column) {
+                    if (in_array($column, $columns)) {
+                        return $column;
+                    }
+                }
+            } catch (PDOException $e) {
+                // Table doesn't exist, return null
+                return null;
+            }
+            return null;
+        }
+
+        // Check announcements - using staff_id as per foreign key constraint
+        $announcementsColumn = 'staff_id'; // Force using staff_id since that's what the foreign key uses
         try {
-            // Get staff name for log
-            $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
-            $nameStmt->execute([$staffId]);
-            $staffName = $nameStmt->fetchColumn();
-
-            // Check for dependencies
-            $dependencies = [];
-
-            // ...existing code...
-
-            // Check announcements
             $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_announcements WHERE staff_id = ?");
             $stmt->execute([$staffId]);
             $announcementsCount = $stmt->fetchColumn();
             if ($announcementsCount > 0) {
                 $dependencies[] = "$announcementsCount announcement(s)";
             }
+        } catch (PDOException $e) {
+            // Table might not exist or other issue
+            error_log("Error checking announcements: " . $e->getMessage());
+        }
 
-            // Check consultations
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_consultations WHERE staff_id = ?");
+        // Check consultations
+        $consultationsColumn = getStaffColumn($pdo, 'sitio1_consultations', ['staff_id', 'doctor_id', 'created_by', 'user_id']);
+        if ($consultationsColumn) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_consultations WHERE $consultationsColumn = ?");
             $stmt->execute([$staffId]);
             $consultationsCount = $stmt->fetchColumn();
             if ($consultationsCount > 0) {
                 $dependencies[] = "$consultationsCount consultation(s)";
             }
+        }
 
-            // Check patient records
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_patients WHERE added_by = ?");
+        // Check patient records
+        $patientsColumn = getStaffColumn($pdo, 'sitio1_patients', ['added_by', 'created_by', 'staff_id', 'user_id']);
+        if ($patientsColumn) {
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_patients WHERE $patientsColumn = ?");
             $stmt->execute([$staffId]);
             $patientsCount = $stmt->fetchColumn();
             if ($patientsCount > 0) {
                 $dependencies[] = "$patientsCount patient record(s)";
             }
+        }
 
-            // Check prescriptions
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_prescriptions WHERE staff_id = ?");
-            $stmt->execute([$staffId]);
-            $prescriptionsCount = $stmt->fetchColumn();
-            if ($prescriptionsCount > 0) {
-                $dependencies[] = "$prescriptionsCount prescription(s)";
-            }
+        // If dependencies exist, handle them
+        if (!empty($dependencies)) {
+            $deleteAction = $_POST['delete_action'] ?? 'reassign';
+            $reassignTo = intval($_POST['reassign_to'] ?? 0);
 
-            // If dependencies exist, handle them
-            if (!empty($dependencies)) {
-                $deleteAction = $_POST['delete_action'] ?? 'reassign';
-                $reassignTo = intval($_POST['reassign_to'] ?? 0);
+            $pdo->beginTransaction();
 
-                $pdo->beginTransaction();
+            try {
+                if ($deleteAction === 'reassign' && $reassignTo > 0) {
+                    // Get reassign staff name for log
+                    $reassignStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
+                    $reassignStmt->execute([$reassignTo]);
+                    $reassignName = $reassignStmt->fetchColumn();
 
-                try {
-                    if ($deleteAction === 'reassign' && $reassignTo > 0) {
-                        // Get reassign staff name for log
-                        $reassignStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
-                        $reassignStmt->execute([$reassignTo]);
-                        $reassignName = $reassignStmt->fetchColumn();
-
-                        // ...existing code...
-
-                        // Reassign consultations
-                        $stmt = $pdo->prepare("UPDATE sitio1_consultations SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
+                    // Reassign announcements - using staff_id as per foreign key constraint
+                    try {
+                        $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$reassignTo, $staffId]);
-
-                        // Reassign patient records
-                        $stmt = $pdo->prepare("UPDATE sitio1_patients SET added_by = ?, updated_at = NOW() WHERE added_by = ?");
-                        $stmt->execute([$reassignTo, $staffId]);
-
-                        // Reassign prescriptions
-                        $stmt = $pdo->prepare("UPDATE sitio1_prescriptions SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
-                        $stmt->execute([$reassignTo, $staffId]);
-
-                        // Set announcements to NULL
-                        $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = NULL, updated_at = NOW() WHERE staff_id = ?");
-                        $stmt->execute([$staffId]);
-
-                        // Log the reassignment
-                        $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
-                        $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' and reassigned records to: ' . $reassignName, $_SERVER['REMOTE_ADDR']]);
-
-                        $_SESSION['message'] = 'Staff account deleted and records reassigned to ' . htmlspecialchars($reassignName) . ' successfully!';
-                    } else {
-                        // ...existing code...
-
-                        $stmt = $pdo->prepare("DELETE FROM sitio1_consultations WHERE staff_id = ?");
-                        $stmt->execute([$staffId]);
-
-                        $stmt = $pdo->prepare("UPDATE sitio1_patients SET added_by = NULL, updated_at = NOW() WHERE added_by = ?");
-                        $stmt->execute([$staffId]);
-
-                        $stmt = $pdo->prepare("DELETE FROM sitio1_prescriptions WHERE staff_id = ?");
-                        $stmt->execute([$staffId]);
-
-                        $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = NULL, updated_at = NOW() WHERE staff_id = ?");
-                        $stmt->execute([$staffId]);
-
-                        // Log the deletion
-                        $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
-                        $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' and all associated records', $_SERVER['REMOTE_ADDR']]);
-
-                        $_SESSION['message'] = 'Staff account and associated records deleted successfully!';
+                    } catch (PDOException $e) {
+                        error_log("Error reassigning announcements: " . $e->getMessage());
                     }
 
-                    // Delete staff account
-                    $stmt = $pdo->prepare("DELETE FROM sitio1_staff WHERE id = ?");
-                    $stmt->execute([$staffId]);
+                    // Reassign consultations
+                    if ($consultationsColumn) {
+                        $stmt = $pdo->prepare("UPDATE sitio1_consultations SET $consultationsColumn = ?, updated_at = NOW() WHERE $consultationsColumn = ?");
+                        $stmt->execute([$reassignTo, $staffId]);
+                    }
 
-                    $pdo->commit();
-                    $_SESSION['message_type'] = 'success';
-                } catch (PDOException $e) {
-                    $pdo->rollBack();
-                    throw $e;
+                    // Reassign patient records
+                    if ($patientsColumn) {
+                        $stmt = $pdo->prepare("UPDATE sitio1_patients SET $patientsColumn = ?, updated_at = NOW() WHERE $patientsColumn = ?");
+                        $stmt->execute([$reassignTo, $staffId]);
+                    }
+
+                    // Log the reassignment
+                    $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+                    $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' and reassigned records to: ' . $reassignName, $_SERVER['REMOTE_ADDR']]);
+
+                    $_SESSION['message'] = 'Staff account deleted and records reassigned to ' . htmlspecialchars($reassignName) . ' successfully!';
+                } else {
+                    // For "delete all associated records" option, we need to either:
+                    // Option A: Delete the announcements (if that's allowed)
+                    // Option B: Set them to NULL (but foreign key might prevent NULL)
+                    
+                    // First, try to delete announcements (if they exist)
+                    try {
+                        $stmt = $pdo->prepare("DELETE FROM sitio1_announcements WHERE staff_id = ?");
+                        $stmt->execute([$staffId]);
+                    } catch (PDOException $e) {
+                        // If delete fails due to constraints, try setting to NULL
+                        error_log("Could not delete announcements, trying to set NULL: " . $e->getMessage());
+                        try {
+                            // Check if staff_id allows NULL
+                            $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = NULL, updated_at = NOW() WHERE staff_id = ?");
+                            $stmt->execute([$staffId]);
+                        } catch (PDOException $e2) {
+                            // If NULL not allowed, we need to reassign to a default staff or skip
+                            error_log("Could not set announcements to NULL: " . $e2->getMessage());
+                            // Find any other active staff to reassign to
+                            $defaultStaffStmt = $pdo->prepare("SELECT id FROM sitio1_staff WHERE id != ? AND is_active = 1 LIMIT 1");
+                            $defaultStaffStmt->execute([$staffId]);
+                            $defaultStaffId = $defaultStaffStmt->fetchColumn();
+                            
+                            if ($defaultStaffId) {
+                                $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
+                                $stmt->execute([$defaultStaffId, $staffId]);
+                            }
+                        }
+                    }
+
+                    // Delete consultations
+                    if ($consultationsColumn) {
+                        try {
+                            $stmt = $pdo->prepare("DELETE FROM sitio1_consultations WHERE $consultationsColumn = ?");
+                            $stmt->execute([$staffId]);
+                        } catch (PDOException $e) {
+                            error_log("Error deleting consultations: " . $e->getMessage());
+                        }
+                    }
+
+                    // Set patients column to NULL or delete based on constraints
+                    if ($patientsColumn) {
+                        try {
+                            $stmt = $pdo->prepare("UPDATE sitio1_patients SET $patientsColumn = NULL, updated_at = NOW() WHERE $patientsColumn = ?");
+                            $stmt->execute([$staffId]);
+                        } catch (PDOException $e) {
+                            error_log("Error updating patients: " . $e->getMessage());
+                        }
+                    }
+
+                    // Log the deletion
+                    $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+                    $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' and all associated records', $_SERVER['REMOTE_ADDR']]);
+
+                    $_SESSION['message'] = 'Staff account and associated records deleted successfully!';
                 }
-            } else {
-                // No dependencies, delete directly
+
+                // Delete staff account
                 $stmt = $pdo->prepare("DELETE FROM sitio1_staff WHERE id = ?");
                 $stmt->execute([$staffId]);
 
-                // Log the deletion
-                $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
-                $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' (no dependencies)', $_SERVER['REMOTE_ADDR']]);
-
-                $_SESSION['message'] = 'Staff account deleted successfully!';
+                $pdo->commit();
                 $_SESSION['message_type'] = 'success';
+            } catch (PDOException $e) {
+                $pdo->rollBack();
+                throw $e;
             }
+        } else {
+            // No dependencies, delete directly
+            $stmt = $pdo->prepare("DELETE FROM sitio1_staff WHERE id = ?");
+            $stmt->execute([$staffId]);
 
-            header('Location: manage_accounts.php');
-            exit();
-        } catch (PDOException $e) {
-            $_SESSION['message'] = 'Error deleting account: ' . $e->getMessage();
-            $_SESSION['message_type'] = 'error';
-            header('Location: manage_accounts.php');
-            exit();
+            // Log the deletion
+            $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+            $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' (no dependencies)', $_SERVER['REMOTE_ADDR']]);
+
+            $_SESSION['message'] = 'Staff account deleted successfully!';
+            $_SESSION['message_type'] = 'success';
         }
+
+        header('Location: manage_accounts.php');
+        exit();
+    } catch (PDOException $e) {
+        $_SESSION['message'] = 'Error deleting account: ' . $e->getMessage();
+        $_SESSION['message_type'] = 'error';
+        header('Location: manage_accounts.php');
+        exit();
     }
+}
 }
 
 /**
@@ -918,7 +948,6 @@ function manuallyLinkToPatientRecord($pdo, $residentUserId, $patientId, $patient
 function getUnlinkedResidents($pdo)
 {
     try {
-        // Alternative query that doesn't use patient_record_uid
         $stmt = $pdo->prepare("
             SELECT u.* 
             FROM sitio1_users u
@@ -1296,28 +1325,13 @@ try {
             line-height: 1.2;
         }
 
-        /* Account Cards - Based on image design */
+        /* Account Cards */
         .account-card {
             background: white;
             border-radius: 8px;
             padding: 1.5rem;
             border: 1px solid #e5e7eb;
             transition: all 0.2s;
-        }
-
-        /* .account-card:hover {
-            border-color: #2563eb;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
-        } */
-
-        .account-card.active {
-            background: #f0f9ff;
-            border-color: #2563eb;
-        }
-
-        .account-card.inactive {
-            background: #f9fafb;
-            opacity: 0.8;
         }
 
         .account-header {
@@ -1337,6 +1351,7 @@ try {
         .account-position {
             font-size: 0.875rem;
             margin: 0 0 0.25rem 0;
+            color: #6b7280;
         }
 
         .status-badge {
@@ -1353,59 +1368,52 @@ try {
 
         .status-badge.inactive {
             background: #EF44444D;
-            font-size: 1rem;
             color: #991b1b;
         }
 
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
+        .status-badge.warning {
+            background: #fed7aa;
+            color: #92400e;
         }
 
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            color: #374151;
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
         }
 
-        .checkbox-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
-            border: 1.5px solid #d1d5db;
-            cursor: pointer;
+        .status-badge.declined {
+            background: #fee2e2;
+            color: #991b1b;
         }
 
-        .checkbox-item input[type="checkbox"]:checked {
-            accent-color: #2563eb;
+        .status-badge.linked {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.unlinked {
+            background: #fee2e2;
+            color: #991b1b;
         }
 
         .action-buttons {
             display: flex;
             gap: 0.625rem;
-            margin-top: 0.5rem;
+            margin-top: 1rem;
         }
 
         .btn-icon {
             padding: 0.625rem 0.75rem;
             border-radius: 6px;
             font-size: 0.875rem;
-            /* font-weight: 600; */
-            /* border: 1px solid #e5e7eb; */
-            /* background: white; */
-            /* color: #374151; */
             cursor: pointer;
             transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
-
-        /* .btn-icon:hover {
-            background: #f3f4f6;
-            border-color: #9ca3af;
-        } */
 
         .btn-icon.danger {
             color: #FFFFFF;
@@ -1425,50 +1433,32 @@ try {
             background: #059669;
         }
 
+        .btn-icon.warning {
+            color: #FFFFFF;
+            background-color: #f59e0b;
+        }
+
+        .btn-icon.warning:hover {
+            background: #d97706;
+        }
+
         .btn-icon.primary {
-            color: #2563eb;
-            border-color: #dbeafe;
+            color: #FFFFFF;
+            background-color: #3C96E1;
         }
 
         .btn-icon.primary:hover {
-            background: #dbeafe;
+            background: #2563eb;
         }
 
-        /* Modern Grid Layout */
-        /* .modern-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
-        } */
-
-        /* Section Headers */
-        .section-header {
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
+        .btn-icon.outline {
+            background: white;
+            border: 1px solid #e5e7eb;
+            color: #374151;
         }
 
-        .section-title-modern {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--gray-900);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .section-title-modern i {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--primary-bg) 0%, #dbeafe 100%);
-            color: var(--primary);
+        .btn-icon.outline:hover {
+            background: #f3f4f6;
         }
 
         /* Stats Cards */
@@ -1483,7 +1473,6 @@ try {
             background: white;
             border-radius: 8px;
             padding: 1.5rem 2.5rem;
-            /* display: flex; */
             align-items: center;
             gap: 1rem;
             border: 1px solid #e5e7eb;
@@ -1580,12 +1569,11 @@ try {
             cursor: pointer;
         }
 
-        /* Main Navigation Tabs - Based on image */
+        /* Main Navigation Tabs */
         .main-nav-tabs {
             display: flex;
             gap: 1.5rem;
             margin-bottom: 2rem;
-            /* border-bottom: 2px solid #e5e7eb; */
             padding-bottom: 0.5rem;
         }
 
@@ -1605,24 +1593,191 @@ try {
             background-color: #3C96E1;
         }
 
-        /* .main-nav-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -0.6rem;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #2563eb;
-        } */
+        /* Resident Tabs */
+        .resident-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
 
-        /* Responsive */
+        .resident-tab {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #6b7280;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .resident-tab.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .resident-tab:hover:not(.active) {
+            background: #f3f4f6;
+        }
+
+        /* Linking Section */
+        .linking-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .linking-column {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .linking-header {
+            background: #f9fafb;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .linking-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .linking-item {
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .linking-item:hover {
+            border-color: #3C96E1;
+            background: #f0f9ff;
+        }
+
+        .linking-item.selected {
+            background: #eff6ff;
+            border-color: #3C96E1;
+            border-width: 2px;
+        }
+
+        .linking-item-title {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.25rem;
+        }
+
+        .linking-item-subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .link-button-container {
+            text-align: center;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .link-button {
+            padding: 0.75rem 2rem;
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .link-button:hover:not(:disabled) {
+            background: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .link-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Resident Form */
+        .resident-form-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+        }
+
+        .resident-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .create-button {
+            padding: 0.5rem 2rem;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .create-button:hover {
+            background: #059669;
+        }
+
+        /* Grid Layout */
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1rem;
+        }
+
         @media (max-width: 768px) {
-            .modern-grid {
-                grid-template-columns: 1fr;
-            }
-
             .stats-container {
                 flex-direction: column;
+            }
+            
+            .linking-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .accounts-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -1650,15 +1805,15 @@ try {
         <div style="width: 100%; padding: 2rem;">
             <!-- Page Header with Stats -->
             <div style="margin-bottom: 2rem;">
-                <h1 style="font-size: 1.5rem; font-weight: 600;  color: #374151; margin-bottom: 1.5rem;">Account Management</h1>
+                <h1 style="font-size: 1.5rem; font-weight: 600; color: #374151; margin-bottom: 1.5rem;">Account Management</h1>
 
-                <!-- Stats Cards - Based on image -->
+                <!-- Stats Cards -->
                 <div class="stats-container">
                     <!-- ACTIVE ADMIN -->
                     <div class="stat-card">
                         <div class="flex justify-between items-center gap-4 mb-6">
                             <div>
-                                <span class="stat-number">10</span>
+                                <span class="stat-number"><?= count($activeStaff) ?></span>
                             </div>
                             <div class="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-50">
                                 <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1668,7 +1823,7 @@ try {
                             </div>
                         </div>
                         <div>
-                            <span class="stat-label">Active Admin</span>
+                            <span class="stat-label">Active Staff</span>
                         </div>
                     </div>
 
@@ -1676,7 +1831,7 @@ try {
                     <div class="stat-card">
                         <div class="flex justify-between items-center gap-4 mb-6">
                             <div>
-                                <span class="stat-number">15</span>
+                                <span class="stat-number"><?= count($approvedResidents) ?></span>
                             </div>
                             <div class="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-50">
                                 <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1690,11 +1845,11 @@ try {
                         </div>
                     </div>
 
-                    <!-- LINKED ACCOUNTS  -->
+                    <!-- LINKED ACCOUNTS -->
                     <div class="stat-card">
                         <div class="flex justify-between items-center gap-4 mb-6">
                             <div>
-                                <span class="stat-number">25</span>
+                                <span class="stat-number"><?= count($approvedResidents) - count($unlinkedResidents) ?></span>
                             </div>
                             <div class="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-50">
                                 <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1721,7 +1876,7 @@ try {
                     </div>
                 </div>
 
-                <!-- Main Navigation Tabs - Based on image -->
+                <!-- Main Navigation Tabs -->
                 <div class="main-nav-tabs">
                     <div class="main-nav-tab active" onclick="switchTab('staff')" id="staffMainTab">Staff Management</div>
                     <div class="main-nav-tab" onclick="switchTab('resident')" id="residentMainTab">Resident Management</div>
@@ -1733,14 +1888,13 @@ try {
 
             <!-- Main Content -->
             <div>
-                <!-- Staff Section -->
+                <!-- Staff Section (Existing - unchanged) -->
                 <div id="staffSection" class="tab-section" style="display: block;">
                     <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Staff Account</h2>
-                    <!-- Create Staff Form - Based on image -->
+                    <!-- Create Staff Form -->
                     <div class="flex flex-col md:flex-row w-full gap-8">
-
                         <!-- LEFT CONTENT -->
-                        <div class="mb-8  p-4 rounded-lg border border-gray-300 w-full md:w-1/2">
+                        <div class="mb-8 p-4 rounded-lg border border-gray-300 w-full md:w-1/2">
                             <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 
@@ -1757,17 +1911,15 @@ try {
                                         class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
                                 </div>
 
-                                <!-- Password (UNCHANGED LOGIC) -->
+                                <!-- Password -->
                                 <div>
                                     <label style="display:block;font-size:1.125rem;font-weight:600;color:#374151;margin-bottom:4px;">
                                         Password <span class="text-red-500">*</span>
                                     </label>
-
                                     <div style="position: relative;">
                                         <input type="text" name="password" required id="staff-password"
                                             placeholder="Enter Password"
                                             class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
-
                                         <button type="button"
                                             onclick="togglePasswordVisibility('staff-password')"
                                             style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;">
@@ -1829,39 +1981,37 @@ try {
                                         placeholder="Enter License Number"
                                         class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
                                 </div>
+
+                                <!-- Button -->
+                                <div class="mt-2 col-span-2">
+                                    <button
+                                        type="submit"
+                                        name="create_staff"
+                                        class="w-full px-6 py-3 bg-[#3C96E1] text-white rounded text-lg font-medium hover:bg-blue-600 transition">
+                                        Create Account
+                                    </button>
+                                </div>
                             </form>
-                            <!-- Button -->
-                            <div class="mt-2">
-                                <button
-                                    type="submit"
-                                    name="create_staff"
-                                    class="w-full px-6 py-3 bg-[#3C96E1] text-white rounded text-lg font-medium hover:bg-blue-600 transition">
-                                    Create Account
-                                </button>
-                            </div>
                         </div>
 
-                        <!-- RIGHT CONTENT -->
+                        <!-- RIGHT CONTENT - Staff Lists -->
                         <div class="w-full md:w-1/2">
-                            <div class="p-4 rounded-lg border border-gray-300 ">
+                            <div class="p-4 rounded-lg border border-gray-300">
                                 <!-- Staff Tabs -->
                                 <div class="mb-6">
                                     <div class="flex gap-6">
-
                                         <button
                                             onclick="showStaffTab('active')"
                                             id="activeStaffMainTab"
                                             class="py-3 px-6 rounded-md text-base font-semibold">
                                             Active Account
                                         </button>
-
                                         <button
                                             onclick="showStaffTab('inactive')"
                                             id="inactiveStaffMainTab"
                                             class="py-3 px-6 rounded-md text-base font-semibold">
                                             Inactive Account
                                         </button>
-
                                     </div>
                                 </div>
 
@@ -1869,11 +2019,9 @@ try {
                                 <div id="activeStaffSection">
                                     <?php if (empty($activeStaff)): ?>
                                         <div class="text-center p-12 bg-white rounded border border-gray-200">
-                                            <p class="text-gray-400">Pending to display</p>
+                                            <p class="text-gray-400">No active staff accounts</p>
                                         </div>
-
                                     <?php else: ?>
-
                                         <div class="grid md:grid-cols-1 gap-4">
                                             <?php foreach ($activeStaff as $staff): ?>
                                                 <div class="border border-gray-200 rounded-lg p-6 shadow-sm">
@@ -1882,32 +2030,14 @@ try {
                                                             <p class="text-sm text-gray-500 mb-1">
                                                                 <span class="font-medium" style="color: #000000;">Position:</span> <?= htmlspecialchars($staff['position'] ?? 'N/A') ?>
                                                             </p>
-
                                                             <h3 class="font-semibold text-base text-gray-800">
                                                                 <?= htmlspecialchars($staff['full_name']) ?>
                                                             </h3>
                                                         </div>
-
                                                         <span class="text-base font-medium text-green-600 bg-green-200 rounded-full px-8 py-2 flex items-center gap-1">
                                                             Active
                                                         </span>
                                                     </div>
-
-                                                    <!-- <div class="flex gap-4 text-sm mb-4">
-                                                        <label class="flex items-center gap-2">
-                                                            <input
-                                                                type="checkbox"
-                                                                onchange="togglePasswordChange(this, <?= $staff['id'] ?>)">
-                                                            Change Password
-                                                        </label>
-
-                                                        <label class="flex items-center gap-2">
-                                                            <input
-                                                                type="checkbox"
-                                                                onchange="toggleDeactivate(this, <?= $staff['id'] ?>)">
-                                                            Deactivate
-                                                        </label>
-                                                    </div> -->
 
                                                     <div class="flex gap-3">
                                                         <button
@@ -1922,15 +2052,14 @@ try {
                                                         <form
                                                             method="POST"
                                                             onsubmit="return confirm('Deactivate this staff account?')">
-
+                                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                                                             <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
                                                             <input type="hidden" name="action" value="deactivate">
-
                                                             <button
                                                                 type="submit"
                                                                 name="toggle_staff_status"
                                                                 style="background-color: #DD7D06;"
-                                                                class="py-3 text-sm px-3  text-white rounded-md flex items-center gap-1">
+                                                                class="py-3 text-sm px-3 text-white rounded-md flex items-center gap-1">
                                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                                     <path d="M16.25 6.25H13.75V4.375C13.75 3.38044 13.3549 2.42661 12.6517 1.72335C11.9484 1.02009 10.9946 0.625 10 0.625C9.00544 0.625 8.05161 1.02009 7.34835 1.72335C6.64509 2.42661 6.25 3.38044 6.25 4.375V6.25H3.75C3.41848 6.25 3.10054 6.3817 2.86612 6.61612C2.6317 6.85054 2.5 7.16848 2.5 7.5V16.25C2.5 16.5815 2.6317 16.8995 2.86612 17.1339C3.10054 17.3683 3.41848 17.5 3.75 17.5H16.25C16.5815 17.5 16.8995 17.3683 17.1339 17.1339C17.3683 16.8995 17.5 16.5815 17.5 16.25V7.5C17.5 7.16848 17.3683 6.85054 17.1339 6.61612C16.8995 6.3817 16.5815 6.25 16.25 6.25ZM7.5 4.375C7.5 3.71196 7.76339 3.07607 8.23223 2.60723C8.70107 2.13839 9.33696 1.875 10 1.875C10.663 1.875 11.2989 2.13839 11.7678 2.60723C12.2366 3.07607 12.5 3.71196 12.5 4.375V6.25H7.5V4.375ZM16.25 16.25H3.75V7.5H16.25V16.25ZM10.9375 11.875C10.9375 12.0604 10.8825 12.2417 10.7795 12.3958C10.6765 12.55 10.5301 12.6702 10.3588 12.7411C10.1875 12.8121 9.99896 12.8307 9.8171 12.7945C9.63525 12.7583 9.4682 12.669 9.33709 12.5379C9.20598 12.4068 9.11669 12.2398 9.08051 12.0579C9.04434 11.876 9.06291 11.6875 9.13386 11.5162C9.20482 11.3449 9.32498 11.1985 9.47915 11.0955C9.63332 10.9925 9.81458 10.9375 10 10.9375C10.2486 10.9375 10.4871 11.0363 10.6629 11.2121C10.8387 11.3879 10.9375 11.6264 10.9375 11.875Z" fill="white" />
                                                                 </svg>
@@ -1938,23 +2067,20 @@ try {
                                                             </button>
                                                         </form>
                                                     </div>
-
                                                 </div>
-
                                             <?php endforeach; ?>
-
                                         </div>
                                     <?php endif; ?>
                                 </div>
 
-                                <!-- INACTIVE STAFF - Based on second image -->
+                                <!-- INACTIVE STAFF -->
                                 <div id="inactiveStaffSection" style="display: none;">
                                     <?php if (empty($inactiveStaff)): ?>
                                         <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
                                             <p style="color: #9ca3af;">No inactive staff accounts</p>
                                         </div>
                                     <?php else: ?>
-                                        <div class="modern-grid">
+                                        <div class="grid md:grid-cols-1 gap-4">
                                             <?php foreach ($inactiveStaff as $staff): ?>
                                                 <div class="account-card inactive">
                                                     <div class="account-header">
@@ -1971,6 +2097,7 @@ try {
 
                                                     <div class="action-buttons">
                                                         <form method="POST" action="" onsubmit="return confirm('Activate this staff account?')">
+                                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                                                             <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
                                                             <input type="hidden" name="action" value="activate">
                                                             <button type="submit" name="toggle_staff_status" class="btn-icon success" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 4px;">
@@ -1997,284 +2124,676 @@ try {
                     </div>
                 </div>
 
-                <!-- Resident Section -->
-                <div id="residentSection" class="tab-section" style="display: none;">
-                    <!-- Create Resident Form - Based on image style -->
-                    <div style="margin-bottom: 2rem; background: white; border-radius: 8px; padding: 1.5rem; border: 1px solid #e5e7eb;">
-                        <h2 style="font-size: 1.125rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Resident Account</h2>
+                <!-- Resident Section - Redesigned to match Staff Management -->
+<div id="residentSection" class="tab-section" style="display: none;">
+    <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Resident Account</h2>
+    
+    <!-- Create Resident Form - Matching Staff Management style -->
+    <div class="flex flex-col md:flex-row w-full gap-8">
+        <!-- LEFT CONTENT - Create Resident Form -->
+        <div class="mb-8 p-4 rounded-lg border border-gray-300 w-full md:w-1/2">
+            <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 
-                        <form method="POST" action="" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                <!-- Username -->
+                <div>
+                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                        Username <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="username"
+                        required
+                        placeholder="Enter Username"
+                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                </div>
 
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Username *</label>
-                                <input type="text" name="username" required placeholder="Enter Username" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                            </div>
+                <!-- Full Name -->
+                <div>
+                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                        Full Name <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="full_name"
+                        required
+                        placeholder="Enter Full Name"
+                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                </div>
 
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Full Name *</label>
-                                <input type="text" name="full_name" required placeholder="Enter Full Name" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                            </div>
+                <!-- Email -->
+                <div>
+                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="email"
+                        name="email"
+                        required
+                        placeholder="Enter Email Address"
+                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                </div>
 
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Email *</label>
-                                <input type="email" name="email" required placeholder="Enter Email Address" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                            </div>
-
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Password *</label>
-                                <div style="position: relative;">
-                                    <input type="text" name="password" required id="resident-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem; font-family: monospace;">
-                                    <button type="button" onclick="togglePasswordVisibility('resident-password')" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af;">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Phone</label>
-                                <input type="tel" name="phone" placeholder="Enter Phone Number" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                            </div>
-
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Gender</label>
-                                <select name="gender" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                                    <option value="">Select Gender</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Date of Birth</label>
-                                <input type="date" name="date_of_birth" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                            </div>
-
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Sitio</label>
-                                <select name="sitio" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                                    <option value="">Select Sitio</option>
-                                    <option value="Kalinao">Kalinao</option>
-                                    <option value="Nangka">Nangka</option>
-                                    <option value="Lubi">Lubi</option>
-                                    <option value="Sta. Cruz">Sta. Cruz</option>
-                                    <option value="Regla">Regla</option>
-                                    <option value="Abellana">Abellana</option>
-                                    <option value="Sto.niño l">Sto.niño l</option>
-                                    <option value="Sto.niño ll">Sto.niño ll</option>
-                                    <option value="Sto.niño lll">Sto.niño lll</option>
-                                    <option value="Zapatera">Zapatera</option>
-                                    <option value="Mabuhay">Mabuhay</option>
-                                    <option value="San Vicente">San Vicente</option>
-                                    <option value="City Central">City Central</option>
-                                    <option value="San. Antonio">San. Antonio</option>
-                                    <option value="San Roque">San Roque</option>
-                                    <option value="Others">Others</option>
-                                </select>
-                            </div>
-
-                            <div style="grid-column: 1/-1; margin-top: 0.5rem;">
-                                <button type="submit" name="create_resident" style="padding: 0.5rem 2rem; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: 500; font-size: 0.875rem; cursor: pointer;">
-                                    Create Account
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Resident Tabs -->
-                    <div style="margin-bottom: 1.5rem;">
-                        <div style="display: flex; gap: 2rem; border-bottom: 2px solid #e5e7eb;">
-                            <button onclick="showResidentTab('approved')" id="approvedResidentMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #10b981; border: none; background: none; cursor: pointer; border-bottom: 2px solid #10b981; margin-bottom: -2px;">
-                                Approved Residents (<?= count($approvedResidents) ?>)
-                            </button>
-                            <button onclick="showResidentTab('pending')" id="pendingResidentMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #6b7280; border: none; background: none; cursor: pointer;">
-                                Pending (<?= count($pendingResidents) ?>)
-                            </button>
-                            <button onclick="showResidentTab('declined')" id="declinedResidentMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #6b7280; border: none; background: none; cursor: pointer;">
-                                Declined (<?= count($declinedResidents) ?>)
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Approved Residents Grid -->
-                    <div id="approvedResidentSection" style="display: block;">
-                        <?php if (empty($approvedResidents)): ?>
-                            <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
-                                <p style="color: #9ca3af;">No approved residents</p>
-                            </div>
-                        <?php else: ?>
-                            <div class="modern-grid">
-                                <?php foreach ($approvedResidents as $resident):
-                                    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
-                                    $stmt->execute([$resident['id']]);
-                                    $hasPatientRecord = $stmt->fetch();
-                                ?>
-                                    <div class="account-card">
-                                        <div class="account-header">
-                                            <div>
-                                                <h3 class="account-name"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                                <p class="account-position">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                                <p class="account-position" style="font-size: 0.75rem;"><?= htmlspecialchars($resident['email']) ?></p>
-                                            </div>
-                                            <?php if (!$hasPatientRecord): ?>
-                                                <span class="status-badge warning" style="background: #fed7aa; color: #92400e;">
-                                                    Unlinked
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="status-badge success">
-                                                    Linked
-                                                </span>
-                                            <?php endif; ?>
-                                        </div>
-
-                                        <div class="checkbox-group">
-                                            <label class="checkbox-item">
-                                                <input type="checkbox" onchange="toggleResidentResetPass(this, <?= $resident['id'] ?>)">
-                                                Reset Password
-                                            </label>
-                                        </div>
-
-                                        <div class="action-buttons">
-                                            <button onclick="openResetModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', 'resident')" class="btn-icon warning" style="flex: 1;">
-                                                <i class="fas fa-key"></i> Reset Pass
-                                            </button>
-                                            <?php if (!$hasPatientRecord): ?>
-                                                <button onclick="switchToLinking(<?= $resident['id'] ?>)" class="btn-icon primary" style="flex: 1;">
-                                                    <i class="fas fa-link"></i> Link
-                                                </button>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Pending Residents Grid -->
-                    <div id="pendingResidentSection" style="display: none;">
-                        <?php if (empty($pendingResidents)): ?>
-                            <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
-                                <p style="color: #9ca3af;">No pending residents</p>
-                            </div>
-                        <?php else: ?>
-                            <div class="modern-grid">
-                                <?php foreach ($pendingResidents as $resident): ?>
-                                    <div class="account-card">
-                                        <div class="account-header">
-                                            <div>
-                                                <h3 class="account-name"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                                <p class="account-position">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                                <p class="account-position" style="font-size: 0.75rem;"><?= htmlspecialchars($resident['email']) ?></p>
-                                            </div>
-                                            <span class="status-badge warning">
-                                                Pending
-                                            </span>
-                                        </div>
-
-                                        <div class="action-buttons">
-                                            <form method="POST" action="" style="flex: 1;">
-                                                <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                                <input type="hidden" name="action" value="approve">
-                                                <button type="submit" name="toggle_resident_status" class="btn-icon success" style="width: 100%;">
-                                                    <i class="fas fa-check"></i> Approve
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="" style="flex: 1;">
-                                                <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                                <input type="hidden" name="action" value="decline">
-                                                <button type="submit" name="toggle_resident_status" class="btn-icon danger" style="width: 100%;">
-                                                    <i class="fas fa-times"></i> Decline
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Declined Residents Grid -->
-                    <div id="declinedResidentSection" style="display: none;">
-                        <?php if (empty($declinedResidents)): ?>
-                            <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
-                                <p style="color: #9ca3af;">No declined residents</p>
-                            </div>
-                        <?php else: ?>
-                            <div class="modern-grid">
-                                <?php foreach ($declinedResidents as $resident): ?>
-                                    <div class="account-card inactive">
-                                        <div class="account-header">
-                                            <div>
-                                                <h3 class="account-name" style="color: #6b7280;"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                                <p class="account-position">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                                <p class="account-position" style="font-size: 0.75rem;"><?= htmlspecialchars($resident['email']) ?></p>
-                                            </div>
-                                            <span class="status-badge inactive">
-                                                Declined
-                                            </span>
-                                        </div>
-
-                                        <form method="POST" action="">
-                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                            <input type="hidden" name="action" value="approve">
-                                            <button type="submit" name="toggle_resident_status" class="btn-icon success" style="width: 100%;">
-                                                <i class="fas fa-redo"></i> Reconsider
-                                            </button>
-                                        </form>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
+                <!-- Password -->
+                <div>
+                    <label style="display:block;font-size:1.125rem;font-weight:600;color:#374151;margin-bottom:4px;">
+                        Password <span class="text-red-500">*</span>
+                    </label>
+                    <div style="position: relative;">
+                        <input type="text" name="password" required id="resident-password"
+                            value="<?= bin2hex(random_bytes(4)) ?>"
+                            class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500 font-mono">
+                        <button type="button"
+                            onclick="togglePasswordVisibility('resident-password')"
+                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Linking Section -->
-                <div id="linkingSection" class="tab-section" style="display: none;">
-                    <div style="background: white; border-radius: 8px; padding: 1.5rem; border: 1px solid #e5e7eb;">
-                        <h2 style="font-size: 1.125rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Link Accounts to Patient Records</h2>
+                <!-- Phone -->
+                <div>
+                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                        Phone
+                    </label>
+                    <input
+                        type="tel"
+                        name="phone"
+                        placeholder="Enter Phone Number"
+                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                </div>
 
-                        <?php if (count($unlinkedResidents) === 0 && count($unlinkedPatients) === 0): ?>
-                            <div style="text-align: center; padding: 3rem;">
-                                <p style="color: #9ca3af;">All accounts are linked!</p>
-                            </div>
-                        <?php else: ?>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                                <!-- Unlinked Residents -->
-                                <div>
-                                    <h3 style="font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 1rem;">Unlinked Residents (<?= count($unlinkedResidents) ?>)</h3>
-                                    <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto;">
-                                        <?php foreach ($unlinkedResidents as $resident): ?>
-                                            <div onclick="selectResident(<?= $resident['id'] ?>, this)" data-resident-id="<?= $resident['id'] ?>" style="padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
-                                                <div style="font-weight: 600;"><?= htmlspecialchars($resident['full_name']) ?></div>
-                                                <div style="font-size: 0.875rem; color: #6b7280;"><?= htmlspecialchars($resident['email']) ?></div>
+                <!-- Gender -->
+                <div>
+                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                        Gender
+                    </label>
+                    <select
+                        name="gender"
+                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Date of Birth -->
+                <div>
+                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                        Date of Birth
+                    </label>
+                    <input
+                        type="date"
+                        name="date_of_birth"
+                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                </div>
+
+                <!-- Sitio -->
+                <div>
+                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                        Sitio
+                    </label>
+                    <select
+                        name="sitio"
+                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                        <option value="">Select Sitio</option>
+                        <option value="Kalinao">Kalinao</option>
+                        <option value="Nangka">Nangka</option>
+                        <option value="Lubi">Lubi</option>
+                        <option value="Sta. Cruz">Sta. Cruz</option>
+                        <option value="Regla">Regla</option>
+                        <option value="Abellana">Abellana</option>
+                        <option value="Sto.niño l">Sto.niño l</option>
+                        <option value="Sto.niño ll">Sto.niño ll</option>
+                        <option value="Sto.niño lll">Sto.niño lll</option>
+                        <option value="Zapatera">Zapatera</option>
+                        <option value="Mabuhay">Mabuhay</option>
+                        <option value="San Vicente">San Vicente</option>
+                        <option value="City Central">City Central</option>
+                        <option value="San. Antonio">San. Antonio</option>
+                        <option value="San Roque">San Roque</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+
+                <!-- Create Button - Full width at bottom with solid green, no hover -->
+<div class="mt-4 col-span-2">
+    <button
+        type="submit"
+        name="create_resident"
+        class="w-full px-6 py-3 bg-[#10b981] text-white rounded text-lg font-medium"
+        style="background-color: #10b981 !important; cursor: pointer;">
+        <i class="fas fa-user-plus mr-2"></i>Create Resident Account
+    </button>
+</div>
+            </form>
+            
+            <!-- Optional: Add helper text -->
+            <p class="text-xs text-gray-500 mt-3 text-center">
+                <i class="fas fa-info-circle mr-1"></i>
+                Password will be shown once. Please save it securely.
+            </p>
+        </div>
+
+        <!-- RIGHT CONTENT - Resident Lists -->
+        <div class="w-full md:w-1/2">
+            <div class="p-4 rounded-lg border border-gray-300">
+                <!-- Resident Tabs -->
+                <div class="mb-6">
+                    <div class="flex gap-2">
+                        <button
+                            onclick="showResidentTab('approved')"
+                            id="approvedResidentTab"
+                            class="py-3 px-4 rounded-md text-sm font-semibold transition-all"
+                            style="color: #FFFFFF; background-color: #10b981;">
+                            <i class="fas fa-check-circle mr-1"></i>Approved (<?= count($approvedResidents) ?>)
+                        </button>
+                        <button
+                            onclick="showResidentTab('pending')"
+                            id="pendingResidentTab"
+                            class="py-3 px-4 rounded-md text-sm font-semibold transition-all"
+                            style="color: #6b7280; background-color: #f3f4f6;">
+                            <i class="fas fa-clock mr-1"></i>Pending (<?= count($pendingResidents) ?>)
+                        </button>
+                        <button
+                            onclick="showResidentTab('declined')"
+                            id="declinedResidentTab"
+                            class="py-3 px-4 rounded-md text-sm font-semibold transition-all"
+                            style="color: #6b7280; background-color: #f3f4f6;">
+                            <i class="fas fa-times-circle mr-1"></i>Declined (<?= count($declinedResidents) ?>)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Stats for Residents -->
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <div class="bg-blue-50 rounded-lg p-2 text-center">
+                        <div class="text-xl font-bold text-blue-600"><?= count($approvedResidents) - count($unlinkedResidents) ?></div>
+                        <div class="text-xs text-gray-600">Linked</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-2 text-center">
+                        <div class="text-xl font-bold text-yellow-600"><?= count($unlinkedResidents) ?></div>
+                        <div class="text-xs text-gray-600">Unlinked</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-2 text-center">
+                        <div class="text-xl font-bold text-purple-600"><?= count($approvedResidents) ?></div>
+                        <div class="text-xs text-gray-600">Total</div>
+                    </div>
+                </div>
+
+                <!-- Approved Residents -->
+                <div id="approvedResidentSection">
+                    <?php if (empty($approvedResidents)): ?>
+                        <div class="text-center p-8 bg-white rounded border border-gray-200">
+                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            <p class="text-gray-500">No approved residents yet</p>
+                            <p class="text-sm text-gray-400 mt-1">Create a new resident account using the form</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                            <?php foreach ($approvedResidents as $resident):
+                                $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
+                                $stmt->execute([$resident['id']]);
+                                $hasPatientRecord = $stmt->fetch();
+                            ?>
+                                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                                <?php if (!$hasPatientRecord): ?>
+                                                    <span class="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">Unlinked</span>
+                                                <?php else: ?>
+                                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Linked</span>
+                                                <?php endif; ?>
                                             </div>
-                                        <?php endforeach; ?>
+                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
+                                            <div class="flex gap-3 mt-2 text-xs text-gray-500">
+                                                <span><i class="far fa-user mr-1"></i><?= htmlspecialchars($resident['username']) ?></span>
+                                                <?php if (!empty($resident['sitio'])): ?>
+                                                    <span><i class="fas fa-map-marker-alt mr-1"></i><?= htmlspecialchars($resident['sitio']) ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex gap-2 mt-3 pt-2 border-t border-gray-100">
+                                        <button
+                                            onclick="openResetModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', 'resident')"
+                                            class="flex-1 py-2 text-xs px-3 rounded-md hover:bg-gray-100 flex items-center justify-center gap-1 border border-gray-300">
+                                            <i class="fas fa-key text-yellow-600"></i>
+                                            Reset Password
+                                        </button>
+                                        
+                                        <?php if (!$hasPatientRecord): ?>
+                                            <button
+                                                onclick="switchToLinking(<?= $resident['id'] ?>)"
+                                                class="flex-1 py-2 text-xs px-3 rounded-md hover:bg-blue-50 flex items-center justify-center gap-1 border border-blue-300 text-blue-600">
+                                                <i class="fas fa-link"></i>
+                                                Link to Patient
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
-                                <!-- Unlinked Patients -->
-                                <div>
-                                    <h3 style="font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 1rem;">Patient Records (<?= count($unlinkedPatients) ?>)</h3>
-                                    <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto;">
-                                        <?php foreach ($unlinkedPatients as $patient): ?>
-                                            <div onclick="selectPatient(<?= $patient['id'] ?>, this)" data-patient-id="<?= $patient['id'] ?>" style="padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
-                                                <div style="font-weight: 600;"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                                <div style="font-size: 0.875rem; color: #6b7280;">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?> | Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></div>
-                                            </div>
-                                        <?php endforeach; ?>
+                <!-- Pending Residents -->
+                <div id="pendingResidentSection" style="display: none;">
+                    <?php if (empty($pendingResidents)): ?>
+                        <div class="text-center p-8 bg-white rounded border border-gray-200">
+                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-gray-500">No pending residents</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                            <?php foreach ($pendingResidents as $resident): ?>
+                                <div class="border border-gray-200 rounded-lg p-4 bg-yellow-50">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
+                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
+                                        </div>
+                                        <span class="text-xs bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full">Pending</span>
+                                    </div>
+
+                                    <div class="flex gap-2 mt-3">
+                                        <form method="POST" action="" class="flex-1">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center justify-center gap-1">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="" class="flex-1">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                            <input type="hidden" name="action" value="decline">
+                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center gap-1">
+                                                <i class="fas fa-times"></i> Decline
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
-                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
-                            <!-- Link Button -->
-                            <div style="text-align: center; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                                <button onclick="performLinking()" id="linkButton" disabled style="padding: 0.5rem 2rem; background: #8b5cf6; color: white; border: none; border-radius: 4px; font-weight: 500; cursor: not-allowed; opacity: 0.5;">
-                                    <i class="fas fa-link"></i> Link Accounts
+                <!-- Declined Residents -->
+                <div id="declinedResidentSection" style="display: none;">
+                    <?php if (empty($declinedResidents)): ?>
+                        <div class="text-center p-8 bg-white rounded border border-gray-200">
+                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-gray-500">No declined residents</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                            <?php foreach ($declinedResidents as $resident): ?>
+                                <div class="border border-gray-200 rounded-lg p-4 bg-red-50">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
+                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
+                                        </div>
+                                        <span class="text-xs bg-red-200 text-red-800 px-3 py-1 rounded-full">Declined</span>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <form method="POST" action="">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center gap-1">
+                                                <i class="fas fa-redo"></i> Reconsider & Approve
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+                <!-- Linking Section - Redesigned UI with Search -->
+<div id="linkingSection" class="tab-section" style="display: none;">
+    <div class="flex flex-col md:flex-row w-full gap-8">
+        <!-- LEFT CONTENT - Unlinked Residents -->
+        <div class="w-full md:w-1/2">
+            <div class="p-4 rounded-lg border border-gray-300">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Residents</h3>
+                        <p class="text-sm text-gray-500 mt-1">Select a resident account to link</p>
+                    </div>
+                    <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                        <?= count($unlinkedResidents) ?> Available
+                    </span>
+                </div>
+                
+                <!-- Search Bar for Residents - Fixed icon position -->
+                <div class="mb-4 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
+                        </svg>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="residentSearch" 
+                        placeholder="Search residents by name or email..." 
+                        class="w-full py-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition-all"
+                    >
+                    <button 
+                        type="button" 
+                        id="clearResidentSearch"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 hidden"
+                        onclick="clearSearch('resident')"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6L18 18"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Residents List -->
+                <?php if (empty($unlinkedResidents)): ?>
+                    <div class="text-center p-8 bg-white rounded border border-gray-200">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <p class="text-gray-500">No unlinked residents available</p>
+                        <p class="text-sm text-gray-400 mt-1">All residents are linked to patient records</p>
+                    </div>
+                <?php else: ?>
+                    <div id="residentsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                        <?php 
+                        $displayCount = 0;
+                        foreach ($unlinkedResidents as $resident): 
+                            if ($displayCount >= 5) break;
+                            $displayCount++;
+                        ?>
+                            <div 
+                                onclick="selectResident(<?= $resident['id'] ?>, this)" 
+                                data-resident-id="<?= $resident['id'] ?>"
+                                data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
+                                data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
+                                data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
+                                class="resident-item p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
+                                style="border-color: #e5e7eb;">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="font-semibold text-gray-800 resident-name"><?= htmlspecialchars($resident['full_name']) ?></div>
+                                        <div class="text-sm text-gray-500 resident-email"><?= htmlspecialchars($resident['email']) ?></div>
+                                        <?php if (!empty($resident['sitio'])): ?>
+                                            <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Resident</div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        
+                        <!-- Additional items (hidden initially) -->
+                        <div id="additionalResidents" style="display: none;">
+                            <?php 
+                            $additionalCount = 0;
+                            foreach ($unlinkedResidents as $resident): 
+                                if ($additionalCount < 5) {
+                                    $additionalCount++;
+                                    continue;
+                                }
+                            ?>
+                                <div 
+                                    onclick="selectResident(<?= $resident['id'] ?>, this)" 
+                                    data-resident-id="<?= $resident['id'] ?>"
+                                    data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
+                                    data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
+                                    data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
+                                    class="resident-item p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
+                                    style="border-color: #e5e7eb;">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <div class="font-semibold text-gray-800 resident-name"><?= htmlspecialchars($resident['full_name']) ?></div>
+                                            <div class="text-sm text-gray-500 resident-email"><?= htmlspecialchars($resident['email']) ?></div>
+                                            <?php if (!empty($resident['sitio'])): ?>
+                                                <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Resident</div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <!-- Show More/Less Buttons -->
+                        <?php if (count($unlinkedResidents) > 5): ?>
+                            <div class="text-center mt-4">
+                                <button 
+                                    id="showMoreResidentsBtn"
+                                    onclick="toggleResidentsList()"
+                                    class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors">
+                                    <span>Show <?= count($unlinkedResidents) - 5 ?> more residents</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <button 
+                                    id="showLessResidentsBtn"
+                                    onclick="toggleResidentsList()"
+                                    class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
+                                    <span>Show less</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                    </svg>
                                 </button>
                             </div>
                         <?php endif; ?>
                     </div>
+                    
+                    <!-- No Results Message (hidden by default) -->
+                    <div id="noResidentsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
+                        </svg>
+                        <p class="text-gray-500">No residents match your search</p>
+                        <button 
+                            onclick="clearSearch('resident')" 
+                            class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                            Clear search
+                        </button>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- RIGHT CONTENT - Unlinked Patients -->
+        <div class="w-full md:w-1/2">
+            <div class="p-4 rounded-lg border border-gray-300">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Patient Records</h3>
+                        <p class="text-sm text-gray-500 mt-1">Select a patient record to link</p>
+                    </div>
+                    <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
+                        <?= count($unlinkedPatients) ?> Available
+                    </span>
+                </div>
+                
+                <!-- Search Bar for Patients - Fixed icon position -->
+                <div class="mb-4 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
+                        </svg>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="patientSearch" 
+                        placeholder="Search patients by name, age, or sitio..." 
+                        class="w-full py-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-500 transition-all"
+                    >
+                    <button 
+                        type="button" 
+                        id="clearPatientSearch"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 hidden"
+                        onclick="clearSearch('patient')"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6L18 18"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Patients List -->
+                <?php if (empty($unlinkedPatients)): ?>
+                    <div class="text-center p-8 bg-white rounded border border-gray-200">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        <p class="text-gray-500">No unlinked patient records available</p>
+                        <p class="text-sm text-gray-400 mt-1">All patients are linked to resident accounts</p>
+                    </div>
+                <?php else: ?>
+                    <div id="patientsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                        <?php 
+                        $displayCount = 0;
+                        foreach ($unlinkedPatients as $patient): 
+                            if ($displayCount >= 5) break;
+                            $displayCount++;
+                        ?>
+                            <div 
+                                onclick="selectPatient(<?= $patient['id'] ?>, this)" 
+                                data-patient-id="<?= $patient['id'] ?>"
+                                data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
+                                data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
+                                data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
+                                class="patient-item p-4 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
+                                style="border-color: #e5e7eb;">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="font-semibold text-gray-800 patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                        <div class="text-sm text-gray-500">
+                                            <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
+                                            <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+                                        </div>
+                                        <?php if (!empty($patient['contact'])): ?>
+                                            <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Patient</div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        
+                        <!-- Additional items (hidden initially) -->
+                        <div id="additionalPatients" style="display: none;">
+                            <?php 
+                            $additionalCount = 0;
+                            foreach ($unlinkedPatients as $patient): 
+                                if ($additionalCount < 5) {
+                                    $additionalCount++;
+                                    continue;
+                                }
+                            ?>
+                                <div 
+                                    onclick="selectPatient(<?= $patient['id'] ?>, this)" 
+                                    data-patient-id="<?= $patient['id'] ?>"
+                                    data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
+                                    data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
+                                    data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
+                                    class="patient-item p-4 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
+                                    style="border-color: #e5e7eb;">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <div class="font-semibold text-gray-800 patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                            <div class="text-sm text-gray-500">
+                                                <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
+                                                <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+                                            </div>
+                                            <?php if (!empty($patient['contact'])): ?>
+                                                <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Patient</div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <!-- Show More/Less Buttons -->
+                        <?php if (count($unlinkedPatients) > 5): ?>
+                            <div class="text-center mt-4">
+                                <button 
+                                    id="showMorePatientsBtn"
+                                    onclick="togglePatientsList()"
+                                    class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors">
+                                    <span>Show <?= count($unlinkedPatients) - 5 ?> more patients</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <button 
+                                    id="showLessPatientsBtn"
+                                    onclick="togglePatientsList()"
+                                    class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
+                                    <span>Show less</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <!-- No Results Message (hidden by default) -->
+                    <div id="noPatientsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
+                        </svg>
+                        <p class="text-gray-500">No patients match your search</p>
+                        <button 
+                            onclick="clearSearch('patient')" 
+                            class="mt-2 text-sm text-green-600 hover:text-green-800 font-medium">
+                            Clear search
+                        </button>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link Button -->
+    <div class="text-center mt-6 pt-6 border-t border-gray-200">
+        <button 
+            onclick="performLinking()" 
+            id="linkButton" 
+            disabled
+            class="px-8 py-3 bg-purple-600 text-white rounded-lg font-medium inline-flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 hover:shadow-lg">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13.5 10.5L21 3M21 3H15.75M21 3V8.25M10.5 13.5L3 21M3 21H8.25M3 21L3 15.75M8.25 3H3M3 3V8.25M21 21H15.75M21 21L21 15.75" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Link Selected Accounts
+        </button>
+        <p class="text-sm text-gray-500 mt-2">Select one resident and one patient record to enable linking</p>
+    </div>
+</div>
                 </div>
             </div>
         </div>
@@ -2287,6 +2806,7 @@ try {
             <p style="margin-bottom: 1.5rem; color: #6b7280;" id="deleteMessage"></p>
 
             <form method="POST" action="" id="deleteForm">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                 <input type="hidden" name="staff_id" id="deleteStaffId">
 
                 <div style="margin-bottom: 1.5rem;">
@@ -2451,13 +2971,15 @@ try {
         // Password visibility toggle
         function togglePasswordVisibility(id) {
             const input = document.getElementById(id);
-            const icon = input.parentElement.querySelector('.password-toggle i');
+            const button = input.parentElement.querySelector('button');
+            const icon = button.querySelector('i');
+            
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
+                if (icon) icon.classList.replace('fa-eye', 'fa-eye-slash');
             } else {
                 input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
+                if (icon) icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         }
 
@@ -2466,10 +2988,10 @@ try {
             const icon = input.parentElement.querySelector('.password-toggle i');
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
+                if (icon) icon.classList.replace('fa-eye', 'fa-eye-slash');
             } else {
                 input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
+                if (icon) icon.classList.replace('fa-eye-slash', 'fa-eye');
             }
         }
 
@@ -2489,78 +3011,87 @@ try {
             if (document.getElementById('linkingSection')) {
                 document.getElementById('linkingSection').style.display = tab === 'linking' ? 'block' : 'none';
             }
+
+            // Reset linking selections when switching tabs
+            if (tab === 'linking') {
+                selectedResidentId = 0;
+                selectedPatientId = 0;
+                updateLinkButton();
+                
+                // Remove selected styling
+                document.querySelectorAll('[data-resident-id]').forEach(el => {
+                    el.style.background = 'white';
+                    el.style.borderColor = '#e5e7eb';
+                });
+                document.querySelectorAll('[data-patient-id]').forEach(el => {
+                    el.style.background = 'white';
+                    el.style.borderColor = '#e5e7eb';
+                });
+            }
         }
 
         // Staff tab switching
         function showStaffTab(tab) {
             const activeTab = document.getElementById('activeStaffMainTab');
             const inactiveTab = document.getElementById('inactiveStaffMainTab');
-
-            // Validate that elements exist
-            if (!activeTab || !inactiveTab) {
-                console.error('Tab elements not found');
-                return;
-            }
-
-            // Get section elements
             const activeSection = document.getElementById('activeStaffSection');
             const inactiveSection = document.getElementById('inactiveStaffSection');
 
             if (tab === 'active') {
-
-                // Active tab styles
                 activeTab.style.color = '#FFFFFF';
-                activeTab.style.borderBottom = '2px solid #2563eb';
                 activeTab.style.backgroundColor = '#3C96E1';
-
-                // Inactive tab styles
                 inactiveTab.style.color = '#3C96E1';
-                inactiveTab.style.borderBottom = 'none';
                 inactiveTab.style.backgroundColor = '#3C96E14D';
-
-                // Show/hide sections
+                
                 if (activeSection) activeSection.style.display = 'block';
                 if (inactiveSection) inactiveSection.style.display = 'none';
-
-            } else if (tab === 'inactive') {
-
-                // Inactive tab styles
+            } else {
                 inactiveTab.style.color = '#FFFFFF';
-                inactiveTab.style.borderBottom = '2px solid #2563eb';
                 inactiveTab.style.backgroundColor = '#3C96E1';
-
-                // Active tab styles
                 activeTab.style.color = '#3C96E1';
-                activeTab.style.borderBottom = 'none';
                 activeTab.style.backgroundColor = '#3C96E14D';
-
-                // Show/hide sections
+                
                 if (inactiveSection) inactiveSection.style.display = 'block';
                 if (activeSection) activeSection.style.display = 'none';
             }
         }
 
-        // Optional: Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set default active tab
-            showStaffTab('active');
-        });
-
         // Resident tab switching
         function showResidentTab(tab) {
-            const tabs = ['approved', 'pending', 'declined'];
-            tabs.forEach(t => {
-                const el = document.getElementById(t + 'ResidentMainTab');
-                if (el) {
-                    el.style.color = '#6b7280';
-                    el.style.borderBottom = 'none';
-                }
-                document.getElementById(t + 'ResidentSection').style.display = 'none';
+            const approvedTab = document.getElementById('approvedResidentTab');
+            const pendingTab = document.getElementById('pendingResidentTab');
+            const declinedTab = document.getElementById('declinedResidentTab');
+            
+            const approvedSection = document.getElementById('approvedResidentSection');
+            const pendingSection = document.getElementById('pendingResidentSection');
+            const declinedSection = document.getElementById('declinedResidentSection');
+
+            // Reset all tabs
+            [approvedTab, pendingTab, declinedTab].forEach(tab => {
+                tab.style.color = '#6b7280';
+                tab.style.backgroundColor = '#f3f4f6';
             });
 
-            document.getElementById(tab + 'ResidentMainTab').style.color = '#10b981';
-            document.getElementById(tab + 'ResidentMainTab').style.borderBottom = '2px solid #10b981';
-            document.getElementById(tab + 'ResidentSection').style.display = 'block';
+            // Set active tab
+            if (tab === 'approved') {
+                approvedTab.style.color = '#FFFFFF';
+                approvedTab.style.backgroundColor = '#10b981';
+                approvedSection.style.display = 'block';
+                pendingSection.style.display = 'none';
+                declinedSection.style.display = 'none';
+            } else if (tab === 'pending') {
+                pendingTab.style.color = '#FFFFFF';
+                pendingTab.style.backgroundColor = '#10b981';
+                approvedSection.style.display = 'none';
+                pendingSection.style.display = 'block';
+                declinedSection.style.display = 'none';
+            } else if (tab === 'declined') {
+                declinedTab.style.color = '#FFFFFF';
+                declinedTab.style.backgroundColor = '#10b981';
+                approvedSection.style.display = 'none';
+                pendingSection.style.display = 'none';
+                declinedSection.style.display = 'block';
+            }
         }
 
         // Modal functions
@@ -2596,76 +3127,38 @@ try {
             document.getElementById('resetPasswordForm').reset();
         }
 
-        // Checkbox handlers
-        function togglePasswordChange(checkbox, staffId) {
-            if (checkbox.checked) {
-                openStaffPasswordModal(staffId, 'Staff Member');
-            }
-            checkbox.checked = false;
-        }
-
-        function toggleDeactivate(checkbox, staffId) {
-            if (checkbox.checked && confirm('Deactivate this staff account?')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.innerHTML = `
-                    <input type="hidden" name="staff_id" value="${staffId}">
-                    <input type="hidden" name="action" value="deactivate">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                `;
-                document.body.appendChild(form);
-                form.submit();
-            }
-            checkbox.checked = false;
-        }
-
-        function toggleActivate(checkbox, staffId) {
-            if (checkbox.checked && confirm('Activate this staff account?')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.innerHTML = `
-                    <input type="hidden" name="staff_id" value="${staffId}">
-                    <input type="hidden" name="action" value="activate">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                `;
-                document.body.appendChild(form);
-                form.submit();
-            }
-            checkbox.checked = false;
-        }
-
-        function toggleDelete(checkbox, staffId) {
-            if (checkbox.checked) {
-                openDeleteModal(staffId, 'Staff');
-            }
-            checkbox.checked = false;
-        }
-
-        function toggleResidentResetPass(checkbox, residentId) {
-            if (checkbox.checked) {
-                openResetModal(residentId, 'Resident', 'resident');
-            }
-            checkbox.checked = false;
-        }
-
         // Linking functions
         let selectedResidentId = 0;
         let selectedPatientId = 0;
 
         function selectResident(id, element) {
+            // Remove selection from all resident items
             document.querySelectorAll('[data-resident-id]').forEach(el => {
                 el.style.background = 'white';
+                el.style.borderColor = '#e5e7eb';
             });
+            
+            // Select this item
             element.style.background = '#eff6ff';
+            element.style.borderColor = '#3C96E1';
+            element.style.borderWidth = '2px';
+            
             selectedResidentId = id;
             updateLinkButton();
         }
 
         function selectPatient(id, element) {
+            // Remove selection from all patient items
             document.querySelectorAll('[data-patient-id]').forEach(el => {
                 el.style.background = 'white';
+                el.style.borderColor = '#e5e7eb';
             });
-            element.style.background = '#ecfdf5';
+            
+            // Select this item
+            element.style.background = '#f0fdf4';
+            element.style.borderColor = '#10b981';
+            element.style.borderWidth = '2px';
+            
             selectedPatientId = id;
             updateLinkButton();
         }
@@ -2685,7 +3178,7 @@ try {
 
         function performLinking() {
             if (selectedResidentId && selectedPatientId) {
-                if (confirm('Link these accounts?')) {
+                if (confirm('Link these accounts? The resident will be connected to the patient record.')) {
                     window.location.href = `?link_resident=1&resident_id=${selectedResidentId}&patient_id=${selectedPatientId}`;
                 }
             }
@@ -2696,12 +3189,10 @@ try {
             setTimeout(() => {
                 const card = document.querySelector(`[data-resident-id="${residentId}"]`);
                 if (card) {
-                    card.scrollIntoView({
-                        behavior: 'smooth'
-                    });
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     selectResident(residentId, card);
                 }
-            }, 100);
+            }, 300);
         }
 
         // Close modals on outside click
@@ -2729,6 +3220,200 @@ try {
                 showToast('Passwords do not match!', 'error');
             }
         });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            showStaffTab('active');
+        });
+    </script>
+
+    <script>
+        // Search and filtering functions
+document.addEventListener('DOMContentLoaded', function() {
+    // Resident search
+    const residentSearch = document.getElementById('residentSearch');
+    if (residentSearch) {
+        residentSearch.addEventListener('input', function() {
+            filterResidents(this.value.toLowerCase());
+        });
+    }
+    
+    // Patient search
+    const patientSearch = document.getElementById('patientSearch');
+    if (patientSearch) {
+        patientSearch.addEventListener('input', function() {
+            filterPatients(this.value.toLowerCase());
+        });
+    }
+});
+
+function filterResidents(searchTerm) {
+    const residentItems = document.querySelectorAll('.resident-item');
+    const noResults = document.getElementById('noResidentsFound');
+    const clearBtn = document.getElementById('clearResidentSearch');
+    let visibleCount = 0;
+    
+    // Show/hide clear button
+    if (clearBtn) {
+        if (searchTerm.length > 0) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+    }
+    
+    // Filter items
+    residentItems.forEach(item => {
+        const name = item.dataset.residentName || '';
+        const email = item.dataset.residentEmail || '';
+        const sitio = item.dataset.residentSitio || '';
+        
+        if (name.includes(searchTerm) || email.includes(searchTerm) || sitio.includes(searchTerm)) {
+            item.style.display = 'block';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Show/hide no results message
+    if (noResults) {
+        if (visibleCount === 0 && residentItems.length > 0) {
+            noResults.classList.remove('hidden');
+        } else {
+            noResults.classList.add('hidden');
+        }
+    }
+}
+
+function filterPatients(searchTerm) {
+    const patientItems = document.querySelectorAll('.patient-item');
+    const noResults = document.getElementById('noPatientsFound');
+    const clearBtn = document.getElementById('clearPatientSearch');
+    let visibleCount = 0;
+    
+    // Show/hide clear button
+    if (clearBtn) {
+        if (searchTerm.length > 0) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+    }
+    
+    // Filter items
+    patientItems.forEach(item => {
+        const name = item.dataset.patientName || '';
+        const age = item.dataset.patientAge || '';
+        const sitio = item.dataset.patientSitio || '';
+        
+        if (name.includes(searchTerm) || age.includes(searchTerm) || sitio.includes(searchTerm)) {
+            item.style.display = 'block';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Show/hide no results message
+    if (noResults) {
+        if (visibleCount === 0 && patientItems.length > 0) {
+            noResults.classList.remove('hidden');
+        } else {
+            noResults.classList.add('hidden');
+        }
+    }
+}
+
+function clearSearch(type) {
+    if (type === 'resident') {
+        const searchInput = document.getElementById('residentSearch');
+        if (searchInput) {
+            searchInput.value = '';
+            filterResidents('');
+        }
+    } else {
+        const searchInput = document.getElementById('patientSearch');
+        if (searchInput) {
+            searchInput.value = '';
+            filterPatients('');
+        }
+    }
+}
+
+// Toggle functions for showing more/less items
+function toggleResidentsList() {
+    const additionalResidents = document.getElementById('additionalResidents');
+    const showMoreBtn = document.getElementById('showMoreResidentsBtn');
+    const showLessBtn = document.getElementById('showLessResidentsBtn');
+    
+    if (additionalResidents.style.display === 'none' || !additionalResidents.style.display) {
+        additionalResidents.style.display = 'block';
+        showMoreBtn.classList.add('hidden');
+        showLessBtn.classList.remove('hidden');
+    } else {
+        additionalResidents.style.display = 'none';
+        showMoreBtn.classList.remove('hidden');
+        showLessBtn.classList.add('hidden');
+    }
+}
+
+function togglePatientsList() {
+    const additionalPatients = document.getElementById('additionalPatients');
+    const showMoreBtn = document.getElementById('showMorePatientsBtn');
+    const showLessBtn = document.getElementById('showLessPatientsBtn');
+    
+    if (additionalPatients.style.display === 'none' || !additionalPatients.style.display) {
+        additionalPatients.style.display = 'block';
+        showMoreBtn.classList.add('hidden');
+        showLessBtn.classList.remove('hidden');
+    } else {
+        additionalPatients.style.display = 'none';
+        showMoreBtn.classList.remove('hidden');
+        showLessBtn.classList.add('hidden');
+    }
+}
+
+// Update the select functions to work with filtered items
+function selectResident(id, element) {
+    // Only select if the item is visible
+    if (element.style.display !== 'none') {
+        // Remove selection from all resident items
+        document.querySelectorAll('[data-resident-id]').forEach(el => {
+            el.style.background = 'white';
+            el.style.borderColor = '#e5e7eb';
+            el.style.borderWidth = '1px';
+        });
+        
+        // Select this item
+        element.style.background = '#eff6ff';
+        element.style.borderColor = '#3C96E1';
+        element.style.borderWidth = '2px';
+        
+        selectedResidentId = id;
+        updateLinkButton();
+    }
+}
+
+function selectPatient(id, element) {
+    // Only select if the item is visible
+    if (element.style.display !== 'none') {
+        // Remove selection from all patient items
+        document.querySelectorAll('[data-patient-id]').forEach(el => {
+            el.style.background = 'white';
+            el.style.borderColor = '#e5e7eb';
+            el.style.borderWidth = '1px';
+        });
+        
+        // Select this item
+        element.style.background = '#f0fdf4';
+        element.style.borderColor = '#10b981';
+        element.style.borderWidth = '2px';
+        
+        selectedPatientId = id;
+        updateLinkButton();
+    }
+}
     </script>
 </body>
 
