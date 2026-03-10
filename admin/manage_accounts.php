@@ -1,6 +1,7 @@
 <?php
 // Ensure the 'updated_at' column exists in sitio1_staff before update
-function ensureStaffUpdatedAtColumn($pdo) {
+function ensureStaffUpdatedAtColumn($pdo)
+{
     $result = $pdo->query("SHOW COLUMNS FROM sitio1_staff LIKE 'updated_at'");
     if ($result->rowCount() === 0) {
         $pdo->exec("ALTER TABLE sitio1_staff ADD COLUMN updated_at DATETIME NULL DEFAULT NULL AFTER created_at");
@@ -50,7 +51,8 @@ require_once __DIR__ . '/../includes/header.php';
 
 // Ensure the sitio1_activity_log table exists before any log insert
 if (!function_exists('ensureActivityLogTable')) {
-    function ensureActivityLogTable($pdo) {
+    function ensureActivityLogTable($pdo)
+    {
         $pdo->exec("CREATE TABLE IF NOT EXISTS sitio1_activity_log (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT DEFAULT NULL,
@@ -88,7 +90,8 @@ if (!function_exists('ensureActivityLogTable')) {
 // --- Data loading for staff and resident accounts, and unlinked records ---
 // --- HTML and UI rendering starts here ---
 // Helper for error message and redirect
-function setErrorAndRedirect($msg, $type = 'error', $redirect = 'manage_accounts.php') {
+function setErrorAndRedirect($msg, $type = 'error', $redirect = 'manage_accounts.php')
+{
     $_SESSION['message'] = $msg;
     $_SESSION['message_type'] = $type;
     header('Location: ' . $redirect);
@@ -117,7 +120,7 @@ global $pdo;
 // Handle patient search AJAX request (for manage_accounts.php)
 if (isset($_GET['search_patients']) && isset($_GET['term'])) {
     $term = trim($_GET['term']);
-    
+
     if (strlen($term) >= 2) {
         try {
             $stmt = $pdo->prepare("
@@ -138,11 +141,11 @@ if (isset($_GET['search_patients']) && isset($_GET['term'])) {
                 ORDER BY full_name ASC
                 LIMIT 10
             ");
-            
+
             $searchTerm = '%' . $term . '%';
             $stmt->execute([$searchTerm]);
             $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
+
             header('Content-Type: application/json');
             echo json_encode($patients);
             exit();
@@ -162,7 +165,7 @@ if (isset($_GET['search_patients']) && isset($_GET['term'])) {
 if (isset($_GET['link_resident'])) {
     $residentId = intval($_GET['resident_id']);
     $patientId = intval($_GET['patient_id']);
-    
+
     try {
         $result = manuallyLinkToPatientRecord($pdo, $residentId, $patientId);
         $_SESSION['message'] = $result;
@@ -208,20 +211,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($newPassword !== $confirmPassword) {
             setErrorAndRedirect('New passwords do not match.');
         }
-        
+
         try {
             // Get staff current password
             $stmt = $pdo->prepare("SELECT id, password, full_name FROM sitio1_staff WHERE id = ?");
             $stmt->execute([$staffId]);
             $staff = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$staff) {
                 $_SESSION['message'] = 'Staff not found.';
                 $_SESSION['message_type'] = 'error';
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Verify current password
             if (!password_verify($currentPassword, $staff['password'])) {
                 $_SESSION['message'] = 'Current password is incorrect.';
@@ -229,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Check if new password is same as old
             if (password_verify($newPassword, $staff['password'])) {
                 $_SESSION['message'] = 'New password must be different from current password.';
@@ -237,23 +240,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Update password
             ensureStaffUpdatedAtColumn($pdo);
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("UPDATE sitio1_staff SET password = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$hashedPassword, $staffId]);
-            
+
             // Log the password change
             ensureActivityLogTable($pdo);
             $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
             $logStmt->execute([$_SESSION['user_id'], 'password_change', 'Changed password for staff: ' . $staff['full_name'], $_SERVER['REMOTE_ADDR']]);
-            
+
             $_SESSION['message'] = 'Staff password changed successfully for ' . htmlspecialchars($staff['full_name']) . '!';
             $_SESSION['message_type'] = 'success';
             header('Location: manage_accounts.php');
             exit();
-            
         } catch (PDOException $e) {
             $_SESSION['message'] = 'Error changing password: ' . $e->getMessage();
             $_SESSION['message_type'] = 'error';
@@ -283,20 +285,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($newPassword !== $confirmPassword) {
             setErrorAndRedirect('New passwords do not match.');
         }
-        
+
         try {
             // Get resident current password
             $stmt = $pdo->prepare("SELECT id, password, full_name FROM sitio1_users WHERE id = ? AND role = 'patient'");
             $stmt->execute([$residentId]);
             $resident = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$resident) {
                 $_SESSION['message'] = 'Resident not found.';
                 $_SESSION['message_type'] = 'error';
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Verify current password
             if (!password_verify($currentPassword, $resident['password'])) {
                 $_SESSION['message'] = 'Current password is incorrect.';
@@ -304,7 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Check if new password is same as old
             if (password_verify($newPassword, $resident['password'])) {
                 $_SESSION['message'] = 'New password must be different from current password.';
@@ -312,22 +314,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Update password
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("UPDATE sitio1_users SET password = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$hashedPassword, $residentId]);
-            
+
             // Log the password change
             ensureActivityLogTable($pdo);
             $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
             $logStmt->execute([$_SESSION['user_id'], 'password_change', 'Changed password for resident: ' . $resident['full_name'], $_SERVER['REMOTE_ADDR']]);
-            
+
             $_SESSION['message'] = 'Resident password changed successfully for ' . htmlspecialchars($resident['full_name']) . '!';
             $_SESSION['message_type'] = 'success';
             header('Location: manage_accounts.php');
             exit();
-            
         } catch (PDOException $e) {
             $_SESSION['message'] = 'Error changing password: ' . $e->getMessage();
             $_SESSION['message_type'] = 'error';
@@ -352,35 +353,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($newPassword !== $confirmPassword) {
             setErrorAndRedirect('Passwords do not match.');
         }
-        
+
         try {
             // Verify staff exists
             $stmt = $pdo->prepare("SELECT id, full_name FROM sitio1_staff WHERE id = ?");
             $stmt->execute([$staffId]);
             $staff = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$staff) {
                 $_SESSION['message'] = 'Staff not found.';
                 $_SESSION['message_type'] = 'error';
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Update password
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("UPDATE sitio1_staff SET password = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$hashedPassword, $staffId]);
-            
+
             // Log the password reset
             ensureActivityLogTable($pdo);
             $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
             $logStmt->execute([$_SESSION['user_id'], 'password_reset', 'Reset password for staff: ' . $staff['full_name'], $_SERVER['REMOTE_ADDR']]);
-            
+
             $_SESSION['message'] = 'Staff password reset successfully for ' . htmlspecialchars($staff['full_name']) . '! New password: ' . htmlspecialchars($newPassword);
             $_SESSION['message_type'] = 'success';
             header('Location: manage_accounts.php');
             exit();
-            
         } catch (PDOException $e) {
             $_SESSION['message'] = 'Error resetting password: ' . $e->getMessage();
             $_SESSION['message_type'] = 'error';
@@ -405,43 +405,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($newPassword !== $confirmPassword) {
             setErrorAndRedirect('Passwords do not match.');
         }
-        
+
         try {
             // Verify resident exists
             $stmt = $pdo->prepare("SELECT id, full_name FROM sitio1_users WHERE id = ? AND role = 'patient'");
             $stmt->execute([$residentId]);
             $resident = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$resident) {
                 $_SESSION['message'] = 'Resident not found.';
                 $_SESSION['message_type'] = 'error';
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Update password, clear reset token, and UNLOCK account
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("UPDATE sitio1_users SET password = ?, failed_login_attempts = 0, last_failed_login = NULL, account_locked_until = NULL, password_reset_token = NULL, password_reset_token_expires = NULL, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$hashedPassword, $residentId]);
-            
+
             // Log the password reset
             ensureActivityLogTable($pdo);
             $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
             $logStmt->execute([$_SESSION['user_id'], 'password_reset', 'Reset password for resident: ' . $resident['full_name'] . ' (Account unlocked automatically)', $_SERVER['REMOTE_ADDR']]);
-            
+
             $_SESSION['message'] = 'Resident password reset successfully';
             $_SESSION['message_type'] = 'success';
             header('Location: manage_accounts.php');
             exit();
-            
         } catch (PDOException $e) {
             $_SESSION['message'] = 'Error resetting password: ' . $e->getMessage();
             $_SESSION['message_type'] = 'error';
             header('Location: manage_accounts.php');
             exit();
         }
-    }
-    elseif (isset($_POST['create_staff'])) {
+    } elseif (isset($_POST['create_staff'])) {
         // Sanitize and validate input
         $username = trim($_POST['username'] ?? '');
         $password = trim($_POST['password'] ?? '');
@@ -469,11 +467,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("INSERT INTO sitio1_staff (username, password, full_name, position, specialization, license_number, work_days, created_by, status, is_active, created_at) 
                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, NOW())");
                 $stmt->execute([$username, $hashedPassword, $fullName, $position, $specialization, $license_number, $work_days, $_SESSION['user_id']]);
-                
+
                 // Log the account creation
                 $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
                 $logStmt->execute([$_SESSION['user_id'], 'staff_created', 'Created staff account: ' . $fullName, $_SERVER['REMOTE_ADDR']]);
-                
+
                 $_SESSION['message'] = 'Staff account created successfully! Password: ' . htmlspecialchars($password);
                 $_SESSION['message_type'] = 'success';
                 header('Location: manage_accounts.php');
@@ -490,7 +488,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: manage_accounts.php');
             exit();
         }
-    } 
+    }
     // Handle resident account creation (SIMPLIFIED - NO AUTOMATIC PATIENT RECORD CREATION)
     elseif (isset($_POST['create_resident'])) {
         // 🔒 CORE FIELDS
@@ -519,7 +517,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             setErrorAndRedirect('Please enter a valid email address.');
         }
-        
+
         // Generate username if not provided
         if (empty($username)) {
             $username = strtok($email, '@');
@@ -535,7 +533,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $counter++;
             }
         }
-        
+
         // Validate date if provided
         $age = 0;
         if (!empty($dateOfBirth)) {
@@ -546,12 +544,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             $age = date('Y') - date('Y', $dobTimestamp);
             if (date('md', $dobTimestamp) > date('md')) {
                 $age--;
             }
-            
+
             if ($age < 0 || $age > 120) {
                 $_SESSION['message'] = 'Please enter a valid date of birth (age must be between 0-120 years)';
                 $_SESSION['message_type'] = 'error';
@@ -559,11 +557,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
         }
-        
+
         try {
             // Start transaction
             $pdo->beginTransaction();
-            
+
             // Check if email already exists
             $stmt = $pdo->prepare("SELECT id FROM sitio1_users WHERE email = ?");
             $stmt->execute([$email]);
@@ -573,7 +571,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Check if username already exists
             $stmt = $pdo->prepare("SELECT id FROM sitio1_users WHERE username = ?");
             $stmt->execute([$username]);
@@ -583,14 +581,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: manage_accounts.php');
                 exit();
             }
-            
+
             // Generate unique number
             if (!empty($sitio)) {
                 $uniqueNumber = 'RES' . strtoupper(substr($sitio, 0, 3)) . date('Ym') . str_pad(mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
             } else {
                 $uniqueNumber = 'RES' . date('Ymd') . str_pad(mt_rand(1000, 9999), 4, '0', STR_PAD_LEFT);
             }
-            
+
             // Insert user WITHOUT linking to any patient record
             $stmt = $pdo->prepare("INSERT INTO sitio1_users 
                 (username, email, password, full_name, date_of_birth, age, gender, sitio, contact, 
@@ -598,13 +596,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  verified_at, created_at) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'approved', 'patient', ?, 
                         'manual_verification', 1, NOW(), NOW())");
-            
+
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $stmt->execute([
-                $username, 
-                $email, 
-                $hashedPassword, 
-                $fullName, 
+                $username,
+                $email,
+                $hashedPassword,
+                $fullName,
                 !empty($dateOfBirth) ? $dateOfBirth : null,
                 $age,
                 !empty($gender) ? $gender : null,
@@ -612,21 +610,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 !empty($phone) ? $phone : null,
                 $uniqueNumber
             ]);
-            
+
             $residentUserId = $pdo->lastInsertId();
-            
+
             // Log the account creation
             $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
             $logStmt->execute([$_SESSION['user_id'], 'resident_created', 'Created resident account: ' . $fullName, $_SERVER['REMOTE_ADDR']]);
-            
+
             // Commit transaction
             $pdo->commit();
-            
+
             $_SESSION['message'] = 'Resident account created successfully! Password: ' . htmlspecialchars($password) . ' Account is ready for patient record linking.';
             $_SESSION['message_type'] = 'success';
             header('Location: manage_accounts.php');
             exit();
-            
         } catch (PDOException $e) {
             // Rollback on error
             $pdo->rollBack();
@@ -640,23 +637,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (isset($_POST['toggle_resident_status'])) {
         $residentId = intval($_POST['resident_id']);
         $action = $_POST['action'];
-        
+
         if (in_array($action, ['approve', 'decline', 'suspend'])) {
             try {
                 $newStatus = ($action === 'approve') ? 'approved' : ($action === 'decline' ? 'declined' : 'suspended');
-                
+
                 $stmt = $pdo->prepare("UPDATE sitio1_users SET status = ?, updated_at = NOW() WHERE id = ?");
                 $stmt->execute([$newStatus, $residentId]);
-                
+
                 // Get resident name for log
                 $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_users WHERE id = ?");
                 $nameStmt->execute([$residentId]);
                 $residentName = $nameStmt->fetchColumn();
-                
+
                 // Log the status change
                 $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
                 $logStmt->execute([$_SESSION['user_id'], 'resident_status_change', ucfirst($action) . 'd resident: ' . $residentName, $_SERVER['REMOTE_ADDR']]);
-                
+
                 $_SESSION['message'] = 'Resident account ' . $action . 'd successfully!';
                 $_SESSION['message_type'] = 'success';
                 header('Location: manage_accounts.php');
@@ -673,23 +670,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (isset($_POST['toggle_staff_status'])) {
         $staffId = intval($_POST['staff_id']);
         $action = $_POST['action'];
-        
+
         if (in_array($action, ['activate', 'deactivate'])) {
             try {
                 $newStatus = ($action === 'activate') ? 'active' : 'inactive';
                 $isActive = ($action === 'activate') ? 1 : 0;
                 $stmt = $pdo->prepare("UPDATE sitio1_staff SET status = ?, is_active = ?, updated_at = NOW() WHERE id = ?");
                 $stmt->execute([$newStatus, $isActive, $staffId]);
-                
+
                 // Get staff name for log
                 $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
                 $nameStmt->execute([$staffId]);
                 $staffName = $nameStmt->fetchColumn();
-                
+
                 // Log the status change
                 $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
                 $logStmt->execute([$_SESSION['user_id'], 'staff_status_change', ucfirst($action) . 'd staff: ' . $staffName, $_SERVER['REMOTE_ADDR']]);
-                
+
                 $_SESSION['message'] = 'Staff account ' . $action . 'd successfully!';
                 $_SESSION['message_type'] = 'success';
                 header('Location: manage_accounts.php');
@@ -701,22 +698,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit();
             }
         }
-    } 
+    }
     // Handle staff deletion
     elseif (isset($_POST['hard_delete'])) {
         $staffId = intval($_POST['staff_id']);
-        
+
         try {
             // Get staff name for log
             $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
             $nameStmt->execute([$staffId]);
             $staffName = $nameStmt->fetchColumn();
-            
+
             // Check for dependencies
             $dependencies = [];
-            
+
             // ...existing code...
-            
+
             // Check announcements
             $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_announcements WHERE staff_id = ?");
             $stmt->execute([$staffId]);
@@ -724,7 +721,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($announcementsCount > 0) {
                 $dependencies[] = "$announcementsCount announcement(s)";
             }
-            
+
             // Check consultations
             $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_consultations WHERE staff_id = ?");
             $stmt->execute([$staffId]);
@@ -732,7 +729,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($consultationsCount > 0) {
                 $dependencies[] = "$consultationsCount consultation(s)";
             }
-            
+
             // Check patient records
             $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_patients WHERE added_by = ?");
             $stmt->execute([$staffId]);
@@ -740,7 +737,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($patientsCount > 0) {
                 $dependencies[] = "$patientsCount patient record(s)";
             }
-            
+
             // Check prescriptions
             $stmt = $pdo->prepare("SELECT COUNT(*) FROM sitio1_prescriptions WHERE staff_id = ?");
             $stmt->execute([$staffId]);
@@ -748,73 +745,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($prescriptionsCount > 0) {
                 $dependencies[] = "$prescriptionsCount prescription(s)";
             }
-            
+
             // If dependencies exist, handle them
             if (!empty($dependencies)) {
                 $deleteAction = $_POST['delete_action'] ?? 'reassign';
                 $reassignTo = intval($_POST['reassign_to'] ?? 0);
-                
+
                 $pdo->beginTransaction();
-                
+
                 try {
                     if ($deleteAction === 'reassign' && $reassignTo > 0) {
                         // Get reassign staff name for log
                         $reassignStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
                         $reassignStmt->execute([$reassignTo]);
                         $reassignName = $reassignStmt->fetchColumn();
-                        
+
                         // ...existing code...
-                        
+
                         // Reassign consultations
                         $stmt = $pdo->prepare("UPDATE sitio1_consultations SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$reassignTo, $staffId]);
-                        
+
                         // Reassign patient records
                         $stmt = $pdo->prepare("UPDATE sitio1_patients SET added_by = ?, updated_at = NOW() WHERE added_by = ?");
                         $stmt->execute([$reassignTo, $staffId]);
-                        
+
                         // Reassign prescriptions
                         $stmt = $pdo->prepare("UPDATE sitio1_prescriptions SET staff_id = ?, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$reassignTo, $staffId]);
-                        
+
                         // Set announcements to NULL
                         $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = NULL, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$staffId]);
-                        
+
                         // Log the reassignment
                         $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
                         $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' and reassigned records to: ' . $reassignName, $_SERVER['REMOTE_ADDR']]);
-                        
+
                         $_SESSION['message'] = 'Staff account deleted and records reassigned to ' . htmlspecialchars($reassignName) . ' successfully!';
                     } else {
                         // ...existing code...
-                        
+
                         $stmt = $pdo->prepare("DELETE FROM sitio1_consultations WHERE staff_id = ?");
                         $stmt->execute([$staffId]);
-                        
+
                         $stmt = $pdo->prepare("UPDATE sitio1_patients SET added_by = NULL, updated_at = NOW() WHERE added_by = ?");
                         $stmt->execute([$staffId]);
-                        
+
                         $stmt = $pdo->prepare("DELETE FROM sitio1_prescriptions WHERE staff_id = ?");
                         $stmt->execute([$staffId]);
-                        
+
                         $stmt = $pdo->prepare("UPDATE sitio1_announcements SET staff_id = NULL, updated_at = NOW() WHERE staff_id = ?");
                         $stmt->execute([$staffId]);
-                        
+
                         // Log the deletion
                         $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
                         $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' and all associated records', $_SERVER['REMOTE_ADDR']]);
-                        
+
                         $_SESSION['message'] = 'Staff account and associated records deleted successfully!';
                     }
-                    
+
                     // Delete staff account
                     $stmt = $pdo->prepare("DELETE FROM sitio1_staff WHERE id = ?");
                     $stmt->execute([$staffId]);
-                    
+
                     $pdo->commit();
                     $_SESSION['message_type'] = 'success';
-                    
                 } catch (PDOException $e) {
                     $pdo->rollBack();
                     throw $e;
@@ -823,18 +819,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // No dependencies, delete directly
                 $stmt = $pdo->prepare("DELETE FROM sitio1_staff WHERE id = ?");
                 $stmt->execute([$staffId]);
-                
+
                 // Log the deletion
                 $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
                 $logStmt->execute([$_SESSION['user_id'], 'staff_deleted', 'Deleted staff: ' . $staffName . ' (no dependencies)', $_SERVER['REMOTE_ADDR']]);
-                
+
                 $_SESSION['message'] = 'Staff account deleted successfully!';
                 $_SESSION['message_type'] = 'success';
             }
-            
+
             header('Location: manage_accounts.php');
             exit();
-            
         } catch (PDOException $e) {
             $_SESSION['message'] = 'Error deleting account: ' . $e->getMessage();
             $_SESSION['message_type'] = 'error';
@@ -847,35 +842,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /**
  * Function to manually link resident account to patient records
  */
-function manuallyLinkToPatientRecord($pdo, $residentUserId, $patientId, $patientRecordUID = null) {
+function manuallyLinkToPatientRecord($pdo, $residentUserId, $patientId, $patientRecordUID = null)
+{
     $resultMessage = '';
-    
+
     try {
         // Verify patient exists and is not already linked
         $stmt = $pdo->prepare("SELECT id, full_name, user_id FROM sitio1_patients WHERE id = ?");
         $stmt->execute([$patientId]);
         $patient = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$patient) {
             return '⚠️ Selected patient record not found.';
         }
-        
+
         if ($patient['user_id'] !== null) {
             if ($patient['user_id'] == $residentUserId) {
                 return 'ℹ️ Patient record already linked to this account.';
             }
             return '⚠️ Patient record already linked to another account.';
         }
-        
+
         // Generate UID if provided
         if (!$patientRecordUID) {
             $patientRecordUID = 'PAT-' . date('Ymd') . '-' . strtoupper(substr($patient['full_name'], 0, 3)) . '-' . mt_rand(1000, 9999);
         }
-        
+
         // Check if patient_record_uid column exists in patients table
         $stmt = $pdo->query("SHOW COLUMNS FROM sitio1_patients LIKE 'patient_record_uid'");
         $patientUidColumnExists = $stmt->fetch();
-        
+
         if ($patientUidColumnExists) {
             // Link with UID
             $stmt = $pdo->prepare("UPDATE sitio1_patients SET user_id = ?, patient_record_uid = ?, updated_at = NOW() WHERE id = ?");
@@ -885,33 +881,32 @@ function manuallyLinkToPatientRecord($pdo, $residentUserId, $patientId, $patient
             $stmt = $pdo->prepare("UPDATE sitio1_patients SET user_id = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$residentUserId, $patientId]);
         }
-        
+
         // Check if patient_record_uid column exists in users table
         $stmt = $pdo->query("SHOW COLUMNS FROM sitio1_users LIKE 'patient_record_uid'");
         $userUidColumnExists = $stmt->fetch();
-        
+
         if ($userUidColumnExists) {
             // Update user record with patient_record_uid
             $stmt = $pdo->prepare("UPDATE sitio1_users SET patient_record_uid = ?, updated_at = NOW() WHERE id = ?");
             $stmt->execute([$patientRecordUID, $residentUserId]);
         }
-        
+
         // Get resident name for log
         $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_users WHERE id = ?");
         $nameStmt->execute([$residentUserId]);
         $residentName = $nameStmt->fetchColumn();
-        
+
         // Log the linking
         $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
         $logStmt->execute([$_SESSION['user_id'], 'account_linking', 'Linked resident: ' . $residentName . ' to patient: ' . $patient['full_name'], $_SERVER['REMOTE_ADDR']]);
-        
+
         $resultMessage = '✅ Successfully linked ' . htmlspecialchars($residentName) . ' to patient: ' . htmlspecialchars($patient['full_name']);
         if ($patientRecordUID) {
             $resultMessage .= ' (UID: ' . $patientRecordUID . ')';
         }
-        
+
         return $resultMessage;
-        
     } catch (PDOException $e) {
         return '⚠️ Manual linking failed: ' . $e->getMessage();
     }
@@ -920,7 +915,8 @@ function manuallyLinkToPatientRecord($pdo, $residentUserId, $patientId, $patient
 /**
  * Function to get unlinked residents (accounts without patient records)
  */
-function getUnlinkedResidents($pdo) {
+function getUnlinkedResidents($pdo)
+{
     try {
         // Alternative query that doesn't use patient_record_uid
         $stmt = $pdo->prepare("
@@ -932,7 +928,7 @@ function getUnlinkedResidents($pdo) {
             AND p.id IS NULL
             ORDER BY u.created_at DESC
         ");
-        
+
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
@@ -944,7 +940,8 @@ function getUnlinkedResidents($pdo) {
 /**
  * Function to get unlinked patient records (without user accounts)
  */
-function getUnlinkedPatients($pdo) {
+function getUnlinkedPatients($pdo)
+{
     $stmt = $pdo->prepare("
         SELECT p.* 
         FROM sitio1_patients p
@@ -980,7 +977,7 @@ try {
                          WHERE s.is_active = 1
                          ORDER BY s.created_at DESC");
     $activeStaff = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Inactive staff
     $stmt = $pdo->query("SELECT s.*, creator.username as creator_username 
                          FROM sitio1_staff s
@@ -988,26 +985,26 @@ try {
                          WHERE s.is_active = 0
                          ORDER BY s.created_at DESC");
     $inactiveStaff = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // All active staff for reassignment
     $stmt = $pdo->query("SELECT id, full_name, username FROM sitio1_staff WHERE is_active = 1 ORDER BY full_name");
     $allStaff = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Pending residents
     $stmt = $pdo->query("SELECT * FROM sitio1_users WHERE role = 'patient' AND status = 'pending' ORDER BY created_at DESC");
     $pendingResidents = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Approved residents
     $stmt = $pdo->query("SELECT * FROM sitio1_users WHERE role = 'patient' AND status = 'approved' ORDER BY created_at DESC");
     $approvedResidents = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Declined residents
     $stmt = $pdo->query("SELECT * FROM sitio1_users WHERE role = 'patient' AND status = 'declined' ORDER BY created_at DESC");
     $declinedResidents = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Unlinked residents
     $unlinkedResidents = getUnlinkedResidents($pdo);
-    
+
     // Unlinked patient records
     $unlinkedPatients = getUnlinkedPatients($pdo);
 } catch (PDOException $e) {
@@ -1019,6 +1016,7 @@ try {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1302,15 +1300,15 @@ try {
         .account-card {
             background: white;
             border-radius: 8px;
-            padding: 1rem;
+            padding: 1.5rem;
             border: 1px solid #e5e7eb;
             transition: all 0.2s;
         }
 
-        .account-card:hover {
+        /* .account-card:hover {
             border-color: #2563eb;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
-        }
+        } */
 
         .account-card.active {
             background: #f0f9ff;
@@ -1326,7 +1324,7 @@ try {
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .account-name {
@@ -1338,24 +1336,24 @@ try {
 
         .account-position {
             font-size: 0.875rem;
-            color: #6b7280;
-            margin: 0.25rem 0 0 0;
+            margin: 0 0 0.25rem 0;
         }
 
         .status-badge {
             background: #d1fae5;
             color: #065f46;
-            padding: 0.25rem 0.75rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            padding: 0.5rem 2rem;
+            border-radius: 9999px;
+            font-size: 1rem;
+            font-weight: 500;
             display: inline-flex;
             align-items: center;
             gap: 0.375rem;
         }
 
         .status-badge.inactive {
-            background: #fee2e2;
+            background: #EF44444D;
+            font-size: 1rem;
             color: #991b1b;
         }
 
@@ -1388,43 +1386,43 @@ try {
 
         .action-buttons {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.625rem;
             margin-top: 0.5rem;
         }
 
         .btn-icon {
-            padding: 0.375rem 0.75rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border: 1px solid #e5e7eb;
-            background: white;
-            color: #374151;
+            padding: 0.625rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            /* font-weight: 600; */
+            /* border: 1px solid #e5e7eb; */
+            /* background: white; */
+            /* color: #374151; */
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .btn-icon:hover {
+        /* .btn-icon:hover {
             background: #f3f4f6;
             border-color: #9ca3af;
-        }
+        } */
 
         .btn-icon.danger {
-            color: #dc2626;
-            border-color: #fee2e2;
+            color: #FFFFFF;
+            background-color: #FF5555;
         }
 
         .btn-icon.danger:hover {
-            background: #fee2e2;
+            background: #F04F4F;
         }
 
         .btn-icon.success {
-            color: #059669;
-            border-color: #d1fae5;
+            color: #FFFFFF;
+            background-color: #10B981;
         }
 
         .btn-icon.success:hover {
-            background: #d1fae5;
+            background: #059669;
         }
 
         .btn-icon.primary {
@@ -1437,11 +1435,11 @@ try {
         }
 
         /* Modern Grid Layout */
-        .modern-grid {
+        /* .modern-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1rem;
-        }
+        } */
 
         /* Section Headers */
         .section-header {
@@ -1476,7 +1474,7 @@ try {
         /* Stats Cards */
         .stats-container {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             margin-bottom: 2rem;
             flex-wrap: wrap;
         }
@@ -1484,22 +1482,24 @@ try {
         .stat-card {
             background: white;
             border-radius: 8px;
-            padding: 1rem 1.5rem;
-            display: flex;
+            padding: 1.5rem 2.5rem;
+            /* display: flex; */
             align-items: center;
             gap: 1rem;
             border: 1px solid #e5e7eb;
-            min-width: 150px;
+            flex: 1;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .stat-number {
-            font-size: 1.5rem;
+            font-size: 30px;
             font-weight: 700;
             color: #111827;
         }
 
         .stat-label {
-            font-size: 0.875rem;
+            font-size: 20px;
             color: #6b7280;
         }
 
@@ -1583,26 +1583,29 @@ try {
         /* Main Navigation Tabs - Based on image */
         .main-nav-tabs {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             margin-bottom: 2rem;
-            border-bottom: 2px solid #e5e7eb;
+            /* border-bottom: 2px solid #e5e7eb; */
             padding-bottom: 0.5rem;
         }
 
         .main-nav-tab {
-            padding: 0.5rem 1rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: #6b7280;
+            padding: 12px 24px;
+            font-weight: 500;
+            font-size: 18px;
+            color: #3C96E1;
+            border-radius: 4px;
+            background-color: #3C96E14D;
             cursor: pointer;
             position: relative;
         }
 
         .main-nav-tab.active {
-            color: #2563eb;
+            color: #FFFFFF;
+            background-color: #3C96E1;
         }
 
-        .main-nav-tab.active::after {
+        /* .main-nav-tab.active::after {
             content: '';
             position: absolute;
             bottom: -0.6rem;
@@ -1610,20 +1613,21 @@ try {
             right: 0;
             height: 2px;
             background: #2563eb;
-        }
+        } */
 
         /* Responsive */
         @media (max-width: 768px) {
             .modern-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .stats-container {
                 flex-direction: column;
             }
         }
     </style>
 </head>
+
 <body class="min-h-screen">
     <?php require_once __DIR__ . '/../includes/header.php'; ?>
 
@@ -1631,45 +1635,98 @@ try {
     <div class="toast-container" id="toastContainer"></div>
 
     <?php if (isset($_SESSION['message'])): ?>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            showToast(<?= json_encode($_SESSION['message']) ?>, <?= json_encode($_SESSION['message_type'] ?? 'success') ?>);
-        });
-    </script>
-    <?php 
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                showToast(<?= json_encode($_SESSION['message']) ?>, <?= json_encode($_SESSION['message_type'] ?? 'success') ?>);
+            });
+        </script>
+    <?php
         unset($_SESSION['message']);
         unset($_SESSION['message_type']);
-    endif; 
+    endif;
     ?>
 
-    <main style="background: linear-gradient(135deg, #f0f9ff 0%, #f9fafb 100%); min-height: 100vh; padding-top: 1rem;">
+    <main style="background: linear-gradient(135deg, #f0f9ff 0%, #f9fafb 100%); min-height: 100vh;">
         <div style="width: 100%; padding: 2rem;">
             <!-- Page Header with Stats -->
             <div style="margin-bottom: 2rem;">
-                <h1 style="font-size: 1.5rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Account Management</h1>
-                
+                <h1 style="font-size: 1.5rem; font-weight: 600;  color: #374151; margin-bottom: 1.5rem;">Account Management</h1>
+
                 <!-- Stats Cards - Based on image -->
                 <div class="stats-container">
+                    <!-- ACTIVE ADMIN -->
                     <div class="stat-card">
-                        <span class="stat-number">10</span>
-                        <span class="stat-label">Active Admin</span>
+                        <div class="flex justify-between items-center gap-4 mb-6">
+                            <div>
+                                <span class="stat-number">10</span>
+                            </div>
+                            <div class="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-50">
+                                <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M0 4C0 1.79086 1.79086 0 4 0H46C48.2091 0 50 1.79086 50 4V46C50 48.2091 48.2091 50 46 50H4C1.79086 50 0 48.2091 0 46V4Z" fill="#2563EB" fill-opacity="0.3" />
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M24.666 40.75C26.7343 40.75 28.7824 40.3426 30.6933 39.5511C32.6042 38.7596 34.3404 37.5995 35.8029 36.1369C37.2655 34.6744 38.4256 32.9381 39.2171 31.0273C40.0086 29.1164 40.416 27.0683 40.416 25C40.416 22.9317 40.0086 20.8836 39.2171 18.9727C38.4256 17.0619 37.2655 15.3256 35.8029 13.8631C34.3404 12.4005 32.6042 11.2404 30.6933 10.4489C28.7824 9.65739 26.7343 9.25 24.666 9.25C20.4889 9.25 16.4828 10.9094 13.5291 13.8631C10.5754 16.8168 8.91602 20.8228 8.91602 25C8.91602 29.1772 10.5754 33.1832 13.5291 36.1369C16.4828 39.0906 20.4889 40.75 24.666 40.75ZM24.26 31.37L33.01 20.87L30.322 18.63L22.797 27.6583L18.9033 23.7628L16.4288 26.2372L21.6788 31.4872L23.0333 32.8418L24.26 31.37Z" fill="#3C96E1" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="stat-label">Active Admin</span>
+                        </div>
                     </div>
+
+                    <!-- RESIDENTS ACCOUNTS -->
                     <div class="stat-card">
-                        <span class="stat-number">15</span>
-                        <span class="stat-label">Resident Accounts</span>
+                        <div class="flex justify-between items-center gap-4 mb-6">
+                            <div>
+                                <span class="stat-number">15</span>
+                            </div>
+                            <div class="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-50">
+                                <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M0 4C0 1.79086 1.79086 0 4 0H46C48.2091 0 50 1.79086 50 4V46C50 48.2091 48.2091 50 46 50H4C1.79086 50 0 48.2091 0 46V4Z" fill="#D97706" fill-opacity="0.3" />
+                                    <path d="M28.6042 18.4375C29.6426 18.4375 30.6576 18.1296 31.521 17.5527C32.3843 16.9758 33.0572 16.1559 33.4546 15.1966C33.8519 14.2373 33.9559 13.1817 33.7533 12.1633C33.5508 11.1449 33.0507 10.2094 32.3165 9.47519C31.5823 8.74097 30.6468 8.24095 29.6284 8.03838C28.61 7.83581 27.5544 7.93977 26.5951 8.33713C25.6358 8.73449 24.8159 9.4074 24.239 10.2708C23.6621 11.1341 23.3542 12.1492 23.3542 13.1875C23.3542 14.5799 23.9073 15.9152 24.8919 16.8998C25.8765 17.8844 27.2118 18.4375 28.6042 18.4375ZM28.6042 10.5625C29.1234 10.5625 29.6309 10.7165 30.0626 11.0049C30.4943 11.2933 30.8307 11.7033 31.0294 12.183C31.2281 12.6626 31.2801 13.1904 31.1788 13.6996C31.0775 14.2088 30.8275 14.6765 30.4604 15.0437C30.0933 15.4108 29.6255 15.6608 29.1163 15.7621C28.6071 15.8634 28.0793 15.8114 27.5997 15.6127C27.12 15.414 26.71 15.0776 26.4216 14.6459C26.1332 14.2142 25.9792 13.7067 25.9792 13.1875C25.9792 12.4913 26.2558 11.8236 26.7481 11.3313C27.2403 10.8391 27.908 10.5625 28.6042 10.5625ZM39.6473 27.0803C39.5472 27.1263 38.4184 27.6184 36.4201 27.6184C34.1479 27.6184 30.7518 26.9819 26.4632 24.3372C25.8105 26.1902 24.963 27.9688 23.935 29.643C25.7814 30.2114 27.5182 31.0884 29.0718 32.2368C32.2005 34.6223 33.8542 38.0184 33.8542 42.0625C33.8542 42.4106 33.7159 42.7444 33.4698 42.9906C33.2236 43.2367 32.8898 43.375 32.5417 43.375C32.1936 43.375 31.8598 43.2367 31.6136 42.9906C31.3675 42.7444 31.2292 42.4106 31.2292 42.0625C31.2292 35.2211 25.5379 32.7585 22.3469 31.9152C22.2566 32.0301 22.1631 32.1466 22.0696 32.2598C18.8474 36.1645 14.8098 38.1955 10.3178 38.1955C9.80616 38.1979 9.29472 38.1744 8.78546 38.125C8.43736 38.0902 8.11735 37.9185 7.89582 37.6478C7.67429 37.377 7.5694 37.0293 7.60421 36.6813C7.63902 36.3332 7.81068 36.0131 8.08144 35.7916C8.35219 35.5701 8.69986 35.4652 9.04796 35.5C13.3005 35.9233 17.0001 34.2712 20.0401 30.5781C22.0893 28.0942 23.4855 25.064 24.1827 22.8672C17.7974 19.1512 13.7188 22.3143 13.6745 22.3488C13.5408 22.4629 13.3855 22.5491 13.2179 22.6021C13.0503 22.6551 12.8737 22.6739 12.6987 22.6573C12.5237 22.6408 12.3537 22.5892 12.199 22.5057C12.0443 22.4223 11.9079 22.3085 11.798 22.1713C11.688 22.0341 11.6068 21.8763 11.559 21.7071C11.5113 21.5379 11.498 21.3608 11.52 21.1864C11.542 21.0119 11.5989 20.8437 11.6871 20.6917C11.7754 20.5396 11.8933 20.4068 12.0339 20.3013C12.28 20.1044 18.1403 15.5434 26.7191 21.3791C34.179 26.4503 38.5201 24.7113 38.5612 24.6916C38.7184 24.6173 38.8888 24.575 39.0626 24.5672C39.2363 24.5594 39.4098 24.5862 39.5731 24.646C39.7364 24.7058 39.8862 24.7974 40.0137 24.9156C40.1413 25.0338 40.2441 25.1762 40.3161 25.3345C40.3882 25.4927 40.4281 25.6637 40.4335 25.8375C40.4389 26.0113 40.4097 26.1845 40.3477 26.3469C40.2856 26.5094 40.1918 26.6579 40.0719 26.7838C39.9519 26.9097 39.8081 27.0105 39.6489 27.0803H39.6473Z" fill="#D97706" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="stat-label">Resident Accounts</span>
+                        </div>
                     </div>
+
+                    <!-- LINKED ACCOUNTS  -->
                     <div class="stat-card">
-                        <span class="stat-number">25</span>
-                        <span class="stat-label">Linked Accounts</span>
+                        <div class="flex justify-between items-center gap-4 mb-6">
+                            <div>
+                                <span class="stat-number">25</span>
+                            </div>
+                            <div class="inline-flex items-center justify-center w-14 h-14 rounded-lg bg-blue-50">
+                                <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <g clip-path="url(#clip0_2212_12342)">
+                                        <path d="M0 4C0 1.79086 1.79086 0 4 0H46C48.2091 0 50 1.79086 50 4V46C50 48.2091 48.2091 50 46 50H4C1.79086 50 0 48.2091 0 46V4Z" fill="#D97706" fill-opacity="0.3" />
+                                        <g clip-path="url(#clip1_2212_12342)">
+                                            <path d="M18.7085 28.6428L30.7737 18.5189C31.0404 18.2951 31.385 18.1865 31.7318 18.2168C32.0785 18.2472 32.399 18.414 32.6228 18.6807C32.8466 18.9473 32.9552 19.2919 32.9249 19.6387C32.8945 19.9855 32.7277 20.306 32.461 20.5298L20.3958 30.6537C20.1292 30.8774 19.7845 30.9861 19.4378 30.9557C19.091 30.9254 18.7705 30.7585 18.5467 30.4919C18.323 30.2252 18.2143 29.8806 18.2447 29.5338C18.275 29.1871 18.4419 28.8665 18.7085 28.6428ZM26.7868 32.1444L21.7596 36.3627C20.4263 37.4815 18.7032 38.0248 16.9693 37.8731C15.2355 37.7214 13.6329 36.8871 12.5141 35.5538C11.3954 34.2206 10.8521 32.4974 11.0038 30.7636C11.1555 29.0297 11.9897 27.4271 13.323 26.3084L18.3502 22.0901C18.6168 21.8663 18.7837 21.5458 18.814 21.199C18.8444 20.8523 18.7357 20.5077 18.5119 20.241C18.2882 19.9743 17.9677 19.8075 17.6209 19.7771C17.2741 19.7468 16.9295 19.8555 16.6629 20.0792L11.6357 24.2975C9.76909 25.8638 8.60113 28.1074 8.38876 30.5348C8.17639 32.9622 8.937 35.3746 10.5033 37.2412C12.0695 39.1078 14.3132 40.2757 16.7406 40.4881C19.168 40.7005 21.5803 39.9398 23.4469 38.3736L28.4741 34.1553C28.7407 33.9315 28.9076 33.611 28.9379 33.2642C28.9683 32.9175 28.8596 32.5729 28.6359 32.3062C28.4121 32.0395 28.0916 31.8727 27.7448 31.8423C27.398 31.812 27.0534 31.9207 26.7868 32.1444ZM27.7226 10.799L22.6955 15.0173C22.4288 15.241 22.2619 15.5615 22.2316 15.9083C22.2013 16.2551 22.3099 16.5997 22.5337 16.8664C22.7574 17.133 23.0779 17.2999 23.4247 17.3302C23.7715 17.3605 24.1161 17.2519 24.3828 17.0281L29.4099 12.8098C30.7432 11.6911 32.4663 11.1478 34.2002 11.2995C35.9341 11.4512 37.5366 12.2854 38.6554 13.6187C39.7742 14.952 40.3175 16.6751 40.1658 18.409C40.0141 20.1428 39.1798 21.7454 37.8465 22.8642L32.8194 27.0825C32.5527 27.3062 32.3859 27.6267 32.3555 27.9735C32.3252 28.3203 32.4338 28.6649 32.6576 28.9316C32.8813 29.1982 33.2019 29.3651 33.5486 29.3954C33.8954 29.4257 34.24 29.3171 34.5067 29.0933L39.5338 24.875C41.4004 23.3088 42.5684 21.0652 42.7808 18.6377C42.9931 16.2103 42.2325 13.798 40.6663 11.9314C39.1 10.0648 36.8564 8.89684 34.429 8.68447C32.0016 8.4721 29.5892 9.23271 27.7226 10.799Z" fill="#D97706" />
+                                        </g>
+                                    </g>
+                                    <defs>
+                                        <clipPath id="clip0_2212_12342">
+                                            <path d="M0 4C0 1.79086 1.79086 0 4 0H46C48.2091 0 50 1.79086 50 4V46C50 48.2091 48.2091 50 46 50H4C1.79086 50 0 48.2091 0 46V4Z" fill="white" />
+                                        </clipPath>
+                                        <clipPath id="clip1_2212_12342">
+                                            <rect width="42" height="42" fill="white" transform="translate(-4 21.9961) rotate(-40)" />
+                                        </clipPath>
+                                    </defs>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="stat-label">Linked Accounts</span>
+                        </div>
                     </div>
                 </div>
-                
+
                 <!-- Main Navigation Tabs - Based on image -->
                 <div class="main-nav-tabs">
                     <div class="main-nav-tab active" onclick="switchTab('staff')" id="staffMainTab">Staff Management</div>
                     <div class="main-nav-tab" onclick="switchTab('resident')" id="residentMainTab">Resident Management</div>
                     <?php if (count($unlinkedResidents) > 0 || count($unlinkedPatients) > 0): ?>
-                    <div class="main-nav-tab" onclick="switchTab('linking')" id="linkingMainTab">Manual Linking</div>
+                        <div class="main-nav-tab" onclick="switchTab('linking')" id="linkingMainTab">Manual Linking</div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1678,115 +1735,456 @@ try {
             <div>
                 <!-- Staff Section -->
                 <div id="staffSection" class="tab-section" style="display: block;">
+                    <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Staff Account</h2>
                     <!-- Create Staff Form - Based on image -->
-                    <div style="margin-bottom: 2rem; background: white; border-radius: 8px; padding: 1.5rem; border: 1px solid #e5e7eb;">
-                        <h2 style="font-size: 1.125rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Staff Account</h2>
-                        
-                        <form method="POST" action="" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                            
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Username *</label>
-                                <input type="text" name="username" required placeholder="Enter User Name" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
+                    <div class="flex flex-col md:flex-row w-full gap-8">
+
+                        <!-- LEFT CONTENT -->
+                        <div class="mb-8  p-4 rounded-lg border border-gray-300 w-full md:w-1/2">
+                            <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+
+                                <!-- Username -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Username <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="username"
+                                        required
+                                        placeholder="Enter Username"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                </div>
+
+                                <!-- Password (UNCHANGED LOGIC) -->
+                                <div>
+                                    <label style="display:block;font-size:1.125rem;font-weight:600;color:#374151;margin-bottom:4px;">
+                                        Password <span class="text-red-500">*</span>
+                                    </label>
+
+                                    <div style="position: relative;">
+                                        <input type="text" name="password" required id="staff-password"
+                                            placeholder="Enter Password"
+                                            class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+
+                                        <button type="button"
+                                            onclick="togglePasswordVisibility('staff-password')"
+                                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Full Name -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Full Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="full_name"
+                                        required
+                                        placeholder="Enter Full Name"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                </div>
+
+                                <!-- Position -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Position *
+                                    </label>
+                                    <select
+                                        name="position"
+                                        required
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                        <option value="">Select Position</option>
+                                        <option value="Nurse">Nurse</option>
+                                        <option value="Midwife">Midwife</option>
+                                        <option value="Doctor">Doctor</option>
+                                        <option value="Encoder">Encoder</option>
+                                    </select>
+                                </div>
+
+                                <!-- Specialization -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Specialization
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="specialization"
+                                        placeholder="e.g., Pediatrics"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                </div>
+
+                                <!-- License -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        License Number
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="license_number"
+                                        placeholder="Enter License Number"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                </div>
+                            </form>
+                            <!-- Button -->
+                            <div class="mt-2">
+                                <button
+                                    type="submit"
+                                    name="create_staff"
+                                    class="w-full px-6 py-3 bg-[#3C96E1] text-white rounded text-lg font-medium hover:bg-blue-600 transition">
+                                    Create Account
+                                </button>
                             </div>
-                            
-                            <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Password *</label>
-                                <div style="position: relative;">
-                                    <input type="text" name="password" required id="staff-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem; font-family: monospace;">
-                                    <button type="button" onclick="togglePasswordVisibility('staff-password')" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af;">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
+                        </div>
+
+                        <!-- RIGHT CONTENT -->
+                        <div class="w-full md:w-1/2">
+                            <div class="p-4 rounded-lg border border-gray-300 ">
+                                <!-- Staff Tabs -->
+                                <div class="mb-6">
+                                    <div class="flex gap-6">
+
+                                        <button
+                                            onclick="showStaffTab('active')"
+                                            id="activeStaffMainTab"
+                                            class="py-3 px-6 rounded-md text-base font-semibold">
+                                            Active Account
+                                        </button>
+
+                                        <button
+                                            onclick="showStaffTab('inactive')"
+                                            id="inactiveStaffMainTab"
+                                            class="py-3 px-6 rounded-md text-base font-semibold">
+                                            Inactive Account
+                                        </button>
+
+                                    </div>
+                                </div>
+
+                                <!-- ACTIVE STAFF -->
+                                <div id="activeStaffSection">
+                                    <?php if (empty($activeStaff)): ?>
+                                        <div class="text-center p-12 bg-white rounded border border-gray-200">
+                                            <p class="text-gray-400">Pending to display</p>
+                                        </div>
+
+                                    <?php else: ?>
+
+                                        <div class="grid md:grid-cols-1 gap-4">
+                                            <?php foreach ($activeStaff as $staff): ?>
+                                                <div class="border border-gray-200 rounded-lg p-6 shadow-sm">
+                                                    <div class="flex justify-between items-start mb-3">
+                                                        <div>
+                                                            <p class="text-sm text-gray-500 mb-1">
+                                                                <span class="font-medium" style="color: #000000;">Position:</span> <?= htmlspecialchars($staff['position'] ?? 'N/A') ?>
+                                                            </p>
+
+                                                            <h3 class="font-semibold text-base text-gray-800">
+                                                                <?= htmlspecialchars($staff['full_name']) ?>
+                                                            </h3>
+                                                        </div>
+
+                                                        <span class="text-base font-medium text-green-600 bg-green-200 rounded-full px-8 py-2 flex items-center gap-1">
+                                                            Active
+                                                        </span>
+                                                    </div>
+
+                                                    <!-- <div class="flex gap-4 text-sm mb-4">
+                                                        <label class="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                onchange="togglePasswordChange(this, <?= $staff['id'] ?>)">
+                                                            Change Password
+                                                        </label>
+
+                                                        <label class="flex items-center gap-2">
+                                                            <input
+                                                                type="checkbox"
+                                                                onchange="toggleDeactivate(this, <?= $staff['id'] ?>)">
+                                                            Deactivate
+                                                        </label>
+                                                    </div> -->
+
+                                                    <div class="flex gap-3">
+                                                        <button
+                                                            onclick="openStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')"
+                                                            class="py-2 text-sm px-3 rounded-md hover:bg-gray-200 flex items-center gap-1" style="border: 1px solid #808080;">
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M12.05 19L14.9 16.175L12.05 13.35L11 14.4L12.075 15.475C11.6083 15.4917 11.1543 15.4167 10.713 15.25C10.2717 15.0833 9.87567 14.825 9.525 14.475C9.19167 14.1417 8.93734 13.7583 8.762 13.325C8.58667 12.8917 8.49933 12.4583 8.5 12.025C8.5 11.7417 8.53767 11.4583 8.613 11.175C8.68833 10.8917 8.79234 10.6167 8.925 10.35L7.825 9.25C7.54167 9.66667 7.33333 10.1083 7.2 10.575C7.06667 11.0417 7 11.5167 7 12C7 12.6333 7.125 13.2583 7.375 13.875C7.625 14.4917 7.99167 15.0417 8.475 15.525C8.95833 16.0083 9.5 16.371 10.1 16.613C10.7 16.855 11.3167 16.984 11.95 17L11 17.95L12.05 19ZM16.175 14.75C16.4583 14.3333 16.6667 13.8917 16.8 13.425C16.9333 12.9583 17 12.4833 17 12C17 11.3667 16.879 10.7373 16.637 10.112C16.395 9.48667 16.0327 8.93267 15.55 8.45C15.0673 7.96733 14.5213 7.609 13.912 7.375C13.3027 7.141 12.682 7.02433 12.05 7.025L13 6.05L11.95 5L9.1 7.825L11.95 10.65L13 9.6L11.9 8.5C12.35 8.5 12.8083 8.58767 13.275 8.763C13.7417 8.93833 14.1417 9.19233 14.475 9.525C14.8083 9.85767 15.0627 10.241 15.238 10.675C15.4133 11.109 15.5007 11.5423 15.5 11.975C15.5 12.2583 15.4627 12.5417 15.388 12.825C15.3133 13.1083 15.209 13.3833 15.075 13.65L16.175 14.75ZM12 22C10.6167 22 9.31667 21.7373 8.1 21.212C6.88334 20.6867 5.825 19.9743 4.925 19.075C4.025 18.1757 3.31267 17.1173 2.788 15.9C2.26333 14.6827 2.00067 13.3827 2 12C1.99933 10.6173 2.262 9.31733 2.788 8.1C3.314 6.88267 4.02633 5.82433 4.925 4.925C5.82367 4.02567 6.882 3.31333 8.1 2.788C9.318 2.26267 10.618 2 12 2C13.382 2 14.682 2.26267 15.9 2.788C17.118 3.31333 18.1763 4.02567 19.075 4.925C19.9737 5.82433 20.6863 6.88267 21.213 8.1C21.7397 9.31733 22.002 10.6173 22 12C21.998 13.3827 21.7353 14.6827 21.212 15.9C20.6887 17.1173 19.9763 18.1757 19.075 19.075C18.1737 19.9743 17.1153 20.687 15.9 21.213C14.6847 21.739 13.3847 22.0013 12 22Z" fill="black" />
+                                                            </svg>
+                                                            Change Password
+                                                        </button>
+
+                                                        <form
+                                                            method="POST"
+                                                            onsubmit="return confirm('Deactivate this staff account?')">
+
+                                                            <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
+                                                            <input type="hidden" name="action" value="deactivate">
+
+                                                            <button
+                                                                type="submit"
+                                                                name="toggle_staff_status"
+                                                                style="background-color: #DD7D06;"
+                                                                class="py-3 text-sm px-3  text-white rounded-md flex items-center gap-1">
+                                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M16.25 6.25H13.75V4.375C13.75 3.38044 13.3549 2.42661 12.6517 1.72335C11.9484 1.02009 10.9946 0.625 10 0.625C9.00544 0.625 8.05161 1.02009 7.34835 1.72335C6.64509 2.42661 6.25 3.38044 6.25 4.375V6.25H3.75C3.41848 6.25 3.10054 6.3817 2.86612 6.61612C2.6317 6.85054 2.5 7.16848 2.5 7.5V16.25C2.5 16.5815 2.6317 16.8995 2.86612 17.1339C3.10054 17.3683 3.41848 17.5 3.75 17.5H16.25C16.5815 17.5 16.8995 17.3683 17.1339 17.1339C17.3683 16.8995 17.5 16.5815 17.5 16.25V7.5C17.5 7.16848 17.3683 6.85054 17.1339 6.61612C16.8995 6.3817 16.5815 6.25 16.25 6.25ZM7.5 4.375C7.5 3.71196 7.76339 3.07607 8.23223 2.60723C8.70107 2.13839 9.33696 1.875 10 1.875C10.663 1.875 11.2989 2.13839 11.7678 2.60723C12.2366 3.07607 12.5 3.71196 12.5 4.375V6.25H7.5V4.375ZM16.25 16.25H3.75V7.5H16.25V16.25ZM10.9375 11.875C10.9375 12.0604 10.8825 12.2417 10.7795 12.3958C10.6765 12.55 10.5301 12.6702 10.3588 12.7411C10.1875 12.8121 9.99896 12.8307 9.8171 12.7945C9.63525 12.7583 9.4682 12.669 9.33709 12.5379C9.20598 12.4068 9.11669 12.2398 9.08051 12.0579C9.04434 11.876 9.06291 11.6875 9.13386 11.5162C9.20482 11.3449 9.32498 11.1985 9.47915 11.0955C9.63332 10.9925 9.81458 10.9375 10 10.9375C10.2486 10.9375 10.4871 11.0363 10.6629 11.2121C10.8387 11.3879 10.9375 11.6264 10.9375 11.875Z" fill="white" />
+                                                                </svg>
+                                                                Deactivate
+                                                            </button>
+                                                        </form>
+                                                    </div>
+
+                                                </div>
+
+                                            <?php endforeach; ?>
+
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- INACTIVE STAFF - Based on second image -->
+                                <div id="inactiveStaffSection" style="display: none;">
+                                    <?php if (empty($inactiveStaff)): ?>
+                                        <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                            <p style="color: #9ca3af;">No inactive staff accounts</p>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="modern-grid">
+                                            <?php foreach ($inactiveStaff as $staff): ?>
+                                                <div class="account-card inactive">
+                                                    <div class="account-header">
+                                                        <div>
+                                                            <p class="account-position text-gray-500 mb-1">
+                                                                <span class="font-medium" style="color: #000000;">Position:</span> <?= htmlspecialchars($staff['position'] ?? 'N/A') ?>
+                                                            </p>
+                                                            <h3 class="account-name"><?= htmlspecialchars($staff['full_name']) ?></h3>
+                                                        </div>
+                                                        <span class="status-badge inactive">
+                                                            Inactive
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="action-buttons">
+                                                        <form method="POST" action="" onsubmit="return confirm('Activate this staff account?')">
+                                                            <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
+                                                            <input type="hidden" name="action" value="activate">
+                                                            <button type="submit" name="toggle_staff_status" class="btn-icon success" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M16.2806 9.21937C16.3504 9.28903 16.4057 9.37175 16.4434 9.46279C16.4812 9.55384 16.5006 9.65144 16.5006 9.75C16.5006 9.84856 16.4812 9.94616 16.4434 10.0372C16.4057 10.1283 16.3504 10.211 16.2806 10.2806L11.0306 15.5306C10.961 15.6004 10.8783 15.6557 10.7872 15.6934C10.6962 15.7312 10.5986 15.7506 10.5 15.7506C10.4014 15.7506 10.3038 15.7312 10.2128 15.6934C10.1218 15.6557 10.039 15.6004 9.96938 15.5306L7.71938 13.2806C7.57865 13.1399 7.49959 12.949 7.49959 12.75C7.49959 12.551 7.57865 12.3601 7.71938 12.2194C7.86011 12.0786 8.05098 11.9996 8.25 11.9996C8.44903 11.9996 8.6399 12.0786 8.78063 12.2194L10.5 13.9397L15.2194 9.21937C15.289 9.14964 15.3718 9.09432 15.4628 9.05658C15.5538 9.01884 15.6514 8.99941 15.75 8.99941C15.8486 8.99941 15.9462 9.01884 16.0372 9.05658C16.1283 9.09432 16.211 9.14964 16.2806 9.21937ZM21.75 12C21.75 13.9284 21.1782 15.8134 20.1068 17.4168C19.0355 19.0202 17.5127 20.2699 15.7312 21.0078C13.9496 21.7458 11.9892 21.9389 10.0979 21.5627C8.20656 21.1865 6.46928 20.2579 5.10571 18.8943C3.74215 17.5307 2.81355 15.7934 2.43735 13.9021C2.06114 12.0108 2.25422 10.0504 2.99218 8.26884C3.73013 6.48726 4.97982 4.96451 6.58319 3.89317C8.18657 2.82183 10.0716 2.25 12 2.25C14.585 2.25273 17.0634 3.28084 18.8913 5.10872C20.7192 6.93661 21.7473 9.41498 21.75 12ZM20.25 12C20.25 10.3683 19.7661 8.77325 18.8596 7.41655C17.9531 6.05984 16.6646 5.00242 15.1571 4.37799C13.6497 3.75357 11.9909 3.59019 10.3905 3.90852C8.79017 4.22685 7.32016 5.01259 6.16637 6.16637C5.01259 7.32015 4.22685 8.79016 3.90853 10.3905C3.5902 11.9908 3.75358 13.6496 4.378 15.1571C5.00242 16.6646 6.05984 17.9531 7.41655 18.8596C8.77326 19.7661 10.3683 20.25 12 20.25C14.1873 20.2475 16.2843 19.3775 17.8309 17.8309C19.3775 16.2843 20.2475 14.1873 20.25 12Z" fill="white" />
+                                                                </svg>
+                                                                <span>Activate</span>
+                                                            </button>
+                                                        </form>
+                                                        <button onclick="openDeleteModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')" class="btn-icon danger" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M20.25 4.5H16.5V3.75C16.5 3.15326 16.2629 2.58097 15.841 2.15901C15.419 1.73705 14.8467 1.5 14.25 1.5H9.75C9.15326 1.5 8.58097 1.73705 8.15901 2.15901C7.73705 2.58097 7.5 3.15326 7.5 3.75V4.5H3.75C3.55109 4.5 3.36032 4.57902 3.21967 4.71967C3.07902 4.86032 3 5.05109 3 5.25C3 5.44891 3.07902 5.63968 3.21967 5.78033C3.36032 5.92098 3.55109 6 3.75 6H4.5V19.5C4.5 19.8978 4.65804 20.2794 4.93934 20.5607C5.22064 20.842 5.60218 21 6 21H18C18.3978 21 18.7794 20.842 19.0607 20.5607C19.342 20.2794 19.5 19.8978 19.5 19.5V6H20.25C20.4489 6 20.6397 5.92098 20.7803 5.78033C20.921 5.63968 21 5.44891 21 5.25C21 5.05109 20.921 4.86032 20.7803 4.71967C20.6397 4.57902 20.4489 4.5 20.25 4.5ZM9 3.75C9 3.55109 9.07902 3.36032 9.21967 3.21967C9.36032 3.07902 9.55109 3 9.75 3H14.25C14.4489 3 14.6397 3.07902 14.7803 3.21967C14.921 3.36032 15 3.55109 15 3.75V4.5H9V3.75ZM18 19.5H6V6H18V19.5ZM10.5 9.75V15.75C10.5 15.9489 10.421 16.1397 10.2803 16.2803C10.1397 16.421 9.94891 16.5 9.75 16.5C9.55109 16.5 9.36032 16.421 9.21967 16.2803C9.07902 16.1397 9 15.9489 9 15.75V9.75C9 9.55109 9.07902 9.36032 9.21967 9.21967C9.36032 9.07902 9.55109 9 9.75 9C9.94891 9 10.1397 9.07902 10.2803 9.21967C10.421 9.36032 10.5 9.55109 10.5 9.75ZM15 9.75V15.75C15 15.9489 14.921 16.1397 14.7803 16.2803C14.6397 16.421 14.4489 16.5 14.25 16.5C14.0511 16.5 13.8603 16.421 13.7197 16.2803C13.579 16.1397 13.5 15.9489 13.5 15.75V9.75C13.5 9.55109 13.579 9.36032 13.7197 9.21967C13.8603 9.07902 14.0511 9 14.25 9C14.4489 9 14.6397 9.07902 14.7803 9.21967C14.921 9.36032 15 9.55109 15 9.75Z" fill="white" />
+                                                            </svg>
+                                                            <span>Delete</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                            
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resident Section -->
+                <div id="residentSection" class="tab-section" style="display: none;">
+                    <!-- Create Resident Form - Based on image style -->
+                    <div style="margin-bottom: 2rem; background: white; border-radius: 8px; padding: 1.5rem; border: 1px solid #e5e7eb;">
+                        <h2 style="font-size: 1.125rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Resident Account</h2>
+
+                        <form method="POST" action="" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Username *</label>
+                                <input type="text" name="username" required placeholder="Enter Username" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
+                            </div>
+
                             <div>
                                 <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Full Name *</label>
                                 <input type="text" name="full_name" required placeholder="Enter Full Name" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
                             </div>
-                            
+
                             <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Position *</label>
-                                <select name="position" required style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                                    <option value="">Select Position</option>
-                                    <option value="Nurse">Nurse</option>
-                                    <option value="Midwife">Midwife</option>
-                                    <option value="Doctor">Doctor</option>
-                                    <option value="Encoder">Encoder</option>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Email *</label>
+                                <input type="email" name="email" required placeholder="Enter Email Address" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Password *</label>
+                                <div style="position: relative;">
+                                    <input type="text" name="password" required id="resident-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem; font-family: monospace;">
+                                    <button type="button" onclick="togglePasswordVisibility('resident-password')" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af;">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Phone</label>
+                                <input type="tel" name="phone" placeholder="Enter Phone Number" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
+                            </div>
+
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Gender</label>
+                                <select name="gender" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
-                            
+
                             <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Specialization</label>
-                                <input type="text" name="specialization" placeholder="e.g., Pediatrics" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Date of Birth</label>
+                                <input type="date" name="date_of_birth" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
                             </div>
-                            
+
                             <div>
-                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">License Number</label>
-                                <input type="text" name="license_number" placeholder="Enter License Number" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
+                                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Sitio</label>
+                                <select name="sitio" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
+                                    <option value="">Select Sitio</option>
+                                    <option value="Kalinao">Kalinao</option>
+                                    <option value="Nangka">Nangka</option>
+                                    <option value="Lubi">Lubi</option>
+                                    <option value="Sta. Cruz">Sta. Cruz</option>
+                                    <option value="Regla">Regla</option>
+                                    <option value="Abellana">Abellana</option>
+                                    <option value="Sto.niño l">Sto.niño l</option>
+                                    <option value="Sto.niño ll">Sto.niño ll</option>
+                                    <option value="Sto.niño lll">Sto.niño lll</option>
+                                    <option value="Zapatera">Zapatera</option>
+                                    <option value="Mabuhay">Mabuhay</option>
+                                    <option value="San Vicente">San Vicente</option>
+                                    <option value="City Central">City Central</option>
+                                    <option value="San. Antonio">San. Antonio</option>
+                                    <option value="San Roque">San Roque</option>
+                                    <option value="Others">Others</option>
+                                </select>
                             </div>
-                            
+
                             <div style="grid-column: 1/-1; margin-top: 0.5rem;">
-                                <button type="submit" name="create_staff" style="padding: 0.5rem 2rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-weight: 500; font-size: 0.875rem; cursor: pointer;">
+                                <button type="submit" name="create_resident" style="padding: 0.5rem 2rem; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: 500; font-size: 0.875rem; cursor: pointer;">
                                     Create Account
                                 </button>
                             </div>
                         </form>
                     </div>
 
-                    <!-- Staff Tabs - Based on image -->
+                    <!-- Resident Tabs -->
                     <div style="margin-bottom: 1.5rem;">
                         <div style="display: flex; gap: 2rem; border-bottom: 2px solid #e5e7eb;">
-                            <button onclick="showStaffTab('active')" id="activeStaffMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #2563eb; border: none; background: none; cursor: pointer; border-bottom: 2px solid #2563eb; margin-bottom: -2px;">
-                                Active Account
+                            <button onclick="showResidentTab('approved')" id="approvedResidentMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #10b981; border: none; background: none; cursor: pointer; border-bottom: 2px solid #10b981; margin-bottom: -2px;">
+                                Approved Residents (<?= count($approvedResidents) ?>)
                             </button>
-                            <button onclick="showStaffTab('inactive')" id="inactiveStaffMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #6b7280; border: none; background: none; cursor: pointer;">
-                                Inactive Account
+                            <button onclick="showResidentTab('pending')" id="pendingResidentMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #6b7280; border: none; background: none; cursor: pointer;">
+                                Pending (<?= count($pendingResidents) ?>)
+                            </button>
+                            <button onclick="showResidentTab('declined')" id="declinedResidentMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #6b7280; border: none; background: none; cursor: pointer;">
+                                Declined (<?= count($declinedResidents) ?>)
                             </button>
                         </div>
                     </div>
 
-                    <!-- Active Staff Grid - Based on first image -->
-                    <div id="activeStaffSection" style="display: block;">
-                        <?php if (empty($activeStaff)): ?>
+                    <!-- Approved Residents Grid -->
+                    <div id="approvedResidentSection" style="display: block;">
+                        <?php if (empty($approvedResidents)): ?>
                             <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
-                                <p style="color: #9ca3af;">Pending to display</p>
+                                <p style="color: #9ca3af;">No approved residents</p>
                             </div>
                         <?php else: ?>
                             <div class="modern-grid">
-                                <?php foreach ($activeStaff as $staff): ?>
-                                    <div class="account-card active">
+                                <?php foreach ($approvedResidents as $resident):
+                                    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
+                                    $stmt->execute([$resident['id']]);
+                                    $hasPatientRecord = $stmt->fetch();
+                                ?>
+                                    <div class="account-card">
                                         <div class="account-header">
                                             <div>
-                                                <h3 class="account-name"><?= htmlspecialchars($staff['full_name']) ?></h3>
-                                                <p class="account-position">Position: <?= htmlspecialchars($staff['position'] ?? 'N/A') ?></p>
+                                                <h3 class="account-name"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                                <p class="account-position">Username: <?= htmlspecialchars($resident['username']) ?></p>
+                                                <p class="account-position" style="font-size: 0.75rem;"><?= htmlspecialchars($resident['email']) ?></p>
                                             </div>
-                                            <span class="status-badge">
-                                                <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
-                                                Active
-                                            </span>
+                                            <?php if (!$hasPatientRecord): ?>
+                                                <span class="status-badge warning" style="background: #fed7aa; color: #92400e;">
+                                                    Unlinked
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="status-badge success">
+                                                    Linked
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
-                                        
+
                                         <div class="checkbox-group">
                                             <label class="checkbox-item">
-                                                <input type="checkbox" onchange="togglePasswordChange(this, <?= $staff['id'] ?>)">
-                                                Change Password
-                                            </label>
-                                            <label class="checkbox-item">
-                                                <input type="checkbox" onchange="toggleDeactivate(this, <?= $staff['id'] ?>)">
-                                                Deactivate
+                                                <input type="checkbox" onchange="toggleResidentResetPass(this, <?= $resident['id'] ?>)">
+                                                Reset Password
                                             </label>
                                         </div>
-                                        
+
                                         <div class="action-buttons">
-                                            <button onclick="openStaffPasswordModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')" class="btn-icon primary" style="flex: 1;">
-                                                <i class="fas fa-key"></i> Change
+                                            <button onclick="openResetModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', 'resident')" class="btn-icon warning" style="flex: 1;">
+                                                <i class="fas fa-key"></i> Reset Pass
                                             </button>
-                                            <form method="POST" action="" style="flex: 1;" onsubmit="return confirm('Deactivate this staff account?')">
-                                                <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
-                                                <input type="hidden" name="action" value="deactivate">
-                                                <button type="submit" name="toggle_staff_status" class="btn-icon danger" style="width: 100%;">
-                                                    <i class="fas fa-ban"></i> Deactivate
+                                            <?php if (!$hasPatientRecord): ?>
+                                                <button onclick="switchToLinking(<?= $resident['id'] ?>)" class="btn-icon primary" style="flex: 1;">
+                                                    <i class="fas fa-link"></i> Link
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Pending Residents Grid -->
+                    <div id="pendingResidentSection" style="display: none;">
+                        <?php if (empty($pendingResidents)): ?>
+                            <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <p style="color: #9ca3af;">No pending residents</p>
+                            </div>
+                        <?php else: ?>
+                            <div class="modern-grid">
+                                <?php foreach ($pendingResidents as $resident): ?>
+                                    <div class="account-card">
+                                        <div class="account-header">
+                                            <div>
+                                                <h3 class="account-name"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                                <p class="account-position">Username: <?= htmlspecialchars($resident['username']) ?></p>
+                                                <p class="account-position" style="font-size: 0.75rem;"><?= htmlspecialchars($resident['email']) ?></p>
+                                            </div>
+                                            <span class="status-badge warning">
+                                                Pending
+                                            </span>
+                                        </div>
+
+                                        <div class="action-buttons">
+                                            <form method="POST" action="" style="flex: 1;">
+                                                <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                                <input type="hidden" name="action" value="approve">
+                                                <button type="submit" name="toggle_resident_status" class="btn-icon success" style="width: 100%;">
+                                                    <i class="fas fa-check"></i> Approve
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="" style="flex: 1;">
+                                                <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                                <input type="hidden" name="action" value="decline">
+                                                <button type="submit" name="toggle_resident_status" class="btn-icon danger" style="width: 100%;">
+                                                    <i class="fas fa-times"></i> Decline
                                                 </button>
                                             </form>
                                         </div>
@@ -1796,288 +2194,40 @@ try {
                         <?php endif; ?>
                     </div>
 
-                    <!-- Inactive Staff Grid - Based on second image -->
-                    <div id="inactiveStaffSection" style="display: none;">
-                        <?php if (empty($inactiveStaff)): ?>
+                    <!-- Declined Residents Grid -->
+                    <div id="declinedResidentSection" style="display: none;">
+                        <?php if (empty($declinedResidents)): ?>
                             <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
-                                <p style="color: #9ca3af;">No inactive staff accounts</p>
+                                <p style="color: #9ca3af;">No declined residents</p>
                             </div>
                         <?php else: ?>
                             <div class="modern-grid">
-                                <?php foreach ($inactiveStaff as $staff): ?>
+                                <?php foreach ($declinedResidents as $resident): ?>
                                     <div class="account-card inactive">
                                         <div class="account-header">
                                             <div>
-                                                <h3 class="account-name" style="color: #6b7280;"><?= htmlspecialchars($staff['full_name']) ?></h3>
-                                                <p class="account-position">Position: <?= htmlspecialchars($staff['position'] ?? 'N/A') ?></p>
+                                                <h3 class="account-name" style="color: #6b7280;"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                                <p class="account-position">Username: <?= htmlspecialchars($resident['username']) ?></p>
+                                                <p class="account-position" style="font-size: 0.75rem;"><?= htmlspecialchars($resident['email']) ?></p>
                                             </div>
                                             <span class="status-badge inactive">
-                                                <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
-                                                Inactive
+                                                Declined
                                             </span>
                                         </div>
-                                        
-                                        <div class="checkbox-group">
-                                            <label class="checkbox-item">
-                                                <input type="checkbox" onchange="toggleActivate(this, <?= $staff['id'] ?>)">
-                                                Activate
-                                            </label>
-                                            <label class="checkbox-item">
-                                                <input type="checkbox" onchange="toggleDelete(this, <?= $staff['id'] ?>)">
-                                                Delete
-                                            </label>
-                                        </div>
-                                        
-                                        <div class="action-buttons">
-                                            <form method="POST" action="" style="flex: 1;" onsubmit="return confirm('Activate this staff account?')">
-                                                <input type="hidden" name="staff_id" value="<?= $staff['id'] ?>">
-                                                <input type="hidden" name="action" value="activate">
-                                                <button type="submit" name="toggle_staff_status" class="btn-icon success" style="width: 100%;">
-                                                    <i class="fas fa-play"></i> Activate
-                                                </button>
-                                            </form>
-                                            <button onclick="openDeleteModal(<?= $staff['id'] ?>, '<?= htmlspecialchars($staff['full_name']) ?>')" class="btn-icon danger" style="flex: 1;">
-                                                <i class="fas fa-trash"></i> Delete
+
+                                        <form method="POST" action="">
+                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" name="toggle_resident_status" class="btn-icon success" style="width: 100%;">
+                                                <i class="fas fa-redo"></i> Reconsider
                                             </button>
-                                        </div>
+                                        </form>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
                     </div>
                 </div>
-
-                <!-- Resident Section -->
-<div id="residentSection" class="tab-section" style="display: none;">
-    <!-- Create Resident Form - Based on image style -->
-    <div style="margin-bottom: 2rem; background: white; border-radius: 8px; padding: 1.5rem; border: 1px solid #e5e7eb;">
-        <h2 style="font-size: 1.125rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Resident Account</h2>
-        
-        <form method="POST" action="" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-            
-            <div>
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Username *</label>
-                <input type="text" name="username" required placeholder="Enter Username" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-            </div>
-            
-            <div>
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Full Name *</label>
-                <input type="text" name="full_name" required placeholder="Enter Full Name" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-            </div>
-            
-            <div>
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Email *</label>
-                <input type="email" name="email" required placeholder="Enter Email Address" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-            </div>
-            
-            <div>
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Password *</label>
-                <div style="position: relative;">
-                    <input type="text" name="password" required id="resident-password" value="<?= bin2hex(random_bytes(4)) ?>" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem; font-family: monospace;">
-                    <button type="button" onclick="togglePasswordVisibility('resident-password')" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9ca3af;">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div>
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Phone</label>
-                <input type="tel" name="phone" placeholder="Enter Phone Number" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-            </div>
-            
-            <div>
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Gender</label>
-                <select name="gender" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            
-            <div>
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Date of Birth</label>
-                <input type="date" name="date_of_birth" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-            </div>
-            
-            <div>
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem;">Sitio</label>
-                <select name="sitio" style="width: 100%; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem;">
-                    <option value="">Select Sitio</option>
-                    <option value="Kalinao">Kalinao</option>
-                    <option value="Nangka">Nangka</option>
-                    <option value="Lubi">Lubi</option>
-                    <option value="Sta. Cruz">Sta. Cruz</option>
-                    <option value="Regla">Regla</option>
-                    <option value="Abellana">Abellana</option>
-                    <option value="Sto.niño l">Sto.niño l</option>
-                    <option value="Sto.niño ll">Sto.niño ll</option>
-                    <option value="Sto.niño lll">Sto.niño lll</option>
-                    <option value="Zapatera">Zapatera</option>
-                    <option value="Mabuhay">Mabuhay</option>
-                    <option value="San Vicente">San Vicente</option>
-                    <option value="City Central">City Central</option>
-                    <option value="San. Antonio">San. Antonio</option>
-                    <option value="San Roque">San Roque</option>
-                    <option value="Others">Others</option>
-                </select>
-            </div>
-            
-            <div style="grid-column: 1/-1; margin-top: 0.5rem;">
-                <button type="submit" name="create_resident" style="padding: 0.5rem 2rem; background: #10b981; color: white; border: none; border-radius: 4px; font-weight: 500; font-size: 0.875rem; cursor: pointer;">
-                    Create Account
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Resident Tabs -->
-    <div style="margin-bottom: 1.5rem;">
-        <div style="display: flex; gap: 2rem; border-bottom: 2px solid #e5e7eb;">
-            <button onclick="showResidentTab('approved')" id="approvedResidentMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #10b981; border: none; background: none; cursor: pointer; border-bottom: 2px solid #10b981; margin-bottom: -2px;">
-                Approved Residents (<?= count($approvedResidents) ?>)
-            </button>
-            <button onclick="showResidentTab('pending')" id="pendingResidentMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #6b7280; border: none; background: none; cursor: pointer;">
-                Pending (<?= count($pendingResidents) ?>)
-            </button>
-            <button onclick="showResidentTab('declined')" id="declinedResidentMainTab" style="padding: 0.5rem 0; font-weight: 600; font-size: 0.875rem; color: #6b7280; border: none; background: none; cursor: pointer;">
-                Declined (<?= count($declinedResidents) ?>)
-            </button>
-        </div>
-    </div>
-
-    <!-- Approved Residents Grid -->
-    <div id="approvedResidentSection" style="display: block;">
-        <?php if (empty($approvedResidents)): ?>
-            <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
-                <p style="color: #9ca3af;">No approved residents</p>
-            </div>
-        <?php else: ?>
-            <div class="modern-grid">
-                <?php foreach ($approvedResidents as $resident): 
-                    $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
-                    $stmt->execute([$resident['id']]);
-                    $hasPatientRecord = $stmt->fetch();
-                ?>
-                    <div class="account-card">
-                        <div class="account-header">
-                            <div>
-                                <h3 class="account-name"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                <p class="account-position">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                <p class="account-position" style="font-size: 0.75rem;"><?= htmlspecialchars($resident['email']) ?></p>
-                            </div>
-                            <?php if (!$hasPatientRecord): ?>
-                                <span class="status-badge warning" style="background: #fed7aa; color: #92400e;">
-                                    Unlinked
-                                </span>
-                            <?php else: ?>
-                                <span class="status-badge success">
-                                    Linked
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="checkbox-group">
-                            <label class="checkbox-item">
-                                <input type="checkbox" onchange="toggleResidentResetPass(this, <?= $resident['id'] ?>)">
-                                Reset Password
-                            </label>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button onclick="openResetModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', 'resident')" class="btn-icon warning" style="flex: 1;">
-                                <i class="fas fa-key"></i> Reset Pass
-                            </button>
-                            <?php if (!$hasPatientRecord): ?>
-                            <button onclick="switchToLinking(<?= $resident['id'] ?>)" class="btn-icon primary" style="flex: 1;">
-                                <i class="fas fa-link"></i> Link
-                            </button>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-    </div>
-
-    <!-- Pending Residents Grid -->
-    <div id="pendingResidentSection" style="display: none;">
-        <?php if (empty($pendingResidents)): ?>
-            <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
-                <p style="color: #9ca3af;">No pending residents</p>
-            </div>
-        <?php else: ?>
-            <div class="modern-grid">
-                <?php foreach ($pendingResidents as $resident): ?>
-                    <div class="account-card">
-                        <div class="account-header">
-                            <div>
-                                <h3 class="account-name"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                <p class="account-position">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                <p class="account-position" style="font-size: 0.75rem;"><?= htmlspecialchars($resident['email']) ?></p>
-                            </div>
-                            <span class="status-badge warning">
-                                Pending
-                            </span>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <form method="POST" action="" style="flex: 1;">
-                                <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                <input type="hidden" name="action" value="approve">
-                                <button type="submit" name="toggle_resident_status" class="btn-icon success" style="width: 100%;">
-                                    <i class="fas fa-check"></i> Approve
-                                </button>
-                            </form>
-                            <form method="POST" action="" style="flex: 1;">
-                                <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                <input type="hidden" name="action" value="decline">
-                                <button type="submit" name="toggle_resident_status" class="btn-icon danger" style="width: 100%;">
-                                    <i class="fas fa-times"></i> Decline
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-    </div>
-
-    <!-- Declined Residents Grid -->
-    <div id="declinedResidentSection" style="display: none;">
-        <?php if (empty($declinedResidents)): ?>
-            <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
-                <p style="color: #9ca3af;">No declined residents</p>
-            </div>
-        <?php else: ?>
-            <div class="modern-grid">
-                <?php foreach ($declinedResidents as $resident): ?>
-                    <div class="account-card inactive">
-                        <div class="account-header">
-                            <div>
-                                <h3 class="account-name" style="color: #6b7280;"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                <p class="account-position">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                <p class="account-position" style="font-size: 0.75rem;"><?= htmlspecialchars($resident['email']) ?></p>
-                            </div>
-                            <span class="status-badge inactive">
-                                Declined
-                            </span>
-                        </div>
-                        
-                        <form method="POST" action="">
-                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                            <input type="hidden" name="action" value="approve">
-                            <button type="submit" name="toggle_resident_status" class="btn-icon success" style="width: 100%;">
-                                <i class="fas fa-redo"></i> Reconsider
-                            </button>
-                        </form>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
 
                 <!-- Linking Section -->
                 <div id="linkingSection" class="tab-section" style="display: none;">
@@ -2102,7 +2252,7 @@ try {
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Unlinked Patients -->
                                 <div>
                                     <h3 style="font-size: 1rem; font-weight: 600; color: #374151; margin-bottom: 1rem;">Patient Records (<?= count($unlinkedPatients) ?>)</h3>
@@ -2135,13 +2285,13 @@ try {
         <div class="modern-modal-content">
             <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Delete Staff Account</h3>
             <p style="margin-bottom: 1.5rem; color: #6b7280;" id="deleteMessage"></p>
-            
+
             <form method="POST" action="" id="deleteForm">
                 <input type="hidden" name="staff_id" id="deleteStaffId">
-                
+
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Handle Dependent Records:</label>
-                    
+
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <label style="display: flex; align-items: start; gap: 0.5rem;">
                             <input type="radio" name="delete_action" value="reassign" checked>
@@ -2159,14 +2309,14 @@ try {
                                 </select>
                             </span>
                         </label>
-                        
+
                         <label style="display: flex; align-items: start; gap: 0.5rem;">
                             <input type="radio" name="delete_action" value="delete">
                             <span style="color: #dc2626; font-weight: 500;">Delete all associated records</span>
                         </label>
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 0.75rem;">
                     <button type="button" onclick="closeDeleteModal()" style="flex: 1; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; background: white; cursor: pointer;">
                         Cancel
@@ -2183,15 +2333,15 @@ try {
     <div class="modern-modal" id="staffPasswordModal">
         <div class="modern-modal-content">
             <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Change Staff Password</h3>
-            
+
             <div style="background: #eff6ff; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">
                 <p style="font-weight: 500;" id="staffPasswordName"></p>
             </div>
-            
+
             <form method="POST" action="" id="staffPasswordForm">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                 <input type="hidden" name="staff_id" id="staffPasswordId">
-                
+
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">Current Password</label>
                     <div class="password-field">
@@ -2201,7 +2351,7 @@ try {
                         </button>
                     </div>
                 </div>
-                
+
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">New Password</label>
                     <div class="password-field">
@@ -2211,7 +2361,7 @@ try {
                         </button>
                     </div>
                 </div>
-                
+
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">Confirm Password</label>
                     <div class="password-field">
@@ -2221,7 +2371,7 @@ try {
                         </button>
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 0.75rem;">
                     <button type="button" onclick="closeStaffPasswordModal()" style="flex: 1; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; background: white; cursor: pointer;">
                         Cancel
@@ -2238,15 +2388,15 @@ try {
     <div class="modern-modal" id="resetPasswordModal">
         <div class="modern-modal-content">
             <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Reset Password</h3>
-            
+
             <div style="background: #fffbeb; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">
                 <p style="font-weight: 500;" id="resetName"></p>
             </div>
-            
+
             <form method="POST" action="" id="resetPasswordForm">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                 <input type="hidden" name="resident_id" id="resetId">
-                
+
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">New Password</label>
                     <div class="password-field">
@@ -2256,7 +2406,7 @@ try {
                         </button>
                     </div>
                 </div>
-                
+
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">Confirm Password</label>
                     <div class="password-field">
@@ -2266,7 +2416,7 @@ try {
                         </button>
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 0.75rem;">
                     <button type="button" onclick="closeResetModal()" style="flex: 1; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; background: white; cursor: pointer;">
                         Cancel
@@ -2328,11 +2478,11 @@ try {
             // Update main nav tabs
             document.querySelectorAll('.main-nav-tab').forEach(t => {
                 t.classList.remove('active');
-                t.style.color = '#6b7280';
+                t.style.color = '#3C96E1';
             });
             document.getElementById(tab + 'MainTab').classList.add('active');
-            document.getElementById(tab + 'MainTab').style.color = '#2563eb';
-            
+            document.getElementById(tab + 'MainTab').style.color = '#FFFFFF';
+
             // Show/hide sections
             document.getElementById('staffSection').style.display = tab === 'staff' ? 'block' : 'none';
             document.getElementById('residentSection').style.display = tab === 'resident' ? 'block' : 'none';
@@ -2345,23 +2495,56 @@ try {
         function showStaffTab(tab) {
             const activeTab = document.getElementById('activeStaffMainTab');
             const inactiveTab = document.getElementById('inactiveStaffMainTab');
-            
+
+            // Validate that elements exist
+            if (!activeTab || !inactiveTab) {
+                console.error('Tab elements not found');
+                return;
+            }
+
+            // Get section elements
+            const activeSection = document.getElementById('activeStaffSection');
+            const inactiveSection = document.getElementById('inactiveStaffSection');
+
             if (tab === 'active') {
-                activeTab.style.color = '#2563eb';
+
+                // Active tab styles
+                activeTab.style.color = '#FFFFFF';
                 activeTab.style.borderBottom = '2px solid #2563eb';
-                inactiveTab.style.color = '#6b7280';
+                activeTab.style.backgroundColor = '#3C96E1';
+
+                // Inactive tab styles
+                inactiveTab.style.color = '#3C96E1';
                 inactiveTab.style.borderBottom = 'none';
-                document.getElementById('activeStaffSection').style.display = 'block';
-                document.getElementById('inactiveStaffSection').style.display = 'none';
-            } else {
-                inactiveTab.style.color = '#2563eb';
+                inactiveTab.style.backgroundColor = '#3C96E14D';
+
+                // Show/hide sections
+                if (activeSection) activeSection.style.display = 'block';
+                if (inactiveSection) inactiveSection.style.display = 'none';
+
+            } else if (tab === 'inactive') {
+
+                // Inactive tab styles
+                inactiveTab.style.color = '#FFFFFF';
                 inactiveTab.style.borderBottom = '2px solid #2563eb';
-                activeTab.style.color = '#6b7280';
+                inactiveTab.style.backgroundColor = '#3C96E1';
+
+                // Active tab styles
+                activeTab.style.color = '#3C96E1';
                 activeTab.style.borderBottom = 'none';
-                document.getElementById('inactiveStaffSection').style.display = 'block';
-                document.getElementById('activeStaffSection').style.display = 'none';
+                activeTab.style.backgroundColor = '#3C96E14D';
+
+                // Show/hide sections
+                if (inactiveSection) inactiveSection.style.display = 'block';
+                if (activeSection) activeSection.style.display = 'none';
             }
         }
+
+        // Optional: Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default active tab
+            showStaffTab('active');
+        });
 
         // Resident tab switching
         function showResidentTab(tab) {
@@ -2374,7 +2557,7 @@ try {
                 }
                 document.getElementById(t + 'ResidentSection').style.display = 'none';
             });
-            
+
             document.getElementById(tab + 'ResidentMainTab').style.color = '#10b981';
             document.getElementById(tab + 'ResidentMainTab').style.borderBottom = '2px solid #10b981';
             document.getElementById(tab + 'ResidentSection').style.display = 'block';
@@ -2513,7 +2696,9 @@ try {
             setTimeout(() => {
                 const card = document.querySelector(`[data-resident-id="${residentId}"]`);
                 if (card) {
-                    card.scrollIntoView({ behavior: 'smooth' });
+                    card.scrollIntoView({
+                        behavior: 'smooth'
+                    });
                     selectResident(residentId, card);
                 }
             }, 100);
@@ -2546,4 +2731,5 @@ try {
         });
     </script>
 </body>
+
 </html>

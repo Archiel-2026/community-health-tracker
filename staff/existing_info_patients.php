@@ -331,7 +331,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_health_info'])) 
 
             $pdo->commit();
             $message = "Patient information saved successfully!";
-
         } catch (PDOException $e) {
             $pdo->rollBack();
             $error = "Error saving patient information: " . $e->getMessage();
@@ -471,7 +470,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_child_health']))
         }
 
         $message = "Child Health Record saved successfully!";
-
     } catch (PDOException $e) {
         $error = "Error saving Child Health Record: " . $e->getMessage();
     }
@@ -545,7 +543,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_present_pregnant
         ]);
 
         $message = "Present Pregnant Record saved successfully!";
-
     } catch (PDOException $e) {
         $error = "Error saving Present Pregnant Record: " . $e->getMessage();
     }
@@ -824,7 +821,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_pdf'])) {
                 header('Location: generate_pdf.php');
                 exit();
             }
-
         } catch (Exception $e) {
             $error = "Error exporting selected patients: " . $e->getMessage();
         }
@@ -1073,7 +1069,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_manual'])) {
 
             echo '</body></html>';
             exit();
-
         } catch (Exception $e) {
             $error = "Error exporting selected patients: " . $e->getMessage();
         }
@@ -1440,7 +1435,6 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
 
         echo '</body></html>';
         exit();
-
     } catch (Exception $e) {
         $error = "Error exporting to Excel: " . $e->getMessage();
         error_log("Excel Export Error: " . $e->getMessage());
@@ -1575,11 +1569,15 @@ $viewAll = isset($_GET['view_all']) && $_GET['view_all'] == 'true';
 
 // Pagination setup
 $recordsPerPage = 5;
-if (!isset($currentPage)) { $currentPage = 1; }
+if (!isset($currentPage)) {
+    $currentPage = 1;
+}
 $offset = ($currentPage - 1) * $recordsPerPage;
 
 
-if (!isset($currentPage)) { $currentPage = 1; }
+if (!isset($currentPage)) {
+    $currentPage = 1;
+}
 
 
 // Get total count of patients based on filter
@@ -1628,7 +1626,6 @@ try {
         $currentPage = $totalPages;
         $offset = ($currentPage - 1) * $recordsPerPage;
     }
-
 } catch (PDOException $e) {
     $error = "Error counting patient records: " . $e->getMessage();
     $totalRecords = 0;
@@ -1761,7 +1758,6 @@ try {
         }
         echo '</pre>';
     }
-
 } catch (PDOException $e) {
     $error = "Error fetching patient records: " . $e->getMessage();
     error_log("Patient fetch error: " . $e->getMessage());
@@ -1915,7 +1911,8 @@ if (!empty($searchTerm)) {
             color: #5F30A3;
             display: inline-block;
             padding: 0.5rem 1.2rem;
-            border-radius: 9999px; /* fully rounded */
+            border-radius: 9999px;
+            /* fully rounded */
             font-size: 0.8rem;
             font-weight: 500;
         }
@@ -1925,7 +1922,8 @@ if (!empty($searchTerm)) {
             color: #00A978;
             display: inline-block;
             padding: 0.5rem 1.2rem;
-            border-radius: 9999px; /* fully rounded */
+            border-radius: 9999px;
+            /* fully rounded */
             font-size: 0.8rem;
             font-weight: 500;
         }
@@ -2169,6 +2167,7 @@ if (!empty($searchTerm)) {
             width: auto;
             margin: 8px 0;
         }
+
         .btn-save-medical {
             background-color: #3498db;
             color: #ffffffff;
@@ -2192,24 +2191,24 @@ if (!empty($searchTerm)) {
         }
 
         .btn-add-note {
-            background-color: #f39c12;
+            background-color: #007BFF;
             color: white;
-            border-radius: 30px;
-            padding: 4px 24px;
+            border-radius: 6px;
+            padding: 8px 16px;
             transition: all 0.3s ease;
             font-weight: 600;
-            min-height: 60px;
+            min-height: 50px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            /* font-size: 16px; */
             line-height: 2px;
             width: auto;
             margin: 8px 0;
         }
 
         .btn-add-note:hover {
-            background-color: #f59e1aff;
+            background-color: #3B96F5;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(243, 156, 18, 0.15);
         }
@@ -2896,7 +2895,7 @@ if (!empty($searchTerm)) {
         .horizontal-notes-container {
             display: flex;
             overflow-x: auto;
-            padding: 1rem 0.5rem;
+            /* padding: 1rem 0.5rem; */
             gap: 1rem;
             scrollbar-width: thin;
             scrollbar-color: #3498db #f0f9ff;
@@ -2921,12 +2920,12 @@ if (!empty($searchTerm)) {
 
         /* Note card styling for horizontal layout */
         .note-card {
-            flex: 0 0 300px;
+            flex: 0 0 400px;
             background: white;
             border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #DEDEDE;
+            padding: 1.5rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0.05, 0.05, 0.05, 0.05);
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
@@ -2935,7 +2934,7 @@ if (!empty($searchTerm)) {
         }
 
         .note-card:hover {
-            transform: translateY(-4px);
+            /* transform: translateY(-4px); */
             box-shadow: 0 8px 20px rgba(52, 152, 219, 0.15);
             border-color: #3498db;
         }
@@ -2965,8 +2964,8 @@ if (!empty($searchTerm)) {
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 1rem;
-            border-bottom: 2px solid #f0f9ff;
-            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #DEDEDE;
+            padding-bottom: 0.5rem;
         }
 
         .note-date {
@@ -2985,7 +2984,6 @@ if (!empty($searchTerm)) {
         }
 
         .note-content {
-            flex: 1;
             overflow: hidden;
             position: relative;
             margin-bottom: 1rem;
@@ -3011,13 +3009,12 @@ if (!empty($searchTerm)) {
         }
 
         .btn-view-note {
-            flex: 1;
-            background: #e0f2fe;
-            color: #0369a1;
+            background: #007BFF;
+            color: #FFFFFF;
             border: 1px solid #bae6fd;
-            padding: 0.5rem;
+            padding: 6px 16px;
             border-radius: 0.5rem;
-            font-size: 0.75rem;
+            font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
@@ -3025,7 +3022,7 @@ if (!empty($searchTerm)) {
         }
 
         .btn-view-note:hover {
-            background: #bae6fd;
+            background: #4E9FF2;
         }
 
         .btn-use-note {
@@ -3049,9 +3046,9 @@ if (!empty($searchTerm)) {
         .empty-notes {
             text-align: center;
             padding: 3rem;
-            background: #f8fafc;
-            border-radius: 12px;
-            border: 2px dashed #e2e8f0;
+            /* background: #f8fafc; */
+            /* border-radius: 12px; */
+            /* border: 2px dashed #e2e8f0; */
             width: 100%;
         }
 
@@ -3296,15 +3293,16 @@ if (!empty($searchTerm)) {
             z-index: 30;
             background: #ffffff;
         }
+
         /* Smaller font for Record Type column */
-                        .record-type-col {
-                            font-size: 0.8rem !important;
-                        }
+        .record-type-col {
+            font-size: 0.8rem !important;
+        }
 
         .patient-table th {
-                    /* Smaller font for Record Type column */
-                        
-                    
+            /* Smaller font for Record Type column */
+
+
             padding: 0.75rem 0;
             text-align: left;
             font-weight: 600;
@@ -3414,7 +3412,8 @@ if (!empty($searchTerm)) {
                     <button
                         class="tab-btn items-center inline-flex py-3 px-6 font-medium text-md hover:text-primary hover:border-primary transition active"
                         data-tab="patients-tab">
-                        <svg class="w-8 h-8 mr-2" viewBox="0 0 27 27" xmlns="http://www.w3.org/2000/svg"> <path
+                        <svg class="w-8 h-8 mr-2" viewBox="0 0 27 27" xmlns="http://www.w3.org/2000/svg">
+                            <path
                                 d="M9.28125 6.75C9.28125 6.52622 9.37014 6.31161 9.52838 6.15338C9.68661 5.99515 9.90122 5.90625 10.125 5.90625H22.7812C23.005 5.90625 23.2196 5.99515 23.3779 6.15338C23.5361 6.31161 23.625 6.52622 23.625 6.75C23.625 6.97378 23.5361 7.18839 23.3779 7.34662C23.2196 7.50486 23.005 7.59375 22.7812 7.59375H10.125C9.90122 7.59375 9.68661 7.50486 9.52838 7.34662C9.37014 7.18839 9.28125 6.97378 9.28125 6.75ZM22.7812 12.6562H10.125C9.90122 12.6562 9.68661 12.7451 9.52838 12.9034C9.37014 13.0616 9.28125 13.2762 9.28125 13.5C9.28125 13.7238 9.37014 13.9384 9.52838 14.0966C9.68661 14.2549 9.90122 14.3438 10.125 14.3438H22.7812C23.005 14.3438 23.2196 14.2549 23.3779 14.0966C23.5361 13.9384 23.625 13.7238 23.625 13.5C23.625 13.2762 23.5361 13.0616 23.3779 12.9034C23.2196 12.7451 23.005 12.6562 22.7812 12.6562ZM22.7812 19.4062H10.125C9.90122 19.4062 9.68661 19.4951 9.52838 19.6534C9.37014 19.8116 9.28125 20.0262 9.28125 20.25C9.28125 20.4738 9.37014 20.6884 9.52838 20.8466C9.68661 21.0049 9.90122 21.0938 10.125 21.0938H22.7812C23.005 21.0938 23.2196 21.0049 23.3779 20.8466C23.5361 20.6884 23.625 20.4738 23.625 20.25C23.625 20.0262 23.5361 19.8116 23.3779 19.6534C23.2196 19.4951 23.005 19.4062 22.7812 19.4062ZM5.90625 5.90625H4.21875C3.99497 5.90625 3.78036 5.99515 3.62213 6.15338C3.4639 6.31161 3.375 6.52622 3.375 6.75C3.375 6.97378 3.4639 7.18839 3.62213 7.34662C3.78036 7.50486 3.99497 7.59375 4.21875 7.59375H5.90625C6.13003 7.59375 6.34464 7.50486 6.50287 7.34662C6.6611 7.18839 6.75 6.97378 6.75 6.75C6.75 6.52622 6.6611 6.31161 6.50287 6.15338C6.34464 5.99515 6.13003 5.90625 5.90625 5.90625ZM5.90625 12.6562H4.21875C3.99497 12.6562 3.78036 12.7451 3.62213 12.9034C3.4639 13.0616 3.375 13.2762 3.375 13.5C3.375 13.7238 3.4639 13.9384 3.62213 14.0966C3.78036 14.2549 3.99497 14.3438 4.21875 14.3438H5.90625C6.13003 14.3438 6.34464 14.2549 6.50287 14.0966C6.6611 13.9384 6.75 13.7238 6.75 13.5C6.75 13.2762 6.6611 13.0616 6.50287 12.9034C6.34464 12.7451 6.13003 12.6562 5.90625 12.6562ZM5.90625 19.4062H4.21875C3.99497 19.4062 3.78036 19.4951 3.62213 19.6534C3.4639 19.8116 3.375 20.0262 3.375 20.25C3.375 20.4738 3.4639 20.6884 3.62213 20.8466C3.78036 21.0049 3.99497 21.0938 4.21875 21.0938H5.90625C6.13003 21.0938 6.34464 21.0049 6.50287 20.8466C6.6611 20.6884 6.75 20.4738 6.75 20.25C6.75 20.0262 6.6611 19.8116 6.50287 19.6534C6.34464 19.4951 6.13003 19.4062 5.90625 19.4062Z"
                                 fill="#3C96E1" />
                         </svg>
@@ -3492,61 +3491,72 @@ if (!empty($searchTerm)) {
                         </div>
                     </div>
                     <style>
-                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                    </style>
-                    <script>
-                    // Show loading overlay on search submit or Enter key
-                    document.addEventListener('DOMContentLoaded', function() {
-                        var searchForm = document.getElementById('mainSearchForm');
-                        var searchInput = document.getElementById('search');
-                        var searchSubmitBtn = document.getElementById('searchSubmitBtn');
-                        let loadingStart = 0;
-                        function updateSearchButtonState() {
-                            if (!searchInput || !searchSubmitBtn) return;
-                            var hasInput = searchInput.value.trim().length > 0;
-                            searchSubmitBtn.disabled = !hasInput;
-                            searchSubmitBtn.classList.toggle('opacity-50', !hasInput);
-                            searchSubmitBtn.classList.toggle('cursor-not-allowed', !hasInput);
-                        }
-                        function showLoader() {
-                            loadingStart = Date.now();
-                            document.getElementById('loadingOverlay').style.display = 'flex';
-                        }
-                        function hideLoader() {
-                            const elapsed = Date.now() - loadingStart;
-                            const minTime = 2000;
-                            if (elapsed < minTime) {
-                                setTimeout(() => {
-                                    document.getElementById('loadingOverlay').style.display = 'none';
-                                }, minTime - elapsed);
-                            } else {
-                                document.getElementById('loadingOverlay').style.display = 'none';
+                        @keyframes spin {
+                            0% {
+                                transform: rotate(0deg);
+                            }
+
+                            100% {
+                                transform: rotate(360deg);
                             }
                         }
-                        if (searchForm) {
-                            searchForm.addEventListener('submit', function(e) {
-                                if (searchInput && searchInput.value.trim().length === 0) {
-                                    e.preventDefault();
-                                    updateSearchButtonState();
-                                    return;
+                    </style>
+                    <script>
+                        // Show loading overlay on search submit or Enter key
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var searchForm = document.getElementById('mainSearchForm');
+                            var searchInput = document.getElementById('search');
+                            var searchSubmitBtn = document.getElementById('searchSubmitBtn');
+                            let loadingStart = 0;
+
+                            function updateSearchButtonState() {
+                                if (!searchInput || !searchSubmitBtn) return;
+                                var hasInput = searchInput.value.trim().length > 0;
+                                searchSubmitBtn.disabled = !hasInput;
+                                searchSubmitBtn.classList.toggle('opacity-50', !hasInput);
+                                searchSubmitBtn.classList.toggle('cursor-not-allowed', !hasInput);
+                            }
+
+                            function showLoader() {
+                                loadingStart = Date.now();
+                                document.getElementById('loadingOverlay').style.display = 'flex';
+                            }
+
+                            function hideLoader() {
+                                const elapsed = Date.now() - loadingStart;
+                                const minTime = 2000;
+                                if (elapsed < minTime) {
+                                    setTimeout(() => {
+                                        document.getElementById('loadingOverlay').style.display = 'none';
+                                    }, minTime - elapsed);
+                                } else {
+                                    document.getElementById('loadingOverlay').style.display = 'none';
                                 }
-                                showLoader();
-                            });
-                        }
-                        if (searchInput) {
-                            updateSearchButtonState();
-                            searchInput.addEventListener('input', updateSearchButtonState);
-                            searchInput.addEventListener('keydown', function(e) {
-                                if (e.key === 'Enter' && searchInput.value.trim().length > 0) {
+                            }
+                            if (searchForm) {
+                                searchForm.addEventListener('submit', function(e) {
+                                    if (searchInput && searchInput.value.trim().length === 0) {
+                                        e.preventDefault();
+                                        updateSearchButtonState();
+                                        return;
+                                    }
                                     showLoader();
-                                }
+                                });
+                            }
+                            if (searchInput) {
+                                updateSearchButtonState();
+                                searchInput.addEventListener('input', updateSearchButtonState);
+                                searchInput.addEventListener('keydown', function(e) {
+                                    if (e.key === 'Enter' && searchInput.value.trim().length > 0) {
+                                        showLoader();
+                                    }
+                                });
+                            }
+                            // Hide overlay after page load (in case of back navigation)
+                            window.addEventListener('pageshow', function() {
+                                hideLoader();
                             });
-                        }
-                        // Hide overlay after page load (in case of back navigation)
-                        window.addEventListener('pageshow', function() {
-                            hideLoader();
                         });
-                    });
                     </script>
                     <input type="hidden" name="tab" value="patients-tab">
                     <?php if ($viewAll): ?>
@@ -3587,7 +3597,7 @@ if (!empty($searchTerm)) {
                                         <?php else: ?>
                                             <a href="existing_info_patients.php<?= $manualSelectMode ? '?manual_select=true&tab=patients-tab' : '?tab=patients-tab' ?>"
                                                 class="btn-gray inline-flex items-center px-6 rounded-none"
-style="border-radius: 4px;">
+                                                style="border-radius: 4px;">
                                                 <i class="fas fa-times mr-2"></i> Clear
                                             </a>
                                         <?php endif; ?>
@@ -3618,22 +3628,30 @@ style="border-radius: 4px;">
                                             </div>
                                         </div>
                                         <style>
-                                        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                                            @keyframes spin {
+                                                0% {
+                                                    transform: rotate(0deg);
+                                                }
+
+                                                100% {
+                                                    transform: rotate(360deg);
+                                                }
+                                            }
                                         </style>
                                         <script>
-                                        // Show loading overlay on search submit
-                                        document.addEventListener('DOMContentLoaded', function() {
-                                            var searchForm = document.getElementById('searchForm');
-                                            if (searchForm) {
-                                                searchForm.addEventListener('submit', function() {
-                                                    document.getElementById('loadingOverlay').style.display = 'flex';
+                                            // Show loading overlay on search submit
+                                            document.addEventListener('DOMContentLoaded', function() {
+                                                var searchForm = document.getElementById('searchForm');
+                                                if (searchForm) {
+                                                    searchForm.addEventListener('submit', function() {
+                                                        document.getElementById('loadingOverlay').style.display = 'flex';
+                                                    });
+                                                }
+                                                // Hide overlay after page load (in case of back navigation)
+                                                window.addEventListener('pageshow', function() {
+                                                    document.getElementById('loadingOverlay').style.display = 'none';
                                                 });
-                                            }
-                                            // Hide overlay after page load (in case of back navigation)
-                                            window.addEventListener('pageshow', function() {
-                                                document.getElementById('loadingOverlay').style.display = 'none';
                                             });
-                                        });
                                         </script>
                                         <input type="hidden" name="tab" value="patients-tab">
                                         <?php if ($viewAll): ?>
@@ -3644,7 +3662,7 @@ style="border-radius: 4px;">
                                         <?php endif; ?>
                                         <select name="patient_type" onchange="this.form.submit()"
                                             class="custom-select-filter">
-                                                                                class="custom-select-filter" style="width: 232px; min-width: 232px; font-size: 18px; font-weight: 500; padding-left: 18px; padding-right: 44px;">
+                                            class="custom-select-filter" style="width: 232px; min-width: 232px; font-size: 18px; font-weight: 500; padding-left: 18px; padding-right: 44px;">
                                             <option value="all" <?= ($patientTypeFilter === 'all' || $patientTypeFilter === '' || !isset($patientTypeFilter)) ? 'selected' : '' ?>>All Patient Types</option>
                                             <option value="account_access" <?= $patientTypeFilter === 'account_access' ? 'selected' : '' ?>>Account Access</option>
                                             <option value="regular_patient" <?= $patientTypeFilter === 'regular_patient' ? 'selected' : '' ?>>Regular Patient</option>
@@ -3677,7 +3695,8 @@ style="border-radius: 4px;">
                                                     background-repeat: no-repeat;
                                                     background-position: right 2rem center;
                                                     background-size: 1.5rem 1.5rem;
-                                                    padding-right: 4.5rem; /* Increased to add gap between text and arrow icon */
+                                                    padding-right: 4.5rem;
+                                                    /* Increased to add gap between text and arrow icon */
                                                 }
 
                                                 select.custom-select-filter::-ms-expand {
@@ -3726,7 +3745,8 @@ style="border-radius: 4px;">
                                                 background-repeat: no-repeat;
                                                 background-position: right 18px center;
                                                 background-size: 24px 24px;
-                                                padding-right: 60px; /* Increased to add gap between text and arrow icon */
+                                                padding-right: 60px;
+                                                /* Increased to add gap between text and arrow icon */
                                             }
 
                                             select.custom-select-filter::-ms-expand {
@@ -3815,12 +3835,16 @@ style="border-radius: 4px;">
                                                         <td>
                                                             <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
                                                                 class="btn-view inline-flex items-center mr-2" style="background:#2196F3;color:#fff;border:none;border-radius:24px;padding:10px 24px;font-weight:500;font-size:16px;">
-                                                                <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><path d="M23.1853 11.6962C23.1525 11.6222 22.3584 9.86062 20.5931 8.09531C18.2409 5.74312 15.27 4.5 12 4.5C8.72999 4.5 5.75905 5.74312 3.40687 8.09531C1.64155 9.86062 0.843741 11.625 0.814679 11.6962C0.772035 11.7922 0.75 11.896 0.75 12.0009C0.75 12.1059 0.772035 12.2097 0.814679 12.3056C0.847491 12.3797 1.64155 14.1403 3.40687 15.9056C5.75905 18.2569 8.72999 19.5 12 19.5C15.27 19.5 18.2409 18.2569 20.5931 15.9056C22.3584 14.1403 23.1525 12.3797 23.1853 12.3056C23.2279 12.2097 23.25 12.1059 23.25 12.0009C23.25 11.896 23.2279 11.7922 23.1853 11.6962ZM12 18C9.11437 18 6.59343 16.9509 4.50655 14.8828C3.65028 14.0313 2.92179 13.0603 2.34374 12C2.92164 10.9396 3.65014 9.9686 4.50655 9.11719C6.59343 7.04906 9.11437 6 12 6C14.8856 6 17.4066 7.04906 19.4934 9.11719C20.3514 9.9684 21.0815 10.9394 21.6609 12C20.985 13.2619 18.0403 18 12 18ZM12 7.5C11.11 7.5 10.2399 7.76392 9.49993 8.25839C8.7599 8.75285 8.18313 9.45566 7.84253 10.2779C7.50194 11.1002 7.41282 12.005 7.58646 12.8779C7.76009 13.7508 8.18867 14.5526 8.81801 15.182C9.44735 15.8113 10.2492 16.2399 11.1221 16.4135C11.995 16.5872 12.8998 16.4981 13.7221 16.1575C14.5443 15.8169 15.2471 15.2401 15.7416 14.5001C16.2361 13.76 16.5 12.89 16.5 12C16.4988 10.8069 16.0242 9.66303 15.1806 8.81939C14.337 7.97575 13.1931 7.50124 12 7.5ZM12 15C11.4066 15 10.8266 14.8241 10.3333 14.4944C9.83993 14.1648 9.45542 13.6962 9.22835 13.1481C9.00129 12.5999 8.94188 11.9967 9.05764 11.4147C9.17339 10.8328 9.45911 10.2982 9.87867 9.87868C10.2982 9.45912 10.8328 9.1734 11.4147 9.05764C11.9967 8.94189 12.5999 9.0013 13.148 9.22836C13.6962 9.45542 14.1648 9.83994 14.4944 10.3333C14.824 10.8266 15 11.4067 15 12C15 12.7956 14.6839 13.5587 14.1213 14.1213C13.5587 14.6839 12.7956 15 12 15Z" fill="white"/></svg> View
+                                                                <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M23.1853 11.6962C23.1525 11.6222 22.3584 9.86062 20.5931 8.09531C18.2409 5.74312 15.27 4.5 12 4.5C8.72999 4.5 5.75905 5.74312 3.40687 8.09531C1.64155 9.86062 0.843741 11.625 0.814679 11.6962C0.772035 11.7922 0.75 11.896 0.75 12.0009C0.75 12.1059 0.772035 12.2097 0.814679 12.3056C0.847491 12.3797 1.64155 14.1403 3.40687 15.9056C5.75905 18.2569 8.72999 19.5 12 19.5C15.27 19.5 18.2409 18.2569 20.5931 15.9056C22.3584 14.1403 23.1525 12.3797 23.1853 12.3056C23.2279 12.2097 23.25 12.1059 23.25 12.0009C23.25 11.896 23.2279 11.7922 23.1853 11.6962ZM12 18C9.11437 18 6.59343 16.9509 4.50655 14.8828C3.65028 14.0313 2.92179 13.0603 2.34374 12C2.92164 10.9396 3.65014 9.9686 4.50655 9.11719C6.59343 7.04906 9.11437 6 12 6C14.8856 6 17.4066 7.04906 19.4934 9.11719C20.3514 9.9684 21.0815 10.9394 21.6609 12C20.985 13.2619 18.0403 18 12 18ZM12 7.5C11.11 7.5 10.2399 7.76392 9.49993 8.25839C8.7599 8.75285 8.18313 9.45566 7.84253 10.2779C7.50194 11.1002 7.41282 12.005 7.58646 12.8779C7.76009 13.7508 8.18867 14.5526 8.81801 15.182C9.44735 15.8113 10.2492 16.2399 11.1221 16.4135C11.995 16.5872 12.8998 16.4981 13.7221 16.1575C14.5443 15.8169 15.2471 15.2401 15.7416 14.5001C16.2361 13.76 16.5 12.89 16.5 12C16.4988 10.8069 16.0242 9.66303 15.1806 8.81939C14.337 7.97575 13.1931 7.50124 12 7.5ZM12 15C11.4066 15 10.8266 14.8241 10.3333 14.4944C9.83993 14.1648 9.45542 13.6962 9.22835 13.1481C9.00129 12.5999 8.94188 11.9967 9.05764 11.4147C9.17339 10.8328 9.45911 10.2982 9.87867 9.87868C10.2982 9.45912 10.8328 9.1734 11.4147 9.05764C11.9967 8.94189 12.5999 9.0013 13.148 9.22836C13.6962 9.45542 14.1648 9.83994 14.4944 10.3333C14.824 10.8266 15 11.4067 15 12C15 12.7956 14.6839 13.5587 14.1213 14.1213C13.5587 14.6839 12.7956 15 12 15Z" fill="white" />
+                                                                </svg> View
                                                             </button>
                                                             <a href="?delete_patient=<?= $patient['id'] ?>"
                                                                 class="btn-archive inline-flex items-center" style="background:#F44336;color:#fff;border:none;border-radius:24px;padding:10px 24px;font-weight:500;font-size:16px;"
                                                                 onclick="return confirm('Are you sure you want to archive this patient record?')">
-                                                                <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white"/></svg> Archive
+                                                                <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white" />
+                                                                </svg> Archive
                                                             </a>
                                                         </td>
                                                     </tr>
@@ -3893,9 +3917,9 @@ style="border-radius: 4px;">
                             <div class="text-center py-12 rounded-lg">
                                 <div class="flex justify-center py-8">
                                     <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M53.6665 29.2372L73.5581 34.533M49.4081 45.0538L59.3498 47.7038M49.904 74.858L53.879 75.9205C65.129 78.9205 70.754 80.4163 75.1873 77.8705C79.6165 75.3288 81.1248 69.733 84.1373 58.5497L88.3998 42.7288C91.4165 31.5413 92.9206 25.9497 90.3623 21.5413C87.804 17.133 82.1831 15.6372 70.929 12.6413L66.954 11.5788C55.704 8.57882 50.079 7.08299 45.6498 9.62882C41.2165 12.1705 39.7081 17.7663 36.6915 28.9497L32.4331 44.7705C29.4165 55.958 27.9081 61.5497 30.4706 65.958C33.029 70.3622 38.654 71.8622 49.904 74.858Z" stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round"/>
-<path d="M50.0008 87.273L46.0341 88.3564C34.8091 91.4105 29.2008 92.9397 24.7758 90.3439C20.3591 87.7522 18.8508 82.048 15.8466 70.6439L11.5924 54.5105C8.58409 43.1064 7.07993 37.4022 9.63409 32.9106C11.8424 29.0231 16.6674 29.1647 22.9174 29.1647" stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round"/>
-</svg>
+                                        <path d="M53.6665 29.2372L73.5581 34.533M49.4081 45.0538L59.3498 47.7038M49.904 74.858L53.879 75.9205C65.129 78.9205 70.754 80.4163 75.1873 77.8705C79.6165 75.3288 81.1248 69.733 84.1373 58.5497L88.3998 42.7288C91.4165 31.5413 92.9206 25.9497 90.3623 21.5413C87.804 17.133 82.1831 15.6372 70.929 12.6413L66.954 11.5788C55.704 8.57882 50.079 7.08299 45.6498 9.62882C41.2165 12.1705 39.7081 17.7663 36.6915 28.9497L32.4331 44.7705C29.4165 55.958 27.9081 61.5497 30.4706 65.958C33.029 70.3622 38.654 71.8622 49.904 74.858Z" stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
+                                        <path d="M50.0008 87.273L46.0341 88.3564C34.8091 91.4105 29.2008 92.9397 24.7758 90.3439C20.3591 87.7522 18.8508 82.048 15.8466 70.6439L11.5924 54.5105C8.58409 43.1064 7.07993 37.4022 9.63409 32.9106C11.8424 29.0231 16.6674 29.1647 22.9174 29.1647" stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
+                                    </svg>
 
                                 </div>
                                 <h3 class="text-xl font-medium text-gray-500 mb-4">No Residents Records Yet</h3>
@@ -3990,9 +4014,9 @@ style="border-radius: 4px;">
                                                                     class="btn-view inline-flex items-center mr-2">
 
                                                                     <svg class="mr-1 mt-1" style="width:1.5em;height:1.5em;vertical-align:middle;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14C13.1046 14 14 13.1046 14 12ZM16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" fill="white"/>
-<path d="M12 3C16.4111 3 18.9532 5.23875 20.3477 7.46973C21.034 8.56793 21.4421 9.65839 21.6787 10.4697C21.7975 10.8772 21.8749 11.2197 21.9229 11.4639C21.9468 11.5859 21.9635 11.684 21.9746 11.7539C21.9801 11.7886 21.9844 11.8165 21.9873 11.8369C21.9887 11.8471 21.9894 11.8559 21.9902 11.8623C21.9907 11.8655 21.9909 11.8688 21.9912 11.8711L21.9922 11.874V11.875L20.0078 12.125V12.126C20.0077 12.1248 20.0075 12.1218 20.0068 12.1172C20.0055 12.1074 20.0028 12.09 19.999 12.0664C19.9915 12.0192 19.9789 11.9451 19.96 11.8486C19.922 11.6553 19.8586 11.3725 19.7588 11.0303C19.558 10.3417 19.2158 9.43184 18.6523 8.53027C17.5468 6.76136 15.5886 5 12 5C8.41136 5 6.45322 6.76136 5.34766 8.53027C4.78423 9.43184 4.44204 10.3417 4.24121 11.0303C4.14141 11.3725 4.07802 11.6553 4.04004 11.8486C4.02109 11.9451 4.00845 12.0192 4.00098 12.0664C3.99724 12.09 3.99454 12.1074 3.99316 12.1172L3.99219 12.126V12.125L2.00781 11.875V11.874L2.00879 11.8711C2.00908 11.8688 2.00934 11.8655 2.00977 11.8623C2.01062 11.8559 2.01126 11.8471 2.0127 11.8369C2.01558 11.8165 2.01989 11.7886 2.02539 11.7539C2.03646 11.684 2.05319 11.5859 2.07715 11.4639C2.1251 11.2197 2.20246 10.8772 2.32129 10.4697C2.55795 9.65839 2.96597 8.56793 3.65234 7.46973C5.04682 5.23875 7.58887 3 12 3Z" fill="white"/>
-</svg>
+                                                                        <path d="M14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14C13.1046 14 14 13.1046 14 12ZM16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" fill="white" />
+                                                                        <path d="M12 3C16.4111 3 18.9532 5.23875 20.3477 7.46973C21.034 8.56793 21.4421 9.65839 21.6787 10.4697C21.7975 10.8772 21.8749 11.2197 21.9229 11.4639C21.9468 11.5859 21.9635 11.684 21.9746 11.7539C21.9801 11.7886 21.9844 11.8165 21.9873 11.8369C21.9887 11.8471 21.9894 11.8559 21.9902 11.8623C21.9907 11.8655 21.9909 11.8688 21.9912 11.8711L21.9922 11.874V11.875L20.0078 12.125V12.126C20.0077 12.1248 20.0075 12.1218 20.0068 12.1172C20.0055 12.1074 20.0028 12.09 19.999 12.0664C19.9915 12.0192 19.9789 11.9451 19.96 11.8486C19.922 11.6553 19.8586 11.3725 19.7588 11.0303C19.558 10.3417 19.2158 9.43184 18.6523 8.53027C17.5468 6.76136 15.5886 5 12 5C8.41136 5 6.45322 6.76136 5.34766 8.53027C4.78423 9.43184 4.44204 10.3417 4.24121 11.0303C4.14141 11.3725 4.07802 11.6553 4.04004 11.8486C4.02109 11.9451 4.00845 12.0192 4.00098 12.0664C3.99724 12.09 3.99454 12.1074 3.99316 12.1172L3.99219 12.126V12.125L2.00781 11.875V11.874L2.00879 11.8711C2.00908 11.8688 2.00934 11.8655 2.00977 11.8623C2.01062 11.8559 2.01126 11.8471 2.0127 11.8369C2.01558 11.8165 2.01989 11.7886 2.02539 11.7539C2.03646 11.684 2.05319 11.5859 2.07715 11.4639C2.1251 11.2197 2.20246 10.8772 2.32129 10.4697C2.55795 9.65839 2.96597 8.56793 3.65234 7.46973C5.04682 5.23875 7.58887 3 12 3Z" fill="white" />
+                                                                    </svg>
 
                                                                     View
                                                                 </button>
@@ -4000,7 +4024,9 @@ style="border-radius: 4px;">
                                                                     <a href="?delete_patient=<?= $patient['id'] ?>"
                                                                         class="btn-archive inline-flex items-center"
                                                                         onclick="return confirm('Are you sure you want to archive this patient record?')">
-                                                                        <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white"/></svg> Archive
+                                                                        <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                            <path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white" />
+                                                                        </svg> Archive
                                                                     </a>
                                                                 <?php endif; ?>
                                                             </td>
@@ -4037,9 +4063,11 @@ style="border-radius: 4px;">
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php 
-                                                if (!isset($offset)) { $offset = 0; }
-                                                foreach ($allPatients as $index => $patient): ?>
+                                            <?php
+                                            if (!isset($offset)) {
+                                                $offset = 0;
+                                            }
+                                            foreach ($allPatients as $index => $patient): ?>
                                                 <tr data-patient-id="<?= $patient['id'] ?>">
                                                     <td class="patient-id"><?= $offset + $index + 1 ?></td>
                                                     <td><?= htmlspecialchars($patient['full_name']) ?></td>
@@ -4071,21 +4099,21 @@ style="border-radius: 4px;">
                                                     </td>
                                                     <td>
                                                         <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
-                                                                class="btn-view mr-2">
-                                                            
-                                                            <svg class="mr-1 mt-1" style="width:1.5em;height:1.5em;vertical-align:middle;"  width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14C13.1046 14 14 13.1046 14 12ZM16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" fill="white"/>
-<path d="M12 3C16.4111 3 18.9532 5.23875 20.3477 7.46973C21.034 8.56793 21.4421 9.65839 21.6787 10.4697C21.7975 10.8772 21.8749 11.2197 21.9229 11.4639C21.9468 11.5859 21.9635 11.684 21.9746 11.7539C21.9801 11.7886 21.9844 11.8165 21.9873 11.8369C21.9887 11.8471 21.9894 11.8559 21.9902 11.8623C21.9907 11.8655 21.9909 11.8688 21.9912 11.8711L21.9922 11.874V11.875L20.0078 12.125V12.126C20.0077 12.1248 20.0075 12.1218 20.0068 12.1172C20.0055 12.1074 20.0028 12.09 19.999 12.0664C19.9915 12.0192 19.9789 11.9451 19.96 11.8486C19.922 11.6553 19.8586 11.3725 19.7588 11.0303C19.558 10.3417 19.2158 9.43184 18.6523 8.53027C17.5468 6.76136 15.5886 5 12 5C8.41136 5 6.45322 6.76136 5.34766 8.53027C4.78423 9.43184 4.44204 10.3417 4.24121 11.0303C4.14141 11.3725 4.07802 11.6553 4.04004 11.8486C4.02109 11.9451 4.00845 12.0192 4.00098 12.0664C3.99724 12.09 3.99454 12.1074 3.99316 12.1172L3.99219 12.126V12.125L2.00781 11.875V11.874L2.00879 11.8711C2.00908 11.8688 2.00934 11.8655 2.00977 11.8623C2.01062 11.8559 2.01126 11.8471 2.0127 11.8369C2.01558 11.8165 2.01989 11.7886 2.02539 11.7539C2.03646 11.684 2.05319 11.5859 2.07715 11.4639C2.1251 11.2197 2.20246 10.8772 2.32129 10.4697C2.55795 9.65839 2.96597 8.56793 3.65234 7.46973C5.04682 5.23875 7.58887 3 12 3Z" fill="white"/>
-</svg>
+                                                            class="btn-view mr-2">
+
+                                                            <svg class="mr-1 mt-1" style="width:1.5em;height:1.5em;vertical-align:middle;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14C13.1046 14 14 13.1046 14 12ZM16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" fill="white" />
+                                                                <path d="M12 3C16.4111 3 18.9532 5.23875 20.3477 7.46973C21.034 8.56793 21.4421 9.65839 21.6787 10.4697C21.7975 10.8772 21.8749 11.2197 21.9229 11.4639C21.9468 11.5859 21.9635 11.684 21.9746 11.7539C21.9801 11.7886 21.9844 11.8165 21.9873 11.8369C21.9887 11.8471 21.9894 11.8559 21.9902 11.8623C21.9907 11.8655 21.9909 11.8688 21.9912 11.8711L21.9922 11.874V11.875L20.0078 12.125V12.126C20.0077 12.1248 20.0075 12.1218 20.0068 12.1172C20.0055 12.1074 20.0028 12.09 19.999 12.0664C19.9915 12.0192 19.9789 11.9451 19.96 11.8486C19.922 11.6553 19.8586 11.3725 19.7588 11.0303C19.558 10.3417 19.2158 9.43184 18.6523 8.53027C17.5468 6.76136 15.5886 5 12 5C8.41136 5 6.45322 6.76136 5.34766 8.53027C4.78423 9.43184 4.44204 10.3417 4.24121 11.0303C4.14141 11.3725 4.07802 11.6553 4.04004 11.8486C4.02109 11.9451 4.00845 12.0192 4.00098 12.0664C3.99724 12.09 3.99454 12.1074 3.99316 12.1172L3.99219 12.126V12.125L2.00781 11.875V11.874L2.00879 11.8711C2.00908 11.8688 2.00934 11.8655 2.00977 11.8623C2.01062 11.8559 2.01126 11.8471 2.0127 11.8369C2.01558 11.8165 2.01989 11.7886 2.02539 11.7539C2.03646 11.684 2.05319 11.5859 2.07715 11.4639C2.1251 11.2197 2.20246 10.8772 2.32129 10.4697C2.55795 9.65839 2.96597 8.56793 3.65234 7.46973C5.04682 5.23875 7.58887 3 12 3Z" fill="white" />
+                                                            </svg>
                                                             View
                                                         </button>
                                                         <a href="?delete_patient=<?= $patient['id'] ?>"
                                                             class="btn-archive"
                                                             onclick="return confirm('Are you sure you want to archive this patient record?')">
 
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M18 10H6V18H18V10ZM15 12V13C15 13.5523 14.5523 14 14 14H10C9.44772 14 9 13.5523 9 13V12H15ZM4 6V8H20V6H4ZM22 8C22 8.53043 21.7891 9.03899 21.4141 9.41406C21.039 9.78913 20.5304 10 20 10V18C20 18.5304 19.7891 19.039 19.4141 19.4141C19.039 19.7891 18.5304 20 18 20H6C5.46957 20 4.96101 19.7891 4.58594 19.4141C4.21086 19.039 4 18.5304 4 18V10C3.46957 10 2.96101 9.78913 2.58594 9.41406C2.21086 9.03899 2 8.53043 2 8V6C2 5.46957 2.21086 4.96101 2.58594 4.58594C2.96101 4.21087 3.46957 4 4 4H20C20.5304 4 21.039 4.21087 21.4141 4.58594C21.7891 4.96101 22 5.46957 22 6V8Z" fill="white"/>
-</svg>
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M18 10H6V18H18V10ZM15 12V13C15 13.5523 14.5523 14 14 14H10C9.44772 14 9 13.5523 9 13V12H15ZM4 6V8H20V6H4ZM22 8C22 8.53043 21.7891 9.03899 21.4141 9.41406C21.039 9.78913 20.5304 10 20 10V18C20 18.5304 19.7891 19.039 19.4141 19.4141C19.039 19.7891 18.5304 20 18 20H6C5.46957 20 4.96101 19.7891 4.58594 19.4141C4.21086 19.039 4 18.5304 4 18V10C3.46957 10 2.96101 9.78913 2.58594 9.41406C2.21086 9.03899 2 8.53043 2 8V6C2 5.46957 2.21086 4.96101 2.58594 4.58594C2.96101 4.21087 3.46957 4 4 4H20C20.5304 4 21.039 4.21087 21.4141 4.58594C21.7891 4.96101 22 5.46957 22 6V8Z" fill="white" />
+                                                            </svg>
 
                                                             Archive
                                                         </a>
@@ -4266,7 +4294,7 @@ style="border-radius: 4px;">
     </div>
     <div id="presentPregnantModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal"
         style="display:none;">
-        
+
         <div class="bg-white rounded-[6px] shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
             <!-- Header -->
             <div class="sticky top-0 z-20 bg-[#2563EB] px-10 py-6 flex items-center">
@@ -4671,7 +4699,7 @@ style="border-radius: 4px;">
                                 <i class="fas fa-search mr-2"></i>Search
                             </button>
                         </div>
-                            
+
                     </div>
 
                     <!-- Patients Table -->
@@ -4779,12 +4807,12 @@ style="border-radius: 4px;">
         style="display: none;">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Sticky Header -->
-            <div class="sticky top-0 z-20 bg-[#4A90E2] px-10 py-6 flex items-center">
-                <h3 class="text-2xl font-sm flex justify-center text-center w-full items-center text-white">
+            <div class="sticky top-0 z-20 px-10 py-6 flex items-center">
+                <h3 class="text-2xl font-sm flex mt-3 border-b-2 border-gray-300 pb-6  text-center w-full items-center text-white">
                     <!-- <i class="fas fa-sticky-note mr-3"></i> -->
-                    <span class="text-white" id="consultationNoteTitle">Add Consultation Note</span>
+                    <span style="color: #387EC3;" id="consultationNoteTitle">Add Consultation Note</span>
                 </h3>
-                <button onclick="closeConsultationNoteModal()" class="modal-close-btn">
+                <button onclick="closeConsultationNoteModal()" class="text-gray-700 hover:text-gray-500 text-3xl transition absolute right-6 top-6">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -5054,12 +5082,12 @@ style="border-radius: 4px;">
                             </div>
                         </div>
                         <div class="flex justify-end mt-8">
-                                                        <button type="button" id="nextToMedicalBtn" class="btn-primary px-8 py-3 rounded-full text-white font-medium shadow flex items-center gap-2" disabled>
-                                                            Next
-                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                                            </svg>
-                                                        </button>
+                            <button type="button" id="nextToMedicalBtn" class="btn-primary px-8 py-3 rounded-full text-white font-medium shadow flex items-center gap-2" disabled>
+                                Next
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
 
@@ -5235,59 +5263,59 @@ style="border-radius: 4px;">
     </div>
 
     <script>
-                // --- Stepper Logic for Add Patient Modal ---
-                document.addEventListener('DOMContentLoaded', function() {
-                    const personalStep = document.getElementById('personalInfoStep');
-                    const medicalStep = document.getElementById('medicalInfoStep');
-                    const nextBtn = document.getElementById('nextToMedicalBtn');
-                    // List all required personal info fields
-                    const requiredFields = [
-                        document.getElementById('modal_full_name'),
-                        document.getElementById('modal_date_of_birth'),
-                        document.getElementById('modal_gender'),
-                        document.getElementById('modal_address'),
-                        document.getElementById('modal_contact'),
-                    ];
-                    // Optional: Add civil status and sitio if present
-                    if (document.getElementById('modal_civil_status')) requiredFields.push(document.getElementById('modal_civil_status'));
-                    if (document.getElementById('modal_sitio')) requiredFields.push(document.getElementById('modal_sitio'));
+        // --- Stepper Logic for Add Patient Modal ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const personalStep = document.getElementById('personalInfoStep');
+            const medicalStep = document.getElementById('medicalInfoStep');
+            const nextBtn = document.getElementById('nextToMedicalBtn');
+            // List all required personal info fields
+            const requiredFields = [
+                document.getElementById('modal_full_name'),
+                document.getElementById('modal_date_of_birth'),
+                document.getElementById('modal_gender'),
+                document.getElementById('modal_address'),
+                document.getElementById('modal_contact'),
+            ];
+            // Optional: Add civil status and sitio if present
+            if (document.getElementById('modal_civil_status')) requiredFields.push(document.getElementById('modal_civil_status'));
+            if (document.getElementById('modal_sitio')) requiredFields.push(document.getElementById('modal_sitio'));
 
-                    function validatePersonalFields() {
-                        return requiredFields.every(field => {
-                            if (!field) return true;
-                            if (field.tagName === 'SELECT') {
-                                return field.value && field.value !== '';
-                            }
-                            return field.value && field.value.trim() !== '';
-                        });
+            function validatePersonalFields() {
+                return requiredFields.every(field => {
+                    if (!field) return true;
+                    if (field.tagName === 'SELECT') {
+                        return field.value && field.value !== '';
                     }
-
-                    function updateNextBtnState() {
-                        nextBtn.disabled = !validatePersonalFields();
-                    }
-
-                    requiredFields.forEach(field => {
-                        if (!field) return;
-                        field.addEventListener('input', updateNextBtnState);
-                        field.addEventListener('change', updateNextBtnState);
-                    });
-
-                    nextBtn.addEventListener('click', function() {
-                        if (!validatePersonalFields()) return;
-                        personalStep.style.display = 'none';
-                        medicalStep.style.display = '';
-                    });
-
-                    // When modal opens, always reset to step 1
-                    window.openAddPatientModal = (function(origFn) {
-                        return function() {
-                            personalStep.style.display = '';
-                            medicalStep.style.display = 'none';
-                            nextBtn.disabled = true;
-                            if (typeof origFn === 'function') origFn();
-                        };
-                    })(window.openAddPatientModal);
+                    return field.value && field.value.trim() !== '';
                 });
+            }
+
+            function updateNextBtnState() {
+                nextBtn.disabled = !validatePersonalFields();
+            }
+
+            requiredFields.forEach(field => {
+                if (!field) return;
+                field.addEventListener('input', updateNextBtnState);
+                field.addEventListener('change', updateNextBtnState);
+            });
+
+            nextBtn.addEventListener('click', function() {
+                if (!validatePersonalFields()) return;
+                personalStep.style.display = 'none';
+                medicalStep.style.display = '';
+            });
+
+            // When modal opens, always reset to step 1
+            window.openAddPatientModal = (function(origFn) {
+                return function() {
+                    personalStep.style.display = '';
+                    medicalStep.style.display = 'none';
+                    nextBtn.disabled = true;
+                    if (typeof origFn === 'function') origFn();
+                };
+            })(window.openAddPatientModal);
+        });
         // Consultation Notes Variables
         let currentPatientId = null;
         let hasNotes = false;
@@ -5451,7 +5479,7 @@ style="border-radius: 4px;">
 
         function switchToAddNote() {
             document.getElementById('consultationNoteTitle').innerHTML =
-                '<i class="fas fa-plus-circle mr-2"></i>Add Consultation Note';
+                '<i class="fa-regular fa-note-sticky mr-2"></i>Add Consultation Note';
             document.getElementById('addNoteForm').style.display = 'block';
             document.getElementById('viewNotesContent').style.display = 'none';
             document.getElementById('addNoteActions').style.display = 'block';
@@ -5504,9 +5532,9 @@ style="border-radius: 4px;">
             saveBtn.disabled = true;
 
             fetch('existing_info_patients.php', {
-                method: 'POST',
-                body: formData
-            })
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => response.text())
                 .then(result => {
                     if (result.includes('successfully') || result.includes('Consultation note added')) {
@@ -5781,7 +5809,7 @@ style="border-radius: 4px;">
         }
 
         // Close export dropdown when clicking outside
-        document.addEventListener('click', function (event) {
+        document.addEventListener('click', function(event) {
             const exportBtn = document.querySelector('.btn-export');
             const exportOptions = document.getElementById('exportOptions');
 
@@ -5792,7 +5820,7 @@ style="border-radius: 4px;">
         });
 
         // Keyboard shortcuts for modals
-        document.addEventListener('keydown', function (event) {
+        document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const exportModal = document.getElementById('exportModal');
                 const manualSelectionModal = document.getElementById('manualSelectionModal');
@@ -5806,7 +5834,7 @@ style="border-radius: 4px;">
         });
 
         // Close modal when clicking outside
-        document.addEventListener('click', function (event) {
+        document.addEventListener('click', function(event) {
             const exportModal = document.getElementById('exportModal');
             const manualSelectionModal = document.getElementById('manualSelectionModal');
 
@@ -5818,13 +5846,13 @@ style="border-radius: 4px;">
         });
 
         // Initialize selected count on page load
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Age calculation for Add Patient modal
             const dobInput = document.getElementById('modal_date_of_birth');
             const ageInput = document.getElementById('modal_age');
 
             if (dobInput && ageInput) {
-                dobInput.addEventListener('change', function () {
+                dobInput.addEventListener('change', function() {
                     calculateAge(this.value, ageInput);
                 });
 
@@ -5970,7 +5998,10 @@ style="border-radius: 4px;">
                 showNotification('error', `Please fill in all required fields: ${missingFields.join(', ')}`);
                 const firstMissing = healthInfoForm.querySelector('.field-empty');
                 if (firstMissing) {
-                    firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstMissing.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
                     firstMissing.focus();
                 }
                 return;
@@ -5998,9 +6029,9 @@ style="border-radius: 4px;">
             saveBtn.disabled = true;
 
             fetch(healthInfoForm.action, {
-                method: 'POST',
-                body: formData
-            })
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => response.text())
                 .then(result => {
                     if (result.includes('successfully') || result.includes('Success') || result.includes('saved')) {
@@ -6036,7 +6067,7 @@ style="border-radius: 4px;">
             if (healthInfoForm) {
                 const inputs = healthInfoForm.querySelectorAll('input, select, textarea');
                 inputs.forEach(input => {
-                    input.addEventListener('input', function () {
+                    input.addEventListener('input', function() {
                         if (this.value.trim()) {
                             this.classList.add('field-filled');
                             this.classList.remove('field-empty');
@@ -6046,7 +6077,7 @@ style="border-radius: 4px;">
                         }
                     });
 
-                    input.addEventListener('blur', function () {
+                    input.addEventListener('blur', function() {
                         if (this.hasAttribute('required') && !this.value.trim()) {
                             this.classList.add('field-empty');
                             this.classList.remove('field-filled');
@@ -6096,7 +6127,7 @@ style="border-radius: 4px;">
                 const printWindow = window.open(url, '_blank', windowFeatures);
                 if (printWindow) {
                     printWindow.focus();
-                    printWindow.onload = function () {
+                    printWindow.onload = function() {
                         setTimeout(() => {
                             printWindow.print();
                             if (printBtn) {
@@ -6155,8 +6186,8 @@ style="border-radius: 4px;">
 
             const icon = type === 'error' ? 'fa-exclamation-circle' :
                 type === 'success' ? 'fa-check-circle' :
-                    type === 'warning' ? 'fa-exclamation-triangle' :
-                        'fa-info-circle';
+                type === 'warning' ? 'fa-exclamation-triangle' :
+                'fa-info-circle';
 
             notification.innerHTML = `
                 <div class="flex items-center gap-2">
@@ -6190,7 +6221,7 @@ style="border-radius: 4px;">
         }
 
         // Enhanced modal close on outside click
-        window.onclick = function (event) {
+        window.onclick = function(event) {
             const viewModal = document.getElementById('viewModal');
             const consultationNoteModal = document.getElementById('consultationNoteModal');
             const exportModal = document.getElementById('exportModal');
@@ -6207,7 +6238,7 @@ style="border-radius: 4px;">
         };
 
         // Add keyboard support for modals
-        document.addEventListener('keydown', function (event) {
+        document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeViewModal();
                 closeAddPatientModal();
@@ -6217,8 +6248,8 @@ style="border-radius: 4px;">
         });
 
         // Auto-hide messages after 3 seconds
-        document.addEventListener('DOMContentLoaded', function () {
-            setTimeout(function () {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
                 var successMessage = document.getElementById('successMessage');
                 var errorMessage = document.querySelector('.alert-error');
 
@@ -6233,7 +6264,7 @@ style="border-radius: 4px;">
         });
 
         // Tab functionality
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const tabButtons = document.querySelectorAll('.tab-btn');
             const tabContents = document.querySelectorAll('.tab-content');
             const tabTriggers = document.querySelectorAll('.tab-trigger');
@@ -6298,7 +6329,7 @@ style="border-radius: 4px;">
         }
 
         // Ensure buttons have proper styling
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const buttons = document.querySelectorAll('.btn-view, .btn-archive, .btn-add-patient, .btn-primary, .btn-success, .btn-gray, .btn-print, .btn-edit, .btn-save-medical, .btn-add-note, .btn-view-notes, .btn-view-all, .btn-back-to-pagination, .pagination-btn, .btn-pdf');
             buttons.forEach(button => {
                 button.style.borderStyle = 'solid';
@@ -6336,32 +6367,34 @@ style="border-radius: 4px;">
                         break;
                     }
                 }
-                if (!foundImg) {
-                    profileImgHtml = `<div class="rounded-full bg-blue-200 border-2 border-blue-300 shadow w-24 h-24 flex items-center justify-center mr-4"><i class='fas fa-user text-5xl text-blue-500'></i></div>`;
-                }
+                // if (!foundImg) {
+                //     profileImgHtml = `<div class="rounded-full bg-blue-200 border-2 border-blue-300 shadow w-24 h-24 flex items-center justify-center mr-4"><i class='fas fa-user text-5xl text-blue-500'></i></div>`;
+                // }
             }
 
             const notesSection = document.createElement('div');
-            notesSection.className = 'bg-white rounded-xl border border-blue-200 shadow-sm mb-8 overflow-hidden';
+            notesSection.className = 'bg-white mb-8 overflow-hidden';
             notesSection.innerHTML = `
-                <div class="bg-blue-50 px-8 py-6 border-b border-blue-100">
+                <div>
                     <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-semibold text-secondary flex items-center gap-3">
-                            <i class="fas fa-sticky-note text-primary"></i>
+                        <h3 class="text-xl font-medium text-blue-800 text-secondary flex items-center gap-3">
+                            <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M24.7017 4.59869L9.43807 1.90338C8.94841 1.81722 8.44458 1.92905 8.03737 2.2143C7.63015 2.49955 7.3529 2.93485 7.26659 3.42448L3.78026 23.2292C3.73762 23.4718 3.7432 23.7204 3.7967 23.9609C3.85019 24.2014 3.95054 24.4289 4.09202 24.6306C4.2335 24.8322 4.41333 25.004 4.62124 25.1362C4.82914 25.2683 5.06104 25.3582 5.30369 25.4006L20.5674 28.096C20.8101 28.1388 21.0588 28.1333 21.2994 28.0799C21.54 28.0265 21.7677 27.9262 21.9695 27.7847C22.1713 27.6432 22.3432 27.4633 22.4754 27.2553C22.6077 27.0473 22.6976 26.8153 22.74 26.5725L26.2263 6.76784C26.3118 6.27802 26.1991 5.77434 25.9132 5.36756C25.6273 4.96078 25.1915 4.68422 24.7017 4.59869ZM20.8908 26.2491L5.62596 23.5538L9.11229 3.74909L24.376 6.4444L20.8908 26.2491ZM10.4705 6.84518C10.5139 6.60046 10.6527 6.383 10.8564 6.2406C11.0602 6.0982 11.3121 6.04252 11.5568 6.0858L21.2834 7.8026C21.5145 7.8431 21.7221 7.96882 21.8651 8.15493C22.008 8.34104 22.076 8.574 22.0555 8.80779C22.0351 9.04158 21.9277 9.25919 21.7546 9.41763C21.5814 9.57607 21.3552 9.66382 21.1205 9.66354C21.0655 9.66346 21.0106 9.65876 20.9564 9.64948L11.2299 7.93151C10.9851 7.88808 10.7677 7.74926 10.6253 7.54555C10.4829 7.34184 10.4272 7.08992 10.4705 6.84518ZM9.82127 10.5389C9.84264 10.4177 9.88769 10.3018 9.95385 10.1979C10.02 10.094 10.106 10.0042 10.2069 9.9336C10.3078 9.86298 10.4216 9.81292 10.5418 9.78628C10.662 9.75965 10.7863 9.75696 10.9076 9.77838L20.6342 11.4964C20.867 11.5353 21.0765 11.6606 21.2209 11.8472C21.3654 12.0339 21.4341 12.2682 21.4134 12.5033C21.3927 12.7384 21.284 12.957 21.1092 13.1156C20.9343 13.2741 20.7061 13.3608 20.4701 13.3585C20.4147 13.3586 20.3593 13.3535 20.3049 13.3432L10.5783 11.6264C10.3338 11.5825 10.1167 11.4432 9.97475 11.2393C9.8328 11.0354 9.7776 10.7835 9.82127 10.5389ZM9.17088 14.2315C9.21512 13.9874 9.35429 13.7708 9.5579 13.6292C9.76152 13.4875 10.013 13.4323 10.2572 13.4756L15.1181 14.3299C15.3492 14.3704 15.5567 14.4961 15.6997 14.682C15.8426 14.868 15.9107 15.1008 15.8904 15.3345C15.87 15.5682 15.7629 15.7858 15.59 15.9444C15.4171 16.1029 15.191 16.1909 14.9564 16.1909C14.9014 16.1909 14.8466 16.1862 14.7924 16.1768L9.92908 15.3178C9.68458 15.2741 9.46741 15.1352 9.32525 14.9315C9.1831 14.7278 9.12758 14.4761 9.17088 14.2315Z" fill="#3C96E1"/>
+                            </svg>
                             Consultation Notes History
-                            <span id="notesCountBadge" class="bg-primary text-white text-sm px-3 py-1 rounded-full">0 notes</span>
+                            <span id="notesCountBadge" class="bg-green-500 text-white text-base px-5 py-1 rounded-full">0 notes</span>
                         </h3>
                         <div class="flex items-center gap-2">
                             ${profileImgHtml}
                             <button onclick="openConsultationNoteModal()" 
-                                    class="btn-add-note px-4 py-2 text-sm font-medium">
-                                <i class="fas fa-plus mr-2"></i>Add New Note
+                                    class="btn-add-note text-sm font-medium">
+                                <i class="fas fa-plus mr-2"></i>Add Note
                             </button>
                         </div>
                     </div>
-                    <p class="text-gray-600 mt-2 text-sm">View past consultations and add new notes for this patient.</p>
+                    <p class="border-b-2 pb-6 border-gray-200 text-gray-500 mt-2 text-base">View past consultations and add new notes for this patient.</p>
                 </div>
-                <div id="notesHistoryContainer" class="p-6">
+                <div id="notesHistoryContainer" class="py-6">
                     <div class="horizontal-notes-container">
                         <div class="text-center py-8 w-full">
                             <div class="loading-notes">
@@ -6390,7 +6423,7 @@ style="border-radius: 4px;">
                     const notesCount = container.querySelectorAll('.note-card').length;
                     const notesCountBadge = document.getElementById('notesCountBadge');
                     if (notesCountBadge) {
-                        notesCountBadge.textContent = `${notesCount} note${notesCount !== 1 ? 's' : ''}`;
+                        notesCountBadge.textContent = `${notesCount} Note${notesCount !== 1 ? 's' : ''}`;
                     }
 
                     // Update the note button in the footer
@@ -6419,55 +6452,44 @@ style="border-radius: 4px;">
                     if (data.success) {
                         const note = data.note;
                         const noteHtml = `
-                            <div class="bg-white p-6 rounded-lg max-w-2xl">
-                                <div class="flex justify-between items-start mb-4">
+                            <div class="bg-white px-3 rounded-lg max-w-2xl">
+                                <div class="flex justify-between border-b-2 border-gray-300 pb-4 items-start mb-4">
                                     <div>
-                                        <h4 class="text-lg font-semibold text-gray-800">Consultation Note Details</h4>
-                                        <p class="text-sm text-gray-500">${formatDate(note.consultation_date)}</p>
+                                        <h4 class="text-xl font-medium mt-4" style="color: #387EC3;">Consultation Note Details</h4>
                                     </div>
                                     <button onclick="closeNoteDetails()" 
-                                            class="text-gray-400 hover:text-gray-600">
+                                            class="text-gray-700 text-3xl hover:text-gray-600">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
                                 
                                 <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Doctor:</label>
-                                        <div class="font-medium">${note.doctor_name || 'Not specified'}</div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <label class="block text-base font-medium text-gray-400 mb-1">Physician Assign:</label>
+                                            <div class="font-medium text-lg" style="color: #387EC3;">${note.doctor_name || 'Not specified'}</div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-base font-medium text-gray-500 mb-1">Date Created:</label>
+                                            <div class="font-medium text-lg" style="color: #387EC3;"> ${formatDateTime(note.created_at)}</div>
+                                        </div>
                                     </div>
                                     
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Note:</label>
-                                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                   <div>
+                                        <div class="bg-gray-50 text-gray-600 p-4 rounded-lg" 
+                                            style="border: 1px solid #DEDEDE; height: 200px;">
                                             ${note.note.replace(/\n/g, '<br>')}
                                         </div>
                                     </div>
                                     
                                     ${note.next_consultation_date ? `
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Next Consultation:</label>
-                                        <div class="text-primary font-medium">
+                                    <div class="flex flex-col md:flex-row items-center gap-2 p-3 rounded-md" style="color: #007BFF; background-color: #007BFF4D; width: fit-content;">
+                                        <label class="text-lg font-medium">Next Consultation:</label>
+                                        <div class="font-medium text-lg">
                                             ${formatDate(note.next_consultation_date)}
                                         </div>
                                     </div>
                                     ` : ''}
-                                    
-                                    <div class="text-xs text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                                        Created by: ${note.created_by_name || 'Staff'} 
-                                        on ${formatDateTime(note.created_at)}
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-6 flex justify-end space-x-3">
-                                    <button onclick="closeNoteDetails()" 
-                                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                                        Close
-                                    </button>
-                                    <button onclick="addSimilarNote(${noteId})" 
-                                            class="px-4 py-2 bg-primary text-white hover:bg-primary-dark rounded-lg">
-                                        <i class="fas fa-copy mr-1"></i> Use as Template
-                                    </button>
                                 </div>
                             </div>
                         `;
@@ -6650,12 +6672,6 @@ style="border-radius: 4px;">
                 modal.style.display = 'none';
                 modal.innerHTML = `
                     <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-                        <div id="customModalHeader" class="sticky top-0 bg-primary px-6 py-4 text-white flex justify-between items-center">
-                            <h3 class="text-lg font-semibold"></h3>
-                            <button onclick="closeCustomModal()" class="modal-close-btn">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
                         <div id="customModalContent" class="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
                         </div>
                     </div>
@@ -6664,7 +6680,7 @@ style="border-radius: 4px;">
             }
 
             document.getElementById('customModalContent').innerHTML = content;
-            document.querySelector('#customModalHeader h3').textContent = title;
+            // document.querySelector('#customModalHeader h3').textContent = title;
 
             modal.style.display = 'flex';
             modal.style.opacity = '0';
@@ -6706,7 +6722,7 @@ style="border-radius: 4px;">
         }
 
         // Update the note button event listener
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const noteButton = document.getElementById('noteButton');
             if (noteButton) {
                 noteButton.addEventListener('click', handleNoteButtonClick);
@@ -7089,7 +7105,7 @@ style="border-radius: 4px;">
                 dobInput.value = '';
 
                 // Set up change event for age calculation and duplicate check
-                dobInput.addEventListener('change', function () {
+                dobInput.addEventListener('change', function() {
                     if (this.value) {
                         const ageInput = document.getElementById('modal_age');
                         calculateAge(this.value, ageInput);
@@ -7100,7 +7116,7 @@ style="border-radius: 4px;">
         }
 
         // Initialize date picker when DOM is ready
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             initializeDatePicker();
         });
     </script>
@@ -7160,9 +7176,9 @@ style="border-radius: 4px;">
 
             // Submit via AJAX
             fetch('save_child_health_record.php', {
-                method: 'POST',
-                body: formData
-            })
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => response.json())
                 .then(result => {
                     if (result.success) {
@@ -7237,7 +7253,10 @@ style="border-radius: 4px;">
                 // Scroll to first empty field
                 const firstEmptyField = form.querySelector(`[name="${requiredFields.find(f => !form.querySelector(`[name="${f}"]`).value.trim())}"]`);
                 if (firstEmptyField) {
-                    firstEmptyField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstEmptyField.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
                     firstEmptyField.focus();
                 }
                 return;
@@ -7256,9 +7275,9 @@ style="border-radius: 4px;">
 
             // Submit via AJAX
             fetch('save_present_pregnant_record.php', {
-                method: 'POST',
-                body: formData
-            })
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => {
                     console.log('Response status:', response.status);
                     console.log('Response ok:', response.ok);
@@ -7360,9 +7379,9 @@ style="border-radius: 4px;">
             testData.append('prenatal_schedule', 'Test Schedule');
 
             fetch('save_present_pregnant_record.php', {
-                method: 'POST',
-                body: testData
-            })
+                    method: 'POST',
+                    body: testData
+                })
                 .then(response => {
                     console.log('Test response status:', response.status);
                     return response.text();
@@ -7383,20 +7402,20 @@ style="border-radius: 4px;">
 
     <script>
         // Add event listeners when the page loads
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Remove any existing form submit event listeners to prevent default submission
             const childForm = document.getElementById('childHealthForm');
             const pregnantForm = document.getElementById('presentPregnantForm');
 
             if (childForm) {
-                childForm.addEventListener('submit', function (event) {
+                childForm.addEventListener('submit', function(event) {
                     event.preventDefault();
                     submitChildHealthForm(event);
                 });
             }
 
             if (pregnantForm) {
-                pregnantForm.addEventListener('submit', function (event) {
+                pregnantForm.addEventListener('submit', function(event) {
                     event.preventDefault();
                     submitPresentPregnantForm(event);
                 });
