@@ -2409,7 +2409,7 @@ if (!empty($searchTerm)) {
         .scrollable-table-container {
             max-height: 70vh;
             overflow-y: auto;
-            border: 1px solid #e2e8f0;
+            /* border: 1px solid #e2e8f0; */
             border-radius: 0.5rem;
             margin-bottom: 1rem;
         }
@@ -2892,295 +2892,304 @@ if (!empty($searchTerm)) {
         }
 
         /* Horizontal notes container with oldest first */
-.horizontal-notes-container {
-    display: flex;
-    overflow-x: auto;
-    gap: 1rem;
-    scrollbar-width: thin;
-    scrollbar-color: #3498db #f0f9ff;
-    padding: 1rem 0.5rem;
-    flex-direction: row; /* Changed from row-reverse to row for natural left-to-right */
-    justify-content: flex-start; /* Start from left */
-    align-items: stretch;
-    min-height: 280px;
-}
+        .horizontal-notes-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: #3498db #f0f9ff;
+            padding: 1rem 0.5rem;
+            flex-direction: row;
+            /* Changed from row-reverse to row for natural left-to-right */
+            justify-content: flex-start;
+            /* Start from left */
+            align-items: stretch;
+            min-height: 280px;
+        }
 
-.horizontal-notes-container::-webkit-scrollbar {
-    height: 8px;
-}
+        .horizontal-notes-container::-webkit-scrollbar {
+            height: 8px;
+        }
 
-.horizontal-notes-container::-webkit-scrollbar-track {
-    background: #f0f9ff;
-    border-radius: 4px;
-}
+        .horizontal-notes-container::-webkit-scrollbar-track {
+            background: #f0f9ff;
+            border-radius: 4px;
+        }
 
-.horizontal-notes-container::-webkit-scrollbar-thumb {
-    background: #3498db;
-    border-radius: 4px;
-}
+        .horizontal-notes-container::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 4px;
+        }
 
-/* Note card styling for horizontal layout */
-.note-card {
-    flex: 0 0 380px;
-    background: white;
-    border-radius: 12px;
-    border: 1px solid #DEDEDE;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    min-height: 260px;
-    max-height: 320px;
-    cursor: pointer;
-}
+        /* Note card styling for horizontal layout */
+        .note-card {
+            flex: 0 0 380px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #DEDEDE;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 260px;
+            max-height: 320px;
+            cursor: pointer;
+        }
 
 
-.note-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    border-bottom: 2px solid #f0f9ff;
-    padding-bottom: 0.75rem;
-}
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #f0f9ff;
+            padding-bottom: 0.75rem;
+        }
 
-.note-date {
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
+        .note-date {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
 
-.note-badge {
-    background: #3498db;
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-}
+        .note-badge {
+            background: #3498db;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
 
-.note-content {
-    flex: 1;
-    overflow: hidden;
-    margin-bottom: 1rem;
-}
+        .note-content {
+            flex: 1;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
 
-.note-text {
-    color: #4b5563;
-    line-height: 1.5;
-    font-size: 0.875rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 6;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-height: 130px;
-}
+        .note-text {
+            color: #4b5563;
+            line-height: 1.5;
+            font-size: 0.875rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 6;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 130px;
+        }
 
-.note-actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: auto;
-    align-items: center;
-    flex-wrap: wrap;
-}
+        .note-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: auto;
+            align-items: center;
+            flex-wrap: wrap;
+        }
 
-/* Next Consultation Badge - Consistent Padding */
-.next-consultation-badge {
-    background: #d1fae5;
-    color: #065f46;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.4rem 0.8rem; /* Consistent vertical and horizontal padding */
-    border-radius: 1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    white-space: nowrap;
-    border: 1px solid #a7f3d0;
-    line-height: 1.2;
-    margin-right: auto; /* Pushes buttons to the right */
-}
+        /* Next Consultation Badge - Consistent Padding */
+        .next-consultation-badge {
+            background: #d1fae5;
+            color: #065f46;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            /* Consistent vertical and horizontal padding */
+            border-radius: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+            border: 1px solid #a7f3d0;
+            line-height: 1.2;
+            margin-right: auto;
+            /* Pushes buttons to the right */
+        }
 
-.next-consultation-badge i {
-    font-size: 0.7rem;
-    color: #059669;
-}
+        .next-consultation-badge i {
+            font-size: 0.7rem;
+            color: #059669;
+        }
 
-/* Button styling */
-.btn-view-note {
-    background: #007BFF;
-    color: white;
-    border: none;
-    padding: 0.5rem 1.2rem;
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: fit-content;
-    min-width: 70px;
-    line-height: 1.4;
-    white-space: nowrap;
-    gap: 0.4rem;
-}
+        /* Button styling */
+        .btn-view-note {
+            background: #007BFF;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: fit-content;
+            min-width: 70px;
+            line-height: 1.4;
+            white-space: nowrap;
+            gap: 0.4rem;
+        }
 
-.btn-view-note:hover {
-    background: #4E9FF2;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
-}
+        .btn-view-note:hover {
+            background: #4E9FF2;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+        }
 
-.btn-view-note i {
-    font-size: 0.8rem;
-}
+        .btn-view-note i {
+            font-size: 0.8rem;
+        }
 
-.btn-use-note {
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
-    padding: 0.5rem 1.2rem;
-    border-radius: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: fit-content;
-    min-width: 70px;
-    line-height: 1.4;
-    white-space: nowrap;
-    gap: 0.4rem;
-}
+        .btn-use-note {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 0.5rem 1.2rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: fit-content;
+            min-width: 70px;
+            line-height: 1.4;
+            white-space: nowrap;
+            gap: 0.4rem;
+        }
 
-.btn-use-note:hover {
-    background: #a7f3d0;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-}
+        .btn-use-note:hover {
+            background: #a7f3d0;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+        }
 
-.btn-use-note i {
-    font-size: 0.8rem;
-}
+        .btn-use-note i {
+            font-size: 0.8rem;
+        }
 
-/* Empty state styling */
-.empty-notes {
-    text-align: center;
-    padding: 3rem;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 2px dashed #e2e8f0;
-}
+        /* Empty state styling */
+        .empty-notes {
+            text-align: center;
+            padding: 3rem;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 2px dashed #e2e8f0;
+        }
 
-.empty-notes i {
-    font-size: 3rem;
-    color: #cbd5e1;
-    margin-bottom: 1rem;
-}
+        .empty-notes i {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
 
-.empty-notes p {
-    color: #64748b;
-    margin-bottom: 1.5rem;
-}
+        .empty-notes p {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+        }
 
-.empty-notes .btn-add-note {
-    background: #007BFF;
-    color: white;
-    border: none;
-    padding: 0.75rem 2rem;
-    border-radius: 0.5rem;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: fit-content;
-}
+        .empty-notes .btn-add-note {
+            background: #007BFF;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: fit-content;
+        }
 
-.empty-notes .btn-add-note:hover {
-    background: #4E9FF2;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
-}
+        .empty-notes .btn-add-note:hover {
+            background: #4E9FF2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+        }
 
-/* Horizontal notes container */
-.horizontal-notes-container {
-    display: flex;
-    overflow-x: auto;
-    gap: 1rem;
-    scrollbar-width: thin;
-    scrollbar-color: #3498db #f0f9ff;
-    padding: 1rem 0.5rem;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: stretch;
-    min-height: 280px;
-}
+        /* Horizontal notes container */
+        .horizontal-notes-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: #3498db #f0f9ff;
+            padding: 1rem 0.5rem;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: stretch;
+            min-height: 280px;
+        }
 
-.horizontal-notes-container::-webkit-scrollbar {
-    height: 8px;
-}
+        .horizontal-notes-container::-webkit-scrollbar {
+            height: 8px;
+        }
 
-.horizontal-notes-container::-webkit-scrollbar-track {
-    background: #f0f9ff;
-    border-radius: 4px;
-}
+        .horizontal-notes-container::-webkit-scrollbar-track {
+            background: #f0f9ff;
+            border-radius: 4px;
+        }
 
-.horizontal-notes-container::-webkit-scrollbar-thumb {
-    background: #3498db;
-    border-radius: 4px;
-}
+        .horizontal-notes-container::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 4px;
+        }
 
-/* Container for notes history */
-#notesHistoryContainer {
-    width: 100%;
-    overflow: hidden;
-    margin-top: 1rem;
-}
+        /* Container for notes history */
+        #notesHistoryContainer {
+            width: 100%;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
 
-/* Loading spinner */
-.loading-spinner {
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #3498db;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-}
+        /* Loading spinner */
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
 
-.loading-notes {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem;
-    width: 100%;
-    gap: 1rem;
-}
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-notes {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            width: 100%;
+            gap: 1rem;
+        }
 
         .consultation-notes-section {
             margin-bottom: 2rem;
@@ -3307,16 +3316,16 @@ if (!empty($searchTerm)) {
         }
 
         /* Warm blue header for export modal */
-        #exportModal .sticky {
+        /* #exportModal .sticky {
             background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
             box-shadow: 0 4px 12px rgba(53, 122, 189, 0.18);
-        }
+        } */
 
         /* Blue header for manual selection */
-        #manualSelectionModal .sticky {
+        /* #manualSelectionModal .sticky {
             background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
-        }
+        } */
 
         /* Scrollable content area */
         #exportModal>div>div:nth-child(2),
@@ -3450,8 +3459,46 @@ if (!empty($searchTerm)) {
             width: 20px;
             height: 20px;
             cursor: pointer;
-            accent-color: #3498db;
+            border: 2px solid #10B981;
+            border-radius: 4px;
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: white;
+            position: relative;
+            transition: all 0.2s ease;
         }
+
+        .checkbox-column input[type="checkbox"]:checked {
+            background-color: white;
+            border-color: #10B981;
+        }
+
+        .checkbox-column input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 6px;
+            width: 5px;
+            height: 10px;
+            border: solid #10B981;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-column input[type="checkbox"]:hover {
+            border-color: #0DA271;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .checkbox-column input[type="checkbox"]:checked:hover {
+            border-color: #0DA271;
+        }
+
+        .checkbox-column input[type="checkbox"]:checked:hover::after {
+            border-color: #0DA271;
+        }
+
+
 
         /* Footer button styles */
         #exportModal button,
@@ -4333,7 +4380,7 @@ if (!empty($searchTerm)) {
 
     <div id="viewModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal"
         style="display:none;">
-        <div class="bg-white rounded-[6px] shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
             <!-- Header -->
             <div class="sticky top-0 z-20 bg-[#2563EB] px-10 py-6 flex items-center">
                 <h3 class="text-xl font-medium flex gap-3 text-center w-full items-center text-white">
@@ -4686,54 +4733,61 @@ if (!empty($searchTerm)) {
 
     <!-- Export Modal (Warm Blue & White, Improved UX) -->
     <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" style="display: none;">
-        <div class="bg-white rounded-[6px] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-white rounded-md shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Sticky Header - Warm Blue -->
-            <div class="sticky top-0 z-20 bg-[#4A90E2] px-10 py-8 flex items-center justify-between">
-                <h3 class="text-2xl font-bold flex items-center text-white gap-3">
-                    <i class="fas fa-download"></i>
-                    <span>Export Patient Records</span>
+            <div class="sticky top-0 z-20 px-8 py-8 flex items-center justify-between">
+                <h3 class="text-2xl font-medium border-b-2 border-gray-300 w-full pb-6 flex items-center gap-3">
+                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24.7017 4.59869L9.43807 1.90338C8.94841 1.81722 8.44458 1.92905 8.03737 2.2143C7.63016 2.49955 7.3529 2.93485 7.26659 3.42448L3.78026 23.2292C3.73762 23.4718 3.7432 23.7204 3.7967 23.9609C3.85019 24.2014 3.95054 24.4289 4.09202 24.6306C4.2335 24.8322 4.41333 25.004 4.62124 25.1362C4.82914 25.2683 5.06104 25.3582 5.30369 25.4006L20.5674 28.096C20.8101 28.1388 21.0588 28.1333 21.2994 28.0799C21.54 28.0265 21.7677 27.9262 21.9695 27.7847C22.1713 27.6432 22.3432 27.4633 22.4754 27.2553C22.6077 27.0473 22.6976 26.8153 22.74 26.5725L26.2264 6.76784C26.3118 6.27802 26.1991 5.77434 25.9132 5.36756C25.6273 4.96078 25.1915 4.68422 24.7017 4.59869ZM20.8908 26.2491L5.62596 23.5538L9.11229 3.74909L24.376 6.4444L20.8908 26.2491ZM10.4705 6.84518C10.5139 6.60046 10.6527 6.383 10.8565 6.2406C11.0602 6.0982 11.3121 6.04252 11.5568 6.0858L21.2834 7.8026C21.5145 7.8431 21.7221 7.96882 21.8651 8.15493C22.008 8.34104 22.076 8.574 22.0555 8.80779C22.0351 9.04158 21.9277 9.25919 21.7546 9.41763C21.5814 9.57607 21.3552 9.66382 21.1205 9.66354C21.0655 9.66346 21.0106 9.65876 20.9564 9.64948L11.2299 7.93151C10.9851 7.88808 10.7677 7.74926 10.6253 7.54555C10.4829 7.34184 10.4272 7.08992 10.4705 6.84518ZM9.82127 10.5389C9.84264 10.4177 9.88769 10.3018 9.95386 10.1979C10.02 10.094 10.106 10.0042 10.2069 9.9336C10.3078 9.86298 10.4216 9.81292 10.5418 9.78628C10.662 9.75965 10.7863 9.75696 10.9076 9.77838L20.6342 11.4964C20.867 11.5353 21.0765 11.6606 21.2209 11.8472C21.3654 12.0339 21.4341 12.2682 21.4134 12.5033C21.3927 12.7384 21.284 12.957 21.1092 13.1156C20.9343 13.2741 20.7061 13.3608 20.4701 13.3585C20.4147 13.3586 20.3593 13.3535 20.3049 13.3432L10.5783 11.6264C10.3338 11.5825 10.1167 11.4432 9.97475 11.2393C9.8328 11.0354 9.7776 10.7835 9.82127 10.5389ZM9.17088 14.2315C9.21512 13.9874 9.35429 13.7708 9.5579 13.6292C9.76152 13.4875 10.013 13.4323 10.2572 13.4756L15.1181 14.3299C15.3492 14.3704 15.5567 14.4961 15.6997 14.682C15.8426 14.868 15.9107 15.1008 15.8904 15.3345C15.87 15.5682 15.7629 15.7858 15.59 15.9444C15.4171 16.1029 15.191 16.1909 14.9564 16.1909C14.9014 16.1909 14.8466 16.1862 14.7924 16.1768L9.92909 15.3178C9.68458 15.2741 9.46741 15.1352 9.32525 14.9315C9.1831 14.7278 9.12758 14.4761 9.17088 14.2315Z" fill="#3C96E1" />
+                    </svg>
+                    <span style="color: #387EC3;">Export Patient Records</span>
                 </h3>
                 <button onclick="closeExportModal()" class="text-white hover:text-gray-200 text-2xl transition">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <!-- Scrollable Content - White -->
-            <div class="px-8 bg-white flex-1 overflow-y-auto py-8">
+            <div class="px-8 bg-white flex-1 overflow-y-auto">
                 <!-- Export All Records Section -->
                 <div class="mb-10">
-                    <h4 class="text-lg font-bold text-[#2E5C8A] mb-4 flex items-center gap-2">
-                        <i class="fas fa-layer-group"></i>
+                    <h4 class="text-lg font-semibold mb-2 flex items-center gap-2" style="color: #515151;">
                         Export All Patient Records
                     </h4>
-                    <p class="text-[#666666] text-sm mb-6">Download all accessible patient records in your preferred format.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <p class="text-[#666666] text-base mb-6">Download all accessible patient records in your preferred format.</p>
+                    <div class="flex w-full gap-4">
                         <!-- Excel Export Button (Green) -->
                         <button onclick="exportAllRecords('excel')"
-                            class="p-5 rounded-xl bg-white shadow-lg border border-[#E8F0FE] transition-all group cursor-pointer flex items-center gap-4 font-medium">
-                            <div class="w-14 h-14 rounded-lg bg-white border border-[#2ecc71] shadow-md flex items-center justify-center text-[#2ecc71]">
-                                <i class="fas fa-file-excel text-2xl text-white"></i>
-                            </div>
-                            <div class="text-left">
-                                <h5 class="font-bold text-green-700 text-lg">Export as Excel</h5>
-                                <p class="text-xs text-[#888888]">.xlsx - Ready for analysis</p>
+                            class="w-1/2 px-6 py-4 rounded-md bg-[#3C96E1] transition-all group cursor-pointer flex justify-center items-center gap-4 font-medium">
+                            <div class="flex flex-col md:flex-row items-center gap-4">
+                                <div>
+                                    <h5 class="font-medium text-white text-xl">Export as Excel</h5>
+                                </div>
+                                <div>
+                                    <svg width="35" height="35" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M23.625 10.9688C23.625 11.1925 23.5361 11.4071 23.3779 11.5654C23.2196 11.7236 23.005 11.8125 22.7812 11.8125C22.5575 11.8125 22.3429 11.7236 22.1846 11.5654C22.0264 11.4071 21.9375 11.1925 21.9375 10.9688V6.25641L14.9418 13.2532C14.7834 13.4115 14.5687 13.5005 14.3448 13.5005C14.1209 13.5005 13.9062 13.4115 13.7479 13.2532C13.5895 13.0949 13.5006 12.8802 13.5006 12.6562C13.5006 12.4323 13.5895 12.2176 13.7479 12.0593L20.7436 5.0625H16.0312C15.8075 5.0625 15.5929 4.97361 15.4346 4.81537C15.2764 4.65714 15.1875 4.44253 15.1875 4.21875C15.1875 3.99497 15.2764 3.78036 15.4346 3.62213C15.5929 3.4639 15.8075 3.375 16.0312 3.375H22.7812C23.005 3.375 23.2196 3.4639 23.3779 3.62213C23.5361 3.78036 23.625 3.99497 23.625 4.21875V10.9688ZM19.4062 13.5C19.1825 13.5 18.9679 13.5889 18.8096 13.7471C18.6514 13.9054 18.5625 14.12 18.5625 14.3438V21.9375H5.0625V8.4375H12.6562C12.88 8.4375 13.0946 8.34861 13.2529 8.19037C13.4111 8.03214 13.5 7.81753 13.5 7.59375C13.5 7.36997 13.4111 7.15536 13.2529 6.99713C13.0946 6.8389 12.88 6.75 12.6562 6.75H5.0625C4.61495 6.75 4.18572 6.92779 3.86926 7.24426C3.55279 7.56073 3.375 7.98995 3.375 8.4375V21.9375C3.375 22.3851 3.55279 22.8143 3.86926 23.1307C4.18572 23.4472 4.61495 23.625 5.0625 23.625H18.5625C19.0101 23.625 19.4393 23.4472 19.7557 23.1307C20.0722 22.8143 20.25 22.3851 20.25 21.9375V14.3438C20.25 14.12 20.1611 13.9054 20.0029 13.7471C19.8446 13.5889 19.63 13.5 19.4062 13.5Z" fill="white" />
+                                    </svg>
+                                </div>
                             </div>
                         </button>
                         <!-- PDF Export Button (Red) -->
-                        <button onclick="exportAllRecords('pdf')"
-                            class="p-5 rounded-xl shadow-lg bg-[#E8F0FE] hover:bg-[#D4E3F7] transition-all group cursor-pointer flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-lg bg-white border border-[#C0392B] shadow-md flex items-center justify-center text-[#C0392B]">
-                                <i class="fas fa-file-pdf text-2xl text-white"></i>
-                            </div>
-                            <div class="text-left">
-                                <h5 class="font-bold text-red-700 text-lg">Export as PDF</h5>
-                                <p class="text-xs text-[#888888]">.pdf - Professional report</p>
+                        <button onclick="openManualSelectionModal()"
+                            class="w-1/2 rounded-md transition-all group cursor-pointer flex justify-center items-center gap-4 px-6 py-4" style="background-color: #3C96E14D;">
+                            <div class="flex flex-col md:flex-row items-center gap-4">
+                                <div>
+                                    <h5 class="font-medium text-[#3C96E1] text-xl">Specific Record</h5>
+                                </div>
+                                <div>
+                                    <svg width="35" height="35" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M14.5899 21.6912C14.5114 21.6128 14.4492 21.5198 14.4067 21.4173C14.3643 21.3149 14.3424 21.2051 14.3424 21.0942C14.3424 20.9833 14.3643 20.8735 14.4067 20.7711C14.4492 20.6687 14.5114 20.5756 14.5899 20.4973L20.744 14.3442H4.21809C3.99431 14.3442 3.7797 14.2553 3.62147 14.0971C3.46323 13.9389 3.37434 13.7242 3.37434 13.5005C3.37434 13.2767 3.46323 13.0621 3.62147 12.9038C3.7797 12.7456 3.99431 12.6567 4.21809 12.6567H20.744L14.5899 6.50367C14.4316 6.34535 14.3426 6.13062 14.3426 5.90672C14.3426 5.68282 14.4316 5.46809 14.5899 5.30977C14.7482 5.15144 14.9629 5.0625 15.1868 5.0625C15.4107 5.0625 15.6255 5.15144 15.7838 5.30977L23.3775 12.9035C23.456 12.9819 23.5182 13.0749 23.5607 13.1774C23.6031 13.2798 23.625 13.3896 23.625 13.5005C23.625 13.6114 23.6031 13.7211 23.5607 13.8236C23.5182 13.926 23.456 14.0191 23.3775 14.0974L15.7838 21.6912C15.7054 21.7696 15.6124 21.8319 15.5099 21.8743C15.4075 21.9168 15.2977 21.9386 15.1868 21.9386C15.076 21.9386 14.9662 21.9168 14.8637 21.8743C14.7613 21.8319 14.6682 21.7696 14.5899 21.6912Z" fill="#3C96E1" />
+                                    </svg>
+                                </div>
                             </div>
                         </button>
                     </div>
                 </div>
                 <div class="my-8"></div>
                 <!-- Manual Selection Section -->
-                <div>
+                <!-- <div>
                     <h4 class="text-lg font-bold text-[#2E5C8A] mb-4 flex items-center gap-2">
                         <i class="fas fa-hand-pointer"></i>
                         Select Specific Patients
@@ -4750,20 +4804,20 @@ if (!empty($searchTerm)) {
                         </div>
                         <i class="fas fa-chevron-right text-[#4A90E2] text-xl"></i>
                     </button>
-                </div>
+                </div> -->
                 <!-- Info Box -->
-                <div class="mt-8 p-5 bg-[#F8FBFF] shadow-lg rounded-lg">
-                    <p class="text-sm text-[#2E5C8A]">
+                <div class="py-3 justify-center flex items-center">
+                    <p class="text-base" style="color: #51515199">
                         <i class="fas fa-lightbulb mr-2"></i>
-                        <strong>Tip:</strong> All exports include complete medical information. Use manual selection to reduce file size or share specific patient records.
+                        All exports include complete medical information
                     </p>
                 </div>
             </div>
             <!-- Sticky Footer -->
             <div class="bg-white px-8 py-4 sticky bottom-0 flex justify-end gap-3 shadow-lg">
                 <button type="button" onclick="closeExportModal()"
-                    class="px-6 py-3 rounded-lg bg-[#4A90E2] text-white hover:bg-[#357ABD] transition font-medium">
-                    <i class="fas fa-times mr-2"></i>Cancel
+                    class="px-6 py-3 rounded-lg text-[#3C96E1] text-lg hover:bg-[#357ABD] transition font-medium" style="background-color: #3C96E14D;">
+                    <i class="fas fa-times mr-2 "></i>Cancel
                 </button>
             </div>
         </div>
@@ -4773,12 +4827,14 @@ if (!empty($searchTerm)) {
     <div id="manualSelectionModal"
         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal"
         style="display: none;">
-        <div class="bg-white rounded-[6px] shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Sticky Header - Warm Blue -->
-            <div class="sticky top-0 z-20 bg-gradient-to-r from-[#4A90E2] to-[#357ABD] px-10 py-8 flex items-center justify-between">
-                <h3 class="text-2xl font-bold flex items-center text-white gap-3">
-                    <i class="fas fa-check-square"></i>
-                    <span>Choose Specific Patients</span>
+            <div class="sticky top-0 z-20 px-10 py-8 flex items-center justify-between">
+                <h3 class="text-2xl font-medium flex border-b-2 border-gray-300 w-full pb-6 items-center gap-3">
+                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 2.8125C12.5895 2.8125 10.2332 3.52728 8.22899 4.86646C6.22477 6.20564 4.66267 8.10907 3.74022 10.336C2.81778 12.563 2.57643 15.0135 3.04668 17.3777C3.51694 19.7418 4.67769 21.9134 6.38214 23.6179C8.08659 25.3223 10.2582 26.4831 12.6223 26.9533C14.9865 27.4236 17.437 27.1822 19.664 26.2598C21.8909 25.3373 23.7944 23.7752 25.1335 21.771C26.4727 19.7668 27.1875 17.4105 27.1875 15C27.1841 11.7687 25.899 8.67076 23.6141 6.3859C21.3292 4.10104 18.2313 2.81591 15 2.8125ZM15 25.3125C12.9604 25.3125 10.9666 24.7077 9.27069 23.5745C7.5748 22.4414 6.25303 20.8308 5.4725 18.9464C4.69197 17.0621 4.48775 14.9886 4.88566 12.9881C5.28357 10.9877 6.26574 9.15019 7.70797 7.70796C9.1502 6.26573 10.9877 5.28356 12.9881 4.88565C14.9886 4.48774 17.0621 4.69196 18.9464 5.47249C20.8308 6.25302 22.4414 7.5748 23.5745 9.27068C24.7077 10.9666 25.3125 12.9604 25.3125 15C25.3094 17.7341 24.2219 20.3553 22.2886 22.2886C20.3553 24.2219 17.7341 25.3094 15 25.3125ZM15 8.4375C13.7021 8.4375 12.4333 8.82238 11.3541 9.54348C10.2749 10.2646 9.43375 11.2895 8.93705 12.4886C8.44035 13.6878 8.31039 15.0073 8.5636 16.2803C8.81682 17.5533 9.44183 18.7226 10.3596 19.6404C11.2774 20.5582 12.4467 21.1832 13.7197 21.4364C14.9927 21.6896 16.3122 21.5597 17.5114 21.063C18.7105 20.5663 19.7354 19.7251 20.4565 18.6459C21.1776 17.5667 21.5625 16.2979 21.5625 15C21.5606 13.2601 20.8686 11.592 19.6383 10.3617C18.408 9.13136 16.7399 8.43936 15 8.4375ZM15 19.6875C14.0729 19.6875 13.1666 19.4126 12.3958 18.8975C11.6249 18.3824 11.0241 17.6504 10.6693 16.7938C10.3145 15.9373 10.2217 14.9948 10.4026 14.0855C10.5834 13.1762 11.0299 12.341 11.6854 11.6854C12.341 11.0299 13.1762 10.5834 14.0855 10.4026C14.9948 10.2217 15.9373 10.3145 16.7938 10.6693C17.6504 11.0241 18.3824 11.6249 18.8975 12.3958C19.4126 13.1666 19.6875 14.0729 19.6875 15C19.6875 16.2432 19.1936 17.4355 18.3146 18.3146C17.4355 19.1936 16.2432 19.6875 15 19.6875Z" fill="#3C96E1" />
+                    </svg>
+                    <span style="color: #387EC3;">Specific Records</span>
                 </h3>
                 <button onclick="closeManualSelectionModal()" class="text-white hover:text-gray-200 text-2xl transition">
                     <i class="fas fa-times"></i>
@@ -4786,24 +4842,23 @@ if (!empty($searchTerm)) {
             </div>
 
             <!-- Scrollable Content - White -->
-            <div class="px-10 bg-white flex-1 overflow-y-auto py-8">
+            <div class="px-10 flex-1 overflow-y-auto ">
                 <form id="manualExportForm" method="POST" action="">
                     <!-- Selection Controls -->
-                    <div class="bg-[#E8F0FE] rounded-xl p-6 mb-6 shadow-md">
+                    <div class="mb-6">
                         <div class="flex items-center justify-between flex-wrap gap-4">
                             <div>
-                                <h4 class="font-bold text-[#357ABD] text-lg flex items-center gap-2">
-                                    <i class="fas fa-list-check"></i>
-                                    Patient Selection
+                                <h4 class="font-medium text-xl flex items-center gap-2">
+                                    Record Selection
                                 </h4>
                                 <p class="text-sm text-[#666666] mt-2">
-                                    <span class="font-medium">Selected:</span>
-                                    <span id="selectedCount" class="font-bold text-[#4A90E2]">0</span>
-                                    <span>patient(s)</span>
+                                    <span class="font-medium text-lg">Selected Record:</span>
+                                    <span id="selectedCount" class="font-medium
+                                     text-lg text-[#3C96E1]">0</span>
                                 </p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <label class="flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg hover:bg-[#D4E3F7] transition">
+                                <label class="flex items-center gap-2 cursor-pointer px-4 rounded-lg hover:bg-[#D4E3F7] transition">
                                     <input type="checkbox" id="selectAllPatients"
                                         class="patient-checkbox select-all-checkbox w-5 h-5 accent-[#4A90E2]"
                                         onchange="toggleAllPatients(this)">
@@ -4812,27 +4867,26 @@ if (!empty($searchTerm)) {
                             </div>
                         </div>
                         <!-- Searchbar for patient selection -->
-                        <div class="mt-4 flex items-center gap-3">
+                        <!-- <div class="mt-4 flex items-center gap-3">
                             <input type="text" id="patientSearchInput" placeholder="Search patient name..." class="search-input w-full py-3 px-6 text-base font-normal rounded-md focus:outline-none border border-[#3C96E1] focus:ring-2 focus:ring-blue-400 focus:border-blue-500">
                             <button type="button" id="patientSearchBtn" class="btn-primary inline-flex items-center py-3 px-6 ml-2">
-                                <i class="fas fa-search mr-2"></i>Search
+                                Search
                             </button>
-                        </div>
+                        </div> -->
 
                     </div>
 
                     <!-- Patients Table -->
-                    <div class="bg-white border-2 border-[#D4E3F7] rounded-xl overflow-hidden mb-6 shadow-sm">
+                    <div class=" overflow-hidden">
                         <div class="scrollable-table-container" style="max-height: 400px; border-radius: 10px;">
                             <table class="patient-table w-full">
                                 <thead>
-                                    <tr class="bg-[#F8FBFF] border-b-2 border-[#D4E3F7] sticky top-0">
-                                        <th class="checkbox-column w-12 text-center py-3"><i
-                                                class="fas fa-square text-[#4A90E2]"></i></th>
+                                    <tr class="bg-[#F8FBFF] border-b-2 sticky top-0">
+                                        <th class="checkbox-column w-12 text-center py-3"></th>
                                         <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Name</th>
                                         <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Age</th>
-                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Blood Type</th>
-                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Type</th>
+                                        <!-- <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Blood Type</th> -->
+                                        <!-- <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Type</th> -->
                                         <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Last Check-up</th>
                                     </tr>
                                 </thead>
@@ -4842,81 +4896,31 @@ if (!empty($searchTerm)) {
                             </table>
                         </div>
                     </div>
-
-                    <!-- Export Data Preview -->
-                    <div class="p-6 bg-[#F8FBFF] border-2 border-[#D4E3F7] rounded-xl mb-6">
-                        <h5 class="text-sm font-bold text-[#2E5C8A] mb-4">
-                            <i class="fas fa-database mr-2 text-[#4A90E2]"></i>EXPORTED DATA INCLUDES:
-                        </h5>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            <div class="text-xs text-[#2E5C8A]">
-                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Patient ID & Full Name
-                            </div>
-                            <div class="text-xs text-[#2E5C8A]">
-                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Age & Gender
-                            </div>
-                            <div class="text-xs text-[#2E5C8A]">
-                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Date of Birth
-                            </div>
-                            <div class="text-xs text-[#2E5C8A]">
-                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Contact & Address
-                            </div>
-                            <div class="text-xs text-[#2E5C8A]">
-                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Blood Type & Vitals
-                            </div>
-                            <div class="text-xs text-[#2E5C8A]">
-                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Height & Weight
-                            </div>
-                            <div class="text-xs text-[#2E5C8A]">
-                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Medical History
-                            </div>
-                            <div class="text-xs text-[#2E5C8A]">
-                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Civil Status & Occupation
-                            </div>
-                            <div class="text-xs text-[#2E5C8A]">
-                                <i class="fas fa-check text-[#4A90E2] mr-2"></i>Last Checkup Date
-                            </div>
-                        </div>
-                        <p class="text-xs text-[#2E5C8A] mt-4 pt-4 border-t border-[#D4E3F7]">
-                            <i class="fas fa-info-circle mr-2 text-[#4A90E2]"></i>
-                            <strong>Complete patient records</strong> will be exported with all available medical
-                            information.
-                        </p>
-                    </div>
-
-                    <!-- Important Notes -->
-                    <div class="p-5 bg-[#F0F8FF] border-l-4 border-[#4A90E2] rounded-lg mb-6">
-                        <p class="text-sm text-[#2E5C8A]">
-                            <i class="fas fa-info-circle mr-2 text-[#4A90E2]"></i>
-                            <strong>Note:</strong> Select at least one patient to proceed with export. Files will
-                            include complete health records.
-                        </p>
-                    </div>
                 </form>
             </div>
 
             <!-- Sticky Footer -->
-            <div
-                class="bg-white border-t border-[#D4E3F7] px-10 py-5 sticky bottom-0 flex items-center justify-between shadow-lg">
-                <span class="text-sm text-[#2E5C8A] flex items-center gap-2 font-medium">
-                    <i class="fas fa-list text-[#4A90E2]"></i>
-                    <strong id="footerCount">0</strong> patient(s) selected
-                </span>
-                <div class="flex gap-3">
-                    <button type="button" onclick="closeManualSelectionModal()"
-                        class="px-6 py-3 rounded-lg border-2 border-[#D4E3F7] text-[#2E5C8A] hover:bg-[#F8FBFF] transition font-medium">
-                        <i class="fas fa-times mr-2"></i>Cancel
-                    </button>
-                    <button type="button" onclick="confirmManualExport('excel')"
-                        class="px-6 py-3 rounded-lg bg-gradient-to-r from-[#4A90E2] to-[#357ABD] hover:from-[#357ABD] hover:to-[#2E5C8A] text-white transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg">
-                        <i class="fas fa-file-excel"></i>Export as Excel
-                    </button>
-                    <button type="button" onclick="confirmManualExport('pdf')"
-                        class="px-6 py-3 rounded-lg bg-gradient-to-r from-[#4A90E2] to-[#357ABD] hover:from-[#357ABD] hover:to-[#2E5C8A] text-white transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg">
-                        <i class="fas fa-file-pdf"></i>Export as PDF
-                    </button>
+            <div class="w-full px-10 py-5 sticky bottom-0 flex items-center justify-between">
+                <div class="flex flex-col md:flex-row gap-3 justify-between items-center w-full">
+                    <div class="flex flex-wrap gap-3 order-2 md:order-1">
+                        <button type="button" onclick="confirmManualExport('excel')"
+                            class="btn-primary px-6 py-3 rounded-lg  hover:from-[#357ABD] hover:to-[#2E5C8A] text-white transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg" style="background-color: #10B981;">
+                            <i class="fas fa-file-excel"></i>Export as Excel
+                        </button>
+                        <button type="button" onclick="confirmManualExport('pdf')"
+                            class="btn-primary px-6 py-3 rounded-lg hover:from-[#357ABD] hover:to-[#2E5C8A] text-white transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg" style="background-color: #DC2626;">
+                            <i class="fas fa-file-pdf"></i>Export as PDF
+                        </button>
+                    </div>
+                    <div class="order-1 md:order-2">
+                        <button type="button" onclick="closeManualSelectionModal()"
+                            class="px-6 py-3 rounded-lg text-[#3C96E1] hover:bg-[#F8FBFF] transition text-lg font-medium" style="background-color: #3C96E14D;">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -4929,8 +4933,8 @@ if (!empty($searchTerm)) {
             <div class="sticky top-0 z-20 px-10 py-6 flex items-center">
                 <h3 class="text-2xl font-sm flex mt-3 border-b-2 border-gray-300 pb-6  text-center w-full items-center text-white">
                     <svg width="40" height="40" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M15 2.8125C12.5895 2.8125 10.2332 3.52728 8.22899 4.86646C6.22477 6.20564 4.66267 8.10907 3.74022 10.336C2.81778 12.563 2.57643 15.0135 3.04668 17.3777C3.51694 19.7418 4.67769 21.9134 6.38214 23.6179C8.08659 25.3223 10.2582 26.4831 12.6223 26.9533C14.9865 27.4236 17.437 27.1822 19.664 26.2598C21.8909 25.3373 23.7944 23.7752 25.1335 21.771C26.4727 19.7668 27.1875 17.4105 27.1875 15C27.1841 11.7687 25.899 8.67076 23.6141 6.3859C21.3292 4.10104 18.2313 2.81591 15 2.8125ZM15 25.3125C12.9604 25.3125 10.9666 24.7077 9.27069 23.5745C7.5748 22.4414 6.25303 20.8308 5.4725 18.9464C4.69197 17.0621 4.48775 14.9886 4.88566 12.9881C5.28357 10.9877 6.26574 9.15019 7.70797 7.70796C9.1502 6.26573 10.9877 5.28356 12.9881 4.88565C14.9886 4.48774 17.0621 4.69196 18.9464 5.47249C20.8308 6.25302 22.4414 7.5748 23.5745 9.27068C24.7077 10.9666 25.3125 12.9604 25.3125 15C25.3094 17.7341 24.2219 20.3553 22.2886 22.2886C20.3553 24.2219 17.7341 25.3094 15 25.3125ZM20.625 15C20.625 15.2486 20.5262 15.4871 20.3504 15.6629C20.1746 15.8387 19.9361 15.9375 19.6875 15.9375H15.9375V19.6875C15.9375 19.9361 15.8387 20.1746 15.6629 20.3504C15.4871 20.5262 15.2486 20.625 15 20.625C14.7514 20.625 14.5129 20.5262 14.3371 20.3504C14.1613 20.1746 14.0625 19.9361 14.0625 19.6875V15.9375H10.3125C10.0639 15.9375 9.82541 15.8387 9.64959 15.6629C9.47378 15.4871 9.375 15.2486 9.375 15C9.375 14.7514 9.47378 14.5129 9.64959 14.3371C9.82541 14.1613 10.0639 14.0625 10.3125 14.0625H14.0625V10.3125C14.0625 10.0639 14.1613 9.8254 14.3371 9.64959C14.5129 9.47377 14.7514 9.375 15 9.375C15.2486 9.375 15.4871 9.47377 15.6629 9.64959C15.8387 9.8254 15.9375 10.0639 15.9375 10.3125V14.0625H19.6875C19.9361 14.0625 20.1746 14.1613 20.3504 14.3371C20.5262 14.5129 20.625 14.7514 20.625 15Z" fill="#007BFF"/>
-</svg>
+                        <path d="M15 2.8125C12.5895 2.8125 10.2332 3.52728 8.22899 4.86646C6.22477 6.20564 4.66267 8.10907 3.74022 10.336C2.81778 12.563 2.57643 15.0135 3.04668 17.3777C3.51694 19.7418 4.67769 21.9134 6.38214 23.6179C8.08659 25.3223 10.2582 26.4831 12.6223 26.9533C14.9865 27.4236 17.437 27.1822 19.664 26.2598C21.8909 25.3373 23.7944 23.7752 25.1335 21.771C26.4727 19.7668 27.1875 17.4105 27.1875 15C27.1841 11.7687 25.899 8.67076 23.6141 6.3859C21.3292 4.10104 18.2313 2.81591 15 2.8125ZM15 25.3125C12.9604 25.3125 10.9666 24.7077 9.27069 23.5745C7.5748 22.4414 6.25303 20.8308 5.4725 18.9464C4.69197 17.0621 4.48775 14.9886 4.88566 12.9881C5.28357 10.9877 6.26574 9.15019 7.70797 7.70796C9.1502 6.26573 10.9877 5.28356 12.9881 4.88565C14.9886 4.48774 17.0621 4.69196 18.9464 5.47249C20.8308 6.25302 22.4414 7.5748 23.5745 9.27068C24.7077 10.9666 25.3125 12.9604 25.3125 15C25.3094 17.7341 24.2219 20.3553 22.2886 22.2886C20.3553 24.2219 17.7341 25.3094 15 25.3125ZM20.625 15C20.625 15.2486 20.5262 15.4871 20.3504 15.6629C20.1746 15.8387 19.9361 15.9375 19.6875 15.9375H15.9375V19.6875C15.9375 19.9361 15.8387 20.1746 15.6629 20.3504C15.4871 20.5262 15.2486 20.625 15 20.625C14.7514 20.625 14.5129 20.5262 14.3371 20.3504C14.1613 20.1746 14.0625 19.9361 14.0625 19.6875V15.9375H10.3125C10.0639 15.9375 9.82541 15.8387 9.64959 15.6629C9.47378 15.4871 9.375 15.2486 9.375 15C9.375 14.7514 9.47378 14.5129 9.64959 14.3371C9.82541 14.1613 10.0639 14.0625 10.3125 14.0625H14.0625V10.3125C14.0625 10.0639 14.1613 9.8254 14.3371 9.64959C14.5129 9.47377 14.7514 9.375 15 9.375C15.2486 9.375 15.4871 9.47377 15.6629 9.64959C15.8387 9.8254 15.9375 10.0639 15.9375 10.3125V14.0625H19.6875C19.9361 14.0625 20.1746 14.1613 20.3504 14.3371C20.5262 14.5129 20.625 14.7514 20.625 15Z" fill="#007BFF" />
+                    </svg>
 
                     <span style="color: #387EC3;" id="consultationNoteTitle">Add Consultation Note</span>
                 </h3>
@@ -5821,8 +5825,6 @@ if (!empty($searchTerm)) {
                         </td>
                         <td class="px-6 py-3 text-[#2E5C8A] font-medium">${name}</td>
                         <td class="px-6 py-3 text-[#666666]">${age}</td>
-                        <td class="px-6 py-3 text-[#666666]">${bloodType}</td>
-                        <td class="px-6 py-3 text-[#666666]">${type}</td>
                         <td class="px-6 py-3 text-[#888888] text-sm">${lastCheckup}</td>
                     `;
                     tbody.appendChild(tr);
@@ -6459,30 +6461,30 @@ if (!empty($searchTerm)) {
         });
 
         function addConsultationNotesSection(patientId) {
-    const healthInfoForm = document.getElementById('healthInfoForm');
-    if (!healthInfoForm) return;
+            const healthInfoForm = document.getElementById('healthInfoForm');
+            if (!healthInfoForm) return;
 
-    // Try to get user_id from a hidden input or data attribute
-    let userId = null;
-    const userIdInput = healthInfoForm.querySelector('input[name="user_id"]');
-    if (userIdInput) {
-        userId = userIdInput.value;
-    } else if (healthInfoForm.dataset.userId) {
-        userId = healthInfoForm.dataset.userId;
-    }
+            // Try to get user_id from a hidden input or data attribute
+            let userId = null;
+            const userIdInput = healthInfoForm.querySelector('input[name="user_id"]');
+            if (userIdInput) {
+                userId = userIdInput.value;
+            } else if (healthInfoForm.dataset.userId) {
+                userId = healthInfoForm.dataset.userId;
+            }
 
-    // Build profile image URL if userId exists
-    let profileImgHtml = '';
-    if (userId && userId !== '0' && userId !== '') {
-        profileImgHtml = `<img src="/community-health-tracker/uploads/profiles/profile_${userId}.jpg?cb=${Date.now()}" 
+            // Build profile image URL if userId exists
+            let profileImgHtml = '';
+            if (userId && userId !== '0' && userId !== '') {
+                profileImgHtml = `<img src="/community-health-tracker/uploads/profiles/profile_${userId}.jpg?cb=${Date.now()}" 
                                 alt="Profile" 
                                 class="rounded-full border-2 border-blue-300 shadow w-24 h-24 object-cover mr-4"
                                 onerror="this.onerror=null; this.src='/community-health-tracker/assets/images/default-avatar.png'">`;
-    }
+            }
 
-    const notesSection = document.createElement('div');
-    notesSection.className = 'consultation-notes-section mb-8';
-    notesSection.innerHTML = `
+            const notesSection = document.createElement('div');
+            notesSection.className = 'consultation-notes-section mb-8';
+            notesSection.innerHTML = `
         <div class="consultation-notes-header">
             <div class="flex justify-between items-center">
                 <h3 class="text-xl font-medium text-blue-800 flex items-center gap-3">
@@ -6512,9 +6514,9 @@ if (!empty($searchTerm)) {
         </div>
     `;
 
-    healthInfoForm.parentNode.insertBefore(notesSection, healthInfoForm);
-    loadConsultationNotesInline(patientId);
-}
+            healthInfoForm.parentNode.insertBefore(notesSection, healthInfoForm);
+            loadConsultationNotesInline(patientId);
+        }
 
         // Function to load consultation notes inline in the main modal
         function loadConsultationNotesInline(patientId) {
