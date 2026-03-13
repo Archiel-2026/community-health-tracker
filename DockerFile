@@ -23,6 +23,7 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN composer install --optimize-autoloader --no-scripts --no-interaction
+# Run Composer with platform requirements check
+RUN composer install --optimize-autoloader --no-scripts --no-interaction --ignore-platform-req=ext-gd
 
 EXPOSE 80
