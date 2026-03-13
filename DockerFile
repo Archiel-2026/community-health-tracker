@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# Install system dependencies for GD, zip, and PHP extensions
+# Install system dependencies for GD, ZIP, and PHP extensions
 RUN apt-get update && apt-get install -y \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
@@ -25,10 +25,10 @@ WORKDIR /var/www/html/
 # Copy project files
 COPY . /var/www/html/
 
-# Ensure PHP CLI sees GD
+# Verify GD is loaded in PHP CLI
 RUN php -m | grep -i gd
 
-# Run Composer install after GD is available
-RUN composer install --ignore-platform-reqs --optimize-autoloader --no-scripts --no-interaction
+# Run Composer install, ignoring missing GD temporarily
+RUN composer install --ignore-platform-req=ext-gd --optimize-autoloader --no-scripts --no-interaction
 
 EXPOSE 80
