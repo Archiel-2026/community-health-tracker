@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# Install system dependencies for GD, ZIP, and PHP extensions
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
@@ -11,24 +11,28 @@ RUN apt-get update && apt-get install -y \
         zip \
         unzip \
         git \
-        curl \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install gd mysqli zip \
-    && a2enmod rewrite
+        curl
+
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install gd mysqli zip
+
+# Enable Apache rewrite
+RUN a2enmod rewrite
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
-WORKDIR /var/www/html/
+WORKDIR /var/www/html
 
 # Copy project files
-COPY . /var/www/html/
+COPY . .
 
-# Verify GD is loaded in PHP CLI
-RUN php -m | grep -i gd
+# Verify GD extension
+RUN php -m | grep gd
 
-# Run Composer install, ignoring missing GD temporarily
-RUN composer install --ignore-platform-req=ext-gd --optimize-autoloader --no-scripts --no-interaction
+# Install PHP dependencies
+RUN composer install --optimize-autoloader --no-scripts --no-interaction
 
 EXPOSE 80
