@@ -13,6 +13,12 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install gd mysqli zip
 
+# Verify GD is installed and create a custom ini file to ensure it's loaded
+RUN echo "extension=gd.so" > /usr/local/etc/php/conf.d/docker-php-ext-gd.ini
+
+# Verify the extension is loaded
+RUN php -m | grep -i gd
+
 # Enable Apache rewrite
 RUN a2enmod rewrite
 
@@ -23,7 +29,6 @@ WORKDIR /var/www/html
 
 COPY . .
 
-# Run Composer with platform requirements check
-RUN composer install --optimize-autoloader --no-scripts --no-interaction --ignore-platform-req=ext-gd
+RUN composer install --optimize-autoloader --no-scripts --no-interaction
 
 EXPOSE 80
