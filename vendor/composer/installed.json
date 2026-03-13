@@ -1350,7 +1350,7 @@
             },
             "time": "2025-12-04T22:19:47+00:00",
             "type": "library",
-            "installation-source": "source",
+            "installation-source": "dist",
             "autoload": {
                 "classmap": [
                     "src/SimpleXLSX.php"
@@ -1404,7 +1404,7 @@
             },
             "time": "2026-03-03T08:58:10+00:00",
             "type": "library",
-            "installation-source": "source",
+            "installation-source": "dist",
             "autoload": {
                 "classmap": [
                     "config",
