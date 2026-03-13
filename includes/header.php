@@ -108,8 +108,16 @@ if (isset($_SESSION['user']['id'])) {
         animation: blink 1s infinite;
     }
 
-    /* CLEAN: User Navigation Tab Styles */
-    .user-nav-tab {
+    /* CLEAN: Simple Navigation Tab Styles */
+    .nav-tab-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .nav-tab {
         position: relative;
         transition: all 0.3s ease;
         padding: 0.75rem 1.5rem;
@@ -117,153 +125,50 @@ if (isset($_SESSION['user']['id'])) {
         font-weight: 600;
         z-index: 1;
         color: white !important;
-        background: transparent;
-        text-decoration: none;
-        display: inline-block;
     }
 
-    .user-nav-tab.user-active {
-        background: rgba(255, 255, 255, 0.25);
+    .nav-tab.active {
+        background: rgba(255, 255, 255, 0.2);
         transform: translateY(-1px);
         color: white !important;
-        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
     }
 
-    .user-nav-tab:hover:not(.user-active) {
-        background: rgba(255, 255, 255, 0.15);
-        cursor: pointer;
+    /* .nav-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 2px;
+    background: white;
+    border-radius: 2px;
+} */
+
+    .nav-tab:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.1);
     }
 
-    /* CLEAN: Staff Navigation Tab Styles */
-    .staff-nav-tab {
-        position: relative;
-        transition: all 0.3s ease;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        z-index: 1;
-        color: white !important;
-        background: transparent;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-    .staff-nav-tab.staff-active {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateY(-1px);
-        color: white !important;
-        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
-    }
-
-    .staff-nav-tab:hover:not(.staff-active) {
-        background: rgba(255, 255, 255, 0.15);
-        cursor: pointer;
-    }
-
-    /* CLEAN: Admin Navigation Tab Styles */
-    .admin-nav-tab {
-        position: relative;
-        transition: all 0.3s ease;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.75rem;
-        font-weight: 600;
-        z-index: 1;
-        color: white !important;
-        background: transparent;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-    .admin-nav-tab.admin-active {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateY(-1px);
-        color: white !important;
-        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
-    }
-
-    .admin-nav-tab:hover:not(.admin-active) {
-        background: rgba(255, 255, 255, 0.15);
-        cursor: pointer;
-    }
-
-    /* CLEAN: Resident User Logout Button - Warm Blue Text */
-    .logout-btn-1 {
-        background: white !important;
-        color: #3C96E1 !important;
-        padding: 0.75rem 1.5rem !important;
-        border-radius: 9999px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
-        text-decoration: none !important;
-        cursor: pointer !important;
-        border: none !important;
-        outline: none !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    .logout-btn-1:hover {
-        background: white !important;
-        color: #2B7CC9 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(60, 150, 225, 0.2) !important;
-    }
-
-    /* CLEAN: Staff Logout Button - Warm Violet Text */
-    .logout-btn-2 {
-        background: white !important;
-        color: #9333EA !important;
-        padding: 0.75rem 1.5rem !important;
-        border-radius: 9999px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
-        text-decoration: none !important;
-        cursor: pointer !important;
-        border: none !important;
-        outline: none !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    .logout-btn-2:hover {
-        background: white !important;
-        color: #7B2CC9 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(147, 51, 234, 0.2) !important;
-    }
-
-    /* CLEAN: Super Admin Logout Button - Warm Blue Text */
-    .logout-btn-3 {
-        background: white !important;
-        color: #3C96E1 !important;
-        padding: 0.75rem 1.5rem !important;
-        border-radius: 9999px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
-        text-decoration: none !important;
-        cursor: pointer !important;
-        border: none !important;
-        outline: none !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    .logout-btn-3:hover {
-        background: white !important;
-        color: #2B7CC9 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(60, 150, 225, 0.2) !important;
-    }
-
-    /* Remove any conflicting styles */
+    /* CLEAN: Simple Logout Button - UPDATED FOR FULL ROUND */
     .logout-btn {
-        /* Remove these styles */
+        background: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 9999px !important;
+        /* Full round radius */
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;
+        outline: none;
+    }
+
+    .logout-btn:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
     }
 
     /* NEW: Improved time display containers - Horizontal layout */
@@ -697,9 +602,7 @@ if (isset($_SESSION['user']['id'])) {
             justify-content: space-between;
         }
 
-        .user-nav-tab,
-        .staff-nav-tab,
-        .admin-nav-tab {
+        .nav-tab {
             position: relative;
             transition: all 0.3s ease;
             padding: 0.75rem 1.5rem;
@@ -708,17 +611,82 @@ if (isset($_SESSION['user']['id'])) {
             z-index: 1;
         }
 
-        .user-nav-tab.user-active,
-        .staff-nav-tab.staff-active,
-        .admin-nav-tab.admin-active {
+        .nav-tab.active {
             background: rgba(255, 255, 255, 0.2);
             transform: translateY(-1px);
         }
 
-        .user-nav-tab:hover:not(.user-active),
-        .staff-nav-tab:hover:not(.staff-active),
-        .admin-nav-tab:hover:not(.admin-active) {
+        .nav-tab:hover:not(.active) {
             background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Staff Button Color */
+        .logout-btn-3 {
+            background: white;
+            color: #9333EA;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .logout-btn-3:hover {
+            background: white;
+            color: #9333EA;
+            transform: translateY(-1px);
+        }
+        
+    /* Admin Button Color */
+    .logout-btn-2 {
+            background: white;
+            color: #9333EA;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .logout-btn-2:hover {
+            background: white;
+            color: #9333EA;
+            transform: translateY(-1px);
+        }
+
+        /* Resident Button Color */
+        .logout-btn-1 {
+            background: white;
+            color: #3C96E1;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px !important;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .logout-btn-1:hover {
+            background: white;
+            color: #3C96E1;
+            transform: translateY(-1px);
         }
 
         .time-display-container {
@@ -779,16 +747,12 @@ if (isset($_SESSION['user']['id'])) {
             font-size: 0.9rem;
         }
 
-        .user-nav-tab,
-        .staff-nav-tab,
-        .admin-nav-tab {
+        .nav-tab {
             padding: 0.6rem 1.2rem;
             font-size: 0.9rem;
         }
 
-        .logout-btn-1,
-        .logout-btn-2,
-        .logout-btn-3 {
+        .logout-btn {
             display: none !important;
         }
 
@@ -847,9 +811,7 @@ if (isset($_SESSION['user']['id'])) {
             justify-content: center;
         }
 
-        .user-nav-tab,
-        .staff-nav-tab,
-        .admin-nav-tab {
+        .nav-tab {
             padding: 0.5rem 1rem;
             font-size: 0.85rem;
         }
@@ -891,8 +853,12 @@ if (isset($_SESSION['user']['id'])) {
             display: flex !important;
         }
 
-        .logout-btn-1,
-        .logout-btn-2,
+        .logout-btn-1 {
+            display: flex !important;
+        }
+        .logout-btn-2 {
+            display: flex !important;
+        }
         .logout-btn-3 {
             display: flex !important;
         }
@@ -933,9 +899,7 @@ if (isset($_SESSION['user']['id'])) {
             height: 36px !important;
         }
 
-        .user-nav-tab,
-        .staff-nav-tab,
-        .admin-nav-tab {
+        .nav-tab {
             padding: 0.4rem 0.8rem !important;
             font-size: 0.75rem !important;
         }
@@ -946,9 +910,7 @@ if (isset($_SESSION['user']['id'])) {
             justify-content: center;
         }
 
-        .nav-connection .user-nav-tab,
-        .nav-connection .staff-nav-tab,
-        .nav-connection .admin-nav-tab {
+        .nav-connection .nav-tab {
             width: 100%;
             text-align: center;
             white-space: nowrap;
@@ -968,7 +930,7 @@ if (isset($_SESSION['user']['id'])) {
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
                             <div class="barangay-text mb-2">Barangay Luz</div>
-                            <a href="/community-health-tracker/" class="main-title">Health Center Super-Admin Panel</a>
+                            <a href="/community-health-tracker/" class="main-title">Health Center Admin Panel</a>
                         </div>
                     </div>
 
@@ -1010,17 +972,17 @@ if (isset($_SESSION['user']['id'])) {
                 <div class="bg-[#2B7CC9] py-2 md:py-3">
                     <div
                         class="px-8 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 admin-nav-container">
-                        <!-- Admin Navigation Tabs - Fixed with proper classes -->
-                        <div class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
+                        <div
+                            class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
                                 <a href="../admin/dashboard.php"
-                                    class="admin-nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'admin-active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
                                     Dashboard
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="../admin/manage_accounts.php"
-                                    class="admin-nav-tab text-sm md:text-base <?= ($current_page == 'manage_accounts.php') ? 'admin-active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'manage_accounts.php') ? 'active' : '' ?>">
                                     Manage Accounts
                                 </a>
                             </div>
@@ -1068,9 +1030,18 @@ if (isset($_SESSION['user']['id'])) {
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
                             <div class="barangay-text text-lg font-semibold">Barangay Luz</div>
-                            <a href="/community-health-tracker/" class="main-title font-light">Health Center Super Admin Panel</a>
+                            <a href="/community-health-tracker/" class="main-title font-light">Health Center Staff Panel</a>
                         </div>
                     </div>
+
+                    <!-- Desktop Nav Content - Hidden on mobile and tablet -->
+                    <!-- <div class="hidden lg:block desktop-nav-content">
+                        <ul class="flex flex-row space-x-12 font-light">
+                            <li class="hover:text-[#F0F0F0] cursor-pointer">Terms & Conditions</li>
+                            <li class="hover:text-[#F0F0F0] cursor-pointer">Contact Us</li>
+                            <li class="hover:text-[#F0F0F0] cursor-pointer">Frequently Asked Questions</li>
+                        </ul>
+                    </div> -->
 
                     <div class="flex items-center space-x-4 md:space-x-10">
                         <div class="hidden md:flex items-center gap-4 user-nav-section">
@@ -1082,7 +1053,8 @@ if (isset($_SESSION['user']['id'])) {
                             <span class="font-medium">Welcome Staff,
                                 <?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>
-                        <button type="button" onclick="showLogoutModal('staff')" class="logout-btn-2 hidden md:block">
+                        <button type="button" onclick="showLogoutModal('staff')"
+                            class="logout-btn-2 hidden md:block bg-white text-[#9333EA] hover:bg-white hover:text-[#9333EA]">
                             <span class="font-medium">Signout</span>
                         </button>
 
@@ -1096,23 +1068,23 @@ if (isset($_SESSION['user']['id'])) {
 
                 <div class="bg-staff-secondary py-2 md:py-3">
                     <div class="px-8 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 staff-nav-container">
-                        <!-- Staff Navigation Tabs - Fixed with proper classes -->
-                        <div class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
+                        <div
+                            class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
                                 <a href="/community-health-tracker/staff/dashboard.php"
-                                    class="staff-nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'staff-active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
                                     Dashboard
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="/community-health-tracker/staff/existing_info_patients.php"
-                                    class="staff-nav-tab text-sm md:text-base <?= ($current_page == 'existing_info_patients.php') ? 'staff-active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'existing_info_patients.php') ? 'active' : '' ?>">
                                     Medical Records
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="/community-health-tracker/staff/announcements.php"
-                                    class="staff-nav-tab text-sm md:text-base <?= ($current_page == 'announcements.php') ? 'staff-active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'announcements.php') ? 'active' : '' ?>">
                                     Announcements
                                 </a>
                             </div>
@@ -1171,7 +1143,7 @@ if (isset($_SESSION['user']['id'])) {
 
                     <!-- Desktop Nav Content - Hidden on mobile and tablet -->
                     <div class="hidden lg:block desktop-nav-content">
-                        <ul class="flex flex-row space-x-12 font-light">
+                        <ul class="flex flex-rofw space-x-12 font-light">
                             <li class="hover:text-[#F0F0F0] cursor-pointer">Terms & Conditions</li>
                             <li class="hover:text-[#F0F0F0] cursor-pointer">Contact Us</li>
                             <li class="hover:text-[#F0F0F0] cursor-pointer">Frequently Asked Questions</li>
@@ -1188,7 +1160,8 @@ if (isset($_SESSION['user']['id'])) {
                             <span class="font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>
                         <!-- Enhanced Logout Button - Hidden on mobile -->
-                        <button type="button" onclick="showLogoutModal('user')" class="logout-btn-1">
+                        <button type="button" onclick="showLogoutModal('user')"
+                            class="logout-btn-1">
                             <span>Signout</span>
                         </button>
 
@@ -1203,23 +1176,23 @@ if (isset($_SESSION['user']['id'])) {
                 <div class="bg-[#2B7CC9] py-2 md:py-3">
                     <div
                         class="px-4 md:px-16 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 user-nav-container">
-                        <!-- User Navigation Tabs - Fixed with proper classes -->
-                        <div class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
+                        <div
+                            class="nav-tab-container flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 w-full md:w-auto">
                             <div class="nav-connection">
                                 <a href="dashboard.php"
-                                    class="user-nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'user-active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
                                     Dashboard
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="health_records.php"
-                                    class="user-nav-tab text-sm md:text-base <?= ($current_page == 'health_records.php') ? 'user-active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'health_records.php') ? 'active' : '' ?>">
                                     My Record
                                 </a>
                             </div>
                             <div class="nav-connection">
                                 <a href="announcements.php"
-                                    class="user-nav-tab text-sm md:text-base <?= ($current_page == 'announcements.php') ? 'user-active' : '' ?>">
+                                    class="nav-tab text-sm md:text-base <?= ($current_page == 'announcements.php') ? 'active' : '' ?>">
                                     Announcements
                                 </a>
                             </div>
@@ -1347,8 +1320,8 @@ if (isset($_SESSION['user']['id'])) {
                     <!-- Logout Button -->
                     <div class="flex justify-center">
                         <button type="button" onclick="showLogoutModal('admin'); closeAdminMenu();"
-                            class="px-8 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition font-medium">
-                            Logout
+                            class="logout-btn-1 transition font-medium">
+                            Signout
                         </button>
                     </div>
                 </div>
@@ -2259,72 +2232,38 @@ if (isset($_SESSION['user']['id'])) {
                 // Start synchronized timekeeping
                 synchronizeTime();
 
-                // Clean Navigation Tab Interaction for all user types
+                // Clean Navigation Tab Interaction
                 document.addEventListener('DOMContentLoaded', function () {
-                    // Handle User tabs
-                    const userNavTabs = document.querySelectorAll('.user-nav-tab');
-                    userNavTabs.forEach(tab => {
+                    const navTabs = document.querySelectorAll('.nav-tab');
+
+                    navTabs.forEach(tab => {
                         tab.addEventListener('click', function (e) {
-                            // Remove active class from all user tabs
-                            userNavTabs.forEach(t => t.classList.remove('user-active'));
+                            // Prevent default if it's not a link
+                            if (this.getAttribute('href') === '#') {
+                                e.preventDefault();
+                            }
+
+                            // Remove active class from all tabs
+                            navTabs.forEach(t => t.classList.remove('active'));
+
                             // Add active class to clicked tab
-                            this.classList.add('user-active');
+                            this.classList.add('active');
+
+                            // Store active state in sessionStorage
+                            sessionStorage.setItem('activeNav', this.getAttribute('href'));
                         });
                     });
 
-                    // Handle Staff tabs
-                    const staffNavTabs = document.querySelectorAll('.staff-nav-tab');
-                    staffNavTabs.forEach(tab => {
-                        tab.addEventListener('click', function (e) {
-                            // Remove active class from all staff tabs
-                            staffNavTabs.forEach(t => t.classList.remove('staff-active'));
-                            // Add active class to clicked tab
-                            this.classList.add('staff-active');
-                        });
-                    });
-
-                    // Handle Admin tabs
-                    const adminNavTabs = document.querySelectorAll('.admin-nav-tab');
-                    adminNavTabs.forEach(tab => {
-                        tab.addEventListener('click', function (e) {
-                            // Remove active class from all admin tabs
-                            adminNavTabs.forEach(t => t.classList.remove('admin-active'));
-                            // Add active class to clicked tab
-                            this.classList.add('admin-active');
-                        });
-                    });
-
-                    // Check current page and set active state on page load
-                    const currentPage = window.location.pathname.split('/').pop();
-                    
-                    // For User pages
-                    if (document.querySelector('.user-nav-tab')) {
-                        document.querySelectorAll('.user-nav-tab').forEach(tab => {
-                            const href = tab.getAttribute('href');
-                            if (href === currentPage) {
-                                tab.classList.add('user-active');
-                            }
-                        });
-                    }
-                    
-                    // For Staff pages
-                    if (document.querySelector('.staff-nav-tab')) {
-                        document.querySelectorAll('.staff-nav-tab').forEach(tab => {
-                            const href = tab.getAttribute('href').split('/').pop();
-                            if (href === currentPage) {
-                                tab.classList.add('staff-active');
-                            }
-                        });
-                    }
-                    
-                    // For Admin pages
-                    if (document.querySelector('.admin-nav-tab')) {
-                        document.querySelectorAll('.admin-nav-tab').forEach(tab => {
-                            const href = tab.getAttribute('href').split('/').pop();
-                            if (href === currentPage) {
-                                tab.classList.add('admin-active');
-                            }
-                        });
+                    // Check if there's an active nav stored
+                    const activeNav = sessionStorage.getItem('activeNav');
+                    if (activeNav) {
+                        const activeTab = document.querySelector(`.nav-tab[href="${activeNav}"]`);
+                        if (activeTab) {
+                            // Remove active class from all tabs first
+                            navTabs.forEach(tab => tab.classList.remove('active'));
+                            // Add active class to stored tab
+                            activeTab.classList.add('active');
+                        }
                     }
 
                     // Background time synchronization
