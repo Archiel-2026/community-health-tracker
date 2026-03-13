@@ -135,6 +135,72 @@ if (isset($_GET['search_patients']) && isset($_GET['term'])) {
     exit();
 }
 
+// Handle resident hard delete
+elseif (isset($_POST['hard_delete_resident'])) {
+    $residentId = intval($_POST['resident_id']);
+    $deleteAction = $_POST['delete_action'] ?? 'delete';
+    $reassignTo = intval($_POST['reassign_to'] ?? 0);
+
+    try {
+        // Get resident name for log
+        $nameStmt = $pdo->prepare("SELECT full_name FROM sitio1_users WHERE id = ?");
+        $nameStmt->execute([$residentId]);
+        $residentName = $nameStmt->fetchColumn();
+
+        if (!$residentName) {
+            $_SESSION['message'] = 'Resident not found.';
+            $_SESSION['message_type'] = 'error';
+            header('Location: manage_accounts.php');
+            exit();
+        }
+
+        $pdo->beginTransaction();
+
+        if ($deleteAction === 'reassign' && $reassignTo > 0) {
+            // Get reassign resident name for log
+            $reassignStmt = $pdo->prepare("SELECT full_name FROM sitio1_users WHERE id = ?");
+            $reassignStmt->execute([$reassignTo]);
+            $reassignName = $reassignStmt->fetchColumn();
+
+            // Reassign patient records to another resident
+            $stmt = $pdo->prepare("UPDATE sitio1_patients SET user_id = ?, updated_at = NOW() WHERE user_id = ?");
+            $stmt->execute([$reassignTo, $residentId]);
+
+            // Log the reassignment
+            $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+            $logStmt->execute([$_SESSION['user_id'], 'resident_deleted', 'Deleted resident: ' . $residentName . ' and reassigned patient records to: ' . $reassignName, $_SERVER['REMOTE_ADDR']]);
+
+            $_SESSION['message'] = 'Resident account deleted and patient records reassigned to ' . htmlspecialchars($reassignName) . ' successfully!';
+        } else {
+            // Delete all associated patient records
+            $stmt = $pdo->prepare("DELETE FROM sitio1_patients WHERE user_id = ?");
+            $stmt->execute([$residentId]);
+
+            // Log the deletion
+            $logStmt = $pdo->prepare("INSERT INTO sitio1_activity_log (user_id, action, details, ip_address, created_at) VALUES (?, ?, ?, ?, NOW())");
+            $logStmt->execute([$_SESSION['user_id'], 'resident_deleted', 'Deleted resident: ' . $residentName . ' and all associated patient records', $_SERVER['REMOTE_ADDR']]);
+
+            $_SESSION['message'] = 'Resident account and associated patient records deleted successfully!';
+        }
+
+        // Delete the resident account
+        $stmt = $pdo->prepare("DELETE FROM sitio1_users WHERE id = ? AND role = 'patient'");
+        $stmt->execute([$residentId]);
+
+        $pdo->commit();
+        $_SESSION['message_type'] = 'success';
+        header('Location: manage_accounts.php');
+        exit();
+
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        $_SESSION['message'] = 'Error deleting resident: ' . $e->getMessage();
+        $_SESSION['message_type'] = 'error';
+        header('Location: manage_accounts.php');
+        exit();
+    }
+}
+
 // Handle manual linking request
 if (isset($_GET['link_resident'])) {
     $residentId = intval($_GET['resident_id']);
@@ -1054,733 +1120,10 @@ try {
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
     <!-- Local Font Awesome for offline support -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/community-health-tracker/asssets/css/Superadmin-Manageaccount.css">
     <!-- Google Fonts - Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
 
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --primary-light: #3b82f6;
-            --primary-bg: #eff6ff;
-            --secondary: #10b981;
-            --secondary-dark: #059669;
-            --secondary-light: #34d399;
-            --secondary-bg: #ecfdf5;
-            --warning: #f59e0b;
-            --warning-dark: #d97706;
-            --warning-light: #fbbf24;
-            --warning-bg: #fffbeb;
-            --danger: #ef4444;
-            --danger-dark: #dc2626;
-            --danger-light: #f87171;
-            --danger-bg: #fef2f2;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f0f9ff 0%, #f9fafb 100%);
-            min-height: 100vh;
-        }
-
-        /* Modern Card Design */
-        .modern-card {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(229, 231, 235, 0.5);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .modern-card:hover {
-            box-shadow: 0 20px 40px -12px rgba(37, 99, 235, 0.2);
-        }
-
-        /* Glassmorphism Effect */
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        /* Modern Button Styles */
-        .btn-modern {
-            padding: 0.625rem 1.25rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-modern-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-        }
-
-        .btn-modern-primary:hover:not(:disabled) {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, #1e3a8a 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px -8px var(--primary);
-        }
-
-        .btn-modern-secondary {
-            background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
-            color: white;
-        }
-
-        .btn-modern-secondary:hover:not(:disabled) {
-            background: linear-gradient(135deg, var(--secondary-dark) 0%, #047857 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px -8px var(--secondary);
-        }
-
-        .btn-modern-warning {
-            background: linear-gradient(135deg, var(--warning) 0%, var(--warning-dark) 100%);
-            color: white;
-        }
-
-        .btn-modern-warning:hover:not(:disabled) {
-            background: linear-gradient(135deg, var(--warning-dark) 0%, #b45309 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px -8px var(--warning);
-        }
-
-        .btn-modern-danger {
-            background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
-            color: white;
-        }
-
-        .btn-modern-danger:hover:not(:disabled) {
-            background: linear-gradient(135deg, var(--danger-dark) 0%, #b91c1b 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px -8px var(--danger);
-        }
-
-        .btn-modern-outline {
-            background: white;
-            border: 2px solid var(--gray-200);
-            color: var(--gray-700);
-        }
-
-        .btn-modern-outline:hover:not(:disabled) {
-            background: var(--gray-50);
-            border-color: var(--gray-300);
-            transform: translateY(-2px);
-        }
-
-        .btn-modern:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Modern Tabs */
-        .modern-tabs {
-            display: flex;
-            gap: 0.5rem;
-            background: white;
-            padding: 0.5rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            flex-wrap: wrap;
-        }
-
-        .modern-tab {
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            transition: all 0.2s;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-        }
-
-        .modern-tab.active {
-            background: var(--primary-bg);
-            color: var(--primary);
-        }
-
-        .modern-tab:hover:not(.active) {
-            background: var(--gray-50);
-            color: var(--gray-800);
-        }
-
-        /* Modern Form Elements */
-        .modern-input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--gray-200);
-            border-radius: 14px;
-            font-size: 0.9375rem;
-            transition: all 0.2s;
-            background: white;
-        }
-
-        .modern-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-        }
-
-        .modern-input.error {
-            border-color: var(--danger);
-        }
-
-        .modern-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: var(--gray-700);
-        }
-
-        /* Modern Badges */
-        .modern-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 30px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-
-        .badge-success {
-            background: var(--secondary-bg);
-            color: var(--secondary-dark);
-            border: 1px solid #a7f3d0;
-        }
-
-        .badge-warning {
-            background: var(--warning-bg);
-            color: var(--warning-dark);
-            border: 1px solid #fde68a;
-        }
-
-        .badge-danger {
-            background: var(--danger-bg);
-            color: var(--danger-dark);
-            border: 1px solid #fecaca;
-        }
-
-        .badge-info {
-            background: var(--primary-bg);
-            color: var(--primary-dark);
-            border: 1px solid #bfdbfe;
-        }
-
-        /* Modern Stats Card */
-        .stat-card-modern {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.08);
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .stat-content h3 {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            font-weight: 500;
-        }
-
-        .stat-content .number {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--gray-900);
-            line-height: 1.2;
-        }
-
-        /* Account Cards */
-        .account-card {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem;
-            border: 1px solid #e5e7eb;
-            transition: all 0.2s;
-        }
-
-        .account-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 0.75rem;
-        }
-
-        .account-name {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #111827;
-            margin: 0;
-        }
-
-        .account-position {
-            font-size: 0.875rem;
-            margin: 0 0 0.25rem 0;
-            color: #6b7280;
-        }
-
-        .status-badge {
-            background: #d1fae5;
-            color: #065f46;
-            padding: 0.5rem 2rem;
-            border-radius: 9999px;
-            font-size: 1rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-
-        .status-badge.inactive {
-            background: #EF44444D;
-            color: #991b1b;
-        }
-
-        .status-badge.warning {
-            background: #fed7aa;
-            color: #92400e;
-        }
-
-        .status-badge.pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-badge.declined {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .status-badge.linked {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-badge.unlinked {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.625rem;
-            margin-top: 1rem;
-        }
-
-        .btn-icon {
-            padding: 0.625rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .btn-icon.danger {
-            color: #FFFFFF;
-            background-color: #FF5555;
-        }
-
-        .btn-icon.danger:hover {
-            background: #F04F4F;
-        }
-
-        .btn-icon.success {
-            color: #FFFFFF;
-            background-color: #10B981;
-        }
-
-        .btn-icon.success:hover {
-            background: #059669;
-        }
-
-        .btn-icon.warning {
-            color: #FFFFFF;
-            background-color: #f59e0b;
-        }
-
-        .btn-icon.warning:hover {
-            background: #d97706;
-        }
-
-        .btn-icon.primary {
-            color: #FFFFFF;
-            background-color: #3C96E1;
-        }
-
-        .btn-icon.primary:hover {
-            background: #2563eb;
-        }
-
-        .btn-icon.outline {
-            background: white;
-            border: 1px solid #e5e7eb;
-            color: #374151;
-        }
-
-        .btn-icon.outline:hover {
-            background: #f3f4f6;
-        }
-
-        /* Stats Cards */
-        .stats-container {
-            display: flex;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem 2.5rem;
-            align-items: center;
-            gap: 1rem;
-            border: 1px solid #e5e7eb;
-            flex: 1;
-            min-width: 200px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .stat-number {
-            font-size: 30px;
-            font-weight: 700;
-            color: #111827;
-        }
-
-        .stat-label {
-            font-size: 20px;
-            color: #6b7280;
-        }
-
-        /* Modern Modal */
-        .modern-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 1rem;
-        }
-
-        .modern-modal.show {
-            display: flex;
-        }
-
-        .modern-modal-content {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem;
-            max-width: 500px;
-            width: 100%;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-        }
-
-        .toast {
-            background: white;
-            border-radius: 8px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 0.5rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            min-width: 300px;
-            max-width: 400px;
-            border-left: 4px solid;
-        }
-
-        .toast.success {
-            border-left-color: var(--secondary);
-        }
-
-        .toast.error {
-            border-left-color: var(--danger);
-        }
-
-        /* Password Field */
-        .password-field {
-            position: relative;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: var(--gray-400);
-            cursor: pointer;
-        }
-
-        /* Main Navigation Tabs */
-        .main-nav-tabs {
-            display: flex;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            padding-bottom: 0.5rem;
-        }
-
-        .main-nav-tab {
-            padding: 12px 24px;
-            font-weight: 500;
-            font-size: 18px;
-            color: #3C96E1;
-            border-radius: 4px;
-            background-color: #3C96E14D;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .main-nav-tab.active {
-            color: #FFFFFF;
-            background-color: #3C96E1;
-        }
-
-        /* Resident Tabs */
-        .resident-tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            background: white;
-            padding: 0.5rem;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-        }
-
-        .resident-tab {
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: #6b7280;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            transition: all 0.2s;
-        }
-
-        .resident-tab.active {
-            background: #10b981;
-            color: white;
-        }
-
-        .resident-tab:hover:not(.active) {
-            background: #f3f4f6;
-        }
-
-        /* Linking Section */
-        .linking-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .linking-column {
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-        }
-
-        .linking-header {
-            background: #f9fafb;
-            padding: 1rem;
-            border-bottom: 1px solid #e5e7eb;
-            font-weight: 600;
-            color: #374151;
-        }
-
-        .linking-list {
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 0.5rem;
-        }
-
-        .linking-item {
-            padding: 0.75rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .linking-item:hover {
-            border-color: #3C96E1;
-            background: #f0f9ff;
-        }
-
-        .linking-item.selected {
-            background: #eff6ff;
-            border-color: #3C96E1;
-            border-width: 2px;
-        }
-
-        .linking-item-title {
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 0.25rem;
-        }
-
-        .linking-item-subtitle {
-            font-size: 0.875rem;
-            color: #6b7280;
-        }
-
-        .link-button-container {
-            text-align: center;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .link-button {
-            padding: 0.75rem 2rem;
-            background: #8b5cf6;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .link-button:hover:not(:disabled) {
-            background: #7c3aed;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-        }
-
-        .link-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Resident Form */
-        .resident-form-container {
-            background: white;
-            border-radius: 8px;
-            padding: 1.5rem;
-            border: 1px solid #e5e7eb;
-            margin-bottom: 2rem;
-        }
-
-        .resident-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            font-size: 0.875rem;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
-
-        .create-button {
-            padding: 0.5rem 2rem;
-            background: #10b981;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-weight: 500;
-            font-size: 0.875rem;
-            cursor: pointer;
-        }
-
-        .create-button:hover {
-            background: #059669;
-        }
-
-        /* Grid Layout */
-        .accounts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .stats-container {
-                flex-direction: column;
-            }
-            
-            .linking-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .accounts-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 </head>
 
 <body class="min-h-screen">
@@ -1894,7 +1237,7 @@ try {
                     <!-- Create Staff Form -->
                     <div class="flex flex-col md:flex-row w-full gap-8">
                         <!-- LEFT CONTENT -->
-                        <div class="mb-8 p-4 rounded-lg border border-gray-300 w-full md:w-1/2">
+                        <div class="mb-8 p-8 rounded-lg border border-gray-300 w-full md:w-1/2">
                             <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 
@@ -1996,7 +1339,7 @@ try {
 
                         <!-- RIGHT CONTENT - Staff Lists -->
                         <div class="w-full md:w-1/2">
-                            <div class="p-4 rounded-lg border border-gray-300">
+                            <div class="p-8 rounded-lg border border-gray-300">
                                 <!-- Staff Tabs -->
                                 <div class="mb-6">
                                     <div class="flex gap-6">
@@ -2124,14 +1467,14 @@ try {
                     </div>
                 </div>
 
-                <!-- Resident Section - Redesigned to match Staff Management -->
+                <!-- Resident Section -->
 <div id="residentSection" class="tab-section" style="display: none;">
     <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Resident Account</h2>
     
-    <!-- Create Resident Form - Matching Staff Management style -->
+    <!-- Create Resident Form -->
     <div class="flex flex-col md:flex-row w-full gap-8">
         <!-- LEFT CONTENT - Create Resident Form -->
-        <div class="mb-8 p-4 rounded-lg border border-gray-300 w-full md:w-1/2">
+        <div class="mb-8 p-8 rounded-lg border border-gray-300 w-full md:w-1/2">
             <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 
@@ -2257,79 +1600,37 @@ try {
                     </select>
                 </div>
 
-                <!-- Create Button - Full width at bottom with solid green, no hover -->
-<div class="mt-4 col-span-2">
-    <button
-        type="submit"
-        name="create_resident"
-        class="w-full px-6 py-3 bg-[#10b981] text-white rounded text-lg font-medium"
-        style="background-color: #10b981 !important; cursor: pointer;">
-        <i class="fas fa-user-plus mr-2"></i>Create Resident Account
-    </button>
-</div>
+                <!-- Create Button -->
+                <div class="mt-4 col-span-2">
+                    <button
+                        type="submit"
+                        name="create_resident"
+                        class="w-full px-6 py-3 bg-[#10b981] text-white rounded text-lg font-medium"
+                        style="background-color: #10b981 !important; cursor: pointer;">
+                        <i class="fas fa-user-plus mr-2"></i>Create Resident Account
+                    </button>
+                </div>
             </form>
-            
-            <!-- Optional: Add helper text -->
-            <p class="text-xs text-gray-500 mt-3 text-center">
-                <i class="fas fa-info-circle mr-1"></i>
-                Password will be shown once. Please save it securely.
-            </p>
+        
         </div>
 
         <!-- RIGHT CONTENT - Resident Lists -->
         <div class="w-full md:w-1/2">
-            <div class="p-4 rounded-lg border border-gray-300">
-                <!-- Resident Tabs -->
+            <div class="p-8 rounded-lg border border-gray-300">
+                <!-- Resident Header -->
                 <div class="mb-6">
-                    <div class="flex gap-2">
-                        <button
-                            onclick="showResidentTab('approved')"
-                            id="approvedResidentTab"
-                            class="py-3 px-4 rounded-md text-sm font-semibold transition-all"
-                            style="color: #FFFFFF; background-color: #10b981;">
-                            <i class="fas fa-check-circle mr-1"></i>Approved (<?= count($approvedResidents) ?>)
-                        </button>
-                        <button
-                            onclick="showResidentTab('pending')"
-                            id="pendingResidentTab"
-                            class="py-3 px-4 rounded-md text-sm font-semibold transition-all"
-                            style="color: #6b7280; background-color: #f3f4f6;">
-                            <i class="fas fa-clock mr-1"></i>Pending (<?= count($pendingResidents) ?>)
-                        </button>
-                        <button
-                            onclick="showResidentTab('declined')"
-                            id="declinedResidentTab"
-                            class="py-3 px-4 rounded-md text-sm font-semibold transition-all"
-                            style="color: #6b7280; background-color: #f3f4f6;">
-                            <i class="fas fa-times-circle mr-1"></i>Declined (<?= count($declinedResidents) ?>)
-                        </button>
-                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800">Accounts Created</h3>
+                    <p class="text-sm text-gray-500 mt-1">List of all resident accounts</p>
                 </div>
 
-                <!-- Quick Stats for Residents -->
-                <div class="grid grid-cols-3 gap-2 mb-4">
-                    <div class="bg-blue-50 rounded-lg p-2 text-center">
-                        <div class="text-xl font-bold text-blue-600"><?= count($approvedResidents) - count($unlinkedResidents) ?></div>
-                        <div class="text-xs text-gray-600">Linked</div>
-                    </div>
-                    <div class="bg-yellow-50 rounded-lg p-2 text-center">
-                        <div class="text-xl font-bold text-yellow-600"><?= count($unlinkedResidents) ?></div>
-                        <div class="text-xs text-gray-600">Unlinked</div>
-                    </div>
-                    <div class="bg-purple-50 rounded-lg p-2 text-center">
-                        <div class="text-xl font-bold text-purple-600"><?= count($approvedResidents) ?></div>
-                        <div class="text-xs text-gray-600">Total</div>
-                    </div>
-                </div>
-
-                <!-- Approved Residents -->
-                <div id="approvedResidentSection">
+                <!-- All Residents -->
+                <div id="allResidentsSection">
                     <?php if (empty($approvedResidents)): ?>
                         <div class="text-center p-8 bg-white rounded border border-gray-200">
                             <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
-                            <p class="text-gray-500">No approved residents yet</p>
+                            <p class="text-gray-500">No resident accounts created yet</p>
                             <p class="text-sm text-gray-400 mt-1">Create a new resident account using the form</p>
                         </div>
                     <?php else: ?>
@@ -2339,127 +1640,51 @@ try {
                                 $stmt->execute([$resident['id']]);
                                 $hasPatientRecord = $stmt->fetch();
                             ?>
-                                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                                    <div class="flex justify-between items-start">
-                                        <div class="flex-1">
-                                            <div class="flex items-center gap-2">
-                                                <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                                <?php if (!$hasPatientRecord): ?>
-                                                    <span class="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">Unlinked</span>
-                                                <?php else: ?>
-                                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Linked</span>
-                                                <?php endif; ?>
-                                            </div>
-                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
-                                            <div class="flex gap-3 mt-2 text-xs text-gray-500">
-                                                <span><i class="far fa-user mr-1"></i><?= htmlspecialchars($resident['username']) ?></span>
-                                                <?php if (!empty($resident['sitio'])): ?>
-                                                    <span><i class="fas fa-map-marker-alt mr-1"></i><?= htmlspecialchars($resident['sitio']) ?></span>
-                                                <?php endif; ?>
-                                            </div>
+                                <div class="border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <p class="text-sm text-gray-500 mb-1">
+                                                <span class="font-medium" style="color: #000000;">Email:</span> <?= htmlspecialchars($resident['email']) ?>
+                                            </p>
+                                            <h3 class="font-semibold text-base text-gray-800">
+                                                <?= htmlspecialchars($resident['full_name']) ?>
+                                            </h3>
                                         </div>
+                                        <span class="text-base font-medium <?= $hasPatientRecord ? 'text-green-600 bg-green-200' : 'text-yellow-600 bg-yellow-200' ?> rounded-full px-8 py-2 flex items-center gap-1">
+                                            <?= $hasPatientRecord ? 'Linked' : 'Unlinked' ?>
+                                        </span>
                                     </div>
 
-                                    <div class="flex gap-2 mt-3 pt-2 border-t border-gray-100">
+                                    <div class="flex gap-3">
                                         <button
                                             onclick="openResetModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', 'resident')"
-                                            class="flex-1 py-2 text-xs px-3 rounded-md hover:bg-gray-100 flex items-center justify-center gap-1 border border-gray-300">
-                                            <i class="fas fa-key text-yellow-600"></i>
-                                            Reset Password
+                                            class="py-2 text-sm px-3 rounded-md hover:bg-gray-200 flex items-center gap-1" style="border: 1px solid #808080;">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M12.05 19L14.9 16.175L12.05 13.35L11 14.4L12.075 15.475C11.6083 15.4917 11.1543 15.4167 10.713 15.25C10.2717 15.0833 9.87567 14.825 9.525 14.475C9.19167 14.1417 8.93734 13.7583 8.762 13.325C8.58667 12.8917 8.49933 12.4583 8.5 12.025C8.5 11.7417 8.53767 11.4583 8.613 11.175C8.68833 10.8917 8.79234 10.6167 8.925 10.35L7.825 9.25C7.54167 9.66667 7.33333 10.1083 7.2 10.575C7.06667 11.0417 7 11.5167 7 12C7 12.6333 7.125 13.2583 7.375 13.875C7.625 14.4917 7.99167 15.0417 8.475 15.525C8.95833 16.0083 9.5 16.371 10.1 16.613C10.7 16.855 11.3167 16.984 11.95 17L11 17.95L12.05 19ZM16.175 14.75C16.4583 14.3333 16.6667 13.8917 16.8 13.425C16.9333 12.9583 17 12.4833 17 12C17 11.3667 16.879 10.7373 16.637 10.112C16.395 9.48667 16.0327 8.93267 15.55 8.45C15.0673 7.96733 14.5213 7.609 13.912 7.375C13.3027 7.141 12.682 7.02433 12.05 7.025L13 6.05L11.95 5L9.1 7.825L11.95 10.65L13 9.6L11.9 8.5C12.35 8.5 12.8083 8.58767 13.275 8.763C13.7417 8.93833 14.1417 9.19233 14.475 9.525C14.8083 9.85767 15.0627 10.241 15.238 10.675C15.4133 11.109 15.5007 11.5423 15.5 11.975C15.5 12.2583 15.4627 12.5417 15.388 12.825C15.3133 13.1083 15.209 13.3833 15.075 13.65L16.175 14.75ZM12 22C10.6167 22 9.31667 21.7373 8.1 21.212C6.88334 20.6867 5.825 19.9743 4.925 19.075C4.025 18.1757 3.31267 17.1173 2.788 15.9C2.26333 14.6827 2.00067 13.3827 2 12C1.99933 10.6173 2.262 9.31733 2.788 8.1C3.314 6.88267 4.02633 5.82433 4.925 4.925C5.82367 4.02567 6.882 3.31333 8.1 2.788C9.318 2.26267 10.618 2 12 2C13.382 2 14.682 2.26267 15.9 2.788C17.118 3.31333 18.1763 4.02567 19.075 4.925C19.9737 5.82433 20.6863 6.88267 21.213 8.1C21.7397 9.31733 22.002 10.6173 22 12C21.998 13.3827 21.7353 14.6827 21.212 15.9C20.6887 17.1173 19.9763 18.1757 19.075 19.075C18.1737 19.9743 17.1153 20.687 15.9 21.213C14.6847 21.739 13.3847 22.0013 12 22Z" fill="black" />
+                                            </svg>
+                                            Change Password
                                         </button>
                                         
                                         <?php if (!$hasPatientRecord): ?>
                                             <button
                                                 onclick="switchToLinking(<?= $resident['id'] ?>)"
-                                                class="flex-1 py-2 text-xs px-3 rounded-md hover:bg-blue-50 flex items-center justify-center gap-1 border border-blue-300 text-blue-600">
-                                                <i class="fas fa-link"></i>
+                                                class="py-2 text-sm px-3 rounded-md hover:bg-blue-50 flex items-center gap-1 border border-blue-300 text-blue-600">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M13.5 10.5L21 3M21 3H15.75M21 3V8.25M10.5 13.5L3 21M3 21H8.25M3 21L3 15.75M8.25 3H3M3 3V8.25M21 21H15.75M21 21L21 15.75" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+                                                </svg>
                                                 Link to Patient
                                             </button>
                                         <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
 
-                <!-- Pending Residents -->
-                <div id="pendingResidentSection" style="display: none;">
-                    <?php if (empty($pendingResidents)): ?>
-                        <div class="text-center p-8 bg-white rounded border border-gray-200">
-                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <p class="text-gray-500">No pending residents</p>
-                        </div>
-                    <?php else: ?>
-                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                            <?php foreach ($pendingResidents as $resident): ?>
-                                <div class="border border-gray-200 rounded-lg p-4 bg-yellow-50">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
-                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                        </div>
-                                        <span class="text-xs bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full">Pending</span>
-                                    </div>
-
-                                    <div class="flex gap-2 mt-3">
-                                        <form method="POST" action="" class="flex-1">
-                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                            <input type="hidden" name="action" value="approve">
-                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center justify-center gap-1">
-                                                <i class="fas fa-check"></i> Approve
-                                            </button>
-                                        </form>
-                                        <form method="POST" action="" class="flex-1">
-                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                            <input type="hidden" name="action" value="decline">
-                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center gap-1">
-                                                <i class="fas fa-times"></i> Decline
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Declined Residents -->
-                <div id="declinedResidentSection" style="display: none;">
-                    <?php if (empty($declinedResidents)): ?>
-                        <div class="text-center p-8 bg-white rounded border border-gray-200">
-                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <p class="text-gray-500">No declined residents</p>
-                        </div>
-                    <?php else: ?>
-                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                            <?php foreach ($declinedResidents as $resident): ?>
-                                <div class="border border-gray-200 rounded-lg p-4 bg-red-50">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
-                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                        </div>
-                                        <span class="text-xs bg-red-200 text-red-800 px-3 py-1 rounded-full">Declined</span>
-                                    </div>
-
-                                    <div class="mt-3">
-                                        <form method="POST" action="">
-                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                            <input type="hidden" name="action" value="approve">
-                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center gap-1">
-                                                <i class="fas fa-redo"></i> Reconsider & Approve
-                                            </button>
-                                        </form>
+                                        <!-- Delete Button -->
+                                        <button
+                                            onclick="openResidentDeleteModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
+                                            class="py-2 text-sm px-3 rounded-md hover:bg-red-50 flex items-center gap-1 border border-red-300 text-red-600">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M20.25 4.5H16.5V3.75C16.5 3.15326 16.2629 2.58097 15.841 2.15901C15.419 1.73705 14.8467 1.5 14.25 1.5H9.75C9.15326 1.5 8.58097 1.73705 8.15901 2.15901C7.73705 2.58097 7.5 3.15326 7.5 3.75V4.5H3.75C3.55109 4.5 3.36032 4.57902 3.21967 4.71967C3.07902 4.86032 3 5.05109 3 5.25C3 5.44891 3.07902 5.63968 3.21967 5.78033C3.36032 5.92098 3.55109 6 3.75 6H4.5V19.5C4.5 19.8978 4.65804 20.2794 4.93934 20.5607C5.22064 20.842 5.60218 21 6 21H18C18.3978 21 18.7794 20.842 19.0607 20.5607C19.342 20.2794 19.5 19.8978 19.5 19.5V6H20.25C20.4489 6 20.6397 5.92098 20.7803 5.78033C20.921 5.63968 21 5.44891 21 5.25C21 5.05109 20.921 4.86032 20.7803 4.71967C20.6397 4.57902 20.4489 4.5 20.25 4.5ZM9 3.75C9 3.55109 9.07902 3.36032 9.21967 3.21967C9.36032 3.07902 9.55109 3 9.75 3H14.25C14.4489 3 14.6397 3.07902 14.7803 3.21967C14.921 3.36032 15 3.55109 15 3.75V4.5H9V3.75ZM18 19.5H6V6H18V19.5ZM10.5 9.75V15.75C10.5 15.9489 10.421 16.1397 10.2803 16.2803C10.1397 16.421 9.94891 16.5 9.75 16.5C9.55109 16.5 9.36032 16.421 9.21967 16.2803C9.07902 16.1397 9 15.9489 9 15.75V9.75C9 9.55109 9.07902 9.36032 9.21967 9.21967C9.36032 9.07902 9.55109 9 9.75 9C9.94891 9 10.1397 9.07902 10.2803 9.21967C10.421 9.36032 10.5 9.55109 10.5 9.75ZM15 9.75V15.75C15 15.9489 14.921 16.1397 14.7803 16.2803C14.6397 16.421 14.4489 16.5 14.25 16.5C14.0511 16.5 13.8603 16.421 13.7197 16.2803C13.579 16.1397 13.5 15.9489 13.5 15.75V9.75C13.5 9.55109 13.579 9.36032 13.7197 9.21967C13.8603 9.07902 14.0511 9 14.25 9C14.4489 9 14.6397 9.07902 14.7803 9.21967C14.921 9.36032 15 9.55109 15 9.75Z" fill="#dc2626" />
+                                            </svg>
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -2471,329 +1696,524 @@ try {
     </div>
 </div>
 
-                <!-- Linking Section - Redesigned UI with Search -->
-<div id="linkingSection" class="tab-section" style="display: none;">
-    <div class="flex flex-col md:flex-row w-full gap-8">
-        <!-- LEFT CONTENT - Unlinked Residents -->
-        <div class="w-full md:w-1/2">
-            <div class="p-4 rounded-lg border border-gray-300">
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Residents</h3>
-                        <p class="text-sm text-gray-500 mt-1">Select a resident account to link</p>
-                    </div>
-                    <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                        <?= count($unlinkedResidents) ?> Available
-                    </span>
-                </div>
-                
-                <!-- Search Bar for Residents - Fixed icon position -->
-                <div class="mb-4 relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
-                        </svg>
-                    </div>
-                    <input 
-                        type="text" 
-                        id="residentSearch" 
-                        placeholder="Search residents by name or email..." 
-                        class="w-full py-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition-all"
-                    >
-                    <button 
-                        type="button" 
-                        id="clearResidentSearch"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 hidden"
-                        onclick="clearSearch('resident')"
-                    >
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6L18 18"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <!-- Residents List -->
-                <?php if (empty($unlinkedResidents)): ?>
-                    <div class="text-center p-8 bg-white rounded border border-gray-200">
-                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                        <p class="text-gray-500">No unlinked residents available</p>
-                        <p class="text-sm text-gray-400 mt-1">All residents are linked to patient records</p>
-                    </div>
-                <?php else: ?>
-                    <div id="residentsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-                        <?php 
-                        $displayCount = 0;
-                        foreach ($unlinkedResidents as $resident): 
-                            if ($displayCount >= 5) break;
-                            $displayCount++;
-                        ?>
-                            <div 
-                                onclick="selectResident(<?= $resident['id'] ?>, this)" 
-                                data-resident-id="<?= $resident['id'] ?>"
-                                data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
-                                data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
-                                data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
-                                class="resident-item p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
-                                style="border-color: #e5e7eb;">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <div class="font-semibold text-gray-800 resident-name"><?= htmlspecialchars($resident['full_name']) ?></div>
-                                        <div class="text-sm text-gray-500 resident-email"><?= htmlspecialchars($resident['email']) ?></div>
-                                        <?php if (!empty($resident['sitio'])): ?>
-                                            <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Resident</div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                        
-                        <!-- Additional items (hidden initially) -->
-                        <div id="additionalResidents" style="display: none;">
-                            <?php 
-                            $additionalCount = 0;
-                            foreach ($unlinkedResidents as $resident): 
-                                if ($additionalCount < 5) {
-                                    $additionalCount++;
-                                    continue;
-                                }
-                            ?>
-                                <div 
-                                    onclick="selectResident(<?= $resident['id'] ?>, this)" 
-                                    data-resident-id="<?= $resident['id'] ?>"
-                                    data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
-                                    data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
-                                    data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
-                                    class="resident-item p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
-                                    style="border-color: #e5e7eb;">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <div class="font-semibold text-gray-800 resident-name"><?= htmlspecialchars($resident['full_name']) ?></div>
-                                            <div class="text-sm text-gray-500 resident-email"><?= htmlspecialchars($resident['email']) ?></div>
-                                            <?php if (!empty($resident['sitio'])): ?>
-                                                <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Resident</div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        
-                        <!-- Show More/Less Buttons -->
-                        <?php if (count($unlinkedResidents) > 5): ?>
-                            <div class="text-center mt-4">
-                                <button 
-                                    id="showMoreResidentsBtn"
-                                    onclick="toggleResidentsList()"
-                                    class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors">
-                                    <span>Show <?= count($unlinkedResidents) - 5 ?> more residents</span>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </button>
-                                <button 
-                                    id="showLessResidentsBtn"
-                                    onclick="toggleResidentsList()"
-                                    class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
-                                    <span>Show less</span>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- No Results Message (hidden by default) -->
-                    <div id="noResidentsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
-                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
-                        </svg>
-                        <p class="text-gray-500">No residents match your search</p>
-                        <button 
-                            onclick="clearSearch('resident')" 
-                            class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
-                            Clear search
-                        </button>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
+<!-- Add this new modal for resident deletion before the closing </body> tag -->
+<!-- Resident Delete Modal -->
+<div class="modern-modal" id="residentDeleteModal">
+    <div class="modern-modal-content">
+        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Delete Resident Account</h3>
+        <p style="margin-bottom: 1.5rem; color: #6b7280;" id="residentDeleteMessage"></p>
 
-        <!-- RIGHT CONTENT - Unlinked Patients -->
-        <div class="w-full md:w-1/2">
-            <div class="p-4 rounded-lg border border-gray-300">
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Patient Records</h3>
-                        <p class="text-sm text-gray-500 mt-1">Select a patient record to link</p>
-                    </div>
-                    <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
-                        <?= count($unlinkedPatients) ?> Available
-                    </span>
+        <form method="POST" action="" id="residentDeleteForm">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+            <input type="hidden" name="resident_id" id="residentDeleteId">
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Handle Patient Records:</label>
+
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <label style="display: flex; align-items: start; gap: 0.5rem;">
+                        <input type="radio" name="delete_action" value="reassign" checked>
+                        <span>
+                            <span style="font-weight: 500;">Reassign patient records to another resident</span>
+                            <select name="reassign_to" class="modern-input" style="margin-top: 0.25rem;">
+                                <option value="">Select resident</option>
+                                <?php foreach ($approvedResidents as $otherResident): ?>
+                                    <?php if ($otherResident['id'] != $resident['id']): ?>
+                                        <option value="<?= $otherResident['id'] ?>">
+                                            <?= htmlspecialchars($otherResident['full_name']) ?>
+                                        </option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </select>
+                        </span>
+                    </label>
+
+                    <label style="display: flex; align-items: start; gap: 0.5rem;">
+                        <input type="radio" name="delete_action" value="delete">
+                        <span style="color: #dc2626; font-weight: 500;">Delete all associated patient records</span>
+                    </label>
                 </div>
-                
-                <!-- Search Bar for Patients - Fixed icon position -->
-                <div class="mb-4 relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
-                        </svg>
-                    </div>
-                    <input 
-                        type="text" 
-                        id="patientSearch" 
-                        placeholder="Search patients by name, age, or sitio..." 
-                        class="w-full py-3 pl-10 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-500 transition-all"
-                    >
-                    <button 
-                        type="button" 
-                        id="clearPatientSearch"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 hidden"
-                        onclick="clearSearch('patient')"
-                    >
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6L18 18"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <!-- Patients List -->
-                <?php if (empty($unlinkedPatients)): ?>
-                    <div class="text-center p-8 bg-white rounded border border-gray-200">
-                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                        </svg>
-                        <p class="text-gray-500">No unlinked patient records available</p>
-                        <p class="text-sm text-gray-400 mt-1">All patients are linked to resident accounts</p>
-                    </div>
-                <?php else: ?>
-                    <div id="patientsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-                        <?php 
-                        $displayCount = 0;
-                        foreach ($unlinkedPatients as $patient): 
-                            if ($displayCount >= 5) break;
-                            $displayCount++;
-                        ?>
-                            <div 
-                                onclick="selectPatient(<?= $patient['id'] ?>, this)" 
-                                data-patient-id="<?= $patient['id'] ?>"
-                                data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
-                                data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
-                                data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
-                                class="patient-item p-4 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
-                                style="border-color: #e5e7eb;">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <div class="font-semibold text-gray-800 patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                        <div class="text-sm text-gray-500">
-                                            <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
-                                            <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem;">
+                <button type="button" onclick="closeResidentDeleteModal()" style="flex: 1; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; background: white; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="submit" name="hard_delete_resident" style="flex: 1; padding: 0.5rem; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Delete Resident
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add these JavaScript functions before the closing </body> tag -->
+<script>
+    // Resident Delete Modal functions
+    function openResidentDeleteModal(id, name) {
+        document.getElementById('residentDeleteId').value = id;
+        document.getElementById('residentDeleteMessage').innerHTML = `Delete resident account <strong>${name}</strong>? This will affect their patient records.`;
+        document.getElementById('residentDeleteModal').classList.add('show');
+    }
+
+    function closeResidentDeleteModal() {
+        document.getElementById('residentDeleteModal').classList.remove('show');
+    }
+
+    // Close modal on outside click (add this to existing window.onclick function)
+    // Update the existing window.onclick function to include the new modal
+    const originalOnClick = window.onclick;
+    window.onclick = function(event) {
+        if (originalOnClick) originalOnClick(event);
+        if (event.target.classList.contains('modern-modal')) {
+            event.target.classList.remove('show');
+        }
+    };
+</script>
+
+                                <!-- Pending Residents -->
+                                <div id="pendingResidentSection" style="display: none;">
+                                    <?php if (empty($pendingResidents)): ?>
+                                        <div class="text-center p-8 bg-white rounded border border-gray-200">
+                                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <p class="text-gray-500">No pending residents</p>
                                         </div>
-                                        <?php if (!empty($patient['contact'])): ?>
-                                            <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Patient</div>
+                                    <?php else: ?>
+                                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                                            <?php foreach ($pendingResidents as $resident): ?>
+                                                <div class="border border-gray-200 rounded-lg p-4 bg-yellow-50">
+                                                    <div class="flex justify-between items-start">
+                                                        <div>
+                                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
+                                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
+                                                        </div>
+                                                        <span class="text-xs bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full">Pending</span>
+                                                    </div>
+
+                                                    <div class="flex gap-2 mt-3">
+                                                        <form method="POST" action="" class="flex-1">
+                                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                                            <input type="hidden" name="action" value="approve">
+                                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center justify-center gap-1">
+                                                                <i class="fas fa-check"></i> Approve
+                                                            </button>
+                                                        </form>
+                                                        <form method="POST" action="" class="flex-1">
+                                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                                            <input type="hidden" name="action" value="decline">
+                                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center gap-1">
+                                                                <i class="fas fa-times"></i> Decline
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Declined Residents -->
+                                <div id="declinedResidentSection" style="display: none;">
+                                    <?php if (empty($declinedResidents)): ?>
+                                        <div class="text-center p-8 bg-white rounded border border-gray-200">
+                                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <p class="text-gray-500">No declined residents</p>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                                            <?php foreach ($declinedResidents as $resident): ?>
+                                                <div class="border border-gray-200 rounded-lg p-4 bg-red-50">
+                                                    <div class="flex justify-between items-start">
+                                                        <div>
+                                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
+                                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
+                                                        </div>
+                                                        <span class="text-xs bg-red-200 text-red-800 px-3 py-1 rounded-full">Declined</span>
+                                                    </div>
+
+                                                    <div class="mt-3">
+                                                        <form method="POST" action="">
+                                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                                            <input type="hidden" name="action" value="approve">
+                                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center gap-1">
+                                                                <i class="fas fa-redo"></i> Reconsider & Approve
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
-                        
-                        <!-- Additional items (hidden initially) -->
-                        <div id="additionalPatients" style="display: none;">
-                            <?php 
-                            $additionalCount = 0;
-                            foreach ($unlinkedPatients as $patient): 
-                                if ($additionalCount < 5) {
-                                    $additionalCount++;
-                                    continue;
-                                }
-                            ?>
-                                <div 
-                                    onclick="selectPatient(<?= $patient['id'] ?>, this)" 
-                                    data-patient-id="<?= $patient['id'] ?>"
-                                    data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
-                                    data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
-                                    data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
-                                    class="patient-item p-4 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
-                                    style="border-color: #e5e7eb;">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <div class="font-semibold text-gray-800 patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                            <div class="text-sm text-gray-500">
-                                                <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
-                                                <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Linking Section - Redesigned with Icon Inside Search Field -->
+                <div id="linkingSection" class="tab-section" style="display: none;">
+                    <div class="flex flex-col md:flex-row w-full gap-8">
+                        <!-- LEFT CONTENT - Unlinked Residents -->
+                        <div class="w-full md:w-1/2">
+                            <div class="p-8 rounded-lg border border-gray-300">
+                                <div class="flex justify-between items-center mb-4">
+                                    <div>
+                                        <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Residents</h3>
+                                        <p class="text-sm text-gray-500 mt-1">Select a resident account to link</p>
+                                    </div>
+                                    <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                                        <?= count($unlinkedResidents) ?> Available
+                                    </span>
+                                </div>
+                                
+                                <!-- Enhanced Search Bar - Icon Inside Input -->
+                                <div class="mb-4">
+                                    <form onsubmit="event.preventDefault(); filterResidents();" class="flex gap-2">
+                                        <div class="search-wrapper flex-1">
+                                            <i class="fas fa-search search-icon"></i>
+                                            <input 
+                                                type="text" 
+                                                id="residentSearchInput" 
+                                                placeholder="Search by name, email, or sitio..." 
+                                                class="search-input"
+                                                value=""
+                                                oninput="filterResidents()"
+                                            >
+                                            <button 
+                                                type="button" 
+                                                class="clear-search-btn" 
+                                                onclick="clearResidentSearch()"
+                                                title="Clear search"
+                                            >
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <!-- <button 
+                                            type="submit" 
+                                            class="search-button"
+                                        >
+                                            <i class="fas fa-search"></i>
+                                            Search
+                                        </button> -->
+                                    </form>
+                                    
+                                    <!-- Search Status Indicator -->
+                                    <div id="residentSearchStatus" class="mt-2 text-sm text-gray-500 flex items-center gap-2 hidden">
+                                        <span class="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                                        <span id="residentSearchCount"></span>
+                                        <button onclick="clearResidentSearch()" class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">
+                                            Clear search
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Residents List -->
+                                <?php if (empty($unlinkedResidents)): ?>
+                                    <div class="text-center p-8 bg-white rounded border border-gray-200">
+                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                        </svg>
+                                        <p class="text-gray-500">No unlinked residents available</p>
+                                        <p class="text-sm text-gray-400 mt-1">All residents are linked to patient records</p>
+                                    </div>
+                                <?php else: ?>
+                                    <div id="residentsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                                        <?php 
+                                        $displayCount = 0;
+                                        foreach ($unlinkedResidents as $resident): 
+                                            if ($displayCount >= 5) break;
+                                            $displayCount++;
+                                        ?>
+                                            <div 
+                                                onclick="selectResident(<?= $resident['id'] ?>, this)" 
+                                                data-resident-id="<?= $resident['id'] ?>"
+                                                data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
+                                                data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
+                                                data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
+                                                class="resident-item p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
+                                                style="border-color: #e5e7eb;">
+                                                <div class="flex justify-between items-start">
+                                                    <div>
+                                                        <div class="font-semibold text-gray-800 resident-name"><?= htmlspecialchars($resident['full_name']) ?></div>
+                                                        <div class="text-sm text-gray-500 resident-email"><?= htmlspecialchars($resident['email']) ?></div>
+                                                        <?php if (!empty($resident['sitio'])): ?>
+                                                            <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Resident</div>
+                                                </div>
                                             </div>
-                                            <?php if (!empty($patient['contact'])): ?>
-                                                <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
-                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                        
+                                        <!-- Additional items (hidden initially) -->
+                                        <div id="additionalResidents" style="display: none;">
+                                            <?php 
+                                            $additionalCount = 0;
+                                            foreach ($unlinkedResidents as $resident): 
+                                                if ($additionalCount < 5) {
+                                                    $additionalCount++;
+                                                    continue;
+                                                }
+                                            ?>
+                                                <div 
+                                                    onclick="selectResident(<?= $resident['id'] ?>, this)" 
+                                                    data-resident-id="<?= $resident['id'] ?>"
+                                                    data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
+                                                    data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
+                                                    data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
+                                                    class="resident-item p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
+                                                    style="border-color: #e5e7eb;">
+                                                    <div class="flex justify-between items-start">
+                                                        <div>
+                                                            <div class="font-semibold text-gray-800 resident-name"><?= htmlspecialchars($resident['full_name']) ?></div>
+                                                            <div class="text-sm text-gray-500 resident-email"><?= htmlspecialchars($resident['email']) ?></div>
+                                                            <?php if (!empty($resident['sitio'])): ?>
+                                                                <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Resident</div>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
                                         </div>
-                                        <div class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Patient</div>
+                                        
+                                        <!-- Show More/Less Buttons -->
+                                        <?php if (count($unlinkedResidents) > 5): ?>
+                                            <div class="text-center mt-4">
+                                                <button 
+                                                    id="showMoreResidentsBtn"
+                                                    onclick="toggleResidentsList()"
+                                                    class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors">
+                                                    <span>Show <?= count($unlinkedResidents) - 5 ?> more residents</span>
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </button>
+                                                <button 
+                                                    id="showLessResidentsBtn"
+                                                    onclick="toggleResidentsList()"
+                                                    class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
+                                                    <span>Show less</span>
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <!-- No Results Message (hidden by default) -->
+                                    <div id="noResidentsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
+                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
+                                        </svg>
+                                        <p class="text-gray-500">No residents match your search</p>
+                                        <button 
+                                            onclick="clearResidentSearch()" 
+                                            class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                            Clear search
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT CONTENT - Unlinked Patients -->
+                        <div class="w-full md:w-1/2">
+                            <div class="p-8 rounded-lg border border-gray-300">
+                                <div class="flex justify-between items-center mb-4">
+                                    <div>
+                                        <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Patient Records</h3>
+                                        <p class="text-sm text-gray-500 mt-1">Select a patient record to link</p>
+                                    </div>
+                                    <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
+                                        <?= count($unlinkedPatients) ?> Available
+                                    </span>
+                                </div>
+                                
+                                <!-- Enhanced Search Bar - Icon Inside Input -->
+                                <div class="mb-4">
+                                    <form onsubmit="event.preventDefault(); filterPatients();" class="flex gap-2">
+                                        <div class="search-wrapper flex-1">
+                                            <i class="fas fa-search search-icon"></i>
+                                            <input 
+                                                type="text" 
+                                                id="patientSearchInput" 
+                                                placeholder="Search by name, age, or sitio..." 
+                                                class="search-input"
+                                                value=""
+                                                oninput="filterPatients()"
+                                            >
+                                            <button 
+                                                type="button" 
+                                                class="clear-search-btn" 
+                                                onclick="clearPatientSearch()"
+                                                title="Clear search"
+                                            >
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <!-- <button 
+                                            type="submit" 
+                                            class="search-button"
+                                            style="background: #10b981;"
+                                        >
+                                            <i class="fas fa-search"></i>
+                                            Search
+                                        </button> -->
+                                    </form>
+                                    
+                                    <!-- Search Status Indicator -->
+                                    <div id="patientSearchStatus" class="mt-2 text-sm text-gray-500 flex items-center gap-2 hidden">
+                                        <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                        <span id="patientSearchCount"></span>
+                                        <button onclick="clearPatientSearch()" class="text-green-600 hover:text-green-800 text-xs font-medium ml-2">
+                                            Clear search
+                                        </button>
                                     </div>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
-                        
-                        <!-- Show More/Less Buttons -->
-                        <?php if (count($unlinkedPatients) > 5): ?>
-                            <div class="text-center mt-4">
-                                <button 
-                                    id="showMorePatientsBtn"
-                                    onclick="togglePatientsList()"
-                                    class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors">
-                                    <span>Show <?= count($unlinkedPatients) - 5 ?> more patients</span>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </button>
-                                <button 
-                                    id="showLessPatientsBtn"
-                                    onclick="togglePatientsList()"
-                                    class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
-                                    <span>Show less</span>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                    </svg>
-                                </button>
+                                
+                                <!-- Patients List -->
+                                <?php if (empty($unlinkedPatients)): ?>
+                                    <div class="text-center p-8 bg-white rounded border border-gray-200">
+                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                        <p class="text-gray-500">No unlinked patient records available</p>
+                                        <p class="text-sm text-gray-400 mt-1">All patients are linked to resident accounts</p>
+                                    </div>
+                                <?php else: ?>
+                                    <div id="patientsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                                        <?php 
+                                        $displayCount = 0;
+                                        foreach ($unlinkedPatients as $patient): 
+                                            if ($displayCount >= 5) break;
+                                            $displayCount++;
+                                        ?>
+                                            <div 
+                                                onclick="selectPatient(<?= $patient['id'] ?>, this)" 
+                                                data-patient-id="<?= $patient['id'] ?>"
+                                                data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
+                                                data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
+                                                data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
+                                                class="patient-item p-4 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
+                                                style="border-color: #e5e7eb;">
+                                                <div class="flex justify-between items-start">
+                                                    <div>
+                                                        <div class="font-semibold text-gray-800 patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                                        <div class="text-sm text-gray-500">
+                                                            <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
+                                                            <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+                                                        </div>
+                                                        <?php if (!empty($patient['contact'])): ?>
+                                                            <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Patient</div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                        
+                                        <!-- Additional items (hidden initially) -->
+                                        <div id="additionalPatients" style="display: none;">
+                                            <?php 
+                                            $additionalCount = 0;
+                                            foreach ($unlinkedPatients as $patient): 
+                                                if ($additionalCount < 5) {
+                                                    $additionalCount++;
+                                                    continue;
+                                                }
+                                            ?>
+                                                <div 
+                                                    onclick="selectPatient(<?= $patient['id'] ?>, this)" 
+                                                    data-patient-id="<?= $patient['id'] ?>"
+                                                    data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
+                                                    data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
+                                                    data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
+                                                    class="patient-item p-4 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
+                                                    style="border-color: #e5e7eb;">
+                                                    <div class="flex justify-between items-start">
+                                                        <div>
+                                                            <div class="font-semibold text-gray-800 patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                                            <div class="text-sm text-gray-500">
+                                                                <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
+                                                                <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+                                                            </div>
+                                                            <?php if (!empty($patient['contact'])): ?>
+                                                                <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <div class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Patient</div>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        
+                                        <!-- Show More/Less Buttons -->
+                                        <?php if (count($unlinkedPatients) > 5): ?>
+                                            <div class="text-center mt-4">
+                                                <button 
+                                                    id="showMorePatientsBtn"
+                                                    onclick="togglePatientsList()"
+                                                    class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors">
+                                                    <span>Show <?= count($unlinkedPatients) - 5 ?> more patients</span>
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </button>
+                                                <button 
+                                                    id="showLessPatientsBtn"
+                                                    onclick="togglePatientsList()"
+                                                    class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
+                                                    <span>Show less</span>
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <!-- No Results Message (hidden by default) -->
+                                    <div id="noPatientsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
+                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
+                                        </svg>
+                                        <p class="text-gray-500">No patients match your search</p>
+                                        <button 
+                                            onclick="clearPatientSearch()" 
+                                            class="mt-2 text-sm text-green-600 hover:text-green-800 font-medium">
+                                            Clear search
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
                             </div>
-                        <?php endif; ?>
+                        </div>
                     </div>
-                    
-                    <!-- No Results Message (hidden by default) -->
-                    <div id="noPatientsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
-                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
-                        </svg>
-                        <p class="text-gray-500">No patients match your search</p>
-                        <button 
-                            onclick="clearSearch('patient')" 
-                            class="mt-2 text-sm text-green-600 hover:text-green-800 font-medium">
-                            Clear search
-                        </button>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
 
-    <!-- Link Button -->
-    <div class="text-center mt-6 pt-6 border-t border-gray-200">
-        <button 
-            onclick="performLinking()" 
-            id="linkButton" 
-            disabled
-            class="px-8 py-3 bg-purple-600 text-white rounded-lg font-medium inline-flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 hover:shadow-lg">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.5 10.5L21 3M21 3H15.75M21 3V8.25M10.5 13.5L3 21M3 21H8.25M3 21L3 15.75M8.25 3H3M3 3V8.25M21 21H15.75M21 21L21 15.75" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            Link Selected Accounts
-        </button>
-        <p class="text-sm text-gray-500 mt-2">Select one resident and one patient record to enable linking</p>
-    </div>
-</div>
+                    <!-- Link Button -->
+                    <div class="text-center mt-6 pt-6 border-t border-gray-200">
+                        <button 
+                            onclick="performLinking()" 
+                            id="linkButton" 
+                            disabled
+                            class="px-8 py-3 bg-purple-600 text-white rounded-lg font-medium inline-flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 hover:shadow-lg">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.5 10.5L21 3M21 3H15.75M21 3V8.25M10.5 13.5L3 21M3 21H8.25M3 21L3 15.75M8.25 3H3M3 3V8.25M21 21H15.75M21 21L21 15.75" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Link Selected Accounts
+                        </button>
+                        <p class="text-sm text-gray-500 mt-2">Select one resident and one patient record to enable linking</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3131,38 +2551,191 @@ try {
         let selectedResidentId = 0;
         let selectedPatientId = 0;
 
+        // Resident search and filter function
+        function filterResidents() {
+            const searchInput = document.getElementById('residentSearchInput');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const residentItems = document.querySelectorAll('.resident-item');
+            const noResults = document.getElementById('noResidentsFound');
+            const searchStatus = document.getElementById('residentSearchStatus');
+            const searchCountSpan = document.getElementById('residentSearchCount');
+            let visibleCount = 0;
+            
+            // Update search status
+            if (searchStatus) {
+                if (searchTerm.length > 0) {
+                    searchStatus.classList.remove('hidden');
+                } else {
+                    searchStatus.classList.add('hidden');
+                }
+            }
+            
+            // Filter items
+            residentItems.forEach(item => {
+                const name = item.dataset.residentName || '';
+                const email = item.dataset.residentEmail || '';
+                const sitio = item.dataset.residentSitio || '';
+                
+                if (searchTerm === '' || 
+                    name.includes(searchTerm) || 
+                    email.includes(searchTerm) || 
+                    sitio.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                    // If this item was selected, clear selection
+                    if (selectedResidentId === parseInt(item.dataset.residentId)) {
+                        selectedResidentId = 0;
+                        item.style.background = 'white';
+                        item.style.borderColor = '#e5e7eb';
+                        item.style.borderWidth = '1px';
+                    }
+                }
+            });
+            
+            // Update search count
+            if (searchCountSpan) {
+                if (searchTerm.length > 0) {
+                    searchCountSpan.textContent = `Found ${visibleCount} resident${visibleCount !== 1 ? 's' : ''}`;
+                }
+            }
+            
+            // Show/hide no results message
+            if (noResults) {
+                if (visibleCount === 0 && residentItems.length > 0) {
+                    noResults.classList.remove('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                }
+            }
+            
+            updateLinkButton();
+        }
+
+        // Patient search and filter function
+        function filterPatients() {
+            const searchInput = document.getElementById('patientSearchInput');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const patientItems = document.querySelectorAll('.patient-item');
+            const noResults = document.getElementById('noPatientsFound');
+            const searchStatus = document.getElementById('patientSearchStatus');
+            const searchCountSpan = document.getElementById('patientSearchCount');
+            let visibleCount = 0;
+            
+            // Update search status
+            if (searchStatus) {
+                if (searchTerm.length > 0) {
+                    searchStatus.classList.remove('hidden');
+                } else {
+                    searchStatus.classList.add('hidden');
+                }
+            }
+            
+            // Filter items
+            patientItems.forEach(item => {
+                const name = item.dataset.patientName || '';
+                const age = item.dataset.patientAge || '';
+                const sitio = item.dataset.patientSitio || '';
+                
+                if (searchTerm === '' || 
+                    name.includes(searchTerm) || 
+                    age.includes(searchTerm) || 
+                    sitio.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                    // If this item was selected, clear selection
+                    if (selectedPatientId === parseInt(item.dataset.patientId)) {
+                        selectedPatientId = 0;
+                        item.style.background = 'white';
+                        item.style.borderColor = '#e5e7eb';
+                        item.style.borderWidth = '1px';
+                    }
+                }
+            });
+            
+            // Update search count
+            if (searchCountSpan) {
+                if (searchTerm.length > 0) {
+                    searchCountSpan.textContent = `Found ${visibleCount} patient${visibleCount !== 1 ? 's' : ''}`;
+                }
+            }
+            
+            // Show/hide no results message
+            if (noResults) {
+                if (visibleCount === 0 && patientItems.length > 0) {
+                    noResults.classList.remove('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                }
+            }
+            
+            updateLinkButton();
+        }
+
+        // Clear resident search
+        function clearResidentSearch() {
+            const searchInput = document.getElementById('residentSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                filterResidents();
+            }
+        }
+
+        // Clear patient search
+        function clearPatientSearch() {
+            const searchInput = document.getElementById('patientSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                filterPatients();
+            }
+        }
+
+        // Select resident function
         function selectResident(id, element) {
-            // Remove selection from all resident items
-            document.querySelectorAll('[data-resident-id]').forEach(el => {
-                el.style.background = 'white';
-                el.style.borderColor = '#e5e7eb';
-            });
-            
-            // Select this item
-            element.style.background = '#eff6ff';
-            element.style.borderColor = '#3C96E1';
-            element.style.borderWidth = '2px';
-            
-            selectedResidentId = id;
-            updateLinkButton();
+            // Only select if the item is visible
+            if (element.style.display !== 'none') {
+                // Remove selection from all resident items
+                document.querySelectorAll('[data-resident-id]').forEach(el => {
+                    el.style.background = 'white';
+                    el.style.borderColor = '#e5e7eb';
+                    el.style.borderWidth = '1px';
+                });
+                
+                // Select this item
+                element.style.background = '#eff6ff';
+                element.style.borderColor = '#3C96E1';
+                element.style.borderWidth = '2px';
+                
+                selectedResidentId = id;
+                updateLinkButton();
+            }
         }
 
+        // Select patient function
         function selectPatient(id, element) {
-            // Remove selection from all patient items
-            document.querySelectorAll('[data-patient-id]').forEach(el => {
-                el.style.background = 'white';
-                el.style.borderColor = '#e5e7eb';
-            });
-            
-            // Select this item
-            element.style.background = '#f0fdf4';
-            element.style.borderColor = '#10b981';
-            element.style.borderWidth = '2px';
-            
-            selectedPatientId = id;
-            updateLinkButton();
+            // Only select if the item is visible
+            if (element.style.display !== 'none') {
+                // Remove selection from all patient items
+                document.querySelectorAll('[data-patient-id]').forEach(el => {
+                    el.style.background = 'white';
+                    el.style.borderColor = '#e5e7eb';
+                    el.style.borderWidth = '1px';
+                });
+                
+                // Select this item
+                element.style.background = '#f0fdf4';
+                element.style.borderColor = '#10b981';
+                element.style.borderWidth = '2px';
+                
+                selectedPatientId = id;
+                updateLinkButton();
+            }
         }
 
+        // Update link button state
         function updateLinkButton() {
             const btn = document.getElementById('linkButton');
             if (selectedResidentId && selectedPatientId) {
@@ -3176,6 +2749,7 @@ try {
             }
         }
 
+        // Perform linking
         function performLinking() {
             if (selectedResidentId && selectedPatientId) {
                 if (confirm('Link these accounts? The resident will be connected to the patient record.')) {
@@ -3184,6 +2758,7 @@ try {
             }
         }
 
+        // Switch to linking tab with specific resident selected
         function switchToLinking(residentId) {
             switchTab('linking');
             setTimeout(() => {
@@ -3193,6 +2768,39 @@ try {
                     selectResident(residentId, card);
                 }
             }, 300);
+        }
+
+        // Toggle functions for showing more/less items
+        function toggleResidentsList() {
+            const additionalResidents = document.getElementById('additionalResidents');
+            const showMoreBtn = document.getElementById('showMoreResidentsBtn');
+            const showLessBtn = document.getElementById('showLessResidentsBtn');
+            
+            if (additionalResidents.style.display === 'none' || !additionalResidents.style.display) {
+                additionalResidents.style.display = 'block';
+                showMoreBtn.classList.add('hidden');
+                showLessBtn.classList.remove('hidden');
+            } else {
+                additionalResidents.style.display = 'none';
+                showMoreBtn.classList.remove('hidden');
+                showLessBtn.classList.add('hidden');
+            }
+        }
+
+        function togglePatientsList() {
+            const additionalPatients = document.getElementById('additionalPatients');
+            const showMoreBtn = document.getElementById('showMorePatientsBtn');
+            const showLessBtn = document.getElementById('showLessPatientsBtn');
+            
+            if (additionalPatients.style.display === 'none' || !additionalPatients.style.display) {
+                additionalPatients.style.display = 'block';
+                showMoreBtn.classList.add('hidden');
+                showLessBtn.classList.remove('hidden');
+            } else {
+                additionalPatients.style.display = 'none';
+                showMoreBtn.classList.remove('hidden');
+                showLessBtn.classList.add('hidden');
+            }
         }
 
         // Close modals on outside click
@@ -3224,196 +2832,28 @@ try {
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             showStaffTab('active');
+            
+            // Add enter key support for search inputs
+            const residentInput = document.getElementById('residentSearchInput');
+            if (residentInput) {
+                residentInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        filterResidents();
+                    }
+                });
+            }
+            
+            const patientInput = document.getElementById('patientSearchInput');
+            if (patientInput) {
+                patientInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        filterPatients();
+                    }
+                });
+            }
         });
-    </script>
-
-    <script>
-        // Search and filtering functions
-document.addEventListener('DOMContentLoaded', function() {
-    // Resident search
-    const residentSearch = document.getElementById('residentSearch');
-    if (residentSearch) {
-        residentSearch.addEventListener('input', function() {
-            filterResidents(this.value.toLowerCase());
-        });
-    }
-    
-    // Patient search
-    const patientSearch = document.getElementById('patientSearch');
-    if (patientSearch) {
-        patientSearch.addEventListener('input', function() {
-            filterPatients(this.value.toLowerCase());
-        });
-    }
-});
-
-function filterResidents(searchTerm) {
-    const residentItems = document.querySelectorAll('.resident-item');
-    const noResults = document.getElementById('noResidentsFound');
-    const clearBtn = document.getElementById('clearResidentSearch');
-    let visibleCount = 0;
-    
-    // Show/hide clear button
-    if (clearBtn) {
-        if (searchTerm.length > 0) {
-            clearBtn.classList.remove('hidden');
-        } else {
-            clearBtn.classList.add('hidden');
-        }
-    }
-    
-    // Filter items
-    residentItems.forEach(item => {
-        const name = item.dataset.residentName || '';
-        const email = item.dataset.residentEmail || '';
-        const sitio = item.dataset.residentSitio || '';
-        
-        if (name.includes(searchTerm) || email.includes(searchTerm) || sitio.includes(searchTerm)) {
-            item.style.display = 'block';
-            visibleCount++;
-        } else {
-            item.style.display = 'none';
-        }
-    });
-    
-    // Show/hide no results message
-    if (noResults) {
-        if (visibleCount === 0 && residentItems.length > 0) {
-            noResults.classList.remove('hidden');
-        } else {
-            noResults.classList.add('hidden');
-        }
-    }
-}
-
-function filterPatients(searchTerm) {
-    const patientItems = document.querySelectorAll('.patient-item');
-    const noResults = document.getElementById('noPatientsFound');
-    const clearBtn = document.getElementById('clearPatientSearch');
-    let visibleCount = 0;
-    
-    // Show/hide clear button
-    if (clearBtn) {
-        if (searchTerm.length > 0) {
-            clearBtn.classList.remove('hidden');
-        } else {
-            clearBtn.classList.add('hidden');
-        }
-    }
-    
-    // Filter items
-    patientItems.forEach(item => {
-        const name = item.dataset.patientName || '';
-        const age = item.dataset.patientAge || '';
-        const sitio = item.dataset.patientSitio || '';
-        
-        if (name.includes(searchTerm) || age.includes(searchTerm) || sitio.includes(searchTerm)) {
-            item.style.display = 'block';
-            visibleCount++;
-        } else {
-            item.style.display = 'none';
-        }
-    });
-    
-    // Show/hide no results message
-    if (noResults) {
-        if (visibleCount === 0 && patientItems.length > 0) {
-            noResults.classList.remove('hidden');
-        } else {
-            noResults.classList.add('hidden');
-        }
-    }
-}
-
-function clearSearch(type) {
-    if (type === 'resident') {
-        const searchInput = document.getElementById('residentSearch');
-        if (searchInput) {
-            searchInput.value = '';
-            filterResidents('');
-        }
-    } else {
-        const searchInput = document.getElementById('patientSearch');
-        if (searchInput) {
-            searchInput.value = '';
-            filterPatients('');
-        }
-    }
-}
-
-// Toggle functions for showing more/less items
-function toggleResidentsList() {
-    const additionalResidents = document.getElementById('additionalResidents');
-    const showMoreBtn = document.getElementById('showMoreResidentsBtn');
-    const showLessBtn = document.getElementById('showLessResidentsBtn');
-    
-    if (additionalResidents.style.display === 'none' || !additionalResidents.style.display) {
-        additionalResidents.style.display = 'block';
-        showMoreBtn.classList.add('hidden');
-        showLessBtn.classList.remove('hidden');
-    } else {
-        additionalResidents.style.display = 'none';
-        showMoreBtn.classList.remove('hidden');
-        showLessBtn.classList.add('hidden');
-    }
-}
-
-function togglePatientsList() {
-    const additionalPatients = document.getElementById('additionalPatients');
-    const showMoreBtn = document.getElementById('showMorePatientsBtn');
-    const showLessBtn = document.getElementById('showLessPatientsBtn');
-    
-    if (additionalPatients.style.display === 'none' || !additionalPatients.style.display) {
-        additionalPatients.style.display = 'block';
-        showMoreBtn.classList.add('hidden');
-        showLessBtn.classList.remove('hidden');
-    } else {
-        additionalPatients.style.display = 'none';
-        showMoreBtn.classList.remove('hidden');
-        showLessBtn.classList.add('hidden');
-    }
-}
-
-// Update the select functions to work with filtered items
-function selectResident(id, element) {
-    // Only select if the item is visible
-    if (element.style.display !== 'none') {
-        // Remove selection from all resident items
-        document.querySelectorAll('[data-resident-id]').forEach(el => {
-            el.style.background = 'white';
-            el.style.borderColor = '#e5e7eb';
-            el.style.borderWidth = '1px';
-        });
-        
-        // Select this item
-        element.style.background = '#eff6ff';
-        element.style.borderColor = '#3C96E1';
-        element.style.borderWidth = '2px';
-        
-        selectedResidentId = id;
-        updateLinkButton();
-    }
-}
-
-function selectPatient(id, element) {
-    // Only select if the item is visible
-    if (element.style.display !== 'none') {
-        // Remove selection from all patient items
-        document.querySelectorAll('[data-patient-id]').forEach(el => {
-            el.style.background = 'white';
-            el.style.borderColor = '#e5e7eb';
-            el.style.borderWidth = '1px';
-        });
-        
-        // Select this item
-        element.style.background = '#f0fdf4';
-        element.style.borderColor = '#10b981';
-        element.style.borderWidth = '2px';
-        
-        selectedPatientId = id;
-        updateLinkButton();
-    }
-}
     </script>
 </body>
 

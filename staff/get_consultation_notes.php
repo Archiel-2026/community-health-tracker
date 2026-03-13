@@ -82,19 +82,19 @@ try {
             // }
             echo '</div>
                         </div>
-                        <span style="background-color: #007BFF4D; color: #007BFF; padding: 4px 8px; border-radius: 4px;">Noted</span>
+                        <span style="background-color: #007BFF4D; color: #007BFF; padding: 4px 10px; border-radius: 4px;">Noted</span>
                     </div>
                     
                     <div class="note-content">
                         <div class="flex flex-col">
-                            <span class="text-sm text-gray-400 mb-1">Physical Assign:</span>
+                            <span class="text-sm text-gray-400 mb-1">Physician Assign:</span>
                             <span class="text-md font-medium" style="color: #387EC3;">' . htmlspecialchars($note['doctor_name']) . '</span>
                         </div>
                     </div>';
 
             if (!empty($note['next_consultation_date'])) {
                 $nextDate = date('M d, Y', strtotime($note['next_consultation_date']));
-                echo '<div class="text-sm font-medium mb-6 p-3 rounded-md" style="color: #007BFF; background-color: #007BFF4D; width: fit-content;">
+                echo '<div class="text-sm font-medium mb-6 py-2 px-4 rounded-md" style="color: #007BFF; background-color: #007BFF4D; width: fit-content;">
                             Next Consultation: ' . $nextDate . '
                         </div>';
             }

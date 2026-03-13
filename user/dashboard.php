@@ -379,452 +379,9 @@ function getTimeAgo($datetime)
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- Local Font Awesome for offline support -->
 <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+<link rel="stylesheet" href="/community-health-tracker/asssets/css/resident-dashboard.css">
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-    /* Existing styles remain the same */
-    .fixed {
-        position: fixed;
-    }
-
-    .inset-0 {
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-    }
-
-    .hidden {
-        display: none;
-    }
-
-    .z-50 {
-        z-index: 50;
-    }
-
-    .tab-content {
-        display: none;
-    }
-
-    .tab-content.active {
-        display: block;
-    }
-
-    .stats-card {
-        background: white;
-        border-radius: 16px;
-        padding: 30px 40px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        border: 1px solid #e5e7eb;
-        min-height: 60px; /* Desktop only: reduced height */
-        display: flex;
-        flex-direction: column;
-        /* justify-content: center; */
-    }
-
-    /* .stats-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        } */
-
-    .chart-container,
-    .chart-container-two {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        border: 1px solid #e5e7eb;
-        width: 100%;
-        min-height: 400px;
-        margin-bottom: 8px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* Ensure consistent height for chart containers */
-    .chart-content-wrapper {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* Mobile optimized */
-    @media (max-width: 768px) {
-
-        .chart-container,
-        .chart-container-two {
-            padding: 20px;
-            border-radius: 12px;
-            min-height: 350px;
-        }
-
-        .stats-card {
-            min-height: 100px; /* Restore original for mobile/tablet */
-            padding: 20px;
-        }
-    }
-
-    @media (max-width: 640px) {
-
-        .chart-container,
-        .chart-container-two {
-            padding: 16px;
-            border-radius: 12px;
-            min-height: 320px;
-        }
-
-        .stats-card {
-            min-height: 90px; /* Restore original for small screens */
-            padding: 16px;
-        }
-    }
-
-    .tab-active {
-        border-bottom: 2px solid #3b82f6;
-        color: #2563eb;
-    }
-
-    .blue-theme-bg {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .blue-theme-text {
-        color: #3b82f6;
-    }
-
-    .blue-theme-border {
-        border-color: #3b82f6;
-    }
-
-    .count-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 2rem;
-        height: 2rem;
-        border-radius: 9999px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        padding: 0 0.8rem;
-        margin-left: 0.7rem;
-    }
-
-    .info-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 18px;
-        padding: 24px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f5f9;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-    }
-
-    /* Activity Log Styles */
-    .activity-log-container {
-        max-height: 260px;
-        overflow-y: auto;
-        flex: 1;
-    }
-
-    .activity-log-item {
-        display: flex;
-        align-items: flex-start;
-        padding: 16px;
-        border-radius: 12px;
-        margin-bottom: 12px;
-        background: #f8fafc;
-        border-left: 5px solid;
-        transition: all 0.2s ease;
-    }
-
-    .activity-log-item:hover {
-        background: #f1f5f9;
-        transform: translateX(2px);
-    }
-
-    .activity-log-item.login {
-        border-left-color: #10b981;
-    }
-
-    .activity-log-item.logout {
-        border-left-color: #ef4444;
-    }
-
-    .activity-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
-        margin-right: 16px;
-        flex-shrink: 0;
-    }
-
-    .activity-icon.login {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    }
-
-    .activity-icon.logout {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-    }
-
-    .activity-content {
-        flex: 1;
-    }
-
-    .activity-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 6px;
-    }
-
-    .activity-title {
-        font-weight: 600;
-        color: #1f2937;
-        font-size: 16px;
-    }
-
-    .activity-time {
-        font-size: 13px;
-        color: #6b7280;
-        background: #f3f4f6;
-        padding: 4px 10px;
-        border-radius: 14px;
-        font-weight: 500;
-    }
-
-    .activity-details {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-top: 8px;
-    }
-
-    .activity-detail {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 13px;
-        color: #6b7280;
-    }
-
-    .activity-detail i {
-        font-size: 12px;
-    }
-
-    /* Bold Icons */
-    .bold-icon {
-        font-weight: 900 !important;
-    }
-
-    /* Chart legend items */
-    .chart-legend-item {
-        display: flex;
-        align-items: center;
-        padding: 10px 14px;
-        border-radius: 10px;
-        background: #f9fafb;
-        margin-bottom: 10px;
-        transition: all 0.2s ease;
-    }
-
-    .chart-legend-item:hover {
-        background: #f3f4f6;
-    }
-
-    .chart-legend-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        margin-right: 14px;
-    }
-
-    /* Stats card icons */
-    .stats-icon-container {
-        width: 68px;
-        height: 50px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 20px;
-        flex-shrink: 0;
-    }
-
-    .bg-first-card {
-        background: rgba(22, 163, 74, 0.3);
-    }
-
-    .bg-second-card {
-        background: rgba(59, 130, 246, 0.3);
-    }
-
-    .bg-third-card {
-        background: rgba(147, 51, 234, 0.3);
-    }
-
-    .bg-lab-result {
-        background-color: #16A34A;
-    }
-
-    /* Personal Information Styles */
-    .personal-info-item {
-        padding: 16px;
-        border-radius: 10px;
-        background: #f9fafb;
-        transition: all 0.2s ease;
-        margin-bottom: 4px;
-    }
-
-    .personal-info-item:hover {
-        background: #f3f4f6;
-    }
-
-    /* Doctor's Notes Styles */
-    .doctor-note-item {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 16px;
-        transition: all 0.2s ease;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        margin-bottom: 12px;
-    }
-
-    .doctor-note-item:hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-
-    /* Modal Info Item Styles */
-    .modal-info-item {
-        padding: 20px;
-        border-radius: 12px;
-        background: #f9fafb;
-        transition: all 0.2s ease;
-        border: 1px solid #e5e7eb;
-        margin-bottom: 6px;
-    }
-
-    .modal-info-item:hover {
-        background: #f3f4f6;
-        border-color: #d1d5db;
-    }
-
-    .ml-13 {
-        margin-left: 3.75rem;
-    }
-
-    /* Consistent spacing utilities */
-    .space-y-consistent {
-        margin-top: 1.5rem;
-    }
-
-    .space-y-consistent>*+* {
-        margin-top: 1.5rem;
-    }
-
-    .mb-consistent {
-        margin-bottom: 1.5rem;
-    }
-
-    /* Ensure all content is visible with top padding */
-    .content-visible {
-        /* padding-top: 25px; */
-        min-height: 100vh;
-    }
-
-    /* Consistent height for stats cards */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    @media (min-width: 768px) {
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    @media (min-width: 1024px) {
-        .stats-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-
-    /* Add this to your existing style section */
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    /* Adjust the announcements container height */
-    #announcementsContainer {
-        height: 288px;
-        /* Exactly fits 3 announcements at ~96px each */
-        max-height: 288px;
-        min-height: 288px;
-    }
-
-    /* Ensure announcement items have consistent height */
-    #announcementsContainer>div:not(.text-center) {
-        min-height: 96px;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        #announcementsContainer {
-            height: 264px;
-            /* Slightly smaller on mobile */
-            max-height: 264px;
-            min-height: 264px;
-        }
-    }
-
-    /* Add smooth scrolling */
-    .custom-scrollbar {
-        scroll-behavior: smooth;
-        scrollbar-width: thin;
-    }
-
-    /* Better scrollbar styling */
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 4px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #94a3b8;
-        border-radius: 4px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #64748b;
-    }
-</style>
 <div class="bg-gray-100 content-visible">
     <div class="px-6 py-8">
         <!-- Dashboard Header -->
@@ -994,7 +551,7 @@ function getTimeAgo($datetime)
                                         </div>
                                     <?php else: ?>
                                         <?php
-                                        $recentNotes = array_slice($consultationNotes, 0, 4);
+                                        $recentNotes = array_slice($consultationNotes, 0, 3);
                                         foreach ($recentNotes as $note): ?>
                                             <div class="border border-gray-200 rounded-lg p-4 mb-3 bg-white">
                                                 <div class="flex justify-between items-start w-full">
@@ -1099,133 +656,135 @@ function getTimeAgo($datetime)
                             <?php endif; ?>
 
                             <!-- General Announcements Section -->
-                            <div>
-                                <div
-                                    class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-5 mb-4">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="w-10 h-10 md:w-12 md:h-12 bg-second-card rounded-lg flex items-center justify-center">
-                                            <svg class="w-10 h-10" viewBox="0 0 30 30" fill="none"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path
-                                                    d="M26.782 10.1551L6.15 3.82695C5.87075 3.74551 5.57638 3.73015 5.29017 3.78209C5.00396 3.83404 4.73376 3.95186 4.50094 4.12625C4.26812 4.30064 4.07907 4.5268 3.94873 4.78686C3.8184 5.04691 3.75036 5.33372 3.75 5.62461V22.4996C3.75 22.9969 3.94754 23.4738 4.29917 23.8254C4.65081 24.1771 5.12772 24.3746 5.625 24.3746C5.8043 24.3747 5.98268 24.349 6.15469 24.2984L15.9375 21.2961V22.4996C15.9375 22.9969 16.135 23.4738 16.4867 23.8254C16.8383 24.1771 17.3152 24.3746 17.8125 24.3746H21.5625C22.0598 24.3746 22.5367 24.1771 22.8883 23.8254C23.24 23.4738 23.4375 22.9969 23.4375 22.4996V18.9957L26.782 17.9703C27.1691 17.854 27.5086 17.6164 27.7504 17.2925C27.9922 16.9687 28.1235 16.5757 28.125 16.1715V11.9527C28.1233 11.5488 27.9918 11.156 27.75 10.8324C27.5083 10.5088 27.1689 10.2713 26.782 10.1551ZM15.9375 19.3355L5.625 22.4996V5.62461L15.9375 8.78867V19.3355ZM21.5625 22.4996H17.8125V20.7207L21.5625 19.5699V22.4996ZM26.25 16.1715H26.2371L17.8125 18.759V9.36523L26.2371 11.9434H26.25V16.1621V16.1715Z"
-                                                    fill="#2563EB" />
-                                            </svg>
-                                        </div>
-                                        <h3 class="text-xl md:text-2xl font-600 text-gray-800">
-                                            All Announcements
-                                        </h3>
-                                    </div>
-                                    <a href="announcements.php?tab=announcements"
-                                        class="text-lg font-medium text-blue-600 hover:text-blue-800" target="_blank"
-                                        rel="noopener">View All</a>
-                                </div>
+<div class="flex flex-col h-full">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-5 mb-4 flex-shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 md:w-12 md:h-12 bg-second-card rounded-lg flex items-center justify-center">
+                <svg class="w-10 h-10" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M26.782 10.1551L6.15 3.82695C5.87075 3.74551 5.57638 3.73015 5.29017 3.78209C5.00396 3.83404 4.73376 3.95186 4.50094 4.12625C4.26812 4.30064 4.07907 4.5268 3.94873 4.78686C3.8184 5.04691 3.75036 5.33372 3.75 5.62461V22.4996C3.75 22.9969 3.94754 23.4738 4.29917 23.8254C4.65081 24.1771 5.12772 24.3746 5.625 24.3746C5.8043 24.3747 5.98268 24.349 6.15469 24.2984L15.9375 21.2961V22.4996C15.9375 22.9969 16.135 23.4738 16.4867 23.8254C16.8383 24.1771 17.3152 24.3746 17.8125 24.3746H21.5625C22.0598 24.3746 22.5367 24.1771 22.8883 23.8254C23.24 23.4738 23.4375 22.9969 23.4375 22.4996V18.9957L26.782 17.9703C27.1691 17.854 27.5086 17.6164 27.7504 17.2925C27.9922 16.9687 28.1235 16.5757 28.125 16.1715V11.9527C28.1233 11.5488 27.9918 11.156 27.75 10.8324C27.5083 10.5088 27.1689 10.2713 26.782 10.1551ZM15.9375 19.3355L5.625 22.4996V5.62461L15.9375 8.78867V19.3355ZM21.5625 22.4996H17.8125V20.7207L21.5625 19.5699V22.4996ZM26.25 16.1715H26.2371L17.8125 18.759V9.36523L26.2371 11.9434H26.25V16.1621V16.1715Z" fill="#2563EB" />
+                </svg>
+            </div>
+            <h3 class="text-xl md:text-2xl font-600 text-gray-800">
+                All Announcements
+            </h3>
+        </div>
+        <a href="announcements.php?tab=announcements" class="text-lg font-medium text-blue-600 hover:text-blue-800" target="_blank" rel="noopener">View All</a>
+    </div>
 
-                                <div id="announcementsContainer" class="h-72 overflow-y-auto custom-scrollbar">
-                                    <?php
-                                    // Filter out lab results from general announcements
-                                    $generalAnnouncements = array_filter($announcements ?? [], function ($ann) {
-                                        return !isset($ann['announcement_category']) || $ann['announcement_category'] !== 'lab_result';
-                                    });
+    <div id="announcementsContainer" class="space-y-3 flex-1" style="min-height: 0;">
+        <?php
+        // Filter out lab results from general announcements
+        $generalAnnouncements = array_filter($announcements ?? [], function ($ann) {
+            return !isset($ann['announcement_category']) || $ann['announcement_category'] !== 'lab_result';
+        });
 
-                                    if (empty($generalAnnouncements)):
-                                        ?>
-                                        <div class="text-center py-10 flex flex-col justify-center items-center h-full">
-                                            <svg width="70" height="70" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M21.4256 8.1225L4.92 3.06C4.6966 2.99484 4.4611 2.98255 4.23213 3.02411C4.00316 3.06567 3.787 3.15993 3.60075 3.29944C3.41449 3.43895 3.26325 3.61988 3.15899 3.82792C3.05472 4.03597 3.00029 4.26542 3 4.49813V17.9981C3 18.396 3.15804 18.7775 3.43934 19.0588C3.72064 19.3401 4.10218 19.4981 4.5 19.4981C4.64344 19.4982 4.78614 19.4777 4.92375 19.4372L12.75 17.0353V17.9981C12.75 18.396 12.908 18.7775 13.1893 19.0588C13.4706 19.3401 13.8522 19.4981 14.25 19.4981H17.25C17.6478 19.4981 18.0294 19.3401 18.3107 19.0588C18.592 18.7775 18.75 18.396 18.75 17.9981V15.195L21.4256 14.3747C21.7353 14.2816 22.0069 14.0916 22.2003 13.8325C22.3937 13.5734 22.4988 13.259 22.5 12.9356V9.56063C22.4986 9.23745 22.3934 8.92326 22.2 8.66435C22.0066 8.40544 21.7351 8.2155 21.4256 8.1225ZM12.75 15.4669L4.5 17.9981V4.49813L12.75 7.02938V15.4669ZM17.25 17.9981H14.25V16.575L17.25 15.6544V17.9981ZM21 12.9356H20.9897L14.25 15.0056V7.49063L20.9897 9.55313H21V12.9281V12.9356Z" fill="#9A9A9A"/>
-</svg>
+        // Reindex array to ensure proper indexing
+        $generalAnnouncements = array_values($generalAnnouncements);
 
-                                            <h3 class="text-gray-500 font-semibold text-xl mb-4">No announcements posted yet</h3>
-                                            <p class="text-gray-500 text-lg">No announcements are currently available.</p>
-                                        </div>
-                                    <?php else: ?>
-                                        <?php
-                                        $recentAnnouncements = array_slice($generalAnnouncements, 0, 2); // Show only 2 announcements
-                                        foreach ($recentAnnouncements as $index => $announcement):
-                                            $isPriorityHigh = $announcement['priority'] === 'high';
-                                            $isPriorityMedium = $announcement['priority'] === 'medium';
-                                            $isAccepted = $announcement['user_status'] === 'accepted';
-                                            $isDismissed = $announcement['user_status'] === 'dismissed';
-                                            // Badge logic for announcement type/audience
-                                            $badge = '';
-                                            $priorityBadge = '';
-                                            $priority = strtolower($announcement['priority']);
-                                            $greenColor = 'style="color: #FFFFFF;"';
-                                            $highBg = 'style="background-color: #e6bcbc; color: #8b2323;"';
-                                            $mediumBg = 'style="background-color: #FD88024D; color: #FD8802"';
-                                            if ((isset($announcement['announcement_type']) && $announcement['announcement_type'] === 'lab_result') || (isset($announcement['announcement_category']) && $announcement['announcement_category'] === 'lab_result')) {
-                                                $badge = '<span class="px-4 py-2 rounded bg-lab-result font-semibold text-base" ' . $greenColor . '>Lab Result</span>';
-                                                if ($priority === 'high') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
-                                                } elseif ($priority === 'medium') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base" ' . $mediumBg . '>' . ucfirst($announcement['priority']) . '</span>';
-                                                } else {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-semibold text-base">' . ucfirst($announcement['priority']) . '</span>';
-                                                }
-                                            } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'public') {
-                                                $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For All Resident</span>';
-                                                if ($priority === 'high') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
-                                                } elseif ($priority === 'medium') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $mediumBg . '>' . ucfirst($announcement['priority']) . '</span>';
-                                                } else {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-semibold text-base ml-2">' . ucfirst($announcement['priority']) . '</span>';
-                                                }
-                                            } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'specific') {
-                                                $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For Specific Resident</span>';
-                                                if ($priority === 'high') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
-                                                } elseif ($priority === 'medium') {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $mediumBg . '>' . ucfirst($announcement['priority']) . '</span>';
-                                                } else {
-                                                    $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-blue-600 font-semibold text-base ml-2">' . ucfirst($announcement['priority']) . '</span>';
-                                                }
-                                            }
-                                            // Prepare staff display for new layout
-                                            $staffPosition = !empty($announcement['staff_position']) ? htmlspecialchars($announcement['staff_position']) : '';
-                                            $staffName = !empty($announcement['staff_name']) ? htmlspecialchars($announcement['staff_name']) : '';
-                                            ?>
-                                            <div class="border border-gray-200 rounded-lg p-4  mb-3 announcement-item"
-                                                data-announcement-id="<?= htmlspecialchars($announcement['id']) ?>">
-                                                <div class="flex justify-between items-start w-full">
-                                                    <div class="flex gap-2 items-center">
-                                                        <?= $badge ?>         <?= $priorityBadge ?>
-                                                    </div>
-                                                    <div class="flex flex-col items-start">
-                                                        <span class="text-sm text-gray-400 font-semibold mb-2">Date Posted
-                                                            :</span>
-                                                        <span
-                                                            class="inline-block px-4 py-2 rounded bg-gray-200 text-gray-600 text-base font-semibold"
-                                                            style="margin-top:2px;"><?= date('F d, Y', strtotime($announcement['post_date'])) ?></span>
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-center gap-2 mb-0.5 mt-1">
-                                                    <span class="text-base text-gray-400 font-sm">Posted By :</span>
-                                                    <?php if ($staffPosition): ?>
-                                                        <span
-                                                            class="inline-block items-center py-0.5 rounded font-medium text-base ml-0.5 align-middle"
-                                                            style="margin-left:4px;"><?= $staffPosition ?></span>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <?php if ($staffName): ?>
-                                                    <div class="text-lg text-gray-800 font-medium mt-0.5 mb-0"><?= $staffName ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </div>
-                                        <?php endforeach; ?>
+        if (empty($generalAnnouncements)):
+        ?>
+        <div class="text-center py-10 flex flex-col justify-center items-center h-full">
+            <svg width="70" height="70" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21.4256 8.1225L4.92 3.06C4.6966 2.99484 4.4611 2.98255 4.23213 3.02411C4.00316 3.06567 3.787 3.15993 3.60075 3.29944C3.41449 3.43895 3.26325 3.61988 3.15899 3.82792C3.05472 4.03597 3.00029 4.26542 3 4.49813V17.9981C3 18.396 3.15804 18.7775 3.43934 19.0588C3.72064 19.3401 4.10218 19.4981 4.5 19.4981C4.64344 19.4982 4.78614 19.4777 4.92375 19.4372L12.75 17.0353V17.9981C12.75 18.396 12.908 18.7775 13.1893 19.0588C13.4706 19.3401 13.8522 19.4981 14.25 19.4981H17.25C17.6478 19.4981 18.0294 19.3401 18.3107 19.0588C18.592 18.7775 18.75 18.396 18.75 17.9981V15.195L21.4256 14.3747C21.7353 14.2816 22.0069 14.0916 22.2003 13.8325C22.3937 13.5734 22.4988 13.259 22.5 12.9356V9.56063C22.4986 9.23745 22.3934 8.92326 22.2 8.66435C22.0066 8.40544 21.7351 8.2155 21.4256 8.1225ZM12.75 15.4669L4.5 17.9981V4.49813L12.75 7.02938V15.4669ZM17.25 17.9981H14.25V16.575L17.25 15.6544V17.9981ZM21 12.9356H20.9897L14.25 15.0056V7.49063L20.9897 9.55313H21V12.9281V12.9356Z" fill="#9A9A9A"/>
+            </svg>
+            <h3 class="text-gray-500 font-semibold text-xl mb-4">No announcements posted yet</h3>
+            <p class="text-gray-500 text-lg">No announcements are currently available.</p>
+        </div>
+        <?php else: ?>
+            <?php
+            // Get exactly 3 announcements to display
+            $displayAnnouncements = array_slice($generalAnnouncements, 0, 3);
+            $remainingCount = count($generalAnnouncements) - 3;
+            
+            foreach ($displayAnnouncements as $index => $announcement):
+                $isPriorityHigh = $announcement['priority'] === 'high';
+                $isPriorityMedium = $announcement['priority'] === 'medium';
+                $isAccepted = $announcement['user_status'] === 'accepted';
+                $isDismissed = $announcement['user_status'] === 'dismissed';
+                
+                // Badge logic for announcement type/audience
+                $badge = '';
+                $priorityBadge = '';
+                $priority = strtolower($announcement['priority'] ?? 'low');
+                $greenColor = 'style="color: #FFFFFF;"';
+                $highBg = 'style="background-color: #e6bcbc; color: #8b2323;"';
+                $mediumBg = 'style="background-color: #FD88024D; color: #FD8802"';
+                
+                if ((isset($announcement['announcement_type']) && $announcement['announcement_type'] === 'lab_result') || 
+                    (isset($announcement['announcement_category']) && $announcement['announcement_category'] === 'lab_result')) {
+                    $badge = '<span class="px-4 py-2 rounded bg-lab-result font-semibold text-base" ' . $greenColor . '>Lab Result</span>';
+                    if ($priority === 'high') {
+                        $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                    } elseif ($priority === 'medium') {
+                        $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base" ' . $mediumBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                    } else {
+                        $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-semibold text-base">' . ucfirst($announcement['priority']) . '</span>';
+                    }
+                } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'public') {
+                    $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For All Resident</span>';
+                    if ($priority === 'high') {
+                        $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                    } elseif ($priority === 'medium') {
+                        $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $mediumBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                    } else {
+                        $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-semibold text-base ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                    }
+                } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'specific') {
+                    $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For Specific Resident</span>';
+                    if ($priority === 'high') {
+                        $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                    } elseif ($priority === 'medium') {
+                        $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $mediumBg . '>' . ucfirst($announcement['priority']) . '</span>';
+                    } else {
+                        $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-blue-600 font-semibold text-base ml-2">' . ucfirst($announcement['priority']) . '</span>';
+                    }
+                }
+                
+                // Prepare staff display
+                $staffPosition = !empty($announcement['staff_position']) ? htmlspecialchars($announcement['staff_position']) : '';
+                $staffName = !empty($announcement['staff_name']) ? htmlspecialchars($announcement['staff_name']) : '';
+                ?>
+                <div class="border border-gray-200 rounded-lg p-4 announcement-item" 
+                     data-announcement-id="<?= htmlspecialchars($announcement['id']) ?>"
+                     style="cursor: pointer;">
+                    <div class="flex justify-between items-start w-full">
+                        <div class="flex gap-2 items-center flex-wrap">
+                            <?= $badge ?> <?= $priorityBadge ?>
+                        </div>
+                        <div class="flex flex-col items-start">
+                            <span class="text-sm text-gray-400 font-semibold mb-2">Date Posted :</span>
+                            <span class="inline-block px-4 py-2 rounded bg-gray-200 text-gray-600 text-base font-semibold">
+                                <?= date('F d, Y', strtotime($announcement['post_date'])) ?>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 mb-0.5 mt-1">
+                        <span class="text-base text-gray-400 font-sm">Posted By :</span>
+                        <?php if ($staffPosition): ?>
+                            <span class="inline-block items-center py-0.5 rounded font-medium text-base">
+                                <?= $staffPosition ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($staffName): ?>
+                        <div class="text-lg text-gray-800 font-medium mt-0.5">
+                            <?= $staffName ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
 
-                                        <?php if (count($generalAnnouncements) > 2): ?>
-                                            <div class="text-center py-3">
-                                                <span class="text-blue-600 text-sm font-medium">
-                                                    +<?= count($generalAnnouncements) - 2 ?> more
-                                                    announcement<?= (count($generalAnnouncements) - 2) > 1 ? 's' : '' ?>
-                                                </span>
-                                            </div>
-                                        <?php endif; ?>
-
-                                    <?php endif; ?>
-                                </div>
-                            </div>
+            <?php if ($remainingCount > 0): ?>
+                <div class="text-center py-3 mt-2 border-t border-gray-100">
+                    <span class="text-blue-600 text-sm font-medium">
+                        +<?= $remainingCount ?> more 
+                        announcement<?= $remainingCount > 1 ? 's' : '' ?> available
+                    </span>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+</div>
                         </div>
                     </div>
                 </div>

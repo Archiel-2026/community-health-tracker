@@ -97,7 +97,7 @@ unset($_SESSION['uploading_profile']);
         width: 100%;
         position: relative;
         margin-bottom: 1rem;
-        border-radius: 20px;
+        border-radius: 8px;
         overflow: hidden;
         background: #000;
     }
@@ -120,7 +120,7 @@ unset($_SESSION['uploading_profile']);
         justify-content: center;
         gap: 1.5rem;
         background: rgba(76, 175, 80, 0.12);
-        border-radius: 15px;
+        border-radius: 8px;
         border: 1px solid rgba(76, 175, 80, 0.2);
         backdrop-filter: blur(8px);
         margin-bottom: 1.25rem;
@@ -147,7 +147,7 @@ unset($_SESSION['uploading_profile']);
     .instructions-panel {
         background: rgba(74, 144, 226, 0.06);
         border: 1px solid rgba(74, 144, 226, 0.15);
-        border-radius: 15px;
+        border-radius: 8px;
         padding: 1.25rem;
         margin-bottom: 1.5rem;
     }
@@ -190,7 +190,7 @@ unset($_SESSION['uploading_profile']);
         left: 1rem;
         right: 1rem;
         background: rgba(0, 0, 0, 0.7);
-        border-radius: 10px;
+        border-radius: 8px;
         padding: 0.75rem;
         backdrop-filter: blur(4px);
     }
@@ -227,7 +227,7 @@ unset($_SESSION['uploading_profile']);
     
     .modal-card {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 30px;
+            border-radius: 8px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
             width: 100%;
             max-width: 520px;
@@ -278,7 +278,7 @@ unset($_SESSION['uploading_profile']);
         .profile-preview-small {
             width: 150px;
             height: 150px;
-            border-radius: 50%;
+            border-radius: 8px;
             object-fit: cover;
             border: 3px solid rgba(74, 144, 226, 0.15);
             margin: 0 auto 1.5rem;
@@ -320,7 +320,7 @@ unset($_SESSION['uploading_profile']);
             padding: 1.25rem 1rem;
             background: rgba(74, 144, 226, 0.04);
             border: 1.5px dashed rgba(74, 144, 226, 0.3);
-            border-radius: 30px;
+            border-radius: 8px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -350,7 +350,7 @@ unset($_SESSION['uploading_profile']);
             padding: 0.65rem;
             background: rgba(254, 226, 226, 0.5);
             border: 1px solid rgba(254, 202, 202, 0.4);
-            border-radius: 0.4rem;
+            border-radius: 8px;
             color: rgba(220, 38, 38, 0.8);
             font-size: 0.75rem;
             margin-bottom: 0.875rem;
@@ -365,7 +365,7 @@ unset($_SESSION['uploading_profile']);
             padding: 0.65rem;
             background: rgba(220, 252, 231, 0.5);
             border: 1px solid rgba(187, 247, 208, 0.4);
-            border-radius: 0.4rem;
+            border-radius: 8px;
             color: rgba(22, 163, 74, 0.8);
             font-size: 0.75rem;
             margin-bottom: 0.875rem;
@@ -393,7 +393,7 @@ unset($_SESSION['uploading_profile']);
             background: rgba(74, 144, 226, 0.85);
             color: white;
             border: none;
-            border-radius: 30px;
+            border-radius: 8px;
             font-weight: 500;
             font-size: 0.95rem;
             cursor: pointer;
@@ -427,7 +427,7 @@ unset($_SESSION['uploading_profile']);
             height: 16px;
             border: 2px solid #E0F2FE;
             border-top: 2px solid #4A90E2;
-            border-radius: 50%;
+            border-radius: 8px;
             animation: spin 0.6s linear infinite;
         }
         
@@ -443,7 +443,7 @@ unset($_SESSION['uploading_profile']);
             font-size: 0.65rem;
             font-weight: 500;
             padding: 0.2rem 0.4rem;
-            border-radius: 0.25rem;
+            border-radius: 8px;
             margin-left: 0.5rem;
         }
 
@@ -484,7 +484,7 @@ unset($_SESSION['uploading_profile']);
                 
                 <!-- Camera Container -->
                 <div id="cameraContainer" class="camera-container" style="display: none;">
-                    <video id="videoElement" width="100%" height="auto" autoplay playsinline style="border-radius: 20px;"></video>
+                    <video id="videoElement" width="100%" height="auto" autoplay playsinline style="border-radius: 8px;"></video>
                     <canvas id="canvasElement" style="display: none;"></canvas>
                 </div>
                 
@@ -523,11 +523,11 @@ unset($_SESSION['uploading_profile']);
                     <i class="fas fa-check"></i>
                     <span>Capture Photo</span>
                 </button>
-                <button type="button" class="btn-upload" id="uploadBtn" style="display: none;">
+                <button type="button" class="btn-upload" id="uploadBtn" style="display: none; gap: 0.75rem;">
                     <i class="fas fa-cloud-upload-alt"></i>
                     <span>Upload</span>
                 </button>
-                <button type="button" class="btn-upload" id="retryBtn" style="display: none;">
+                <button type="button" class="btn-upload" id="retryBtn" style="display: none; gap: 0.75rem;">
                     <i class="fas fa-redo"></i>
                     <span>Retake Photo</span>
                 </button>

@@ -1,0 +1,504 @@
+
+    /* Existing styles remain the same */
+    .fixed {
+        position: fixed;
+    }
+
+    .inset-0 {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .z-50 {
+        z-index: 50;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 16px;
+        padding: 30px 40px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+        min-height: 60px; /* Desktop only: reduced height */
+        display: flex;
+        flex-direction: column;
+        /* justify-content: center; */
+    }
+
+    /* .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        } */
+
+   /* Ensure both containers have the same structure */
+.chart-container, 
+.chart-container-two {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    width: 100%;
+    min-height: 450px; /* Fixed minimum height */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Chart content wrapper for consistent flex layout */
+.chart-content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+
+    /* Mobile optimized */
+    @media (max-width: 768px) {
+
+        .chart-container,
+        .chart-container-two {
+            padding: 20px;
+            border-radius: 12px;
+            min-height: 350px;
+        }
+
+        .stats-card {
+            min-height: 100px; /* Restore original for mobile/tablet */
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 640px) {
+
+        .chart-container,
+        .chart-container-two {
+            padding: 16px;
+            border-radius: 12px;
+            min-height: 320px;
+        }
+
+        .stats-card {
+            min-height: 90px; /* Restore original for small screens */
+            padding: 16px;
+        }
+    }
+
+    .tab-active {
+        border-bottom: 2px solid #3b82f6;
+        color: #2563eb;
+    }
+
+    .blue-theme-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .blue-theme-text {
+        color: #3b82f6;
+    }
+
+    .blue-theme-border {
+        border-color: #3b82f6;
+    }
+
+    .count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        padding: 0 0.8rem;
+        margin-left: 0.7rem;
+    }
+
+    .info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 18px;
+        padding: 24px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    /* Activity Log Styles */
+    .activity-log-container {
+        max-height: 260px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .activity-log-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        background: #f8fafc;
+        border-left: 5px solid;
+        transition: all 0.2s ease;
+    }
+
+    .activity-log-item:hover {
+        background: #f1f5f9;
+        transform: translateX(2px);
+    }
+
+    .activity-log-item.login {
+        border-left-color: #10b981;
+    }
+
+    .activity-log-item.logout {
+        border-left-color: #ef4444;
+    }
+
+    .activity-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        margin-right: 16px;
+        flex-shrink: 0;
+    }
+
+    .activity-icon.login {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    }
+
+    .activity-icon.logout {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 6px;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 16px;
+    }
+
+    .activity-time {
+        font-size: 13px;
+        color: #6b7280;
+        background: #f3f4f6;
+        padding: 4px 10px;
+        border-radius: 14px;
+        font-weight: 500;
+    }
+
+    .activity-details {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 8px;
+    }
+
+    .activity-detail {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    .activity-detail i {
+        font-size: 12px;
+    }
+
+    /* Bold Icons */
+    .bold-icon {
+        font-weight: 900 !important;
+    }
+
+    /* Chart legend items */
+    .chart-legend-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: #f9fafb;
+        margin-bottom: 10px;
+        transition: all 0.2s ease;
+    }
+
+    .chart-legend-item:hover {
+        background: #f3f4f6;
+    }
+
+    .chart-legend-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        margin-right: 14px;
+    }
+
+    /* Stats card icons */
+    .stats-icon-container {
+        width: 68px;
+        height: 50px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        flex-shrink: 0;
+    }
+
+    .bg-first-card {
+        background: rgba(22, 163, 74, 0.3);
+    }
+
+    .bg-second-card {
+        background: rgba(59, 130, 246, 0.3);
+    }
+
+    .bg-third-card {
+        background: rgba(147, 51, 234, 0.3);
+    }
+
+    .bg-lab-result {
+        background-color: #16A34A;
+    }
+
+    /* Personal Information Styles */
+    .personal-info-item {
+        padding: 16px;
+        border-radius: 10px;
+        background: #f9fafb;
+        transition: all 0.2s ease;
+        margin-bottom: 4px;
+    }
+
+    .personal-info-item:hover {
+        background: #f3f4f6;
+    }
+
+    /* Doctor's Notes Styles */
+    .doctor-note-item {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        margin-bottom: 12px;
+    }
+
+    .doctor-note-item:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    /* Modal Info Item Styles */
+    .modal-info-item {
+        padding: 20px;
+        border-radius: 12px;
+        background: #f9fafb;
+        transition: all 0.2s ease;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 6px;
+    }
+
+    .modal-info-item:hover {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+    }
+
+    .ml-13 {
+        margin-left: 3.75rem;
+    }
+
+    /* Consistent spacing utilities */
+    .space-y-consistent {
+        margin-top: 1.5rem;
+    }
+
+    .space-y-consistent>*+* {
+        margin-top: 1.5rem;
+    }
+
+    .mb-consistent {
+        margin-bottom: 1.5rem;
+    }
+
+    /* Ensure all content is visible with top padding */
+    .content-visible {
+        /* padding-top: 25px; */
+        min-height: 100vh;
+    }
+
+    /* Consistent height for stats cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    /* Add this to your existing style section */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Ensure consistent item spacing */
+#announcementsContainer,
+.consultation-notes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Consistent spacing between items */
+    flex: 1;
+}
+
+/* Announcements container - exactly 3 items visible */
+#announcementsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0; /* Important for flex child */
+}
+
+/* Consultation notes container - exactly 3 items visible */
+.consultation-notes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0; /* Important for flex child */
+    overflow: visible; /* No scrolling */
+}
+
+/* Ensure announcement items have consistent height */
+.announcement-item {
+    width: 100%;
+    transition: all 0.2s ease;
+    background-color: white;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Ensure consultation items have consistent height */
+.consultation-item {
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Fix for the right column to maintain consistent height */
+.chart-container-two .chart-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Remove any scrolling from announcements container */
+#announcementsContainer {
+    overflow: visible !important;
+    max-height: none !important;
+}
+
+/* Ensure the "View All" link stays at the top */
+.chart-container-two .flex-shrink-0 {
+    flex-shrink: 0;
+}
+
+/* Consistent badge display */
+.announcement-item .flex.gap-2 {
+    flex-wrap: wrap;
+}
+
+/* Remove any fixed heights that might cause issues */
+#announcementsContainer,
+.consultation-notes-container {
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+}
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        #announcementsContainer {
+            height: 264px;
+            /* Slightly smaller on mobile */
+            max-height: 264px;
+            min-height: 264px;
+        }
+    }
+
+    /* Add smooth scrolling */
+    .custom-scrollbar {
+        scroll-behavior: smooth;
+        scrollbar-width: thin;
+    }
+
+    /* Better scrollbar styling */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+    }

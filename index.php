@@ -709,11 +709,11 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                             every resident of Barangay Luz, Cebu City.
                         </p>
 
-                        <button>
-                            <div class="py-3 px-6  bg-[#3879D3] rounded-lg text-white font-md shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 w-max">
-                                <p>Learn More</p>
-                                <i class="fas fa-arrow-right"></i>
-                            </div>
+                        <button href="Learnmore.html" >
+                            <a href="Learnmore.php" class="py-3 px-6 bg-[#3879D3] rounded-lg text-white font-md shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 w-max">
+    Learn More
+    <i class="fas fa-arrow-right"></i>
+</a>
                         </button>
                     </div>
 
@@ -721,19 +721,19 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
                     <div class="md:w-1/2 lg:w-2/5 xl:w-1/2 md:pr-14 lg:pr-20">
                         <!-- Quick Stats -->
                         <div class="grid grid-cols-2 gap-4 md:gap-6 justify-center mt-5">
-                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-white/20">
+                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8 md:p-6 border border-white/20">
                                 <div class="text-blue-200 text-xs md:text-base mb-4">Medical Staff</div>
                                 <div class="text-2xl md:text-3xl font-bold mb-1"><?= $medicalStaffCount ?></div>
                             </div>
-                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-white/20">
+                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8 md:p-6 border border-white/20">
                                 <div class="text-blue-200 text-xs md:text-base mb-4">Residents Served</div>
                                 <div class="text-2xl md:text-3xl font-bold mb-1"><?= $residentsServedCount ?></div>
                             </div>
-                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-white/20">
+                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8 md:p-6 border border-white/20">
                                 <div class="text-blue-200 text-xs md:text-base mb-4">Years Service</div>
                                 <div class="text-2xl md:text-3xl font-bold mb-1">28</div>
                             </div>
-                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-white/20">
+                            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8 md:p-6 border border-white/20">
                                 <div class="text-blue-200 text-xs md:text-base mb-4">Monthly Consultations</div>
                                 <div class="text-2xl md:text-3xl font-bold mb-1"><?= $monthlyConsultationCount ?></div>
                             </div>
@@ -1608,29 +1608,29 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-
         }
 
         // Learn More Modal Functions
-        function openLearnMoreModal() {
-            const modal = document.getElementById('learnMoreModal');
-            const modalContent = modal.querySelector('.modal-content');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => {
-                modalContent.style.opacity = '1';
-                modalContent.style.transform = 'scale(1)';
-            }, 10);
-        }
+        // function openLearnMoreModal() {
+        //     const modal = document.getElementById('learnMoreModal');
+        //     const modalContent = modal.querySelector('.modal-content');
+        //     modal.classList.remove('hidden');
+        //     modal.classList.add('flex');
+        //     document.body.style.overflow = 'hidden';
+        //     setTimeout(() => {
+        //         modalContent.style.opacity = '1';
+        //         modalContent.style.transform = 'scale(1)';
+        //     }, 10);
+        // }
 
-        function closeLearnMoreModal() {
-            const modal = document.getElementById('learnMoreModal');
-            const modalContent = modal.querySelector('.modal-content');
-            modalContent.style.opacity = '0';
-            modalContent.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
-            }, 300);
-        }
+        // function closeLearnMoreModal() {
+        //     const modal = document.getElementById('learnMoreModal');
+        //     const modalContent = modal.querySelector('.modal-content');
+        //     modalContent.style.opacity = '0';
+        //     modalContent.style.transform = 'scale(0.95)';
+        //     setTimeout(() => {
+        //         modal.classList.remove('flex');
+        //         modal.classList.add('hidden');
+        //         document.body.style.overflow = 'auto';
+        //     }, 300);
+        // }
 
         // Close modals when clicking outside
         document.addEventListener('click', function(event) {
