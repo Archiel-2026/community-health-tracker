@@ -5,11 +5,11 @@ Thank you for your cooperation for this project, even we're struggling we always
 Researchers:
 
 Project Leader
-- Archiel R. Cabanag - Backend Dev
+- Archiel R. Cabanag - Backend Dev / UI/UX Designer
 
 Members:
 - Leandro Labos - Frontend Dev
-- Warren Miras - Presenter / Documentation Manager
+- Warren Miras - Project Manager
 - Russel Loquinario - Research Writer
 - Creshiel Manloloyo - Documentation Manager
 - Rica Java - Research Writer
@@ -20,3 +20,4 @@ Project Name: Barangay Luz Health Monitoring and Tracking System
 Version 1.1
 
 Updated - January 29, 2026
+Last Updated - March 15, 2026
