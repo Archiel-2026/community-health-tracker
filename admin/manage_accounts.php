@@ -1123,7 +1123,42 @@ try {
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/Superadmin-Manageaccount.css">
     <!-- Google Fonts - Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Custom dropdown arrow styles -->
+    <style>
+        /* Custom dropdown styles for consistent arrows */
+        .custom-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%233C96E1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.2rem;
+            padding-right: 2.5rem !important;
+            cursor: pointer;
+        }
 
+        .custom-select:hover {
+            border-color: #2563eb;
+        }
+
+        .custom-select:focus {
+            outline: none;
+            ring: 2px solid #3C96E1;
+            border-color: #3C96E1;
+        }
+
+        /* For Firefox */
+        .custom-select::-moz-focus-inner {
+            border: 0;
+        }
+
+        /* For IE */
+        .custom-select::-ms-expand {
+            display: none;
+        }
+    </style>
 </head>
 
 <body class="min-h-screen">
@@ -1231,7 +1266,7 @@ try {
 
             <!-- Main Content -->
             <div>
-                <!-- Staff Section (Existing - unchanged) -->
+                <!-- Staff Section (with updated Position dropdown) -->
                 <div id="staffSection" class="tab-section" style="display: block;">
                     <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Staff Account</h2>
                     <!-- Create Staff Form -->
@@ -1265,7 +1300,7 @@ try {
                                             class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
                                         <button type="button"
                                             onclick="togglePasswordVisibility('staff-password')"
-                                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;">
+                                            style="position:absolute;right:20px;top:50%;transform:translateY(-50%);background:none;border:none;color:#3C96E1;cursor:pointer;">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                     </div>
@@ -1284,7 +1319,7 @@ try {
                                         class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
                                 </div>
 
-                                <!-- Position -->
+                                <!-- Position - Updated with custom-select class for consistent arrow -->
                                 <div>
                                     <label class="block text-lg font-semibold text-gray-700 mb-1">
                                         Position *
@@ -1292,7 +1327,7 @@ try {
                                     <select
                                         name="position"
                                         required
-                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500 custom-select">
                                         <option value="">Select Position</option>
                                         <option value="Nurse">Nurse</option>
                                         <option value="Midwife">Midwife</option>
@@ -1330,8 +1365,11 @@ try {
                                     <button
                                         type="submit"
                                         name="create_staff"
-                                        class="w-full px-6 py-3 bg-[#3C96E1] text-white rounded text-lg font-medium hover:bg-blue-600 transition">
-                                        Create Account
+                                        class="w-auto px-6 py-4 bg-[#3C96E1] text-white rounded-md text-lg font-medium hover:bg-blue-600 transition flex items-center gap-2">
+                                        <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 2.8125C12.5895 2.8125 10.2332 3.52728 8.22899 4.86646C6.22477 6.20564 4.66267 8.10907 3.74022 10.336C2.81778 12.563 2.57643 15.0135 3.04668 17.3777C3.51694 19.7418 4.67769 21.9134 6.38214 23.6179C8.08659 25.3223 10.2582 26.4831 12.6223 26.9533C14.9865 27.4236 17.437 27.1822 19.664 26.2598C21.8909 25.3373 23.7944 23.7752 25.1335 21.771C26.4727 19.7668 27.1875 17.4105 27.1875 15C27.1841 11.7687 25.899 8.67076 23.6141 6.3859C21.3292 4.10104 18.2313 2.81591 15 2.8125ZM15 25.3125C12.9604 25.3125 10.9666 24.7077 9.27069 23.5745C7.5748 22.4414 6.25303 20.8308 5.4725 18.9464C4.69197 17.0621 4.48775 14.9886 4.88566 12.9881C5.28357 10.9877 6.26574 9.15019 7.70797 7.70796C9.1502 6.26573 10.9877 5.28356 12.9881 4.88565C14.9886 4.48774 17.0621 4.69196 18.9464 5.47249C20.8308 6.25302 22.4414 7.5748 23.5745 9.27068C24.7077 10.9666 25.3125 12.9604 25.3125 15C25.3094 17.7341 24.2219 20.3553 22.2886 22.2886C20.3553 24.2219 17.7341 25.3094 15 25.3125ZM20.625 15C20.625 15.2486 20.5262 15.4871 20.3504 15.6629C20.1746 15.8387 19.9361 15.9375 19.6875 15.9375H15.9375V19.6875C15.9375 19.9361 15.8387 20.1746 15.6629 20.3504C15.4871 20.5262 15.2486 20.625 15 20.625C14.7514 20.625 14.5129 20.5262 14.3371 20.3504C14.1613 20.1746 14.0625 19.9361 14.0625 19.6875V15.9375H10.3125C10.0639 15.9375 9.82541 15.8387 9.64959 15.6629C9.47378 15.4871 9.375 15.2486 9.375 15C9.375 14.7514 9.47378 14.5129 9.64959 14.3371C9.82541 14.1613 10.0639 14.0625 10.3125 14.0625H14.0625V10.3125C14.0625 10.0639 14.1613 9.8254 14.3371 9.64959C14.5129 9.47377 14.7514 9.375 15 9.375C15.2486 9.375 15.4871 9.47377 15.6629 9.64959C15.8387 9.8254 15.9375 10.0639 15.9375 10.3125V14.0625H19.6875C19.9361 14.0625 20.1746 14.1613 20.3504 14.3371C20.5262 14.5129 20.625 14.7514 20.625 15Z" fill="white"/>
+</svg>
+Create Account
                                     </button>
                                 </div>
                             </form>
@@ -1377,7 +1415,7 @@ try {
                                                                 <?= htmlspecialchars($staff['full_name']) ?>
                                                             </h3>
                                                         </div>
-                                                        <span class="text-base font-medium text-green-600 bg-green-200 rounded-full px-8 py-2 flex items-center gap-1">
+                                                        <span class="text-sm font-medium text-green-600 bg-green-200 rounded-full px-4 py-2 flex items-center gap-1">
                                                             Active
                                                         </span>
                                                     </div>
@@ -1467,224 +1505,365 @@ try {
                     </div>
                 </div>
 
-                <!-- Resident Section -->
-<div id="residentSection" class="tab-section" style="display: none;">
-    <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Resident Account</h2>
-    
-    <!-- Create Resident Form -->
-    <div class="flex flex-col md:flex-row w-full gap-8">
-        <!-- LEFT CONTENT - Create Resident Form -->
-        <div class="mb-8 p-8 rounded-lg border border-gray-300 w-full md:w-1/2">
-            <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                <!-- Resident Section (with updated Gender and Sitio dropdowns) -->
+                <div id="residentSection" class="tab-section" style="display: none;">
+                    <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Resident Account</h2>
+                    
+                    <!-- Create Resident Form -->
+                    <div class="flex flex-col md:flex-row w-full gap-8">
+                        <!-- LEFT CONTENT - Create Resident Form -->
+                        <div class="mb-8 p-8 rounded-lg border border-gray-300 w-full md:w-1/2">
+                            <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 
-                <!-- Username -->
-                <div>
-                    <label class="block text-lg font-semibold text-gray-700 mb-1">
-                        Username <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        name="username"
-                        required
-                        placeholder="Enter Username"
-                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
-                </div>
+                                <!-- Username -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Username <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="username"
+                                        required
+                                        placeholder="Enter Username"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                </div>
 
-                <!-- Full Name -->
-                <div>
-                    <label class="block text-lg font-semibold text-gray-700 mb-1">
-                        Full Name <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        name="full_name"
-                        required
-                        placeholder="Enter Full Name"
-                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
-                </div>
+                                <!-- Full Name -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Full Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="full_name"
+                                        required
+                                        placeholder="Enter Full Name"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                </div>
 
-                <!-- Email -->
-                <div>
-                    <label class="block text-lg font-semibold text-gray-700 mb-1">
-                        Email <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="email"
-                        name="email"
-                        required
-                        placeholder="Enter Email Address"
-                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
-                </div>
+                                <!-- Email -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Email <span class="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        required
+                                        placeholder="Enter Email Address"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                </div>
 
-                <!-- Password -->
-                <div>
-                    <label style="display:block;font-size:1.125rem;font-weight:600;color:#374151;margin-bottom:4px;">
-                        Password <span class="text-red-500">*</span>
-                    </label>
-                    <div style="position: relative;">
-                        <input type="text" name="password" required id="resident-password"
-                            value="<?= bin2hex(random_bytes(4)) ?>"
-                            class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500 font-mono">
-                        <button type="button"
-                            onclick="togglePasswordVisibility('resident-password')"
-                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                                <!-- Password -->
+                                <div>
+                                    <label style="display:block;font-size:1.125rem;font-weight:600;color:#374151;margin-bottom:4px;">
+                                        Password <span class="text-red-500">*</span>
+                                    </label>
+                                    <div style="position: relative;">
+                                        <input type="text" name="password" required id="resident-password"
+                                            value="<?= bin2hex(random_bytes(4)) ?>"
+                                            class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500 font-mono">
+                                        <button type="button"
+                                            onclick="togglePasswordVisibility('resident-password')"
+                                            style="position:absolute;right:20px;top:50%;transform:translateY(-50%);background:none;border:none;color:#3C96E1;cursor:pointer;">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Phone -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Phone
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        placeholder="Enter Phone Number"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                </div>
+
+                                <!-- Gender - Updated with custom-select class for consistent arrow -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Gender
+                                    </label>
+                                    <select
+                                        name="gender"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500 custom-select">
+                                        <option value="">Select Gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <!-- Date of Birth -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Date of Birth
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="date_of_birth"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                                </div>
+
+                                <!-- Sitio - Updated with custom-select class for consistent arrow -->
+                                <div>
+                                    <label class="block text-lg font-semibold text-gray-700 mb-1">
+                                        Sitio
+                                    </label>
+                                    <select
+                                        name="sitio"
+                                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500 custom-select">
+                                        <option value="">Select Sitio</option>
+                                        <option value="Kalinao">Kalinao</option>
+                                        <option value="Nangka">Nangka</option>
+                                        <option value="Lubi">Lubi</option>
+                                        <option value="Sta. Cruz">Sta. Cruz</option>
+                                        <option value="Regla">Regla</option>
+                                        <option value="Abellana">Abellana</option>
+                                        <option value="Sto.niño l">Sto.niño l</option>
+                                        <option value="Sto.niño ll">Sto.niño ll</option>
+                                        <option value="Sto.niño lll">Sto.niño lll</option>
+                                        <option value="Zapatera">Zapatera</option>
+                                        <option value="Mabuhay">Mabuhay</option>
+                                        <option value="San Vicente">San Vicente</option>
+                                        <option value="City Central">City Central</option>
+                                        <option value="San. Antonio">San. Antonio</option>
+                                        <option value="San Roque">San Roque</option>
+                                        <option value="Others">Others</option>
+                                    </select>
+                                </div>
+
+                                <!-- Create Button -->
+                                <div class="mt-4 col-span-2">
+                                    <button
+                                        type="submit"
+                                        name="create_resident"
+                                        class="w-auto px-6 py-4 bg-[#10b981] text-white rounded-md text-lg font-medium flex items-center gap-2"
+                                        style="background-color: #10b981 !important; cursor: pointer;">
+                                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2.25C10.0716 2.25 8.18657 2.82183 6.58319 3.89317C4.97982 4.96452 3.73013 6.48726 2.99218 8.26884C2.25422 10.0504 2.06114 12.0108 2.43735 13.9021C2.81355 15.7934 3.74215 17.5307 5.10571 18.8943C6.46928 20.2579 8.20656 21.1865 10.0979 21.5627C11.9892 21.9389 13.9496 21.7458 15.7312 21.0078C17.5127 20.2699 19.0355 19.0202 20.1068 17.4168C21.1782 15.8134 21.75 13.9284 21.75 12C21.7473 9.41498 20.7192 6.93661 18.8913 5.10872C17.0634 3.28084 14.585 2.25273 12 2.25ZM12 20.25C10.3683 20.25 8.77326 19.7661 7.41655 18.8596C6.05984 17.9531 5.00242 16.6646 4.378 15.1571C3.75358 13.6496 3.5902 11.9908 3.90853 10.3905C4.22685 8.79016 5.01259 7.32015 6.16637 6.16637C7.32016 5.01259 8.79017 4.22685 10.3905 3.90852C11.9909 3.59019 13.6497 3.75357 15.1571 4.37799C16.6646 5.00242 17.9531 6.05984 18.8596 7.41655C19.7662 8.77325 20.25 10.3683 20.25 12C20.2475 14.1873 19.3775 16.2843 17.8309 17.8309C16.2843 19.3775 14.1873 20.2475 12 20.25ZM16.5 12C16.5 12.1989 16.421 12.3897 16.2803 12.5303C16.1397 12.671 15.9489 12.75 15.75 12.75H12.75V15.75C12.75 15.9489 12.671 16.1397 12.5303 16.2803C12.3897 16.421 12.1989 16.5 12 16.5C11.8011 16.5 11.6103 16.421 11.4697 16.2803C11.329 16.1397 11.25 15.9489 11.25 15.75V12.75H8.25C8.05109 12.75 7.86033 12.671 7.71967 12.5303C7.57902 12.3897 7.5 12.1989 7.5 12C7.5 11.8011 7.57902 11.6103 7.71967 11.4697C7.86033 11.329 8.05109 11.25 8.25 11.25H11.25V8.25C11.25 8.05109 11.329 7.86032 11.4697 7.71967C11.6103 7.57902 11.8011 7.5 12 7.5C12.1989 7.5 12.3897 7.57902 12.5303 7.71967C12.671 7.86032 12.75 8.05109 12.75 8.25V11.25H15.75C15.9489 11.25 16.1397 11.329 16.2803 11.4697C16.421 11.6103 16.5 11.8011 16.5 12Z" fill="white"/>
+</svg>
+Create Resident Account
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- RIGHT CONTENT - Resident Lists -->
+                        <div class="w-full md:w-1/2">
+                            <div class="p-8 rounded-lg border border-gray-300">
+                                <!-- Resident Header -->
+                                <div class="mb-6">
+                                    <h3 class="text-xl font-semibold text-gray-800">Accounts Created</h3>
+                                    <p class="text-sm text-gray-500 mt-1">List of all resident accounts</p>
+                                </div>
+
+                                <!-- All Residents -->
+                                <div id="allResidentsSection">
+                                    <?php if (empty($approvedResidents)): ?>
+                                        <div class="text-center p-8 bg-white rounded border border-gray-200">
+                                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                            </svg>
+                                            <p class="text-gray-500">No resident accounts created yet</p>
+                                            <p class="text-sm text-gray-400 mt-1">Create a new resident account using the form</p>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                                            <?php foreach ($approvedResidents as $resident):
+                                                $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
+                                                $stmt->execute([$resident['id']]);
+                                                $hasPatientRecord = $stmt->fetch();
+                                            ?>
+                                                <div class="border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div class="flex justify-between items-start mb-3">
+                                                        <div>
+                                                            <p class="text-sm text-gray-500 mb-1">
+                                                                <span class="font-medium" style="color: #000000;">Email:</span> <?= htmlspecialchars($resident['email']) ?>
+                                                            </p>
+                                                            <h3 class="font-semibold text-base text-gray-800">
+                                                                <?= htmlspecialchars($resident['full_name']) ?>
+                                                            </h3>
+                                                        </div>
+                                                        <span class="text-sm font-medium <?= $hasPatientRecord ? 'text-green-600 bg-green-200' : 'text-yellow-600 bg-yellow-200' ?> rounded-full px-4 py-2 flex items-center gap-1">
+                                                            <?= $hasPatientRecord ? 'Linked' : 'Unlinked' ?>
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="flex gap-3">
+                                                        <button
+                                                            onclick="openResetModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', 'resident')"
+                                                            class="py-2 text-sm px-3 rounded-md hover:bg-gray-200 flex items-center gap-1" style="border: 1px solid #808080;">
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M12.05 19L14.9 16.175L12.05 13.35L11 14.4L12.075 15.475C11.6083 15.4917 11.1543 15.4167 10.713 15.25C10.2717 15.0833 9.87567 14.825 9.525 14.475C9.19167 14.1417 8.93734 13.7583 8.762 13.325C8.58667 12.8917 8.49933 12.4583 8.5 12.025C8.5 11.7417 8.53767 11.4583 8.613 11.175C8.68833 10.8917 8.79234 10.6167 8.925 10.35L7.825 9.25C7.54167 9.66667 7.33333 10.1083 7.2 10.575C7.06667 11.0417 7 11.5167 7 12C7 12.6333 7.125 13.2583 7.375 13.875C7.625 14.4917 7.99167 15.0417 8.475 15.525C8.95833 16.0083 9.5 16.371 10.1 16.613C10.7 16.855 11.3167 16.984 11.95 17L11 17.95L12.05 19ZM16.175 14.75C16.4583 14.3333 16.6667 13.8917 16.8 13.425C16.9333 12.9583 17 12.4833 17 12C17 11.3667 16.879 10.7373 16.637 10.112C16.395 9.48667 16.0327 8.93267 15.55 8.45C15.0673 7.96733 14.5213 7.609 13.912 7.375C13.3027 7.141 12.682 7.02433 12.05 7.025L13 6.05L11.95 5L9.1 7.825L11.95 10.65L13 9.6L11.9 8.5C12.35 8.5 12.8083 8.58767 13.275 8.763C13.7417 8.93833 14.1417 9.19233 14.475 9.525C14.8083 9.85767 15.0627 10.241 15.238 10.675C15.4133 11.109 15.5007 11.5423 15.5 11.975C15.5 12.2583 15.4627 12.5417 15.388 12.825C15.3133 13.1083 15.209 13.3833 15.075 13.65L16.175 14.75ZM12 22C10.6167 22 9.31667 21.7373 8.1 21.212C6.88334 20.6867 5.825 19.9743 4.925 19.075C4.025 18.1757 3.31267 17.1173 2.788 15.9C2.26333 14.6827 2.00067 13.3827 2 12C1.99933 10.6173 2.262 9.31733 2.788 8.1C3.314 6.88267 4.02633 5.82433 4.925 4.925C5.82367 4.02567 6.882 3.31333 8.1 2.788C9.318 2.26267 10.618 2 12 2C13.382 2 14.682 2.26267 15.9 2.788C17.118 3.31333 18.1763 4.02567 19.075 4.925C19.9737 5.82433 20.6863 6.88267 21.213 8.1C21.7397 9.31733 22.002 10.6173 22 12C21.998 13.3827 21.7353 14.6827 21.212 15.9C20.6887 17.1173 19.9763 18.1757 19.075 19.075C18.1737 19.9743 17.1153 20.687 15.9 21.213C14.6847 21.739 13.3847 22.0013 12 22Z" fill="black" />
+                                                            </svg>
+                                                            Change Password
+                                                        </button>
+                                                        
+                                                        <?php if (!$hasPatientRecord): ?>
+                                                            <button
+                                                                onclick="switchToLinking(<?= $resident['id'] ?>)"
+                                                                class="py-2 text-sm px-3 rounded-md hover:bg-blue-50 flex items-center gap-1 border border-blue-300 text-blue-600">
+                                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M13.5 10.5L21 3M21 3H15.75M21 3V8.25M10.5 13.5L3 21M3 21H8.25M3 21L3 15.75M8.25 3H3M3 3V8.25M21 21H15.75M21 21L21 15.75" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+                                                                </svg>
+                                                                Link to Patient
+                                                            </button>
+                                                        <?php endif; ?>
+
+                                                        <!-- Delete Button -->
+                                                        <button
+                                                            onclick="openResidentDeleteModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
+                                                            class="py-2 text-sm px-3 rounded-md hover:bg-red-50 flex items-center gap-1 border border-red-300 text-red-600">
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M20.25 4.5H16.5V3.75C16.5 3.15326 16.2629 2.58097 15.841 2.15901C15.419 1.73705 14.8467 1.5 14.25 1.5H9.75C9.15326 1.5 8.58097 1.73705 8.15901 2.15901C7.73705 2.58097 7.5 3.15326 7.5 3.75V4.5H3.75C3.55109 4.5 3.36032 4.57902 3.21967 4.71967C3.07902 4.86032 3 5.05109 3 5.25C3 5.44891 3.07902 5.63968 3.21967 5.78033C3.36032 5.92098 3.55109 6 3.75 6H4.5V19.5C4.5 19.8978 4.65804 20.2794 4.93934 20.5607C5.22064 20.842 5.60218 21 6 21H18C18.3978 21 18.7794 20.842 19.0607 20.5607C19.342 20.2794 19.5 19.8978 19.5 19.5V6H20.25C20.4489 6 20.6397 5.92098 20.7803 5.78033C20.921 5.63968 21 5.44891 21 5.25C21 5.05109 20.921 4.86032 20.7803 4.71967C20.6397 4.57902 20.4489 4.5 20.25 4.5ZM9 3.75C9 3.55109 9.07902 3.36032 9.21967 3.21967C9.36032 3.07902 9.55109 3 9.75 3H14.25C14.4489 3 14.6397 3.07902 14.7803 3.21967C14.921 3.36032 15 3.55109 15 3.75V4.5H9V3.75ZM18 19.5H6V6H18V19.5ZM10.5 9.75V15.75C10.5 15.9489 10.421 16.1397 10.2803 16.2803C10.1397 16.421 9.94891 16.5 9.75 16.5C9.55109 16.5 9.36032 16.421 9.21967 16.2803C9.07902 16.1397 9 15.9489 9 15.75V9.75C9 9.55109 9.07902 9.36032 9.21967 9.21967C9.36032 9.07902 9.55109 9 9.75 9C9.94891 9 10.1397 9.07902 10.2803 9.21967C10.421 9.36032 10.5 9.55109 10.5 9.75ZM15 9.75V15.75C15 15.9489 14.921 16.1397 14.7803 16.2803C14.6397 16.421 14.4489 16.5 14.25 16.5C14.0511 16.5 13.8603 16.421 13.7197 16.2803C13.579 16.1397 13.5 15.9489 13.5 15.75V9.75C13.5 9.55109 13.579 9.36032 13.7197 9.21967C13.8603 9.07902 14.0511 9 14.25 9C14.4489 9 14.6397 9.07902 14.7803 9.21967C14.921 9.36032 15 9.55109 15 9.75Z" fill="#dc2626" />
+                                                            </svg>
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Phone -->
-                <div>
-                    <label class="block text-lg font-semibold text-gray-700 mb-1">
-                        Phone
-                    </label>
-                    <input
-                        type="tel"
-                        name="phone"
-                        placeholder="Enter Phone Number"
-                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
+                <!-- Add this new modal for resident deletion before the closing </body> tag -->
+                <!-- Resident Delete Modal -->
+                <div class="modern-modal" id="residentDeleteModal">
+                    <div class="modern-modal-content">
+                        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Delete Resident Account</h3>
+                        <p style="margin-bottom: 1.5rem; color: #6b7280;" id="residentDeleteMessage"></p>
+
+                        <form method="POST" action="" id="residentDeleteForm">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                            <input type="hidden" name="resident_id" id="residentDeleteId">
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Handle Patient Records:</label>
+
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <label style="display: flex; align-items: start; gap: 0.5rem;">
+                                        <input type="radio" name="delete_action" value="reassign" checked>
+                                        <span>
+                                            <span style="font-weight: 500;">Reassign patient records to another resident</span>
+                                            <select name="reassign_to" class="modern-input" style="margin-top: 0.25rem;">
+                                                <option value="">Select resident</option>
+                                                <?php foreach ($approvedResidents as $otherResident): ?>
+                                                    <?php if ($otherResident['id'] != $resident['id']): ?>
+                                                        <option value="<?= $otherResident['id'] ?>">
+                                                            <?= htmlspecialchars($otherResident['full_name']) ?>
+                                                        </option>
+                                                    <?php endif; ?>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </span>
+                                    </label>
+
+                                    <label style="display: flex; align-items: start; gap: 0.5rem;">
+                                        <input type="radio" name="delete_action" value="delete">
+                                        <span style="color: #dc2626; font-weight: 500;">Delete all associated patient records</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 0.75rem;">
+                                <button type="button" onclick="closeResidentDeleteModal()" style="flex: 1; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; background: white; cursor: pointer;">
+                                    Cancel
+                                </button>
+                                <button type="submit" name="hard_delete_resident" style="flex: 1; padding: 0.5rem; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                    Delete Resident
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
-                <!-- Gender -->
-                <div>
-                    <label class="block text-lg font-semibold text-gray-700 mb-1">
-                        Gender
-                    </label>
-                    <select
-                        name="gender"
-                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-
-                <!-- Date of Birth -->
-                <div>
-                    <label class="block text-lg font-semibold text-gray-700 mb-1">
-                        Date of Birth
-                    </label>
-                    <input
-                        type="date"
-                        name="date_of_birth"
-                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
-                </div>
-
-                <!-- Sitio -->
-                <div>
-                    <label class="block text-lg font-semibold text-gray-700 mb-1">
-                        Sitio
-                    </label>
-                    <select
-                        name="sitio"
-                        class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500">
-                        <option value="">Select Sitio</option>
-                        <option value="Kalinao">Kalinao</option>
-                        <option value="Nangka">Nangka</option>
-                        <option value="Lubi">Lubi</option>
-                        <option value="Sta. Cruz">Sta. Cruz</option>
-                        <option value="Regla">Regla</option>
-                        <option value="Abellana">Abellana</option>
-                        <option value="Sto.niño l">Sto.niño l</option>
-                        <option value="Sto.niño ll">Sto.niño ll</option>
-                        <option value="Sto.niño lll">Sto.niño lll</option>
-                        <option value="Zapatera">Zapatera</option>
-                        <option value="Mabuhay">Mabuhay</option>
-                        <option value="San Vicente">San Vicente</option>
-                        <option value="City Central">City Central</option>
-                        <option value="San. Antonio">San. Antonio</option>
-                        <option value="San Roque">San Roque</option>
-                        <option value="Others">Others</option>
-                    </select>
-                </div>
-
-                <!-- Create Button -->
-                <div class="mt-4 col-span-2">
-                    <button
-                        type="submit"
-                        name="create_resident"
-                        class="w-full px-6 py-3 bg-[#10b981] text-white rounded text-lg font-medium"
-                        style="background-color: #10b981 !important; cursor: pointer;">
-                        <i class="fas fa-user-plus mr-2"></i>Create Resident Account
-                    </button>
-                </div>
-            </form>
-        
-        </div>
-
-        <!-- RIGHT CONTENT - Resident Lists -->
-        <div class="w-full md:w-1/2">
-            <div class="p-8 rounded-lg border border-gray-300">
-                <!-- Resident Header -->
-                <div class="mb-6">
-                    <h3 class="text-xl font-semibold text-gray-800">Accounts Created</h3>
-                    <p class="text-sm text-gray-500 mt-1">List of all resident accounts</p>
-                </div>
-
-                <!-- All Residents -->
-                <div id="allResidentsSection">
-                    <?php if (empty($approvedResidents)): ?>
+                <!-- Pending Residents -->
+                <div id="pendingResidentSection" style="display: none;">
+                    <?php if (empty($pendingResidents)): ?>
                         <div class="text-center p-8 bg-white rounded border border-gray-200">
                             <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <p class="text-gray-500">No resident accounts created yet</p>
-                            <p class="text-sm text-gray-400 mt-1">Create a new resident account using the form</p>
+                            <p class="text-gray-500">No pending residents</p>
                         </div>
                     <?php else: ?>
                         <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                            <?php foreach ($approvedResidents as $resident):
-                                $stmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE user_id = ?");
-                                $stmt->execute([$resident['id']]);
-                                $hasPatientRecord = $stmt->fetch();
-                            ?>
-                                <div class="border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="flex justify-between items-start mb-3">
+                            <?php foreach ($pendingResidents as $resident): ?>
+                                <div class="border border-gray-200 rounded-lg p-4 bg-yellow-50">
+                                    <div class="flex justify-between items-start">
                                         <div>
-                                            <p class="text-sm text-gray-500 mb-1">
-                                                <span class="font-medium" style="color: #000000;">Email:</span> <?= htmlspecialchars($resident['email']) ?>
-                                            </p>
-                                            <h3 class="font-semibold text-base text-gray-800">
-                                                <?= htmlspecialchars($resident['full_name']) ?>
-                                            </h3>
+                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
+                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
                                         </div>
-                                        <span class="text-base font-medium <?= $hasPatientRecord ? 'text-green-600 bg-green-200' : 'text-yellow-600 bg-yellow-200' ?> rounded-full px-8 py-2 flex items-center gap-1">
-                                            <?= $hasPatientRecord ? 'Linked' : 'Unlinked' ?>
-                                        </span>
+                                        <span class="text-xs bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full">Pending</span>
                                     </div>
 
-                                    <div class="flex gap-3">
-                                        <button
-                                            onclick="openResetModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>', 'resident')"
-                                            class="py-2 text-sm px-3 rounded-md hover:bg-gray-200 flex items-center gap-1" style="border: 1px solid #808080;">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M12.05 19L14.9 16.175L12.05 13.35L11 14.4L12.075 15.475C11.6083 15.4917 11.1543 15.4167 10.713 15.25C10.2717 15.0833 9.87567 14.825 9.525 14.475C9.19167 14.1417 8.93734 13.7583 8.762 13.325C8.58667 12.8917 8.49933 12.4583 8.5 12.025C8.5 11.7417 8.53767 11.4583 8.613 11.175C8.68833 10.8917 8.79234 10.6167 8.925 10.35L7.825 9.25C7.54167 9.66667 7.33333 10.1083 7.2 10.575C7.06667 11.0417 7 11.5167 7 12C7 12.6333 7.125 13.2583 7.375 13.875C7.625 14.4917 7.99167 15.0417 8.475 15.525C8.95833 16.0083 9.5 16.371 10.1 16.613C10.7 16.855 11.3167 16.984 11.95 17L11 17.95L12.05 19ZM16.175 14.75C16.4583 14.3333 16.6667 13.8917 16.8 13.425C16.9333 12.9583 17 12.4833 17 12C17 11.3667 16.879 10.7373 16.637 10.112C16.395 9.48667 16.0327 8.93267 15.55 8.45C15.0673 7.96733 14.5213 7.609 13.912 7.375C13.3027 7.141 12.682 7.02433 12.05 7.025L13 6.05L11.95 5L9.1 7.825L11.95 10.65L13 9.6L11.9 8.5C12.35 8.5 12.8083 8.58767 13.275 8.763C13.7417 8.93833 14.1417 9.19233 14.475 9.525C14.8083 9.85767 15.0627 10.241 15.238 10.675C15.4133 11.109 15.5007 11.5423 15.5 11.975C15.5 12.2583 15.4627 12.5417 15.388 12.825C15.3133 13.1083 15.209 13.3833 15.075 13.65L16.175 14.75ZM12 22C10.6167 22 9.31667 21.7373 8.1 21.212C6.88334 20.6867 5.825 19.9743 4.925 19.075C4.025 18.1757 3.31267 17.1173 2.788 15.9C2.26333 14.6827 2.00067 13.3827 2 12C1.99933 10.6173 2.262 9.31733 2.788 8.1C3.314 6.88267 4.02633 5.82433 4.925 4.925C5.82367 4.02567 6.882 3.31333 8.1 2.788C9.318 2.26267 10.618 2 12 2C13.382 2 14.682 2.26267 15.9 2.788C17.118 3.31333 18.1763 4.02567 19.075 4.925C19.9737 5.82433 20.6863 6.88267 21.213 8.1C21.7397 9.31733 22.002 10.6173 22 12C21.998 13.3827 21.7353 14.6827 21.212 15.9C20.6887 17.1173 19.9763 18.1757 19.075 19.075C18.1737 19.9743 17.1153 20.687 15.9 21.213C14.6847 21.739 13.3847 22.0013 12 22Z" fill="black" />
-                                            </svg>
-                                            Change Password
-                                        </button>
-                                        
-                                        <?php if (!$hasPatientRecord): ?>
-                                            <button
-                                                onclick="switchToLinking(<?= $resident['id'] ?>)"
-                                                class="py-2 text-sm px-3 rounded-md hover:bg-blue-50 flex items-center gap-1 border border-blue-300 text-blue-600">
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M13.5 10.5L21 3M21 3H15.75M21 3V8.25M10.5 13.5L3 21M3 21H8.25M3 21L3 15.75M8.25 3H3M3 3V8.25M21 21H15.75M21 21L21 15.75" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
-                                                </svg>
-                                                Link to Patient
+                                    <div class="flex gap-2 mt-3">
+                                        <form method="POST" action="" class="flex-1">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center justify-center gap-1">
+                                                <i class="fas fa-check"></i> Approve
                                             </button>
-                                        <?php endif; ?>
+                                        </form>
+                                        <form method="POST" action="" class="flex-1">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                            <input type="hidden" name="action" value="decline">
+                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center gap-1">
+                                                <i class="fas fa-times"></i> Decline
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
-                                        <!-- Delete Button -->
-                                        <button
-                                            onclick="openResidentDeleteModal(<?= $resident['id'] ?>, '<?= htmlspecialchars($resident['full_name']) ?>')"
-                                            class="py-2 text-sm px-3 rounded-md hover:bg-red-50 flex items-center gap-1 border border-red-300 text-red-600">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M20.25 4.5H16.5V3.75C16.5 3.15326 16.2629 2.58097 15.841 2.15901C15.419 1.73705 14.8467 1.5 14.25 1.5H9.75C9.15326 1.5 8.58097 1.73705 8.15901 2.15901C7.73705 2.58097 7.5 3.15326 7.5 3.75V4.5H3.75C3.55109 4.5 3.36032 4.57902 3.21967 4.71967C3.07902 4.86032 3 5.05109 3 5.25C3 5.44891 3.07902 5.63968 3.21967 5.78033C3.36032 5.92098 3.55109 6 3.75 6H4.5V19.5C4.5 19.8978 4.65804 20.2794 4.93934 20.5607C5.22064 20.842 5.60218 21 6 21H18C18.3978 21 18.7794 20.842 19.0607 20.5607C19.342 20.2794 19.5 19.8978 19.5 19.5V6H20.25C20.4489 6 20.6397 5.92098 20.7803 5.78033C20.921 5.63968 21 5.44891 21 5.25C21 5.05109 20.921 4.86032 20.7803 4.71967C20.6397 4.57902 20.4489 4.5 20.25 4.5ZM9 3.75C9 3.55109 9.07902 3.36032 9.21967 3.21967C9.36032 3.07902 9.55109 3 9.75 3H14.25C14.4489 3 14.6397 3.07902 14.7803 3.21967C14.921 3.36032 15 3.55109 15 3.75V4.5H9V3.75ZM18 19.5H6V6H18V19.5ZM10.5 9.75V15.75C10.5 15.9489 10.421 16.1397 10.2803 16.2803C10.1397 16.421 9.94891 16.5 9.75 16.5C9.55109 16.5 9.36032 16.421 9.21967 16.2803C9.07902 16.1397 9 15.9489 9 15.75V9.75C9 9.55109 9.07902 9.36032 9.21967 9.21967C9.36032 9.07902 9.55109 9 9.75 9C9.94891 9 10.1397 9.07902 10.2803 9.21967C10.421 9.36032 10.5 9.55109 10.5 9.75ZM15 9.75V15.75C15 15.9489 14.921 16.1397 14.7803 16.2803C14.6397 16.421 14.4489 16.5 14.25 16.5C14.0511 16.5 13.8603 16.421 13.7197 16.2803C13.579 16.1397 13.5 15.9489 13.5 15.75V9.75C13.5 9.55109 13.579 9.36032 13.7197 9.21967C13.8603 9.07902 14.0511 9 14.25 9C14.4489 9 14.6397 9.07902 14.7803 9.21967C14.921 9.36032 15 9.55109 15 9.75Z" fill="#dc2626" />
-                                            </svg>
-                                            Delete
-                                        </button>
+                <!-- Declined Residents -->
+                <div id="declinedResidentSection" style="display: none;">
+                    <?php if (empty($declinedResidents)): ?>
+                        <div class="text-center p-8 bg-white rounded border border-gray-200">
+                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-gray-500">No declined residents</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                            <?php foreach ($declinedResidents as $resident): ?>
+                                <div class="border border-gray-200 rounded-lg p-4 bg-red-50">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
+                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
+                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
+                                        </div>
+                                        <span class="text-xs bg-red-200 text-red-800 px-3 py-1 rounded-full">Declined</span>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <form method="POST" action="">
+                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center gap-1">
+                                                <i class="fas fa-redo"></i> Reconsider & Approve
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -1693,528 +1872,362 @@ try {
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Add this new modal for resident deletion before the closing </body> tag -->
-<!-- Resident Delete Modal -->
-<div class="modern-modal" id="residentDeleteModal">
-    <div class="modern-modal-content">
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Delete Resident Account</h3>
-        <p style="margin-bottom: 1.5rem; color: #6b7280;" id="residentDeleteMessage"></p>
+        <!-- Linking Section - Redesigned with Icon Inside Search Field -->
+        <div id="linkingSection" class="tab-section" style="display: none;">
+            <div class="flex flex-col md:flex-row w-full gap-8 px-8">
+                <!-- LEFT CONTENT - Unlinked Residents -->
+                <div class="w-full md:w-1/2">
+                    <div class="p-8 rounded-lg border border-gray-300">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Residents</h3>
+                                <p class="text-sm text-gray-500 mt-1">Select a resident account to link</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full border border-blue-400">
+                                <?= count($unlinkedResidents) ?> Available
+                            </span>
+                        </div>
+                        
+                        <!-- Enhanced Search Bar - Icon Inside Input -->
+                        <div class="mb-4">
+                            <form onsubmit="event.preventDefault(); filterResidents();" class="flex gap-2">
+                                <div class="search-wrapper flex-1">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input 
+                                        type="text" 
+                                        id="residentSearchInput" 
+                                        placeholder="Search by name, email, or sitio..." 
+                                        class="search-input"
+                                        value=""
+                                        oninput="filterResidents()"
+                                    >
+                                    <button 
+                                        type="button" 
+                                        class="clear-search-btn" 
+                                        onclick="clearResidentSearch()"
+                                        title="Clear search"
+                                    >
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <!-- <button 
+                                    type="submit" 
+                                    class="search-button"
+                                >
+                                    <i class="fas fa-search"></i>
+                                    Search
+                                </button> -->
+                            </form>
+                            
+                            <!-- Search Status Indicator -->
+                            <div id="residentSearchStatus" class="mt-2 text-sm text-gray-500 flex items-center gap-2 hidden">
+                                <span class="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                                <span id="residentSearchCount"></span>
+                                <button onclick="clearResidentSearch()" class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">
+                                    Clear search
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Residents List -->
+                        <?php if (empty($unlinkedResidents)): ?>
+                            <div class="text-center p-8 bg-white rounded">
+                                <svg width="80" height="80" class="mx-auto mb-3" viewBox="0 0 55 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M51.5637 18.9546C51.4775 21.9466 50.2472 24.7917 48.1262 26.9038L40.6604 34.3739C39.5731 35.4672 38.2796 36.334 36.855 36.9241C35.4304 37.5141 33.9029 37.8157 32.361 37.8114H32.3502C30.782 37.8103 29.2298 37.4949 27.7855 36.8839C26.3411 36.2728 25.0339 35.3785 23.941 34.2538C22.8481 33.129 21.9917 31.7966 21.4223 30.3353C20.853 28.8741 20.5823 27.3135 20.6262 25.7458C20.639 25.29 20.8324 24.8579 21.1638 24.5446C21.4952 24.2314 21.9375 24.0626 22.3933 24.0754C22.8492 24.0882 23.2812 24.2816 23.5945 24.613C23.9078 24.9444 24.0765 25.3867 24.0637 25.8425C24.0324 26.9509 24.2236 28.0544 24.626 29.0877C25.0284 30.121 25.6339 31.0631 26.4066 31.8584C27.1793 32.6538 28.1035 33.2861 29.1248 33.7182C30.146 34.1503 31.2435 34.3732 32.3524 34.3739C33.4424 34.3767 34.5222 34.1634 35.5293 33.7463C36.5364 33.3293 37.4509 32.7167 38.2198 31.9441L45.6856 24.4782C47.2259 22.9185 48.0866 20.8127 48.0798 18.6205C48.0729 16.4284 47.1991 14.328 45.649 12.7779C44.0989 11.2279 41.9985 10.354 39.8064 10.3471C37.6143 10.3403 35.5084 11.201 33.9487 12.7413L31.5854 15.1046C31.2605 15.4133 30.8278 15.5829 30.3796 15.5772C29.9314 15.5714 29.5032 15.3908 29.1862 15.0739C28.8693 14.7569 28.6887 14.3287 28.683 13.8805C28.6772 13.4324 28.8468 12.9997 29.1555 12.6747L31.5188 10.3114C32.6091 9.22074 33.9036 8.35553 35.3284 7.76522C36.7532 7.17492 38.2803 6.87109 39.8225 6.87109C41.3647 6.87109 42.8918 7.17492 44.3166 7.76522C45.7414 8.35553 47.0359 9.22074 48.1262 10.3114C49.2556 11.4436 50.1427 12.7937 50.7337 14.2796C51.3246 15.7655 51.607 17.3561 51.5637 18.9546ZM23.4192 39.8868L21.0559 42.2501C20.2851 43.0261 19.3677 43.641 18.3571 44.0593C17.3466 44.4775 16.2629 44.6907 15.1692 44.6864C13.5284 44.6851 11.9249 44.1975 10.5611 43.2852C9.19741 42.3729 8.13469 41.0768 7.50725 39.5608C6.87982 38.0447 6.71583 36.3767 7.036 34.7675C7.35618 33.1583 8.14615 31.6801 9.30611 30.5196L16.759 23.0538C17.9329 21.8737 19.4345 21.0739 21.0688 20.7582C22.7031 20.4425 24.3945 20.6254 25.9235 21.2834C27.4524 21.9413 28.7482 23.0437 29.6426 24.4475C30.537 25.8513 30.9886 27.4916 30.9387 29.1554C30.9259 29.6112 31.0947 30.0535 31.408 30.3849C31.7212 30.7163 32.1533 30.9097 32.6091 30.9225C33.065 30.9353 33.5072 30.7665 33.8386 30.4532C34.17 30.14 34.3634 29.7079 34.3762 29.2521C34.4175 27.6561 34.1341 26.0683 33.5432 24.5851C32.9523 23.102 32.0662 21.7543 30.9387 20.6239C28.737 18.4231 25.7513 17.1868 22.6382 17.1868C19.5252 17.1868 16.5395 18.4231 14.3377 20.6239L6.87623 28.0898C5.23532 29.73 4.11745 31.8199 3.6639 34.0952C3.21036 36.3706 3.44148 38.7293 4.32807 40.8734C5.21466 43.0174 6.71693 44.8506 8.64501 46.1411C10.5731 47.4316 12.8405 48.1216 15.1606 48.1239C16.7029 48.1284 18.2308 47.8269 19.6557 47.2368C21.0807 46.6468 22.3745 45.7799 23.4622 44.6864L25.8254 42.3232C26.1036 41.9955 26.2489 41.5756 26.2327 41.1461C26.2166 40.7166 26.0401 40.3088 25.7381 40.003C25.4361 39.6972 25.0305 39.5157 24.6012 39.4942C24.172 39.4727 23.7503 39.6128 23.4192 39.8868Z" fill="#C8C8C8"/>
+</svg>
 
-        <form method="POST" action="" id="residentDeleteForm">
-            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-            <input type="hidden" name="resident_id" id="residentDeleteId">
-
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Handle Patient Records:</label>
-
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    <label style="display: flex; align-items: start; gap: 0.5rem;">
-                        <input type="radio" name="delete_action" value="reassign" checked>
-                        <span>
-                            <span style="font-weight: 500;">Reassign patient records to another resident</span>
-                            <select name="reassign_to" class="modern-input" style="margin-top: 0.25rem;">
-                                <option value="">Select resident</option>
-                                <?php foreach ($approvedResidents as $otherResident): ?>
-                                    <?php if ($otherResident['id'] != $resident['id']): ?>
-                                        <option value="<?= $otherResident['id'] ?>">
-                                            <?= htmlspecialchars($otherResident['full_name']) ?>
-                                        </option>
-                                    <?php endif; ?>
+                                <p class="text-gray-500">No unlinked residents available</p>
+                                <p class="text-sm text-gray-400 mt-1">All residents are linked to patient records</p>
+                            </div>
+                        <?php else: ?>
+                            <div id="residentsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                                <?php 
+                                $displayCount = 0;
+                                foreach ($unlinkedResidents as $resident): 
+                                    if ($displayCount >= 5) break;
+                                    $displayCount++;
+                                ?>
+                                    <div 
+                                        onclick="selectResident(<?= $resident['id'] ?>, this)" 
+                                        data-resident-id="<?= $resident['id'] ?>"
+                                        data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
+                                        data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
+                                        data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
+                                        class="resident-item p-6 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
+                                        style="border-color: #e5e7eb;">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <div class="font-semibold text-gray-800 resident-name mb-2"><?= htmlspecialchars($resident['full_name']) ?></div>
+                                                <div class="text-sm text-gray-500 resident-email mb-1"><?= htmlspecialchars($resident['email']) ?></div>
+                                                <?php if (!empty($resident['sitio'])): ?>
+                                                    <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="text-xs bg-blue-100 text-blue-800 px-4 py-2 border border-blue-400 rounded-full">Resident</div>
+                                        </div>
+                                    </div>
                                 <?php endforeach; ?>
-                            </select>
-                        </span>
-                    </label>
-
-                    <label style="display: flex; align-items: start; gap: 0.5rem;">
-                        <input type="radio" name="delete_action" value="delete">
-                        <span style="color: #dc2626; font-weight: 500;">Delete all associated patient records</span>
-                    </label>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 0.75rem;">
-                <button type="button" onclick="closeResidentDeleteModal()" style="flex: 1; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 4px; background: white; cursor: pointer;">
-                    Cancel
-                </button>
-                <button type="submit" name="hard_delete_resident" style="flex: 1; padding: 0.5rem; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                    Delete Resident
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Add these JavaScript functions before the closing </body> tag -->
-<script>
-    // Resident Delete Modal functions
-    function openResidentDeleteModal(id, name) {
-        document.getElementById('residentDeleteId').value = id;
-        document.getElementById('residentDeleteMessage').innerHTML = `Delete resident account <strong>${name}</strong>? This will affect their patient records.`;
-        document.getElementById('residentDeleteModal').classList.add('show');
-    }
-
-    function closeResidentDeleteModal() {
-        document.getElementById('residentDeleteModal').classList.remove('show');
-    }
-
-    // Close modal on outside click (add this to existing window.onclick function)
-    // Update the existing window.onclick function to include the new modal
-    const originalOnClick = window.onclick;
-    window.onclick = function(event) {
-        if (originalOnClick) originalOnClick(event);
-        if (event.target.classList.contains('modern-modal')) {
-            event.target.classList.remove('show');
-        }
-    };
-</script>
-
-                                <!-- Pending Residents -->
-                                <div id="pendingResidentSection" style="display: none;">
-                                    <?php if (empty($pendingResidents)): ?>
-                                        <div class="text-center p-8 bg-white rounded border border-gray-200">
-                                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            <p class="text-gray-500">No pending residents</p>
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                                            <?php foreach ($pendingResidents as $resident): ?>
-                                                <div class="border border-gray-200 rounded-lg p-4 bg-yellow-50">
-                                                    <div class="flex justify-between items-start">
-                                                        <div>
-                                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
-                                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                                        </div>
-                                                        <span class="text-xs bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full">Pending</span>
-                                                    </div>
-
-                                                    <div class="flex gap-2 mt-3">
-                                                        <form method="POST" action="" class="flex-1">
-                                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                                            <input type="hidden" name="action" value="approve">
-                                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center justify-center gap-1">
-                                                                <i class="fas fa-check"></i> Approve
-                                                            </button>
-                                                        </form>
-                                                        <form method="POST" action="" class="flex-1">
-                                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                                            <input type="hidden" name="action" value="decline">
-                                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center gap-1">
-                                                                <i class="fas fa-times"></i> Decline
-                                                            </button>
-                                                        </form>
-                                                    </div>
+                                
+                                <!-- Additional items (hidden initially) -->
+                                <div id="additionalResidents" style="display: none;">
+                                    <?php 
+                                    $additionalCount = 0;
+                                    foreach ($unlinkedResidents as $resident): 
+                                        if ($additionalCount < 5) {
+                                            $additionalCount++;
+                                            continue;
+                                        }
+                                    ?>
+                                        <div 
+                                            onclick="selectResident(<?= $resident['id'] ?>, this)" 
+                                            data-resident-id="<?= $resident['id'] ?>"
+                                            data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
+                                            data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
+                                            data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
+                                            class="resident-item p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
+                                            style="border-color: #e5e7eb;">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <div class="font-semibold text-gray-800 resident-name"><?= htmlspecialchars($resident['full_name']) ?></div>
+                                                    <div class="text-sm text-gray-500 resident-email"><?= htmlspecialchars($resident['email']) ?></div>
+                                                    <?php if (!empty($resident['sitio'])): ?>
+                                                        <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
+                                                    <?php endif; ?>
                                                 </div>
-                                            <?php endforeach; ?>
+                                                <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Resident</div>
+                                            </div>
                                         </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <!-- Declined Residents -->
-                                <div id="declinedResidentSection" style="display: none;">
-                                    <?php if (empty($declinedResidents)): ?>
-                                        <div class="text-center p-8 bg-white rounded border border-gray-200">
-                                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            <p class="text-gray-500">No declined residents</p>
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                                            <?php foreach ($declinedResidents as $resident): ?>
-                                                <div class="border border-gray-200 rounded-lg p-4 bg-red-50">
-                                                    <div class="flex justify-between items-start">
-                                                        <div>
-                                                            <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($resident['full_name']) ?></h3>
-                                                            <p class="text-sm text-gray-600"><?= htmlspecialchars($resident['email']) ?></p>
-                                                            <p class="text-xs text-gray-500 mt-1">Username: <?= htmlspecialchars($resident['username']) ?></p>
-                                                        </div>
-                                                        <span class="text-xs bg-red-200 text-red-800 px-3 py-1 rounded-full">Declined</span>
-                                                    </div>
-
-                                                    <div class="mt-3">
-                                                        <form method="POST" action="">
-                                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-                                                            <input type="hidden" name="resident_id" value="<?= $resident['id'] ?>">
-                                                            <input type="hidden" name="action" value="approve">
-                                                            <button type="submit" name="toggle_resident_status" class="w-full py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center gap-1">
-                                                                <i class="fas fa-redo"></i> Reconsider & Approve
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Linking Section - Redesigned with Icon Inside Search Field -->
-                <div id="linkingSection" class="tab-section" style="display: none;">
-                    <div class="flex flex-col md:flex-row w-full gap-8">
-                        <!-- LEFT CONTENT - Unlinked Residents -->
-                        <div class="w-full md:w-1/2">
-                            <div class="p-8 rounded-lg border border-gray-300">
-                                <div class="flex justify-between items-center mb-4">
-                                    <div>
-                                        <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Residents</h3>
-                                        <p class="text-sm text-gray-500 mt-1">Select a resident account to link</p>
-                                    </div>
-                                    <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                                        <?= count($unlinkedResidents) ?> Available
-                                    </span>
+                                    <?php endforeach; ?>
                                 </div>
                                 
-                                <!-- Enhanced Search Bar - Icon Inside Input -->
-                                <div class="mb-4">
-                                    <form onsubmit="event.preventDefault(); filterResidents();" class="flex gap-2">
-                                        <div class="search-wrapper flex-1">
-                                            <i class="fas fa-search search-icon"></i>
-                                            <input 
-                                                type="text" 
-                                                id="residentSearchInput" 
-                                                placeholder="Search by name, email, or sitio..." 
-                                                class="search-input"
-                                                value=""
-                                                oninput="filterResidents()"
-                                            >
-                                            <button 
-                                                type="button" 
-                                                class="clear-search-btn" 
-                                                onclick="clearResidentSearch()"
-                                                title="Clear search"
-                                            >
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                        <!-- <button 
-                                            type="submit" 
-                                            class="search-button"
-                                        >
-                                            <i class="fas fa-search"></i>
-                                            Search
-                                        </button> -->
-                                    </form>
-                                    
-                                    <!-- Search Status Indicator -->
-                                    <div id="residentSearchStatus" class="mt-2 text-sm text-gray-500 flex items-center gap-2 hidden">
-                                        <span class="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                                        <span id="residentSearchCount"></span>
-                                        <button onclick="clearResidentSearch()" class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">
-                                            Clear search
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- Residents List -->
-                                <?php if (empty($unlinkedResidents)): ?>
-                                    <div class="text-center p-8 bg-white rounded border border-gray-200">
-                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                        </svg>
-                                        <p class="text-gray-500">No unlinked residents available</p>
-                                        <p class="text-sm text-gray-400 mt-1">All residents are linked to patient records</p>
-                                    </div>
-                                <?php else: ?>
-                                    <div id="residentsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-                                        <?php 
-                                        $displayCount = 0;
-                                        foreach ($unlinkedResidents as $resident): 
-                                            if ($displayCount >= 5) break;
-                                            $displayCount++;
-                                        ?>
-                                            <div 
-                                                onclick="selectResident(<?= $resident['id'] ?>, this)" 
-                                                data-resident-id="<?= $resident['id'] ?>"
-                                                data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
-                                                data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
-                                                data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
-                                                class="resident-item p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
-                                                style="border-color: #e5e7eb;">
-                                                <div class="flex justify-between items-start">
-                                                    <div>
-                                                        <div class="font-semibold text-gray-800 resident-name"><?= htmlspecialchars($resident['full_name']) ?></div>
-                                                        <div class="text-sm text-gray-500 resident-email"><?= htmlspecialchars($resident['email']) ?></div>
-                                                        <?php if (!empty($resident['sitio'])): ?>
-                                                            <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Resident</div>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                        
-                                        <!-- Additional items (hidden initially) -->
-                                        <div id="additionalResidents" style="display: none;">
-                                            <?php 
-                                            $additionalCount = 0;
-                                            foreach ($unlinkedResidents as $resident): 
-                                                if ($additionalCount < 5) {
-                                                    $additionalCount++;
-                                                    continue;
-                                                }
-                                            ?>
-                                                <div 
-                                                    onclick="selectResident(<?= $resident['id'] ?>, this)" 
-                                                    data-resident-id="<?= $resident['id'] ?>"
-                                                    data-resident-name="<?= strtolower(htmlspecialchars($resident['full_name'])) ?>"
-                                                    data-resident-email="<?= strtolower(htmlspecialchars($resident['email'] ?? '')) ?>"
-                                                    data-resident-sitio="<?= strtolower(htmlspecialchars($resident['sitio'] ?? '')) ?>"
-                                                    class="resident-item p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-500 hover:bg-blue-50"
-                                                    style="border-color: #e5e7eb;">
-                                                    <div class="flex justify-between items-start">
-                                                        <div>
-                                                            <div class="font-semibold text-gray-800 resident-name"><?= htmlspecialchars($resident['full_name']) ?></div>
-                                                            <div class="text-sm text-gray-500 resident-email"><?= htmlspecialchars($resident['email']) ?></div>
-                                                            <?php if (!empty($resident['sitio'])): ?>
-                                                                <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                        <div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Resident</div>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                        
-                                        <!-- Show More/Less Buttons -->
-                                        <?php if (count($unlinkedResidents) > 5): ?>
-                                            <div class="text-center mt-4">
-                                                <button 
-                                                    id="showMoreResidentsBtn"
-                                                    onclick="toggleResidentsList()"
-                                                    class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors">
-                                                    <span>Show <?= count($unlinkedResidents) - 5 ?> more residents</span>
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                    </svg>
-                                                </button>
-                                                <button 
-                                                    id="showLessResidentsBtn"
-                                                    onclick="toggleResidentsList()"
-                                                    class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
-                                                    <span>Show less</span>
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <!-- No Results Message (hidden by default) -->
-                                    <div id="noResidentsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
-                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
-                                        </svg>
-                                        <p class="text-gray-500">No residents match your search</p>
+                                <!-- Show More/Less Buttons -->
+                                <?php if (count($unlinkedResidents) > 5): ?>
+                                    <div class="text-center mt-4">
                                         <button 
-                                            onclick="clearResidentSearch()" 
-                                            class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
-                                            Clear search
+                                            id="showMoreResidentsBtn"
+                                            onclick="toggleResidentsList()"
+                                            class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors">
+                                            <span>Show <?= count($unlinkedResidents) - 5 ?> more residents</span>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </button>
+                                        <button 
+                                            id="showLessResidentsBtn"
+                                            onclick="toggleResidentsList()"
+                                            class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
+                                            <span>Show less</span>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                            </svg>
                                         </button>
                                     </div>
                                 <?php endif; ?>
                             </div>
-                        </div>
+                            
+                            <!-- No Results Message (hidden by default) -->
+                            <div id="noResidentsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
+                                </svg>
+                                <p class="text-gray-500">No residents match your search</p>
+                                <button 
+                                    onclick="clearResidentSearch()" 
+                                    class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                    Clear search
+                                </button>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
 
-                        <!-- RIGHT CONTENT - Unlinked Patients -->
-                        <div class="w-full md:w-1/2">
-                            <div class="p-8 rounded-lg border border-gray-300">
-                                <div class="flex justify-between items-center mb-4">
-                                    <div>
-                                        <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Patient Records</h3>
-                                        <p class="text-sm text-gray-500 mt-1">Select a patient record to link</p>
+                <!-- RIGHT CONTENT - Unlinked Patients -->
+                <div class="w-full md:w-1/2">
+                    <div class="p-8 rounded-lg border border-gray-300">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Patient Records</h3>
+                                <p class="text-sm text-gray-500 mt-1">Select a patient record to link</p>
+                            </div>
+                            <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full border border-green-400">
+                                <?= count($unlinkedPatients) ?> Available
+                            </span>
+                        </div>
+                        
+                        <!-- Enhanced Search Bar - Icon Inside Input -->
+                        <div class="mb-4">
+                            <form onsubmit="event.preventDefault(); filterPatients();" class="flex gap-2">
+                                <div class="search-wrapper flex-1">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input 
+                                        type="text" 
+                                        id="patientSearchInput" 
+                                        placeholder="Search by name, age, or sitio..." 
+                                        class="search-input"
+                                        value=""
+                                        oninput="filterPatients()"
+                                    >
+                                    <button 
+                                        type="button" 
+                                        class="clear-search-btn" 
+                                        onclick="clearPatientSearch()"
+                                        title="Clear search"
+                                    >
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <!-- <button 
+                                    type="submit" 
+                                    class="search-button"
+                                    style="background: #10b981;"
+                                >
+                                    <i class="fas fa-search"></i>
+                                    Search
+                                </button> -->
+                            </form>
+                            
+                            <!-- Search Status Indicator -->
+                            <div id="patientSearchStatus" class="mt-2 text-sm text-gray-500 flex items-center gap-2 hidden">
+                                <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                <span id="patientSearchCount"></span>
+                                <button onclick="clearPatientSearch()" class="text-green-600 hover:text-green-800 text-xs font-medium ml-2">
+                                    Clear search
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Patients List -->
+                        <?php if (empty($unlinkedPatients)): ?>
+                            <div class="text-center p-8 bg-white rounded border border-gray-200">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                                <p class="text-gray-500">No unlinked patient records available</p>
+                                <p class="text-sm text-gray-400 mt-1">All patients are linked to resident accounts</p>
+                            </div>
+                        <?php else: ?>
+                            <div id="patientsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                                <?php 
+                                $displayCount = 0;
+                                foreach ($unlinkedPatients as $patient): 
+                                    if ($displayCount >= 5) break;
+                                    $displayCount++;
+                                ?>
+                                    <div 
+                                        onclick="selectPatient(<?= $patient['id'] ?>, this)" 
+                                        data-patient-id="<?= $patient['id'] ?>"
+                                        data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
+                                        data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
+                                        data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
+                                        class="patient-item p-6 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
+                                        style="border-color: #e5e7eb;">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <div class="font-semibold text-gray-800 patient-name mb-3"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                                <div class="text-sm text-gray-500 mt-2">
+                                                    <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
+                                                    <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+                                                </div>
+                                                <?php if (!empty($patient['contact'])): ?>
+                                                    <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="text-xs bg-green-100 text-green-800 px-4 py-2 border border-green-400 rounded-full">Patient</div>
+                                        </div>
                                     </div>
-                                    <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full">
-                                        <?= count($unlinkedPatients) ?> Available
-                                    </span>
+                                <?php endforeach; ?>
+                                
+                                <!-- Additional items (hidden initially) -->
+                                <div id="additionalPatients" style="display: none;">
+                                    <?php 
+                                    $additionalCount = 0;
+                                    foreach ($unlinkedPatients as $patient): 
+                                        if ($additionalCount < 5) {
+                                            $additionalCount++;
+                                            continue;
+                                        }
+                                    ?>
+                                        <div 
+                                            onclick="selectPatient(<?= $patient['id'] ?>, this)" 
+                                            data-patient-id="<?= $patient['id'] ?>"
+                                            data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
+                                            data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
+                                            data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
+                                            class="patient-item p-4 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
+                                            style="border-color: #e5e7eb;">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <div class="font-semibold text-gray-800 patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
+                                                    <div class="text-sm text-gray-500">
+                                                        <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
+                                                        <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
+                                                    </div>
+                                                    <?php if (!empty($patient['contact'])): ?>
+                                                        <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="text-xs bg-green-100 text-green-800 px-4 py-2 border border-green-400 rounded-full">Patient</div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
                                 
-                                <!-- Enhanced Search Bar - Icon Inside Input -->
-                                <div class="mb-4">
-                                    <form onsubmit="event.preventDefault(); filterPatients();" class="flex gap-2">
-                                        <div class="search-wrapper flex-1">
-                                            <i class="fas fa-search search-icon"></i>
-                                            <input 
-                                                type="text" 
-                                                id="patientSearchInput" 
-                                                placeholder="Search by name, age, or sitio..." 
-                                                class="search-input"
-                                                value=""
-                                                oninput="filterPatients()"
-                                            >
-                                            <button 
-                                                type="button" 
-                                                class="clear-search-btn" 
-                                                onclick="clearPatientSearch()"
-                                                title="Clear search"
-                                            >
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                        <!-- <button 
-                                            type="submit" 
-                                            class="search-button"
-                                            style="background: #10b981;"
-                                        >
-                                            <i class="fas fa-search"></i>
-                                            Search
-                                        </button> -->
-                                    </form>
-                                    
-                                    <!-- Search Status Indicator -->
-                                    <div id="patientSearchStatus" class="mt-2 text-sm text-gray-500 flex items-center gap-2 hidden">
-                                        <span class="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                        <span id="patientSearchCount"></span>
-                                        <button onclick="clearPatientSearch()" class="text-green-600 hover:text-green-800 text-xs font-medium ml-2">
-                                            Clear search
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- Patients List -->
-                                <?php if (empty($unlinkedPatients)): ?>
-                                    <div class="text-center p-8 bg-white rounded border border-gray-200">
-                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                        </svg>
-                                        <p class="text-gray-500">No unlinked patient records available</p>
-                                        <p class="text-sm text-gray-400 mt-1">All patients are linked to resident accounts</p>
-                                    </div>
-                                <?php else: ?>
-                                    <div id="patientsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-                                        <?php 
-                                        $displayCount = 0;
-                                        foreach ($unlinkedPatients as $patient): 
-                                            if ($displayCount >= 5) break;
-                                            $displayCount++;
-                                        ?>
-                                            <div 
-                                                onclick="selectPatient(<?= $patient['id'] ?>, this)" 
-                                                data-patient-id="<?= $patient['id'] ?>"
-                                                data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
-                                                data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
-                                                data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
-                                                class="patient-item p-4 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
-                                                style="border-color: #e5e7eb;">
-                                                <div class="flex justify-between items-start">
-                                                    <div>
-                                                        <div class="font-semibold text-gray-800 patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                                        <div class="text-sm text-gray-500">
-                                                            <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
-                                                            <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
-                                                        </div>
-                                                        <?php if (!empty($patient['contact'])): ?>
-                                                            <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <div class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Patient</div>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                        
-                                        <!-- Additional items (hidden initially) -->
-                                        <div id="additionalPatients" style="display: none;">
-                                            <?php 
-                                            $additionalCount = 0;
-                                            foreach ($unlinkedPatients as $patient): 
-                                                if ($additionalCount < 5) {
-                                                    $additionalCount++;
-                                                    continue;
-                                                }
-                                            ?>
-                                                <div 
-                                                    onclick="selectPatient(<?= $patient['id'] ?>, this)" 
-                                                    data-patient-id="<?= $patient['id'] ?>"
-                                                    data-patient-name="<?= strtolower(htmlspecialchars($patient['full_name'])) ?>"
-                                                    data-patient-age="<?= strtolower(htmlspecialchars($patient['age'] ?? '')) ?>"
-                                                    data-patient-sitio="<?= strtolower(htmlspecialchars($patient['sitio'] ?? '')) ?>"
-                                                    class="patient-item p-4 border rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-green-50"
-                                                    style="border-color: #e5e7eb;">
-                                                    <div class="flex justify-between items-start">
-                                                        <div>
-                                                            <div class="font-semibold text-gray-800 patient-name"><?= htmlspecialchars($patient['full_name']) ?></div>
-                                                            <div class="text-sm text-gray-500">
-                                                                <span class="patient-age">Age: <?= htmlspecialchars($patient['age'] ?? 'N/A') ?></span> | 
-                                                                <span class="patient-sitio">Sitio: <?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></span>
-                                                            </div>
-                                                            <?php if (!empty($patient['contact'])): ?>
-                                                                <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                        <div class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Patient</div>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                        
-                                        <!-- Show More/Less Buttons -->
-                                        <?php if (count($unlinkedPatients) > 5): ?>
-                                            <div class="text-center mt-4">
-                                                <button 
-                                                    id="showMorePatientsBtn"
-                                                    onclick="togglePatientsList()"
-                                                    class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors">
-                                                    <span>Show <?= count($unlinkedPatients) - 5 ?> more patients</span>
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                                    </svg>
-                                                </button>
-                                                <button 
-                                                    id="showLessPatientsBtn"
-                                                    onclick="togglePatientsList()"
-                                                    class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
-                                                    <span>Show less</span>
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <!-- No Results Message (hidden by default) -->
-                                    <div id="noPatientsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
-                                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
-                                        </svg>
-                                        <p class="text-gray-500">No patients match your search</p>
+                                <!-- Show More/Less Buttons -->
+                                <?php if (count($unlinkedPatients) > 5): ?>
+                                    <div class="text-center mt-4">
                                         <button 
-                                            onclick="clearPatientSearch()" 
-                                            class="mt-2 text-sm text-green-600 hover:text-green-800 font-medium">
-                                            Clear search
+                                            id="showMorePatientsBtn"
+                                            onclick="togglePatientsList()"
+                                            class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors">
+                                            <span>Show <?= count($unlinkedPatients) - 5 ?> more patients</span>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                            </svg>
+                                        </button>
+                                        <button 
+                                            id="showLessPatientsBtn"
+                                            onclick="togglePatientsList()"
+                                            class="px-4 py-2 text-sm text-green-600 hover:text-green-800 font-medium inline-flex items-center gap-1 transition-colors hidden">
+                                            <span>Show less</span>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                            </svg>
                                         </button>
                                     </div>
                                 <?php endif; ?>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Link Button -->
-                    <div class="text-center mt-6 pt-6 border-t border-gray-200">
-                        <button 
-                            onclick="performLinking()" 
-                            id="linkButton" 
-                            disabled
-                            class="px-8 py-3 bg-purple-600 text-white rounded-lg font-medium inline-flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 hover:shadow-lg">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M13.5 10.5L21 3M21 3H15.75M21 3V8.25M10.5 13.5L3 21M3 21H8.25M3 21L3 15.75M8.25 3H3M3 3V8.25M21 21H15.75M21 21L21 15.75" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                            Link Selected Accounts
-                        </button>
-                        <p class="text-sm text-gray-500 mt-2">Select one resident and one patient record to enable linking</p>
+                            
+                            <!-- No Results Message (hidden by default) -->
+                            <div id="noPatientsFound" class="text-center p-8 bg-white rounded border border-gray-200 hidden">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"></path>
+                                </svg>
+                                <p class="text-gray-500">No patients match your search</p>
+                                <button 
+                                    onclick="clearPatientSearch()" 
+                                    class="mt-2 text-sm text-green-600 hover:text-green-800 font-medium">
+                                    Clear search
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
+            </div>
+
+            <!-- Link Button -->
+            <div class="text-center mt-6 pt-6 border-t border-gray-200">
+                <button 
+                    onclick="performLinking()" 
+                    id="linkButton" 
+                    disabled
+                    class="px-8 py-3 bg-purple-600 text-white rounded-lg font-medium inline-flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 hover:shadow-lg">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.5 10.5L21 3M21 3H15.75M21 3V8.25M10.5 13.5L3 21M3 21H8.25M3 21L3 15.75M8.25 3H3M3 3V8.25M21 21H15.75M21 21L21 15.75" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Link Selected Accounts
+                </button>
+                <p class="text-sm text-gray-500 mt-2">Select one resident and one patient record to enable linking</p>
             </div>
         </div>
     </main>
@@ -2546,6 +2559,28 @@ try {
             document.getElementById('resetPasswordModal').classList.remove('show');
             document.getElementById('resetPasswordForm').reset();
         }
+
+        // Add these JavaScript functions before the closing </body> tag
+        // Resident Delete Modal functions
+        function openResidentDeleteModal(id, name) {
+            document.getElementById('residentDeleteId').value = id;
+            document.getElementById('residentDeleteMessage').innerHTML = `Delete resident account <strong>${name}</strong>? This will affect their patient records.`;
+            document.getElementById('residentDeleteModal').classList.add('show');
+        }
+
+        function closeResidentDeleteModal() {
+            document.getElementById('residentDeleteModal').classList.remove('show');
+        }
+
+        // Close modal on outside click (add this to existing window.onclick function)
+        // Update the existing window.onclick function to include the new modal
+        const originalOnClick = window.onclick;
+        window.onclick = function(event) {
+            if (originalOnClick) originalOnClick(event);
+            if (event.target.classList.contains('modern-modal')) {
+                event.target.classList.remove('show');
+            }
+        };
 
         // Linking functions
         let selectedResidentId = 0;

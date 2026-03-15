@@ -1,6 +1,120 @@
 <?php
 ob_start();
 
+// Enable error reporting for debugging (remove in production)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Handle AJAX request FIRST - before any HTML output
+if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
+    // Set JSON header
+    header('Content-Type: application/json');
+    header('X-Content-Type-Options: nosniff');
+    
+    try {
+        // Include necessary files
+        require_once __DIR__ . '/../includes/auth.php';
+        require_once __DIR__ . '/../includes/functions.php';
+        
+        // Check if user is logged in
+        if (!isset($_SESSION['user'])) {
+            throw new Exception('User not authenticated');
+        }
+        
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $recordsPerPage = 10;
+        $offset = ($page - 1) * $recordsPerPage;
+        
+        // Build queries
+        $countQuery = "SELECT COUNT(*) as total FROM sitio1_patients p WHERE p.deleted_at IS NULL";
+        $selectQuery = "SELECT 
+            p.id,
+            p.full_name,
+            p.age,
+            p.last_checkup,
+            e.blood_type,
+            CASE 
+                WHEN p.user_id IS NOT NULL THEN 'Registered Patient'
+                ELSE 'Regular Patient'
+            END as patient_type
+        FROM sitio1_patients p
+        LEFT JOIN existing_info_patients e ON p.id = e.patient_id
+        WHERE p.deleted_at IS NULL";
+        
+        $params = [];
+        
+        // Add search
+        if (!empty($search)) {
+            $searchTerm = "%$search%";
+            $countQuery .= " AND p.full_name LIKE ?";
+            $selectQuery .= " AND p.full_name LIKE ?";
+            $params[] = $searchTerm;
+        }
+        
+        // Add staff restriction
+        if (function_exists('staff_can_view_all') && !staff_can_view_all()) {
+            $countQuery .= " AND p.added_by = ?";
+            $selectQuery .= " AND p.added_by = ?";
+            $params[] = $_SESSION['user']['id'];
+        }
+        
+        // Get total count
+        $stmt = $pdo->prepare($countQuery);
+        if (!empty($params)) {
+            $stmt->execute($params);
+        } else {
+            $stmt->execute();
+        }
+        $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        $totalPages = ceil($totalRecords / $recordsPerPage);
+        
+        // Get paginated results
+        $selectQuery .= " ORDER BY p.full_name ASC LIMIT ? OFFSET ?";
+        $stmt = $pdo->prepare($selectQuery);
+        
+        // Bind parameters
+        $paramIndex = 1;
+        foreach ($params as $param) {
+            $stmt->bindValue($paramIndex++, $param, PDO::PARAM_STR);
+        }
+        $stmt->bindValue($paramIndex++, $recordsPerPage, PDO::PARAM_INT);
+        $stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
+        
+        $stmt->execute();
+        $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Format dates
+        foreach ($patients as &$patient) {
+            if (!empty($patient['last_checkup'])) {
+                $patient['last_checkup_formatted'] = date('M d, Y', strtotime($patient['last_checkup']));
+            }
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'patients' => $patients,
+            'totalPages' => $totalPages,
+            'currentPage' => $page,
+            'totalRecords' => $totalRecords
+        ]);
+        exit();
+        
+    } catch (Exception $e) {
+        // Log error
+        error_log("AJAX Error: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        
+        // Return error as JSON
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getMessage()
+        ]);
+        exit();
+    }
+}
+
 require_once __DIR__ . '/../includes/auth.php';
 // --- Auto-logout for staff after 1 hour of inactivity ---
 if (isStaff()) {
@@ -147,6 +261,119 @@ try {
     $civilStatusExists = $occupationExists = $sitioExists = $dateOfBirthExists =
         $phicNoExists = $bhwAssignedExists = $familyNoExists = $fourpsMemberExists = false;
     $doctorNameExists = false;
+}
+
+// Handle AJAX request for paginated patient list in export modal
+if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
+    header('Content-Type: application/json');
+    header('X-Content-Type-Options: nosniff');
+    
+    try {
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $recordsPerPage = 10; // Show 10 records per page in modal
+        $offset = ($page - 1) * $recordsPerPage;
+        
+        // Debug log
+        error_log("AJAX Request: page=$page, search=$search, offset=$offset");
+        
+        // Base query
+        $countQuery = "SELECT COUNT(*) as total FROM sitio1_patients p WHERE p.deleted_at IS NULL";
+        $selectQuery = "SELECT 
+            p.id,
+            p.full_name,
+            p.age,
+            p.last_checkup,
+            e.blood_type,
+            CASE 
+                WHEN p.user_id IS NOT NULL THEN 'Registered Patient'
+                ELSE 'Regular Patient'
+            END as patient_type
+        FROM sitio1_patients p
+        LEFT JOIN existing_info_patients e ON p.id = e.patient_id
+        WHERE p.deleted_at IS NULL";
+        
+        $params = [];
+        $countParams = [];
+        
+        // Add search condition if provided
+        if (!empty($search)) {
+            $searchTerm = "%$search%";
+            $countQuery .= " AND p.full_name LIKE ?";
+            $selectQuery .= " AND p.full_name LIKE ?";
+            $params[] = $searchTerm;
+            $countParams[] = $searchTerm;
+        }
+        
+        // Apply staff restriction if not viewing all records
+        if (!staff_can_view_all()) {
+            $countQuery .= " AND p.added_by = ?";
+            $selectQuery .= " AND p.added_by = ?";
+            $params[] = $_SESSION['user']['id'];
+            $countParams[] = $_SESSION['user']['id'];
+        }
+        
+        // Get total count
+        $stmt = $pdo->prepare($countQuery);
+        
+        // Bind parameters for count query
+        for ($i = 0; $i < count($countParams); $i++) {
+            $stmt->bindValue($i + 1, $countParams[$i], PDO::PARAM_STR);
+        }
+        
+        $stmt->execute();
+        $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        $totalPages = ceil($totalRecords / $recordsPerPage);
+        
+        // Get paginated results
+        $selectQuery .= " ORDER BY p.full_name ASC LIMIT ? OFFSET ?";
+        
+        $stmt = $pdo->prepare($selectQuery);
+        
+        // Bind parameters for select query
+        $paramIndex = 1;
+        foreach ($params as $param) {
+            $stmt->bindValue($paramIndex++, $param, PDO::PARAM_STR);
+        }
+        $stmt->bindValue($paramIndex++, $recordsPerPage, PDO::PARAM_INT);
+        $stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
+        
+        $stmt->execute();
+        $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Format the data for display
+        foreach ($patients as &$patient) {
+            if (!empty($patient['last_checkup'])) {
+                $patient['last_checkup_formatted'] = date('M d, Y', strtotime($patient['last_checkup']));
+            } else {
+                $patient['last_checkup_formatted'] = 'N/A';
+            }
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'patients' => $patients,
+            'totalPages' => $totalPages,
+            'currentPage' => $page,
+            'totalRecords' => $totalRecords
+        ]);
+        exit();
+        
+    } catch (PDOException $e) {
+        error_log("PDO Error in ajax_get_patients: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'Database error: ' . $e->getMessage()
+        ]);
+        exit();
+    } catch (Exception $e) {
+        error_log("General Error in ajax_get_patients: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ]);
+        exit();
+    }
 }
 
 // Handle form submission for editing health info
@@ -1569,16 +1796,10 @@ $viewAll = isset($_GET['view_all']) && $_GET['view_all'] == 'true';
 
 // Pagination setup
 $recordsPerPage = 5;
-if (!isset($currentPage)) {
-    $currentPage = 1;
-}
+
+// Get current page from URL, default to 1
+$currentPage = isset($_GET['page']) && is_numeric($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $offset = ($currentPage - 1) * $recordsPerPage;
-
-
-if (!isset($currentPage)) {
-    $currentPage = 1;
-}
-
 
 // Get total count of patients based on filter
 try {
@@ -1833,7 +2054,31 @@ if (!empty($searchTerm)) {
     <link rel="stylesheet" href="/asssets/css/normalize.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <style>
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
 
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .patient-checkbox {
+            cursor: pointer;
+        }
+        
+        #exportPagination {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50">
@@ -1878,8 +2123,6 @@ if (!empty($searchTerm)) {
                                 fill="#FFFFFF" />
                         </svg>
                         Add New Records
-                    </button>
-                    <!-- ...existing code... -->
                     </button>
                 </div>
                 <a href="deleted_patients.php"
@@ -2430,7 +2673,7 @@ if (!empty($searchTerm)) {
                                                 </thead>
                                                 <tbody>
                                                     <?php foreach ($allPatients as $index => $patient): ?>
-                                                        <tr>
+                                                        <tr data-patient-id="<?= $patient['id'] ?>">
                                                             <?php if ($manualSelectMode): ?>
                                                                 <td class="checkbox-column">
                                                                     <input type="checkbox" name="selected_patients[]"
@@ -2615,28 +2858,28 @@ if (!empty($searchTerm)) {
                                         ?>
 
                                         <!-- Previous Button -->
-                                        <a href="?tab=patients-tab&page=<?= $currentPage - 1 ?><?= $queryString ?>"
-                                            class="pagination-btn<?= ($currentPage <= 1 ? ' disabled' : '') ?>" style="margin: 0 4px;">
-                                            <i class="fas fa-chevron-left"></i>
-                                        </a>
+<a href="?tab=patients-tab&page=<?= $currentPage - 1 ?><?= $queryString ?>"
+    class="pagination-btn<?= ($currentPage <= 1 ? ' disabled' : '') ?>" style="margin: 0 4px;">
+    <i class="fas fa-chevron-left"></i>
+</a>
 
-                                        <!-- Page Numbers -->
-                                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                                            <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
-                                                <a href="?tab=patients-tab&page=<?= $i ?><?= $queryString ?>"
-                                                    class="pagination-btn<?= ($i == $currentPage ? ' active' : '') ?>" style="font-size: 1.1rem;">
-                                                    <?= $i ?>
-                                                </a>
-                                            <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
-                                                <span class="pagination-btn disabled" style="pointer-events: none;">...</span>
-                                            <?php endif; ?>
-                                        <?php endfor; ?>
+<!-- Page Numbers -->
+<?php for ($i = 1; $i <= $totalPages; $i++): ?>
+    <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
+        <a href="?tab=patients-tab&page=<?= $i ?><?= $queryString ?>"
+            class="pagination-btn<?= ($i == $currentPage ? ' active' : '') ?>" style="font-size: 1.1rem;">
+            <?= $i ?>
+        </a>
+    <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
+        <span class="pagination-btn disabled" style="pointer-events: none;">...</span>
+    <?php endif; ?>
+<?php endfor; ?>
 
-                                        <!-- Next Button -->
-                                        <a href="?tab=patients-tab&page=<?= $currentPage + 1 ?><?= $queryString ?>"
-                                            class="pagination-btn<?= ($currentPage >= $totalPages ? ' disabled' : '') ?>" style="margin: 0 4px;">
-                                            <i class="fas fa-chevron-right"></i>
-                                        </a>
+<!-- Next Button -->
+<a href="?tab=patients-tab&page=<?= $currentPage + 1 ?><?= $queryString ?>"
+    class="pagination-btn<?= ($currentPage >= $totalPages ? ' disabled' : '') ?>" style="margin: 0 4px;">
+    <i class="fas fa-chevron-right"></i>
+</a>
                                     </div>
 
                                     <!-- Update the View All button in the header -->
@@ -2740,6 +2983,7 @@ Save All Information
             </div>
         </div>
     </div>
+    
     <!-- Global Success Modal -->
     <div id="successModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100]"
         style="display:none; opacity:0; transition:opacity 0.3s;">
@@ -2752,6 +2996,7 @@ Save All Information
                 class='px-8 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition font-medium'>OK</button>
         </div>
     </div>
+    
     <div id="presentPregnantModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal"
         style="display:none;">
 
@@ -3063,7 +3308,7 @@ Save All Information
                                 </div>
                             </div>
                         </button>
-                        <!-- PDF Export Button (Red) -->
+                        <!-- Specific Record Button (Blue) -->
                         <button onclick="openManualSelectionModal()"
                             class="w-1/2 rounded-md transition-all group cursor-pointer flex justify-center items-center gap-4 px-6 py-4" style="background-color: #3C96E14D;">
                             <div class="flex flex-col md:flex-row items-center gap-4">
@@ -3080,25 +3325,6 @@ Save All Information
                     </div>
                 </div>
                 <div class="my-8"></div>
-                <!-- Manual Selection Section -->
-                <!-- <div>
-                    <h4 class="text-lg font-bold text-[#2E5C8A] mb-4 flex items-center gap-2">
-                        <i class="fas fa-hand-pointer"></i>
-                        Select Specific Patients
-                    </h4>
-                    <p class="text-[#666666] text-sm mb-6">Choose individual patients to export. Ideal for targeted reports and focused data sharing.</p>
-                    <button onclick="openManualSelectionModal()"
-                        class="w-full p-6 rounded-xl shadow-lg bg-[#F8FBFF] hover:bg-[#E8F0FE] transition-all group cursor-pointer flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-users text-3xl text-[#4A90E2]"></i>
-                            <div class="text-left">
-                                <h5 class="font-bold text-[#2E5C8A]">Choose Specific Patients</h5>
-                                <p class="text-sm text-[#666666]">Select individual records for export</p>
-                            </div>
-                        </div>
-                        <i class="fas fa-chevron-right text-[#4A90E2] text-xl"></i>
-                    </button>
-                </div> -->
                 <!-- Info Box -->
                 <div class="py-3 justify-center flex items-center">
                     <p class="text-base" style="color: #51515199">
@@ -3117,106 +3343,132 @@ Save All Information
         </div>
     </div>
 
-    <!-- Manual Selection Modal (Warm Blue & White) -->
-    <div id="manualSelectionModal"
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal"
-        style="display: none;">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-            <!-- Sticky Header - Warm Blue -->
-            <div class="sticky top-0 z-20 px-10 py-8 flex items-center justify-between">
-                <h3 class="text-2xl font-medium flex border-b-2 border-gray-300 w-full pb-6 items-center gap-3">
-                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 2.8125C12.5895 2.8125 10.2332 3.52728 8.22899 4.86646C6.22477 6.20564 4.66267 8.10907 3.74022 10.336C2.81778 12.563 2.57643 15.0135 3.04668 17.3777C3.51694 19.7418 4.67769 21.9134 6.38214 23.6179C8.08659 25.3223 10.2582 26.4831 12.6223 26.9533C14.9865 27.4236 17.437 27.1822 19.664 26.2598C21.8909 25.3373 23.7944 23.7752 25.1335 21.771C26.4727 19.7668 27.1875 17.4105 27.1875 15C27.1841 11.7687 25.899 8.67076 23.6141 6.3859C21.3292 4.10104 18.2313 2.81591 15 2.8125ZM15 25.3125C12.9604 25.3125 10.9666 24.7077 9.27069 23.5745C7.5748 22.4414 6.25303 20.8308 5.4725 18.9464C4.69197 17.0621 4.48775 14.9886 4.88566 12.9881C5.28357 10.9877 6.26574 9.15019 7.70797 7.70796C9.1502 6.26573 10.9877 5.28356 12.9881 4.88565C14.9886 4.48774 17.0621 4.69196 18.9464 5.47249C20.8308 6.25302 22.4414 7.5748 23.5745 9.27068C24.7077 10.9666 25.3125 12.9604 25.3125 15C25.3094 17.7341 24.2219 20.3553 22.2886 22.2886C20.3553 24.2219 17.7341 25.3094 15 25.3125ZM15 8.4375C13.7021 8.4375 12.4333 8.82238 11.3541 9.54348C10.2749 10.2646 9.43375 11.2895 8.93705 12.4886C8.44035 13.6878 8.31039 15.0073 8.5636 16.2803C8.81682 17.5533 9.44183 18.7226 10.3596 19.6404C11.2774 20.5582 12.4467 21.1832 13.7197 21.4364C14.9927 21.6896 16.3122 21.5597 17.5114 21.063C18.7105 20.5663 19.7354 19.7251 20.4565 18.6459C21.1776 17.5667 21.5625 16.2979 21.5625 15C21.5606 13.2601 20.8686 11.592 19.6383 10.3617C18.408 9.13136 16.7399 8.43936 15 8.4375ZM15 19.6875C14.0729 19.6875 13.1666 19.4126 12.3958 18.8975C11.6249 18.3824 11.0241 17.6504 10.6693 16.7938C10.3145 15.9373 10.2217 14.9948 10.4026 14.0855C10.5834 13.1762 11.0299 12.341 11.6854 11.6854C12.341 11.0299 13.1762 10.5834 14.0855 10.4026C14.9948 10.2217 15.9373 10.3145 16.7938 10.6693C17.6504 11.0241 18.3824 11.6249 18.8975 12.3958C19.4126 13.1666 19.6875 14.0729 19.6875 15C19.6875 16.2432 19.1936 17.4355 18.3146 18.3146C17.4355 19.1936 16.2432 19.6875 15 19.6875Z" fill="#3C96E1" />
-                    </svg>
-                    <span style="color: #387EC3;">Specific Records</span>
-                </h3>
-                <button onclick="closeManualSelectionModal()" class="text-white hover:text-gray-200 text-2xl transition">
-                    <i class="fas fa-times"></i>
-                </button>
+    <!-- Manual Selection Modal (Warm Blue & White) with Search and Pagination -->
+<div id="manualSelectionModal"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal"
+    style="display: none;">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Sticky Header -->
+        <div class="sticky top-0 z-20 px-10 py-8 flex items-center justify-between bg-white border-b">
+            <h3 class="text-2xl font-medium flex items-center gap-3">
+                <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 2.8125C12.5895 2.8125 10.2332 3.52728 8.22899 4.86646C6.22477 6.20564 4.66267 8.10907 3.74022 10.336C2.81778 12.563 2.57643 15.0135 3.04668 17.3777C3.51694 19.7418 4.67769 21.9134 6.38214 23.6179C8.08659 25.3223 10.2582 26.4831 12.6223 26.9533C14.9865 27.4236 17.437 27.1822 19.664 26.2598C21.8909 25.3373 23.7944 23.7752 25.1335 21.771C26.4727 19.7668 27.1875 17.4105 27.1875 15C27.1841 11.7687 25.899 8.67076 23.6141 6.3859C21.3292 4.10104 18.2313 2.81591 15 2.8125ZM15 25.3125C12.9604 25.3125 10.9666 24.7077 9.27069 23.5745C7.5748 22.4414 6.25303 20.8308 5.4725 18.9464C4.69197 17.0621 4.48775 14.9886 4.88566 12.9881C5.28357 10.9877 6.26574 9.15019 7.70797 7.70796C9.1502 6.26573 10.9877 5.28356 12.9881 4.88565C14.9886 4.48774 17.0621 4.69196 18.9464 5.47249C20.8308 6.25302 22.4414 7.5748 23.5745 9.27068C24.7077 10.9666 25.3125 12.9604 25.3125 15C25.3094 17.7341 24.2219 20.3553 22.2886 22.2886C20.3553 24.2219 17.7341 25.3094 15 25.3125ZM15 8.4375C13.7021 8.4375 12.4333 8.82238 11.3541 9.54348C10.2749 10.2646 9.43375 11.2895 8.93705 12.4886C8.44035 13.6878 8.31039 15.0073 8.5636 16.2803C8.81682 17.5533 9.44183 18.7226 10.3596 19.6404C11.2774 20.5582 12.4467 21.1832 13.7197 21.4364C14.9927 21.6896 16.3122 21.5597 17.5114 21.063C18.7105 20.5663 19.7354 19.7251 20.4565 18.6459C21.1776 17.5667 21.5625 16.2979 21.5625 15C21.5606 13.2601 20.8686 11.592 19.6383 10.3617C18.408 9.13136 16.7399 8.43936 15 8.4375ZM15 19.6875C14.0729 19.6875 13.1666 19.4126 12.3958 18.8975C11.6249 18.3824 11.0241 17.6504 10.6693 16.7938C10.3145 15.9373 10.2217 14.9948 10.4026 14.0855C10.5834 13.1762 11.0299 12.341 11.6854 11.6854C12.341 11.0299 13.1762 10.5834 14.0855 10.4026C14.9948 10.2217 15.9373 10.3145 16.7938 10.6693C17.6504 11.0241 18.3824 11.6249 18.8975 12.3958C19.4126 13.1666 19.6875 14.0729 19.6875 15C19.6875 16.2432 19.1936 17.4355 18.3146 18.3146C17.4355 19.1936 16.2432 19.6875 15 19.6875Z" fill="#3C96E1" />
+                </svg>
+                <span style="color: #387EC3;">Select Specific Records to Export</span>
+            </h3>
+            <button onclick="closeManualSelectionModal()" class="text-gray-500 hover:text-gray-700 text-2xl transition">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="px-10 flex-1 overflow-y-auto py-6">
+            <!-- Search Bar -->
+            <div class="mb-6">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" 
+                           id="exportPatientSearch" 
+                           placeholder="Search patients by name..." 
+                           class="w-full pl-12 pr-4 py-3 border border-[#3C96E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                           oninput="debounceSearchExportPatients()">
+                </div>
             </div>
-
-            <!-- Scrollable Content - White -->
-            <div class="px-10 flex-1 overflow-y-auto ">
-                <form id="manualExportForm" method="POST" action="">
-                    <!-- Selection Controls -->
-                    <div class="mb-6">
-                        <div class="flex items-center justify-between flex-wrap gap-4">
-                            <div>
-                                <h4 class="font-medium text-xl flex items-center gap-2">
-                                    Record Selection
-                                </h4>
-                                <p class="text-sm text-[#666666] mt-2">
-                                    <span class="font-medium text-lg">Selected Record:</span>
-                                    <span id="selectedCount" class="font-medium
-                                     text-lg text-[#3C96E1]">0</span>
-                                </p>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <label class="flex items-center gap-2 cursor-pointer px-4 rounded-lg hover:bg-[#D4E3F7] transition">
-                                    <input type="checkbox" id="selectAllPatients"
-                                        class="patient-checkbox select-all-checkbox w-5 h-5 accent-[#4A90E2]"
-                                        onchange="toggleAllPatients(this)">
-                                    <span class="font-medium text-[#357ABD]">Select All</span>
-                                </label>
-                            </div>
-                        </div>
-                        <!-- Searchbar for patient selection -->
-                        <!-- <div class="mt-4 flex items-center gap-3">
-                            <input type="text" id="patientSearchInput" placeholder="Search patient name..." class="search-input w-full py-3 px-6 text-base font-normal rounded-md focus:outline-none border border-[#3C96E1] focus:ring-2 focus:ring-blue-400 focus:border-blue-500">
-                            <button type="button" id="patientSearchBtn" class="btn-primary inline-flex items-center py-3 px-6 ml-2">
-                                Search
-                            </button>
-                        </div> -->
-
+            
+            <!-- Selection Controls -->
+            <div class="mb-4">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <p class="text-sm text-[#666666]">
+                            <span class="font-medium text-lg">Selected:</span>
+                            <span id="selectedCount" class="font-medium text-lg text-[#3C96E1]">0</span> patients
+                        </p>
                     </div>
-
-                    <!-- Patients Table -->
-                    <div class=" overflow-hidden">
-                        <div class="scrollable-table-container" style="max-height: 400px; border-radius: 10px;">
-                            <table class="patient-table w-full">
-                                <thead>
-                                    <tr class="bg-[#F8FBFF] border-b-2 sticky top-0">
-                                        <th class="checkbox-column w-12 text-center py-3"></th>
-                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Name</th>
-                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Age</th>
-                                        <!-- <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Blood Type</th> -->
-                                        <!-- <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Type</th> -->
-                                        <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Last Check-up</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="patientSelectionList">
-                                    <!-- Populated by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Sticky Footer -->
-            <div class="w-full px-10 py-10 sticky bottom-0 flex items-center justify-between">
-                <div class="flex flex-col md:flex-row gap-3 justify-between items-center w-full">
-                    <div class="flex flex-wrap gap-3 order-2 md:order-1">
-                        <button type="button" onclick="confirmManualExport('excel')"
-                            class="btn-primary px-6 py-3 rounded-lg  hover:from-[#357ABD] hover:to-[#2E5C8A] text-white transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg" style="background-color: #10B981;">
-                            <i class="fas fa-file-excel"></i>Export as Excel
-                        </button>
-                        <button type="button" onclick="confirmManualExport('pdf')"
-                            class="btn-primary px-6 py-3 rounded-lg hover:from-[#357ABD] hover:to-[#2E5C8A] text-white transition font-medium flex items-center gap-2 shadow-md hover:shadow-lg" style="background-color: #DC2626;">
-                            <i class="fas fa-file-pdf"></i>Export as PDF
-                        </button>
-                    </div>
-                    <div class="order-1 md:order-2">
-                        <button type="button" onclick="closeManualSelectionModal()"
-                            class="px-6 py-3 rounded-lg text-[#3C96E1] hover:bg-[#F8FBFF] transition text-lg font-medium" style="background-color: #3C96E14D;">
-                            <i class="fas fa-times mr-2"></i>Cancel
-                        </button>
+                    <div class="flex items-center gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer px-4 rounded-lg hover:bg-[#D4E3F7] transition">
+                            <input type="checkbox" id="selectAllPatients"
+                                class="patient-checkbox select-all-checkbox w-5 h-5 accent-[#4A90E2]"
+                                onchange="toggleAllPatients(this)">
+                            <span class="font-medium text-[#357ABD]">Select All on Current Page</span>
+                        </label>
                     </div>
                 </div>
             </div>
 
+            <!-- Patients Table -->
+            <div class="overflow-hidden border rounded-lg">
+                <div class="scrollable-table-container" style="max-height: 350px;">
+                    <table class="patient-table w-full">
+                        <thead class="bg-[#F8FBFF] sticky top-0">
+                            <tr>
+                                <th class="checkbox-column w-12 text-center py-3 px-2"></th>
+                                <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Patient Name</th>
+                                <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Age</th>
+                                <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Last Check-up</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientSelectionList">
+                            <!-- Populated by JavaScript -->
+                            <tr>
+                                <td colspan="4" class="text-center py-8">
+                                    <div class="flex justify-center items-center">
+                                        <div class="loading-spinner mr-3"></div>
+                                        <span class="text-gray-600">Loading patients...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination will be inserted here dynamically -->
+            <div id="exportPagination"></div>
         </div>
+
+        <!-- Sticky Footer -->
+<div class="w-full px-10 py-6 sticky bottom-0 bg-white border-t flex items-center justify-between">
+    <div class="flex items-center gap-4">
+        <!-- Back Button - Navigates to Export Modal -->
+        <button type="button" onclick="goBackToExportModal()" 
+            class="inline-flex items-center px-4 py-2 rounded-lg border border-[#3C96E1] text-[#3C96E1] hover:bg-[#F0F7FF] transition font-medium bg-white">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Export Options
+        </button>
+        
+        <span class="text-sm text-gray-600">
+            <i class="fas fa-info-circle mr-1 text-blue-500"></i>
+            Select patients to export as Excel or PDF
+        </span>
     </div>
+    <div class="flex gap-3">
+        <!-- Export Excel Button - Green -->
+        <button type="button" onclick="confirmManualExport('excel')"
+            class="inline-flex items-center px-6 py-3 rounded-lg text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
+            style="background-color: #10B981; border: none;">
+            <i class="fas fa-file-excel mr-2"></i>
+            Export as Excel
+        </button>
+        
+        <!-- Export PDF Button - Red -->
+        <button type="button" onclick="confirmManualExport('pdf')"
+            class="inline-flex items-center px-6 py-3 rounded-lg text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
+            style="background-color: #DC2626; border: none;">
+            <i class="fas fa-file-pdf mr-2"></i>
+            Export as PDF
+        </button>
+        
+        <!-- Cancel Button -->
+        <button type="button" onclick="closeManualSelectionModal()"
+            class="px-6 py-3 rounded-lg border border-[#3C96E1] text-[#3C96E1] hover:bg-[#F8FBFF] transition font-medium bg-white">
+            Cancel
+        </button>
+    </div>
+</div>
+    </div>
+</div>
 
     <!-- Consultation Note Modal -->
     <div id="consultationNoteModal"
@@ -3225,7 +3477,7 @@ Save All Information
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Sticky Header -->
             <div class="sticky top-0 z-20 px-10 py-6 flex items-center">
-                <h3 class="text-2xl font-sm flex mt-3 border-b-2 border-gray-300 pb-6  text-center w-full items-center text-white">
+                <h3 class="text-2xl font-sm flex mt-3 border-b-2 border-gray-100 pb-6  text-center w-full items-center text-white">
                     <svg width="40" height="40" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M15 2.8125C12.5895 2.8125 10.2332 3.52728 8.22899 4.86646C6.22477 6.20564 4.66267 8.10907 3.74022 10.336C2.81778 12.563 2.57643 15.0135 3.04668 17.3777C3.51694 19.7418 4.67769 21.9134 6.38214 23.6179C8.08659 25.3223 10.2582 26.4831 12.6223 26.9533C14.9865 27.4236 17.437 27.1822 19.664 26.2598C21.8909 25.3373 23.7944 23.7752 25.1335 21.771C26.4727 19.7668 27.1875 17.4105 27.1875 15C27.1841 11.7687 25.899 8.67076 23.6141 6.3859C21.3292 4.10104 18.2313 2.81591 15 2.8125ZM15 25.3125C12.9604 25.3125 10.9666 24.7077 9.27069 23.5745C7.5748 22.4414 6.25303 20.8308 5.4725 18.9464C4.69197 17.0621 4.48775 14.9886 4.88566 12.9881C5.28357 10.9877 6.26574 9.15019 7.70797 7.70796C9.1502 6.26573 10.9877 5.28356 12.9881 4.88565C14.9886 4.48774 17.0621 4.69196 18.9464 5.47249C20.8308 6.25302 22.4414 7.5748 23.5745 9.27068C24.7077 10.9666 25.3125 12.9604 25.3125 15C25.3094 17.7341 24.2219 20.3553 22.2886 22.2886C20.3553 24.2219 17.7341 25.3094 15 25.3125ZM20.625 15C20.625 15.2486 20.5262 15.4871 20.3504 15.6629C20.1746 15.8387 19.9361 15.9375 19.6875 15.9375H15.9375V19.6875C15.9375 19.9361 15.8387 20.1746 15.6629 20.3504C15.4871 20.5262 15.2486 20.625 15 20.625C14.7514 20.625 14.5129 20.5262 14.3371 20.3504C14.1613 20.1746 14.0625 19.9361 14.0625 19.6875V15.9375H10.3125C10.0639 15.9375 9.82541 15.8387 9.64959 15.6629C9.47378 15.4871 9.375 15.2486 9.375 15C9.375 14.7514 9.47378 14.5129 9.64959 14.3371C9.82541 14.1613 10.0639 14.0625 10.3125 14.0625H14.0625V10.3125C14.0625 10.0639 14.1613 9.8254 14.3371 9.64959C14.5129 9.47377 14.7514 9.375 15 9.375C15.2486 9.375 15.4871 9.47377 15.6629 9.64959C15.8387 9.8254 15.9375 10.0639 15.9375 10.3125V14.0625H19.6875C19.9361 14.0625 20.1746 14.1613 20.3504 14.3371C20.5262 14.5129 20.625 14.7514 20.625 15Z" fill="#007BFF" />
                     </svg>
@@ -3238,7 +3490,7 @@ Save All Information
             </div>
 
             <!-- Scrollable Content -->
-            <div class="px-10 py-6 bg-gray-50 flex-1 overflow-y-auto">
+            <div class="px-10 py-4 bg-gray-50 flex-1 overflow-y-auto">
                 <div id="consultationNoteContent">
                     <!-- Add Note Form -->
                     <form id="addNoteForm" method="POST" action="">
@@ -3295,13 +3547,13 @@ Save All Information
             <!-- Footer -->
             <div class="p-6 border-t border-gray-200 bg-white">
                 <div class="flex justify-between items-center">
-                    <button type="button" onclick="closeConsultationNoteModal()" class="btn-gray px-6 py-3">
+                    <button type="button" onclick="closeConsultationNoteModal()" class="btn-gray px-6">
                         <i class="fas fa-times mr-2"></i>Cancel
                     </button>
 
                     <!-- Add Note Button (shown when in Add mode) -->
                     <div id="addNoteActions">
-                        <button type="button" onclick="saveConsultationNote()" class="btn-add-note px-6 py-3 gap-2">
+                        <button type="button" onclick="saveConsultationNote()" class="btn-add-note px-6 py-6 gap-2">
                             <svg width="30" height="30" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M17.2899 3.21909L6.60528 1.33237C6.26252 1.27205 5.90984 1.35034 5.62479 1.55001C5.33974 1.74968 5.14567 2.05439 5.08524 2.39713L2.64481 16.2604C2.61496 16.4302 2.61887 16.6043 2.65632 16.7726C2.69377 16.9409 2.76401 17.1002 2.86305 17.2414C2.96208 17.3826 3.08796 17.5028 3.2335 17.5953C3.37903 17.6878 3.54136 17.7507 3.71122 17.7805L14.3958 19.6672C14.5657 19.6971 14.7398 19.6933 14.9082 19.6559C15.0767 19.6185 15.236 19.5483 15.3773 19.4493C15.5186 19.3502 15.6389 19.2243 15.7314 19.0787C15.824 18.9331 15.8869 18.7707 15.9166 18.6008L18.3571 4.73748C18.4169 4.39461 18.338 4.04204 18.1379 3.75729C17.9377 3.47255 17.6327 3.27895 17.2899 3.21909ZM14.6222 18.3744L3.93681 16.4876L6.37723 2.62436L17.0618 4.51108L14.6222 18.3744ZM7.32798 4.79163C7.35837 4.62032 7.45555 4.4681 7.59815 4.36842C7.74074 4.26874 7.91708 4.22977 8.08841 4.26006L14.897 5.46182C15.0588 5.49017 15.2041 5.57817 15.3042 5.70845C15.4043 5.83873 15.4518 6.0018 15.4375 6.16545C15.4232 6.3291 15.348 6.48143 15.2268 6.59234C15.1056 6.70325 14.9473 6.76467 14.783 6.76448C14.7445 6.76442 14.7061 6.76113 14.6681 6.75463L7.85954 5.55206C7.68823 5.52166 7.53601 5.42448 7.43633 5.28188C7.33666 5.13929 7.29768 4.96295 7.32798 4.79163ZM6.87352 7.37725C6.88848 7.29236 6.92002 7.21124 6.96633 7.13853C7.01264 7.06583 7.07283 7.00296 7.14345 6.95352C7.21406 6.90408 7.29373 6.86904 7.37789 6.8504C7.46205 6.83175 7.54906 6.82987 7.63395 6.84487L14.4425 8.04745C14.6055 8.0747 14.7522 8.16241 14.8533 8.29307C14.9544 8.42373 15.0025 8.58772 14.988 8.7523C14.9735 8.91688 14.8975 9.06993 14.7751 9.1809C14.6527 9.29187 14.4929 9.35258 14.3277 9.35092C14.2889 9.351 14.2502 9.34743 14.212 9.34026L7.40345 8.1385C7.23227 8.10773 7.08032 8.01027 6.98096 7.86753C6.88159 7.7248 6.84295 7.54846 6.87352 7.37725ZM6.41825 9.96206C6.44922 9.7912 6.54664 9.63959 6.68917 9.54042C6.83169 9.44125 7.00772 9.40261 7.17868 9.43295L10.5813 10.031C10.7431 10.0593 10.8883 10.1472 10.9884 10.2774C11.0885 10.4076 11.1361 10.5706 11.1219 10.7342C11.1077 10.8978 11.0326 11.0501 10.9116 11.1611C10.7906 11.272 10.6323 11.3336 10.4681 11.3336C10.4296 11.3336 10.3912 11.3303 10.3533 11.3238L6.94899 10.7225C6.77784 10.6919 6.62582 10.5946 6.52631 10.4521C6.4268 10.3095 6.38794 10.1333 6.41825 9.96206Z" fill="white"/>
 </svg>
@@ -3742,6 +3994,341 @@ Save Note
                 };
             })(window.openAddPatientModal);
         });
+
+        // Variables for pagination in export modal
+let currentExportPage = 1;
+let totalExportPages = 1;
+let currentExportSearch = '';
+let isLoadingPatients = false;
+
+// Populate patient list in manual selection modal with pagination and search
+function populatePatientSelectionList(page = 1, search = '') {
+    const tbody = document.getElementById('patientSelectionList');
+    if (!tbody) return;
+    
+    // Prevent multiple simultaneous requests
+    if (isLoadingPatients) return;
+    
+    currentExportPage = page;
+    currentExportSearch = search;
+    isLoadingPatients = true;
+    
+    // Show loading state
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="4" class="text-center py-8">
+                <div class="flex justify-center items-center">
+                    <div class="loading-spinner mr-3"></div>
+                    <span class="text-gray-600">Loading patients...</span>
+                </div>
+            </td>
+        </tr>
+    `;
+    
+    // Build URL with parameters
+    let url = window.location.pathname + '?ajax_get_patients=1&page=' + page;
+    if (search) {
+        url += '&search=' + encodeURIComponent(search);
+    }
+    
+    console.log('Fetching patients from:', url); // Debug log
+    
+    // Fetch patients via AJAX with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    fetch(url, { signal: controller.signal })
+        .then(response => {
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            isLoadingPatients = false;
+            if (data.success) {
+                renderPatientTable(data.patients, data.totalPages, data.currentPage, data.totalRecords);
+            } else {
+                showErrorMessage('Error loading patients: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            isLoadingPatients = false;
+            clearTimeout(timeoutId);
+            console.error('Error loading patients:', error);
+            
+            if (error.name === 'AbortError') {
+                showErrorMessage('Request timeout. Please try again.');
+            } else {
+                showErrorMessage('Network error: ' + error.message + '. Please check your connection and try again.');
+            }
+        });
+}
+
+// Show error message in table
+function showErrorMessage(message) {
+    const tbody = document.getElementById('patientSelectionList');
+    if (!tbody) return;
+    
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="4" class="text-center py-8">
+                <div class="flex flex-col items-center justify-center text-red-500">
+                    <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                    <span class="text-lg font-medium">${message}</span>
+                    <button onclick="populatePatientSelectionList(1, '${currentExportSearch}')" 
+                            class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        <i class="fas fa-redo mr-2"></i>Try Again
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+// Render patient table with pagination
+function renderPatientTable(patients, totalPages, currentPage, totalRecords) {
+    const tbody = document.getElementById('patientSelectionList');
+    if (!tbody) return;
+    
+    totalExportPages = totalPages;
+    
+    if (!patients || patients.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center py-8 text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-3 block"></i>
+                    No patients found
+                </td>
+            </tr>
+        `;
+        updatePaginationControls();
+        return;
+    }
+    
+    let html = '';
+    patients.forEach(patient => {
+        const lastCheckup = patient.last_checkup_formatted || patient.last_checkup || 'N/A';
+        
+        html += `
+            <tr class="border-b border-[#E8F0FE] hover:bg-[#F8FBFF] transition">
+                <td class="checkbox-column px-4 py-3 text-center">
+                    <input type="checkbox" class="patient-select w-5 h-5 accent-[#4A90E2]" 
+                           value="${patient.id}" onchange="updateSelectedCount(); updateFooterCount()">
+                </td>
+                <td class="px-6 py-3 text-[#2E5C8A] font-medium">${escapeHtml(patient.full_name)}</td>
+                <td class="px-6 py-3 text-[#666666]">${patient.age || '-'}</td>
+                <td class="px-6 py-3 text-[#888888] text-sm">${lastCheckup}</td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+    updatePaginationControls();
+    updateSelectedCount();
+}
+
+// Update pagination controls in the modal
+function updatePaginationControls() {
+    // Check if pagination container exists, if not create it
+    let paginationContainer = document.getElementById('exportPagination');
+    if (!paginationContainer) {
+        const modalContent = document.querySelector('#manualSelectionModal .flex-1.overflow-y-auto');
+        if (modalContent) {
+            paginationContainer = document.createElement('div');
+            paginationContainer.id = 'exportPagination';
+            paginationContainer.className = 'flex items-center justify-between mt-4 py-3 border-t border-gray-200';
+            modalContent.appendChild(paginationContainer);
+        }
+    }
+    
+    if (!paginationContainer) return;
+    
+    if (totalExportPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    // Build pagination HTML
+    let paginationHtml = `
+        <div class="flex items-center text-sm text-gray-600">
+            <span>Page ${currentExportPage} of ${totalExportPages}</span>
+        </div>
+        <div class="flex items-center gap-2">
+    `;
+    
+    // Previous button
+    paginationHtml += `
+        <button onclick="changeExportPage(${currentExportPage - 1})" 
+                class="px-3 py-1 rounded border ${currentExportPage <= 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-50 text-blue-600'}"
+                ${currentExportPage <= 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left text-sm"></i>
+        </button>
+    `;
+    
+    // Page numbers (show limited range)
+    const startPage = Math.max(1, currentExportPage - 2);
+    const endPage = Math.min(totalExportPages, currentExportPage + 2);
+    
+    if (startPage > 1) {
+        paginationHtml += `<button onclick="changeExportPage(1)" class="px-3 py-1 rounded border hover:bg-blue-50 text-blue-600">1</button>`;
+        if (startPage > 2) {
+            paginationHtml += `<span class="px-2">...</span>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHtml += `
+            <button onclick="changeExportPage(${i})" 
+                    class="px-3 py-1 rounded border ${i === currentExportPage ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-blue-600'}">
+                ${i}
+            </button>
+        `;
+    }
+    
+    if (endPage < totalExportPages) {
+        if (endPage < totalExportPages - 1) {
+            paginationHtml += `<span class="px-2">...</span>`;
+        }
+        paginationHtml += `<button onclick="changeExportPage(${totalExportPages})" class="px-3 py-1 rounded border hover:bg-blue-50 text-blue-600">${totalExportPages}</button>`;
+    }
+    
+    // Next button
+    paginationHtml += `
+        <button onclick="changeExportPage(${currentExportPage + 1})" 
+                class="px-3 py-1 rounded border ${currentExportPage >= totalExportPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-50 text-blue-600'}"
+                ${currentExportPage >= totalExportPages ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right text-sm"></i>
+        </button>
+    `;
+    
+    paginationHtml += `</div>`;
+    
+    paginationContainer.innerHTML = paginationHtml;
+}
+
+// Change page in export modal
+function changeExportPage(newPage) {
+    if (newPage < 1 || newPage > totalExportPages || isLoadingPatients) return;
+    populatePatientSelectionList(newPage, currentExportSearch);
+}
+
+// Update selected count in modal
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
+    const countElement = document.getElementById('selectedCount');
+    if (countElement) {
+        countElement.textContent = checkboxes.length;
+    }
+
+    // Update select all checkbox state
+    const selectAllCheckbox = document.getElementById('selectAllPatients');
+    const allCheckboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
+    if (selectAllCheckbox && allCheckboxes.length > 0) {
+        selectAllCheckbox.checked = checkboxes.length === allCheckboxes.length;
+        selectAllCheckbox.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
+    }
+}
+
+// Update footer count
+function updateFooterCount() {
+    const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
+    const footerCount = document.getElementById('footerCount');
+    if (footerCount) {
+        footerCount.textContent = checkboxes.length;
+    }
+}
+
+// Toggle all patients for export
+function toggleAllPatients(checkbox) {
+    const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+    updateSelectedCount();
+    updateFooterCount();
+}
+
+// Open manual selection modal
+function openManualSelectionModal() {
+    closeExportModal();
+
+    const modal = document.getElementById('manualSelectionModal');
+    if (!modal) {
+        console.error('Manual selection modal not found');
+        showNotification('error', 'Modal not found. Please refresh the page.');
+        return;
+    }
+
+    modal.style.display = 'flex';
+    modal.style.opacity = '0';
+
+    setTimeout(() => {
+        modal.style.opacity = '1';
+        modal.style.transition = 'opacity 0.3s ease';
+        // Reset to first page and clear search
+        currentExportPage = 1;
+        currentExportSearch = '';
+        
+        // Clear search input if it exists
+        const searchInput = document.getElementById('exportPatientSearch');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        
+        // Load patients
+        populatePatientSelectionList(1, '');
+    }, 10);
+}
+
+// Close manual selection modal
+function closeManualSelectionModal() {
+    const modal = document.getElementById('manualSelectionModal');
+    if (modal) {
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.display = 'none';
+            // Reset loading state
+            isLoadingPatients = false;
+        }, 300);
+    }
+}
+
+// Search patients in export modal
+function searchExportPatients() {
+    const searchInput = document.getElementById('exportPatientSearch');
+    if (!searchInput) return;
+    
+    const searchTerm = searchInput.value.trim();
+    currentExportSearch = searchTerm;
+    currentExportPage = 1;
+    
+    populatePatientSelectionList(1, searchTerm);
+}
+
+// Debounce search to avoid too many requests
+let searchTimeout;
+function debounceSearchExportPatients() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        searchExportPatients();
+    }, 500);
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.toString().replace(/[&<>"']/g, m => map[m]);
+}
+
         // Consultation Notes Variables
         let currentPatientId = null;
         let hasNotes = false;
@@ -4059,115 +4646,6 @@ Save Note
             }
         }
 
-        // Open manual selection modal from export modal
-        function openManualSelectionModal() {
-            closeExportModal();
-
-            const modal = document.getElementById('manualSelectionModal');
-            if (!modal) {
-                console.error('Manual selection modal not found');
-                return;
-            }
-
-            modal.style.display = 'flex';
-            modal.style.opacity = '0';
-
-            setTimeout(() => {
-                modal.style.opacity = '1';
-                modal.style.transition = 'opacity 0.3s ease';
-                populatePatientSelectionList();
-            }, 10);
-        }
-
-        function closeManualSelectionModal() {
-            const modal = document.getElementById('manualSelectionModal');
-            if (modal) {
-                modal.style.opacity = '0';
-                setTimeout(() => {
-                    modal.style.display = 'none';
-                }, 300);
-            }
-        }
-
-        // Populate patient list in manual selection modal
-        function populatePatientSelectionList() {
-            const tbody = document.getElementById('patientSelectionList');
-            if (!tbody) return;
-
-            // Get all patient rows from the main resident patient table (all records)
-            // This assumes the main table contains all resident patient records
-            // If there is pagination, you may need to fetch all records from the backend or ensure all are rendered in the DOM
-            const patientRows = document.querySelectorAll('#patients-tab table.patient-table tbody tr[data-patient-id]');
-            tbody.innerHTML = '';
-
-            if (patientRows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-[#888888]"><i class="fas fa-inbox mr-2"></i>No patients available for export</td></tr>';
-                return;
-            }
-
-            patientRows.forEach((row) => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length >= 4) {
-                    // Get patient ID from data attribute (this is the actual database ID)
-                    const patientId = row.getAttribute('data-patient-id');
-
-                    const name = cells[1]?.textContent?.trim() || 'Unknown';
-                    const age = cells[3]?.textContent?.trim() || '-';
-                    const bloodType = cells[2]?.textContent?.trim() || '-';
-                    const type = cells[6]?.textContent?.trim() || '-';
-                    const lastCheckup = cells[2]?.textContent?.trim() || '-';
-
-                    const tr = document.createElement('tr');
-                    tr.className = 'border-b border-[#E8F0FE] hover:bg-[#F8FBFF] transition';
-                    tr.innerHTML = `
-                        <td class="checkbox-column px-4 py-3 text-center">
-                            <input type="checkbox" class="patient-select w-5 h-5 accent-[#4A90E2]" value="${patientId}" onchange="updateSelectedCount(); updateFooterCount()">
-                        </td>
-                        <td class="px-6 py-3 text-[#2E5C8A] font-medium">${name}</td>
-                        <td class="px-6 py-3 text-[#666666]">${age}</td>
-                        <td class="px-6 py-3 text-[#888888] text-sm">${lastCheckup}</td>
-                    `;
-                    tbody.appendChild(tr);
-                }
-            });
-        }
-
-        // Update selected count in modal
-        function updateSelectedCount() {
-            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
-            const countElement = document.getElementById('selectedCount');
-            if (countElement) {
-                countElement.textContent = checkboxes.length;
-            }
-
-            // Update select all checkbox state
-            const selectAllCheckbox = document.getElementById('selectAllPatients');
-            const allCheckboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
-            if (selectAllCheckbox && allCheckboxes.length > 0) {
-                selectAllCheckbox.checked = checkboxes.length === allCheckboxes.length;
-                selectAllCheckbox.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
-            }
-        }
-
-        // Update footer count
-        function updateFooterCount() {
-            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
-            const footerCount = document.getElementById('footerCount');
-            if (footerCount) {
-                footerCount.textContent = checkboxes.length;
-            }
-        }
-
-        // Toggle all patients for export
-        function toggleAllPatients(checkbox) {
-            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
-            checkboxes.forEach(cb => {
-                cb.checked = checkbox.checked;
-            });
-            updateSelectedCount();
-            updateFooterCount();
-        }
-
         // Confirm manual export with selected patients
         function confirmManualExport(format) {
             const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
@@ -4182,10 +4660,6 @@ Save Note
             const typeLabels = {
                 'excel': 'Excel',
                 'pdf': 'PDF'
-            };
-            const formatExtension = {
-                'excel': '.xlsx',
-                'pdf': '.pdf'
             };
 
             // Show processing notification
@@ -4226,8 +4700,9 @@ Save Note
             form.submit();
             document.body.removeChild(form);
 
-            // Keep modal open; only close via explicit close button
+            // Close modal after submission
             setTimeout(() => {
+                closeManualSelectionModal();
                 showNotification('success', `Successfully exported ${patientCount} patient(s) as ${typeLabels[format]}!`, 3000);
             }, 800);
         }
@@ -4253,7 +4728,9 @@ Save Note
                     closeExportModal();
                 }
 
-                // Manual selection modal should only close via its close buttons
+                if (manualSelectionModal && manualSelectionModal.style.display === 'flex') {
+                    closeManualSelectionModal();
+                }
             }
         });
 
@@ -4266,7 +4743,9 @@ Save Note
                 closeExportModal();
             }
 
-            // Manual selection modal should only close via its close buttons
+            if (manualSelectionModal && event.target === manualSelectionModal) {
+                closeManualSelectionModal();
+            }
         });
 
         // Initialize selected count on page load
@@ -4649,6 +5128,7 @@ Save Note
             const viewModal = document.getElementById('viewModal');
             const consultationNoteModal = document.getElementById('consultationNoteModal');
             const exportModal = document.getElementById('exportModal');
+            const manualSelectionModal = document.getElementById('manualSelectionModal');
 
             if (event.target === viewModal) {
                 closeViewModal();
@@ -4659,6 +5139,9 @@ Save Note
             if (event.target === exportModal) {
                 closeExportModal();
             }
+            if (event.target === manualSelectionModal) {
+                closeManualSelectionModal();
+            }
         };
 
         // Add keyboard support for modals
@@ -4668,6 +5151,7 @@ Save Note
                 closeAddPatientModal();
                 closeConsultationNoteModal();
                 closeExportModal();
+                closeManualSelectionModal();
             }
         });
 
@@ -4853,63 +5337,96 @@ Save Note
         }
 
         // Function to view note details
-        function viewNoteDetails(noteId) {
-            fetch(`../api/get_note_details.php?id=${noteId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const note = data.note;
-                        const noteHtml = `
-                            <div class="bg-white px-3 rounded-lg max-w-2xl">
-                                <div class="flex justify-between border-b-2 border-gray-100 pb-4 items-start mb-4">
-                                    <div>
-                                        <h4 class="text-xl font-medium mt-4" style="color: #387EC3;">Consultation Note Details</h4>
-                                    </div>
-                                    <button onclick="closeNoteDetails()" 
-                                            class="text-gray-500 text-2xl hover:text-gray-500">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+function viewNoteDetails(noteId) {
+    fetch(`../api/get_note_details.php?id=${noteId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const note = data.note;
+                
+                // Format date only (without time)
+                const createdDate = formatDateOnly(note.created_at);
+                // Format time only
+                const createdTime = formatTimeOnly(note.created_at);
+                
+                const noteHtml = `
+                    <div class="bg-white px-3 rounded-lg max-w-2xl">
+                        <div class="flex justify-between border-b-2 border-gray-100 pb-4 items-start mb-4">
+                            <div>
+                                <h4 class="text-xl font-medium mt-4" style="color: #387EC3;">Consultation Note Details</h4>
+                            </div>
+                            <button onclick="closeNoteDetails()" 
+                                    class="text-gray-500 text-2xl hover:text-gray-500">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="block text-base font-medium text-gray-400 mb-1">Physician Assign :</label>
+                                    <div class="font-medium text-lg" style="color: #387EC3;">${note.doctor_name || 'Not specified'}</div>
                                 </div>
-                                
-                                <div class="space-y-4">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <label class="block text-base font-medium text-gray-400 mb-1">Physician Assign:</label>
-                                            <div class="font-medium text-lg" style="color: #387EC3;">${note.doctor_name || 'Not specified'}</div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-base font-medium text-gray-500 mb-1">Date Created:</label>
-                                            <div class="font-medium text-lg" style="color: #387EC3;"> ${formatDateTime(note.created_at)}</div>
-                                        </div>
-                                    </div>
-                                    
-                                   <div>
-                                        <div class="bg-gray-50 text-gray-600 p-4 rounded-lg" 
-                                            style="border: 1px solid #DEDEDE; height: 200px;">
-                                            ${note.note.replace(/\n/g, '<br>')}
-                                        </div>
-                                    </div>
-                                    
-                                    ${note.next_consultation_date ? `
-                                    <div class="flex flex-col md:flex-row items-center gap-2 py-2 px-4 rounded-md" style="color: #007BFF; background-color: #007BFF4D; width: fit-content;">
-                                        <label class="text-lg font-medium">Next Consultation:</label>
-                                        <div class="font-medium text-lg">
-                                            ${formatDate(note.next_consultation_date)}
-                                        </div>
-                                    </div>
-                                    ` : ''}
+                                <div>
+                                    <label class="block text-base font-medium text-gray-500 mb-1">Date created :</label>
+                                    <div class="font-medium text-lg" style="color: #387EC3;">${createdDate}</div>
                                 </div>
                             </div>
-                        `;
+                            
+                           <div>
+                                <div class="bg-gray-50 text-gray-600 p-4 rounded-lg" 
+                                    style="border: 1px solid #DEDEDE; height: 200px;">
+                                    ${note.note.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between mt-2">
+                                ${note.next_consultation_date ? `
+                                <div class="py-2 px-4 rounded-md" style="background-color: #007BFF4D; width: fit-content;">
+                                    <span class="text-base" style="color: #007BFF;">Next Consultation :</span>
+                                    <span class="font-medium text-lg ml-1" style="color: #007BFF;">${formatDateOnly(note.next_consultation_date)}</span>
+                                </div>
+                                ` : '<div></div>'}
+                                
+                                <div>
+                                    <span class="text-base text-gray-500">Time Created :</span>
+                                    <span class="font-medium text-lg ml-1" style="color: #387EC3;">${createdTime}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
 
-                        showCustomModal(noteHtml, 'Note Details');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading note details:', error);
-                    showNotification('error', 'Unable to load note details.');
-                });
-        }
+                showCustomModal(noteHtml, 'Note Details');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading note details:', error);
+            showNotification('error', 'Unable to load note details.');
+        });
+}
+
+// Helper function to format date only (e.g., "March 05, 2026")
+function formatDateOnly(dateTimeString) {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: '2-digit'
+    });
+}
+
+// Helper function to format time only (e.g., "02:26 PM")
+function formatTimeOnly(dateTimeString) {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+}
 
         // Function to show note details in modal
         function showNoteDetailsModal(note) {
@@ -5362,20 +5879,6 @@ Save Note
                     openViewModal(currentDuplicatePatientId);
                 }, 300);
             }
-        }
-
-        /**
-         * Utility function to escape HTML special characters
-         */
-        function escapeHtml(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, m => map[m]);
         }
 
         // Add CSS animation for sliding down the warning
@@ -5842,6 +6345,23 @@ Save Note
             }
         });
     </script>
+
+<!-- Go back for Export Option Modal -->
+    <script>
+// Go back to Export Modal from Manual Selection Modal
+function goBackToExportModal() {
+    // Close manual selection modal
+    closeManualSelectionModal();
+    
+    // Small delay to ensure smooth transition
+    setTimeout(() => {
+        // Open export modal
+        openExportModal();
+    }, 300);
+}
+    </script>
+    
+    
 </body>
 
 </html>

@@ -193,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-select, .form-input {
             width: 100%;
             padding: 8px 20px;
-            border: 1px solid #e5e7eb;
+            border: 0.5px solid #CACACA;
             border-radius: 8px;
             font-size: 15px;
             height: 50px;
@@ -207,12 +207,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-input::placeholder { color: #aeb7c1; }
 
         .form-select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233C96E1' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 16px;
+            background-position: right 20px center;
+            background-size: 20px;
             cursor: pointer;
-            padding-right: 36px;
+            padding-right: 10px;
         }
 
         .form-select:focus, .form-input:focus {
@@ -401,7 +401,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label class="form-label">Password <span class="required">*</span></label>
                         <div style="position: relative;">
                             <input type="password" id="staffPassword" name="password" class="form-input" placeholder="Enter Password" required>
-                            <button type="button" onclick="toggleStaffPassword()" style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); background: none; border: none; color: #6b7280; cursor: pointer;">
+                            <button type="button" onclick="toggleStaffPassword()" style="position: absolute; top: 50%; right: 20px; transform: translateY(-50%); background: none; border: none; color: #3C96E1; cursor: pointer;">
                                 <i id="staffEyeIcon" class="fas fa-eye"></i>
                             </button>
                         </div>

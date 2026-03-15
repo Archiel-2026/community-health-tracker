@@ -1179,63 +1179,148 @@ require_once __DIR__ . '/../includes/header.php';
                         </div>
                     </div>
                 </div>
-                <div id="staffLogsSection" style="display:none;">
-                    <div class="overflow-x-auto mb-4 activity-logs-wrapper">
-                        <table class="patient-table">
-                            <thead>
-                                <tr>
-                                    <th>Time Log</th>
-                                    <th>Staff Name</th>
-                                    <th>Action Performed</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($staff_logs_page as $log): ?>
-                                        <tr>
-                                            <td class="text-gray-600">
-                                                <?= !empty($log['created_at']) ? date('M j, Y g:i A', strtotime($log['created_at'])) : 'N/A' ?>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    class="font-semibold text-gray-800"><?= htmlspecialchars($log['display_name'] ?? 'Unknown Staff') ?></span>
-                                            </td>
-                                            <td>
-                                                <?php $actionType = strtolower($log['type'] ?? $log['action_type'] ?? ''); ?>
-                                                <?php if ($actionType === 'staff_login' || $actionType === 'login'): ?>
-                                                        <span
-                                                            class="px-6 py-2 rounded-md text-md font-medium" style="background-color: rgba(29, 78, 216, 0.3); color: #1D4ED8;">Staff
-                                                            Login</span>
-                                                <?php elseif ($actionType === 'add_patient'): ?>
-                                                        <span
-                                                            class="px-6 py-2 rounded-md text-md font-medium" style="background-color: rgba(54, 128, 61, 0.3); color: #36803D;">Add
-                                                            Patient</span>
-                                                <?php else: ?>
-                                                        <span
-                                                            class="px-6 py-2 rounded-md text-md font-medium bg-gray-100 text-gray-700"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $actionType))) ?></span>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="flex justify-between items-center text-sm activity-logs-pagination">
-                        <div class="text-gray-500">Page <?= $page_staff ?> of <?= $staff_total_pages ?></div>
-                        <div class="flex gap-2">
-                            <?php if ($page_staff > 1): ?>
-                                    <a class="btn-action"
-                                        href="?logs_tab=staff&page_staff=<?= $page_staff - 1 ?>#activity-logs"><i
-                                            class="fas fa-chevron-left mr-1"></i>Prev</a>
-                            <?php endif; ?>
-                            <?php if ($page_staff < $staff_total_pages): ?>
-                                    <a class="btn-action"
-                                        href="?logs_tab=staff&page_staff=<?= $page_staff + 1 ?>#activity-logs">Next<i
-                                            class="fas fa-chevron-right ml-1"></i></a>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
+
+                
+                <!-- Replace the staffLogsSection div with this simplified version -->
+
+<div id="staffLogsSection" style="display:none;">
+    <div class="overflow-x-auto mb-4 activity-logs-wrapper">
+        <table class="patient-table">
+            <thead>
+                <tr>
+                    <th>Time Log</th>
+                    <th>Staff Name</th>
+                    <th>Action Performed</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($staff_logs_page as $log): ?>
+                    <tr>
+                        <td class="text-gray-600">
+                            <?= !empty($log['created_at']) ? date('M j, Y g:i A', strtotime($log['created_at'])) : 'N/A' ?>
+                        </td>
+                        <td>
+                            <span class="font-semibold text-gray-800"><?= htmlspecialchars($log['display_name'] ?? 'Unknown Staff') ?></span>
+                        </td>
+                        <td>
+                            <?php 
+                            $actionType = strtolower($log['type'] ?? $log['action_type'] ?? '');
+                            
+                            // Define action badges with appropriate colors for all staff actions
+                            $actionStyles = [
+                                // Authentication actions
+                                'staff_login' => ['bg' => 'rgba(29, 78, 216, 0.3)', 'color' => '#1D4ED8', 'label' => 'Staff Login'],
+                                'login' => ['bg' => 'rgba(29, 78, 216, 0.3)', 'color' => '#1D4ED8', 'label' => 'Staff Login'],
+                                'logout' => ['bg' => 'rgba(239, 68, 68, 0.3)', 'color' => '#EF4444', 'label' => 'Staff Logout'],
+                                'staff_logout' => ['bg' => 'rgba(239, 68, 68, 0.3)', 'color' => '#EF4444', 'label' => 'Staff Logout'],
+                                
+                                // Patient record actions
+                                'add_patient' => ['bg' => 'rgba(54, 128, 61, 0.3)', 'color' => '#36803D', 'label' => 'Added Patient'],
+                                'edit_patient' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Patient'],
+                                'update_patient' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Updated Patient'],
+                                'view_patient' => ['bg' => 'rgba(99, 102, 241, 0.3)', 'color' => '#6366F1', 'label' => 'Viewed Patient'],
+                                'delete_patient' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Patient'],
+                                'archive_patient' => ['bg' => 'rgba(124, 58, 237, 0.3)', 'color' => '#7C3AED', 'label' => 'Archived Patient'],
+                                'restore_patient' => ['bg' => 'rgba(16, 185, 129, 0.3)', 'color' => '#10B981', 'label' => 'Restored Patient'],
+                                
+                                // Export/Print actions
+                                'print_record' => ['bg' => 'rgba(139, 92, 246, 0.3)', 'color' => '#8B5CF6', 'label' => 'Printed Record'],
+                                'print_patient' => ['bg' => 'rgba(139, 92, 246, 0.3)', 'color' => '#8B5CF6', 'label' => 'Printed Patient Record'],
+                                'export_records' => ['bg' => 'rgba(236, 72, 153, 0.3)', 'color' => '#EC4899', 'label' => 'Exported Records'],
+                                'export_pdf' => ['bg' => 'rgba(236, 72, 153, 0.3)', 'color' => '#EC4899', 'label' => 'Exported to PDF'],
+                                'export_excel' => ['bg' => 'rgba(16, 185, 129, 0.3)', 'color' => '#10B981', 'label' => 'Exported to Excel'],
+                                'export_csv' => ['bg' => 'rgba(16, 185, 129, 0.3)', 'color' => '#10B981', 'label' => 'Exported to CSV'],
+                                
+                                // Announcement actions
+                                'post_announcement' => ['bg' => 'rgba(217, 119, 6, 0.3)', 'color' => '#D97706', 'label' => 'Posted Announcement'],
+                                'add_announcement' => ['bg' => 'rgba(217, 119, 6, 0.3)', 'color' => '#D97706', 'label' => 'Added Announcement'],
+                                'create_announcement' => ['bg' => 'rgba(217, 119, 6, 0.3)', 'color' => '#D97706', 'label' => 'Created Announcement'],
+                                'edit_announcement' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Announcement'],
+                                'update_announcement' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Updated Announcement'],
+                                'delete_announcement' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Announcement'],
+                                
+                                // Account management actions
+                                'link_account' => ['bg' => 'rgba(37, 99, 235, 0.3)', 'color' => '#2563EB', 'label' => 'Linked Account'],
+                                'unlink_account' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Unlinked Account'],
+                                'approve_resident' => ['bg' => 'rgba(54, 128, 61, 0.3)', 'color' => '#36803D', 'label' => 'Approved Resident'],
+                                'decline_resident' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Declined Resident'],
+                                'pending_resident' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Pending Resident'],
+                                
+                                // Staff management actions
+                                'add_staff' => ['bg' => 'rgba(37, 99, 235, 0.3)', 'color' => '#2563EB', 'label' => 'Added Staff'],
+                                'create_staff' => ['bg' => 'rgba(37, 99, 235, 0.3)', 'color' => '#2563EB', 'label' => 'Created Staff'],
+                                'edit_staff' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Staff'],
+                                'update_staff' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Updated Staff'],
+                                'deactivate_staff' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deactivated Staff'],
+                                'activate_staff' => ['bg' => 'rgba(54, 128, 61, 0.3)', 'color' => '#36803D', 'label' => 'Activated Staff'],
+                                'delete_staff' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Staff'],
+                                
+                                // System actions
+                                'system_settings' => ['bg' => 'rgba(107, 114, 128, 0.3)', 'color' => '#6B7280', 'label' => 'Modified Settings'],
+                                'backup' => ['bg' => 'rgba(107, 114, 128, 0.3)', 'color' => '#6B7280', 'label' => 'Created Backup'],
+                                'restore_backup' => ['bg' => 'rgba(107, 114, 128, 0.3)', 'color' => '#6B7280', 'label' => 'Restored Backup']
+                            ];
+                            
+                            // Check if action type contains keywords for common actions
+                            if (!isset($actionStyles[$actionType])) {
+                                if (strpos($actionType, 'announcement') !== false) {
+                                    if (strpos($actionType, 'add') !== false || strpos($actionType, 'create') !== false || strpos($actionType, 'post') !== false) {
+                                        $actionStyles[$actionType] = ['bg' => 'rgba(217, 119, 6, 0.3)', 'color' => '#D97706', 'label' => 'Announcement Action'];
+                                    } elseif (strpos($actionType, 'edit') !== false || strpos($actionType, 'update') !== false) {
+                                        $actionStyles[$actionType] = ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Announcement'];
+                                    } elseif (strpos($actionType, 'delete') !== false) {
+                                        $actionStyles[$actionType] = ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Announcement'];
+                                    }
+                                } elseif (strpos($actionType, 'patient') !== false || strpos($actionType, 'record') !== false) {
+                                    if (strpos($actionType, 'add') !== false || strpos($actionType, 'create') !== false) {
+                                        $actionStyles[$actionType] = ['bg' => 'rgba(54, 128, 61, 0.3)', 'color' => '#36803D', 'label' => 'Added Patient'];
+                                    } elseif (strpos($actionType, 'edit') !== false || strpos($actionType, 'update') !== false) {
+                                        $actionStyles[$actionType] = ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Patient'];
+                                    } elseif (strpos($actionType, 'delete') !== false) {
+                                        $actionStyles[$actionType] = ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Patient'];
+                                    } elseif (strpos($actionType, 'archive') !== false) {
+                                        $actionStyles[$actionType] = ['bg' => 'rgba(124, 58, 237, 0.3)', 'color' => '#7C3AED', 'label' => 'Archived Patient'];
+                                    } elseif (strpos($actionType, 'print') !== false) {
+                                        $actionStyles[$actionType] = ['bg' => 'rgba(139, 92, 246, 0.3)', 'color' => '#8B5CF6', 'label' => 'Printed Record'];
+                                    } elseif (strpos($actionType, 'export') !== false) {
+                                        $actionStyles[$actionType] = ['bg' => 'rgba(236, 72, 153, 0.3)', 'color' => '#EC4899', 'label' => 'Exported Records'];
+                                    }
+                                } elseif (strpos($actionType, 'export') !== false) {
+                                    $actionStyles[$actionType] = ['bg' => 'rgba(236, 72, 153, 0.3)', 'color' => '#EC4899', 'label' => 'Exported Data'];
+                                } elseif (strpos($actionType, 'print') !== false) {
+                                    $actionStyles[$actionType] = ['bg' => 'rgba(139, 92, 246, 0.3)', 'color' => '#8B5CF6', 'label' => 'Printed Document'];
+                                }
+                            }
+                            
+                            $style = $actionStyles[$actionType] ?? ['bg' => 'rgba(107, 114, 128, 0.3)', 'color' => '#6B7280', 'label' => ucwords(str_replace('_', ' ', $actionType))];
+                            ?>
+                            <span class="px-6 py-2 rounded-md text-md font-medium" 
+                                  style="background-color: <?= $style['bg'] ?>; color: <?= $style['color'] ?>;">
+                                <?= $style['label'] ?>
+                            </span>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <div class="flex justify-between items-center text-sm activity-logs-pagination">
+        <div class="text-gray-500">Page <?= $page_staff ?> of <?= $staff_total_pages ?></div>
+        <div class="flex gap-2">
+            <?php if ($page_staff > 1): ?>
+                <a class="btn-action"
+                    href="?logs_tab=staff&page_staff=<?= $page_staff - 1 ?>#activity-logs"><i
+                        class="fas fa-chevron-left mr-1"></i>Prev</a>
+            <?php endif; ?>
+            <?php if ($page_staff < $staff_total_pages): ?>
+                <a class="btn-action"
+                    href="?logs_tab=staff&page_staff=<?= $page_staff + 1 ?>#activity-logs">Next<i
+                        class="fas fa-chevron-right ml-1"></i></a>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
             <script>
                 // Modal logic for Activity Logs
                 const activityLogsBtn = document.getElementById('activityLogsBtn');
