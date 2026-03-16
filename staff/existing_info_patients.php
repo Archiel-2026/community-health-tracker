@@ -3272,7 +3272,7 @@ Save All Information
 
     <!-- Export Modal (Warm Blue & White, Improved UX) -->
     <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" style="display: none;">
-        <div class="bg-white rounded-md shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-white rounded-md shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Sticky Header - Warm Blue -->
             <div class="sticky top-0 z-20 px-10 py-10 flex items-center justify-center">
                 <h3 class="text-2xl font-medium border-b-2 border-gray-300 w-full pb-6 flex items-center gap-3">
@@ -3334,7 +3334,10 @@ Save All Information
                 </div>
             </div>
             <!-- Sticky Footer -->
-            <div class="bg-white px-10 py-10 sticky bottom-0 flex justify-end gap-3 shadow-lg">
+            <div class="bg-white p-4 sticky bottom-0 flex items-center justify-between gap-3 shadow-lg">
+                <div>
+                    <p class="px-6 py-3 rounded-lg" style="background-color: #0000000D;">Download all accessible patient records in your preferred format.</p>
+                </div>
                 <button type="button" onclick="closeExportModal()"
                     class="px-6 py-3 rounded-lg text-[#3C96E1] text-lg hover:bg-[#357ABD] transition font-medium" style="background-color: #3C96E14D;">
                     <i class="fas fa-times mr-2 "></i>Cancel
