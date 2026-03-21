@@ -63,6 +63,7 @@
             height: 100%;
             padding: 36px 36px;
         }
+        
 
         .form-group {
             margin-bottom: 1rem;
@@ -489,6 +490,10 @@
         .stat-label {
             font-size: 0.875rem;
             color: var(--gray);
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 0;
+            display: none;
         }
 
         /* Loader animation styles */

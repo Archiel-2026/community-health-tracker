@@ -11,22 +11,22 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
     // Set JSON header
     header('Content-Type: application/json');
     header('X-Content-Type-Options: nosniff');
-    
+
     try {
         // Include necessary files
         require_once __DIR__ . '/../includes/auth.php';
         require_once __DIR__ . '/../includes/functions.php';
-        
+
         // Check if user is logged in
         if (!isset($_SESSION['user'])) {
             throw new Exception('User not authenticated');
         }
-        
+
         $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
         $recordsPerPage = 10;
         $offset = ($page - 1) * $recordsPerPage;
-        
+
         // Build queries
         $countQuery = "SELECT COUNT(*) as total FROM sitio1_patients p WHERE p.deleted_at IS NULL";
         $selectQuery = "SELECT 
@@ -42,9 +42,9 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
         FROM sitio1_patients p
         LEFT JOIN existing_info_patients e ON p.id = e.patient_id
         WHERE p.deleted_at IS NULL";
-        
+
         $params = [];
-        
+
         // Add search
         if (!empty($search)) {
             $searchTerm = "%$search%";
@@ -52,14 +52,14 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
             $selectQuery .= " AND p.full_name LIKE ?";
             $params[] = $searchTerm;
         }
-        
+
         // Add staff restriction
         if (function_exists('staff_can_view_all') && !staff_can_view_all()) {
             $countQuery .= " AND p.added_by = ?";
             $selectQuery .= " AND p.added_by = ?";
             $params[] = $_SESSION['user']['id'];
         }
-        
+
         // Get total count
         $stmt = $pdo->prepare($countQuery);
         if (!empty($params)) {
@@ -69,11 +69,11 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
         }
         $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         $totalPages = ceil($totalRecords / $recordsPerPage);
-        
+
         // Get paginated results
         $selectQuery .= " ORDER BY p.full_name ASC LIMIT ? OFFSET ?";
         $stmt = $pdo->prepare($selectQuery);
-        
+
         // Bind parameters
         $paramIndex = 1;
         foreach ($params as $param) {
@@ -81,17 +81,17 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
         }
         $stmt->bindValue($paramIndex++, $recordsPerPage, PDO::PARAM_INT);
         $stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
-        
+
         $stmt->execute();
         $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Format dates
         foreach ($patients as &$patient) {
             if (!empty($patient['last_checkup'])) {
                 $patient['last_checkup_formatted'] = date('M d, Y', strtotime($patient['last_checkup']));
             }
         }
-        
+
         echo json_encode([
             'success' => true,
             'patients' => $patients,
@@ -100,12 +100,11 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
             'totalRecords' => $totalRecords
         ]);
         exit();
-        
     } catch (Exception $e) {
         // Log error
         error_log("AJAX Error: " . $e->getMessage());
         error_log("Stack trace: " . $e->getTraceAsString());
-        
+
         // Return error as JSON
         echo json_encode([
             'success' => false,
@@ -267,16 +266,16 @@ try {
 if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
     header('Content-Type: application/json');
     header('X-Content-Type-Options: nosniff');
-    
+
     try {
         $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
         $recordsPerPage = 10; // Show 10 records per page in modal
         $offset = ($page - 1) * $recordsPerPage;
-        
+
         // Debug log
         error_log("AJAX Request: page=$page, search=$search, offset=$offset");
-        
+
         // Base query
         $countQuery = "SELECT COUNT(*) as total FROM sitio1_patients p WHERE p.deleted_at IS NULL";
         $selectQuery = "SELECT 
@@ -292,10 +291,10 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
         FROM sitio1_patients p
         LEFT JOIN existing_info_patients e ON p.id = e.patient_id
         WHERE p.deleted_at IS NULL";
-        
+
         $params = [];
         $countParams = [];
-        
+
         // Add search condition if provided
         if (!empty($search)) {
             $searchTerm = "%$search%";
@@ -304,7 +303,7 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
             $params[] = $searchTerm;
             $countParams[] = $searchTerm;
         }
-        
+
         // Apply staff restriction if not viewing all records
         if (!staff_can_view_all()) {
             $countQuery .= " AND p.added_by = ?";
@@ -312,24 +311,24 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
             $params[] = $_SESSION['user']['id'];
             $countParams[] = $_SESSION['user']['id'];
         }
-        
+
         // Get total count
         $stmt = $pdo->prepare($countQuery);
-        
+
         // Bind parameters for count query
         for ($i = 0; $i < count($countParams); $i++) {
             $stmt->bindValue($i + 1, $countParams[$i], PDO::PARAM_STR);
         }
-        
+
         $stmt->execute();
         $totalRecords = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         $totalPages = ceil($totalRecords / $recordsPerPage);
-        
+
         // Get paginated results
         $selectQuery .= " ORDER BY p.full_name ASC LIMIT ? OFFSET ?";
-        
+
         $stmt = $pdo->prepare($selectQuery);
-        
+
         // Bind parameters for select query
         $paramIndex = 1;
         foreach ($params as $param) {
@@ -337,10 +336,10 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
         }
         $stmt->bindValue($paramIndex++, $recordsPerPage, PDO::PARAM_INT);
         $stmt->bindValue($paramIndex++, $offset, PDO::PARAM_INT);
-        
+
         $stmt->execute();
         $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Format the data for display
         foreach ($patients as &$patient) {
             if (!empty($patient['last_checkup'])) {
@@ -349,7 +348,7 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
                 $patient['last_checkup_formatted'] = 'N/A';
             }
         }
-        
+
         echo json_encode([
             'success' => true,
             'patients' => $patients,
@@ -358,7 +357,6 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
             'totalRecords' => $totalRecords
         ]);
         exit();
-        
     } catch (PDOException $e) {
         error_log("PDO Error in ajax_get_patients: " . $e->getMessage());
         echo json_encode([
@@ -2066,18 +2064,23 @@ if (!empty($searchTerm)) {
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
-        
+
         .patient-checkbox {
             cursor: pointer;
         }
-        
-        #exportPagination {
+
+        /* #exportPagination {
             margin-top: 1rem;
             padding-top: 0.75rem;
-        }
+        } */
     </style>
 </head>
 
@@ -2291,7 +2294,7 @@ if (!empty($searchTerm)) {
                                         <?php else: ?>
                                             <a href="existing_info_patients.php<?= $manualSelectMode ? '?manual_select=true&tab=patients-tab' : '?tab=patients-tab' ?>"
                                                 class="btn-gray inline-flex items-center px-6 rounded-none"
-                                                style="border-radius: 4px;">
+                                                style="border-radius: 4px; border: none; color:white; background-color: #95A5A6;">
                                                 <i class="fas fa-times mr-2"></i> Clear
                                             </a>
                                         <?php endif; ?>
@@ -2527,20 +2530,24 @@ if (!empty($searchTerm)) {
                                                             <?php endif; ?>
                                                         </td>
                                                         <td>
-                                                            <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
-                                                                class="btn-view inline-flex items-center mr-2" style="background:#2196F3;color:#fff;border:none;border-radius:24px;padding:10px 24px;font-weight:500;font-size:16px;">
-                                                                <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
-                                                                    <path d="M23.1853 11.6962C23.1525 11.6222 22.3584 9.86062 20.5931 8.09531C18.2409 5.74312 15.27 4.5 12 4.5C8.72999 4.5 5.75905 5.74312 3.40687 8.09531C1.64155 9.86062 0.843741 11.625 0.814679 11.6962C0.772035 11.7922 0.75 11.896 0.75 12.0009C0.75 12.1059 0.772035 12.2097 0.814679 12.3056C0.847491 12.3797 1.64155 14.1403 3.40687 15.9056C5.75905 18.2569 8.72999 19.5 12 19.5C15.27 19.5 18.2409 18.2569 20.5931 15.9056C22.3584 14.1403 23.1525 12.3797 23.1853 12.3056C23.2279 12.2097 23.25 12.1059 23.25 12.0009C23.25 11.896 23.2279 11.7922 23.1853 11.6962ZM12 18C9.11437 18 6.59343 16.9509 4.50655 14.8828C3.65028 14.0313 2.92179 13.0603 2.34374 12C2.92164 10.9396 3.65014 9.9686 4.50655 9.11719C6.59343 7.04906 9.11437 6 12 6C14.8856 6 17.4066 7.04906 19.4934 9.11719C20.3514 9.9684 21.0815 10.9394 21.6609 12C20.985 13.2619 18.0403 18 12 18ZM12 7.5C11.11 7.5 10.2399 7.76392 9.49993 8.25839C8.7599 8.75285 8.18313 9.45566 7.84253 10.2779C7.50194 11.1002 7.41282 12.005 7.58646 12.8779C7.76009 13.7508 8.18867 14.5526 8.81801 15.182C9.44735 15.8113 10.2492 16.2399 11.1221 16.4135C11.995 16.5872 12.8998 16.4981 13.7221 16.1575C14.5443 15.8169 15.2471 15.2401 15.7416 14.5001C16.2361 13.76 16.5 12.89 16.5 12C16.4988 10.8069 16.0242 9.66303 15.1806 8.81939C14.337 7.97575 13.1931 7.50124 12 7.5ZM12 15C11.4066 15 10.8266 14.8241 10.3333 14.4944C9.83993 14.1648 9.45542 13.6962 9.22835 13.1481C9.00129 12.5999 8.94188 11.9967 9.05764 11.4147C9.17339 10.8328 9.45911 10.2982 9.87867 9.87868C10.2982 9.45912 10.8328 9.1734 11.4147 9.05764C11.9967 8.94189 12.5999 9.0013 13.148 9.22836C13.6962 9.45542 14.1648 9.83994 14.4944 10.3333C14.824 10.8266 15 11.4067 15 12C15 12.7956 14.6839 13.5587 14.1213 14.1213C13.5587 14.6839 12.7956 15 12 15Z" fill="white" />
-                                                                </svg> View
-                                                            </button>
-                                                            <a href="?delete_patient=<?= $patient['id'] ?>"
-                                                                class="btn-archive inline-flex items-center" style="background:#F44336;color:#fff;border:none;border-radius:24px;padding:10px 24px;font-weight:500;font-size:16px;"
-                                                                onclick="return confirm('Are you sure you want to archive this patient record?')">
-                                                                <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                    <path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white" />
-                                                                </svg> Archive
-                                                            </a>
-                                                        </td>
+    <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
+        class="btn-view inline-flex items-center mr-2" 
+        style="background:#2196F3; color:#fff; border:none; border-radius:30px; padding:13px 24px; font-weight:500; font-size:16px; line-height:1.5; min-width:100px; justify-content:center;">
+        <svg class="mr-1" style="width:1.5em; height:1.5em;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14C13.1046 14 14 13.1046 14 12ZM16 12C16 14.2091 14.2091 16 12 16C9.79086 16 8 14.2091 8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12Z" fill="white" />
+            <path d="M12 3C16.4111 3 18.9532 5.23875 20.3477 7.46973C21.034 8.56793 21.4421 9.65839 21.6787 10.4697C21.7975 10.8772 21.8749 11.2197 21.9229 11.4639C21.9468 11.5859 21.9635 11.684 21.9746 11.7539C21.9801 11.7886 21.9844 11.8165 21.9873 11.8369C21.9887 11.8471 21.9894 11.8559 21.9902 11.8623C21.9907 11.8655 21.9909 11.8688 21.9912 11.8711L21.9922 11.874V11.875L20.0078 12.125V12.126C20.0077 12.1248 20.0075 12.1218 20.0068 12.1172C20.0055 12.1074 20.0028 12.09 19.999 12.0664C19.9915 12.0192 19.9789 11.9451 19.96 11.8486C19.922 11.6553 19.8586 11.3725 19.7588 11.0303C19.558 10.3417 19.2158 9.43184 18.6523 8.53027C17.5468 6.76136 15.5886 5 12 5C8.41136 5 6.45322 6.76136 5.34766 8.53027C4.78423 9.43184 4.44204 10.3417 4.24121 11.0303C4.14141 11.3725 4.07802 11.6553 4.04004 11.8486C4.02109 11.9451 4.00845 12.0192 4.00098 12.0664C3.99724 12.09 3.99454 12.1074 3.99316 12.1172L3.99219 12.126V12.125L2.00781 11.875V11.874L2.00879 11.8711C2.00908 11.8688 2.00934 11.8655 2.00977 11.8623C2.01062 11.8559 2.01126 11.8471 2.0127 11.8369C2.01558 11.8165 2.01989 11.7886 2.02539 11.7539C2.03646 11.684 2.05319 11.5859 2.07715 11.4639C2.1251 11.2197 2.20246 10.8772 2.32129 10.4697C2.55795 9.65839 2.96597 8.56793 3.65234 7.46973C5.04682 5.23875 7.58887 3 12 3Z" fill="white" />
+        </svg>
+        View
+    </button>
+    <button type="button" onclick="openArchiveModal(<?= $patient['id'] ?>, '<?= htmlspecialchars($patient['full_name']) ?>', '?delete_patient=<?= $patient['id'] ?>')" 
+        class="btn-archive inline-flex items-center" 
+        style="background:#F44336; color:#fff; border:none; border-radius:30px; padding:13px 24px; font-weight:500; font-size:16px; line-height:1.5; min-width:100px; justify-content:center;">
+        <svg class="mr-1" style="width:1.5em; height:1.5em;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white" />
+        </svg>
+        Archive
+    </button>
+</td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>
@@ -2548,6 +2555,125 @@ if (!empty($searchTerm)) {
                                     </div>
                                 </div>
                             <?php endif; ?>
+
+<!-- Archive Confirmation Modal -->
+<div id="archiveConfirmModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]" style="display: none;">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all">
+        <!-- Header -->
+        <div class="bg-red-500 px-6 py-4 flex items-center gap-3">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linecap="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+            </svg>
+            <h3 class="text-xl font-semibold text-white">Archive Patient Record</h3>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-6">
+            <div class="flex items-start gap-4 mb-6">
+                <div class="flex-shrink-0">
+                    <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linecap="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="text-lg font-medium text-gray-800 mb-2">Confirm Archive Action</h4>
+                    <p class="text-gray-600">Are you sure you want to archive this patient record?</p>
+                    <p class="text-sm text-gray-500 mt-2">This action will move the record to archive. You can restore it later from the archive page.</p>
+                </div>
+            </div>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-info-circle text-yellow-600"></i>
+                    <p class="text-sm text-yellow-700">
+                        <span class="font-semibold">Note:</span> All medical records and consultation notes will also be archived.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Patient Info Preview (will be populated dynamically) -->
+            <div id="archivePatientPreview" class="bg-gray-50 rounded-lg p-4 mb-6 hidden">
+                <p class="text-sm font-medium text-gray-700 mb-2">Patient: <span id="archivePatientName" class="font-normal text-gray-600"></span></p>
+                <p class="text-sm text-gray-500">ID: <span id="archivePatientId"></span></p>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="closeArchiveModal()" 
+                    class="px-6 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition duration-200">
+                    Cancel
+                </button>
+                <a href="#" id="confirmArchiveBtn" 
+                    class="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition duration-200 inline-flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linecap="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                    </svg>
+                    Archive Record
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Archive Confirmation Modal Functions
+let currentArchiveUrl = '';
+
+function openArchiveModal(patientId, patientName, archiveUrl) {
+    const modal = document.getElementById('archiveConfirmModal');
+    const patientPreview = document.getElementById('archivePatientPreview');
+    const patientNameSpan = document.getElementById('archivePatientName');
+    const patientIdSpan = document.getElementById('archivePatientId');
+    const confirmBtn = document.getElementById('confirmArchiveBtn');
+    
+    // Store the archive URL
+    currentArchiveUrl = archiveUrl;
+    
+    // Update patient info
+    if (patientName) {
+        patientNameSpan.textContent = patientName;
+        patientIdSpan.textContent = patientId;
+        patientPreview.style.display = 'block';
+    } else {
+        patientPreview.style.display = 'none';
+    }
+    
+    // Set the confirm button link
+    confirmBtn.href = archiveUrl;
+    
+    // Show modal with animation
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.style.opacity = '1';
+    }, 10);
+}
+
+function closeArchiveModal() {
+    const modal = document.getElementById('archiveConfirmModal');
+    modal.style.opacity = '0';
+    setTimeout(() => {
+        modal.style.display = 'none';
+        // Clear stored URL
+        currentArchiveUrl = '';
+    }, 300);
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('archiveConfirmModal');
+    if (event.target === modal) {
+        closeArchiveModal();
+    }
+});
+
+// Keyboard support
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeArchiveModal();
+    }
+});
+</script>
+                            
 
                             <!-- USER SEARCH RESULT -->
                             <?php if (!empty($searchedUsers)): ?>
@@ -2639,7 +2765,7 @@ if (!empty($searchTerm)) {
                                     <?php if (!$manualSelectMode): ?>
                                         <a href="existing_info_patients.php?tab=patients-tab"
                                             class="btn-back-to-pagination inline-flex items-center">
-                                            <i class="fas fa-arrow-left mr-2"></i>Back to Pagination View
+                                            <i class="fas fa-arrow-left mr-3"></i>Back to Pagination View
                                         </a>
                                     <?php endif; ?>
                                     <div class="scrollable-table-container">
@@ -2801,22 +2927,138 @@ if (!empty($searchTerm)) {
                                                             </svg>
                                                             View
                                                         </button>
-                                                        <a href="?delete_patient=<?= $patient['id'] ?>"
-                                                            class="btn-archive"
-                                                            onclick="return confirm('Are you sure you want to archive this patient record?')">
-
-                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <path d="M18 10H6V18H18V10ZM15 12V13C15 13.5523 14.5523 14 14 14H10C9.44772 14 9 13.5523 9 13V12H15ZM4 6V8H20V6H4ZM22 8C22 8.53043 21.7891 9.03899 21.4141 9.41406C21.039 9.78913 20.5304 10 20 10V18C20 18.5304 19.7891 19.039 19.4141 19.4141C19.039 19.7891 18.5304 20 18 20H6C5.46957 20 4.96101 19.7891 4.58594 19.4141C4.21086 19.039 4 18.5304 4 18V10C3.46957 10 2.96101 9.78913 2.58594 9.41406C2.21086 9.03899 2 8.53043 2 8V6C2 5.46957 2.21086 4.96101 2.58594 4.58594C2.96101 4.21087 3.46957 4 4 4H20C20.5304 4 21.039 4.21087 21.4141 4.58594C21.7891 4.96101 22 5.46957 22 6V8Z" fill="white" />
-                                                            </svg>
-
-                                                            Archive
-                                                        </a>
+                                                        <!-- With this: -->
+<button type="button" onclick="openArchiveModal(<?= $patient['id'] ?>, '<?= htmlspecialchars($patient['full_name']) ?>', '?delete_patient=<?= $patient['id'] ?>')" 
+    class="btn-archive inline-flex items-center">
+    <svg class="mr-1" style="width:1.5em;height:1.5em;vertical-align:middle;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 4.5H3C2.60218 4.5 2.22064 4.65804 1.93934 4.93934C1.65804 5.22064 1.5 5.60218 1.5 6V8.25C1.5 8.64782 1.65804 9.02936 1.93934 9.31066C2.22064 9.59196 2.60218 9.75 3 9.75V18C3 18.3978 3.15804 18.7794 3.43934 19.0607C3.72064 19.342 4.10218 19.5 4.5 19.5H19.5C19.8978 19.5 20.2794 19.342 20.5607 19.0607C20.842 18.7794 21 18.3978 21 18V9.75C21.3978 9.75 21.7794 9.59196 22.0607 9.31066C22.342 9.02936 22.5 8.64782 22.5 8.25V6C22.5 5.60218 22.342 5.22064 22.0607 4.93934C21.7794 4.65804 21.3978 4.5 21 4.5ZM19.5 18H4.5V9.75H19.5V18ZM21 8.25H3V6H21V8.25ZM9 12.75C9 12.5511 9.07902 12.3603 9.21967 12.2197C9.36032 12.079 9.55109 12 9.75 12H14.25C14.4489 12 14.6397 12.079 14.7803 12.2197C14.921 12.3603 15 12.5511 15 12.75C15 12.9489 14.921 13.1397 14.7803 13.2803C14.6397 13.421 14.4489 13.5 14.25 13.5H9.75C9.55109 13.5 9.36032 13.421 9.21967 13.2803C9.07902 13.1397 9 12.9489 9 12.75Z" fill="white" />
+    </svg> Archive
+</button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         </tbody>
                                     </table>
                                 </div>
+
+
+                                <!-- Archive Confirmation Modal -->
+<div id="archiveConfirmModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]" style="display: none;">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all">
+        <!-- Header -->
+        <div class="bg-red-500 px-6 py-4 flex items-center gap-3">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linecap="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+            </svg>
+            <h3 class="text-xl font-semibold text-white">Archive Patient Record</h3>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-6">
+            <div class="flex items-start gap-4 mb-6">
+                <div class="flex-shrink-0">
+                    <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linecap="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="text-lg font-medium text-gray-800 mb-2">Confirm Archive Action</h4>
+                    <p class="text-gray-600">Are you sure you want to archive this patient record?</p>
+                    <p class="text-sm text-gray-500 mt-2">This action will move the record to archive. You can restore it later from the archive page.</p>
+                </div>
+            </div>
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-info-circle text-yellow-600"></i>
+                    <p class="text-sm text-yellow-700">
+                        <span class="font-semibold">Note:</span> All medical records and consultation notes will also be archived.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Patient Info Preview (will be populated dynamically) -->
+            <div id="archivePatientPreview" class="bg-gray-50 rounded-lg p-4 mb-6 hidden">
+                <p class="text-sm font-medium text-gray-700 mb-2">Patient: <span id="archivePatientName" class="font-normal text-gray-600"></span></p>
+                <p class="text-sm text-gray-500">ID: <span id="archivePatientId"></span></p>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="flex gap-3 justify-end">
+                <button type="button" onclick="closeArchiveModal()" 
+                    class="px-6 py-2.5 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition duration-200">
+                    Cancel
+                </button>
+                <a href="#" id="confirmArchiveBtn" 
+                    class="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition duration-200 inline-flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linecap="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                    </svg>
+                    Archive Record
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Archive Confirmation Modal Functions
+let currentArchiveUrl = '';
+
+function openArchiveModal(patientId, patientName, archiveUrl) {
+    const modal = document.getElementById('archiveConfirmModal');
+    const patientPreview = document.getElementById('archivePatientPreview');
+    const patientNameSpan = document.getElementById('archivePatientName');
+    const patientIdSpan = document.getElementById('archivePatientId');
+    const confirmBtn = document.getElementById('confirmArchiveBtn');
+    
+    // Store the archive URL
+    currentArchiveUrl = archiveUrl;
+    
+    // Update patient info
+    if (patientName) {
+        patientNameSpan.textContent = patientName;
+        patientIdSpan.textContent = patientId;
+        patientPreview.style.display = 'block';
+    } else {
+        patientPreview.style.display = 'none';
+    }
+    
+    // Set the confirm button link
+    confirmBtn.href = archiveUrl;
+    
+    // Show modal with animation
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.style.opacity = '1';
+    }, 10);
+}
+
+function closeArchiveModal() {
+    const modal = document.getElementById('archiveConfirmModal');
+    modal.style.opacity = '0';
+    setTimeout(() => {
+        modal.style.display = 'none';
+        // Clear stored URL
+        currentArchiveUrl = '';
+    }, 300);
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('archiveConfirmModal');
+    if (event.target === modal) {
+        closeArchiveModal();
+    }
+});
+
+// Keyboard support
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeArchiveModal();
+    }
+});
+</script>
 
                                 <!-- Enhanced Pagination Container with preserved filters -->
                                 <div class="pagination-container">
@@ -2858,28 +3100,28 @@ if (!empty($searchTerm)) {
                                         ?>
 
                                         <!-- Previous Button -->
-<a href="?tab=patients-tab&page=<?= $currentPage - 1 ?><?= $queryString ?>"
-    class="pagination-btn<?= ($currentPage <= 1 ? ' disabled' : '') ?>" style="margin: 0 4px;">
-    <i class="fas fa-chevron-left"></i>
-</a>
+                                        <a href="?tab=patients-tab&page=<?= $currentPage - 1 ?><?= $queryString ?>"
+                                            class="pagination-btn<?= ($currentPage <= 1 ? ' disabled' : '') ?>" style="margin: 0 4px;">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
 
-<!-- Page Numbers -->
-<?php for ($i = 1; $i <= $totalPages; $i++): ?>
-    <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
-        <a href="?tab=patients-tab&page=<?= $i ?><?= $queryString ?>"
-            class="pagination-btn<?= ($i == $currentPage ? ' active' : '') ?>" style="font-size: 1.1rem;">
-            <?= $i ?>
-        </a>
-    <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
-        <span class="pagination-btn disabled" style="pointer-events: none;">...</span>
-    <?php endif; ?>
-<?php endfor; ?>
+                                        <!-- Page Numbers -->
+                                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                            <?php if ($i == 1 || $i == $totalPages || ($i >= $currentPage - 1 && $i <= $currentPage + 1)): ?>
+                                                <a href="?tab=patients-tab&page=<?= $i ?><?= $queryString ?>"
+                                                    class="pagination-btn<?= ($i == $currentPage ? ' active' : '') ?>" style="font-size: 1.1rem;">
+                                                    <?= $i ?>
+                                                </a>
+                                            <?php elseif ($i == $currentPage - 2 || $i == $currentPage + 2): ?>
+                                                <span class="pagination-btn disabled" style="pointer-events: none;">...</span>
+                                            <?php endif; ?>
+                                        <?php endfor; ?>
 
-<!-- Next Button -->
-<a href="?tab=patients-tab&page=<?= $currentPage + 1 ?><?= $queryString ?>"
-    class="pagination-btn<?= ($currentPage >= $totalPages ? ' disabled' : '') ?>" style="margin: 0 4px;">
-    <i class="fas fa-chevron-right"></i>
-</a>
+                                        <!-- Next Button -->
+                                        <a href="?tab=patients-tab&page=<?= $currentPage + 1 ?><?= $queryString ?>"
+                                            class="pagination-btn<?= ($currentPage >= $totalPages ? ' disabled' : '') ?>" style="margin: 0 4px;">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
                                     </div>
 
                                     <!-- Update the View All button in the header -->
@@ -2925,8 +3167,8 @@ if (!empty($searchTerm)) {
                 </h3>
                 <button onclick="closeViewModal()" class="modal-close-btn">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M19.281 18.2198C19.3507 18.2895 19.406 18.3722 19.4437 18.4632C19.4814 18.5543 19.5008 18.6519 19.5008 18.7504C19.5008 18.849 19.4814 18.9465 19.4437 19.0376C19.406 19.1286 19.3507 19.2114 19.281 19.281C19.2114 19.3507 19.1286 19.406 19.0376 19.4437C18.9465 19.4814 18.849 19.5008 18.7504 19.5008C18.6519 19.5008 18.5543 19.4814 18.4632 19.4437C18.3722 19.406 18.2895 19.3507 18.2198 19.281L12.0004 13.0607L5.78104 19.281C5.64031 19.4218 5.44944 19.5008 5.25042 19.5008C5.05139 19.5008 4.86052 19.4218 4.71979 19.281C4.57906 19.1403 4.5 18.9494 4.5 18.7504C4.5 18.5514 4.57906 18.3605 4.71979 18.2198L10.9401 12.0004L4.71979 5.78104C4.57906 5.64031 4.5 5.44944 4.5 5.25042C4.5 5.05139 4.57906 4.86052 4.71979 4.71979C4.86052 4.57906 5.05139 4.5 5.25042 4.5C5.44944 4.5 5.64031 4.57906 5.78104 4.71979L12.0004 10.9401L18.2198 4.71979C18.3605 4.57906 18.5514 4.5 18.7504 4.5C18.9494 4.5 19.1403 4.57906 19.281 4.71979C19.4218 4.86052 19.5008 5.05139 19.5008 5.25042C19.5008 5.44944 19.4218 5.64031 19.281 5.78104L13.0607 12.0004L19.281 18.2198Z" fill="white"/>
-</svg>
+                        <path d="M19.281 18.2198C19.3507 18.2895 19.406 18.3722 19.4437 18.4632C19.4814 18.5543 19.5008 18.6519 19.5008 18.7504C19.5008 18.849 19.4814 18.9465 19.4437 19.0376C19.406 19.1286 19.3507 19.2114 19.281 19.281C19.2114 19.3507 19.1286 19.406 19.0376 19.4437C18.9465 19.4814 18.849 19.5008 18.7504 19.5008C18.6519 19.5008 18.5543 19.4814 18.4632 19.4437C18.3722 19.406 18.2895 19.3507 18.2198 19.281L12.0004 13.0607L5.78104 19.281C5.64031 19.4218 5.44944 19.5008 5.25042 19.5008C5.05139 19.5008 4.86052 19.4218 4.71979 19.281C4.57906 19.1403 4.5 18.9494 4.5 18.7504C4.5 18.5514 4.57906 18.3605 4.71979 18.2198L10.9401 12.0004L4.71979 5.78104C4.57906 5.64031 4.5 5.44944 4.5 5.25042C4.5 5.05139 4.57906 4.86052 4.71979 4.71979C4.86052 4.57906 5.05139 4.5 5.25042 4.5C5.44944 4.5 5.64031 4.57906 5.78104 4.71979L12.0004 10.9401L18.2198 4.71979C18.3605 4.57906 18.5514 4.5 18.7504 4.5C18.9494 4.5 19.1403 4.57906 19.281 4.71979C19.4218 4.86052 19.5008 5.05139 19.5008 5.25042C19.5008 5.44944 19.4218 5.64031 19.281 5.78104L13.0607 12.0004L19.281 18.2198Z" fill="white" />
+                    </svg>
 
                 </button>
             </div>
@@ -2964,18 +3206,18 @@ if (!empty($searchTerm)) {
                         <div class="flex flex-col items-center mt-2">
                             <button id="printRecordBtn" onclick="printPatientRecord()" class="btn-export text-lg px-8 py-3 font-normal gap-2">
                                 <svg width="35" height="35" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M20.1253 6.75H18.75V3.75C18.75 3.55109 18.671 3.36032 18.5303 3.21967C18.3897 3.07902 18.1989 3 18 3H6C5.80109 3 5.61032 3.07902 5.46967 3.21967C5.32902 3.36032 5.25 3.55109 5.25 3.75V6.75H3.87469C2.565 6.75 1.5 7.75969 1.5 9V16.5C1.5 16.6989 1.57902 16.8897 1.71967 17.0303C1.86032 17.171 2.05109 17.25 2.25 17.25H5.25V20.25C5.25 20.4489 5.32902 20.6397 5.46967 20.7803C5.61032 20.921 5.80109 21 6 21H18C18.1989 21 18.3897 20.921 18.5303 20.7803C18.671 20.6397 18.75 20.4489 18.75 20.25V17.25H21.75C21.9489 17.25 22.1397 17.171 22.2803 17.0303C22.421 16.8897 22.5 16.6989 22.5 16.5V9C22.5 7.75969 21.435 6.75 20.1253 6.75ZM6.75 4.5H17.25V6.75H6.75V4.5ZM17.25 19.5H6.75V15H17.25V19.5ZM21 15.75H18.75V14.25C18.75 14.0511 18.671 13.8603 18.5303 13.7197C18.3897 13.579 18.1989 13.5 18 13.5H6C5.80109 13.5 5.61032 13.579 5.46967 13.7197C5.32902 13.8603 5.25 14.0511 5.25 14.25V15.75H3V9C3 8.58656 3.39281 8.25 3.87469 8.25H20.1253C20.6072 8.25 21 8.58656 21 9V15.75ZM18.75 10.875C18.75 11.0975 18.684 11.315 18.5604 11.5C18.4368 11.685 18.2611 11.8292 18.0555 11.9144C17.85 11.9995 17.6238 12.0218 17.4055 11.9784C17.1873 11.935 16.9868 11.8278 16.8295 11.6705C16.6722 11.5132 16.565 11.3127 16.5216 11.0945C16.4782 10.8762 16.5005 10.65 16.5856 10.4445C16.6708 10.2389 16.815 10.0632 17 9.9396C17.185 9.81598 17.4025 9.75 17.625 9.75C17.9234 9.75 18.2095 9.86853 18.4205 10.0795C18.6315 10.2905 18.75 10.5766 18.75 10.875Z" fill="white"/>
-</svg>
-Print Patient Records
+                                    <path d="M20.1253 6.75H18.75V3.75C18.75 3.55109 18.671 3.36032 18.5303 3.21967C18.3897 3.07902 18.1989 3 18 3H6C5.80109 3 5.61032 3.07902 5.46967 3.21967C5.32902 3.36032 5.25 3.55109 5.25 3.75V6.75H3.87469C2.565 6.75 1.5 7.75969 1.5 9V16.5C1.5 16.6989 1.57902 16.8897 1.71967 17.0303C1.86032 17.171 2.05109 17.25 2.25 17.25H5.25V20.25C5.25 20.4489 5.32902 20.6397 5.46967 20.7803C5.61032 20.921 5.80109 21 6 21H18C18.1989 21 18.3897 20.921 18.5303 20.7803C18.671 20.6397 18.75 20.4489 18.75 20.25V17.25H21.75C21.9489 17.25 22.1397 17.171 22.2803 17.0303C22.421 16.8897 22.5 16.6989 22.5 16.5V9C22.5 7.75969 21.435 6.75 20.1253 6.75ZM6.75 4.5H17.25V6.75H6.75V4.5ZM17.25 19.5H6.75V15H17.25V19.5ZM21 15.75H18.75V14.25C18.75 14.0511 18.671 13.8603 18.5303 13.7197C18.3897 13.579 18.1989 13.5 18 13.5H6C5.80109 13.5 5.61032 13.579 5.46967 13.7197C5.32902 13.8603 5.25 14.0511 5.25 14.25V15.75H3V9C3 8.58656 3.39281 8.25 3.87469 8.25H20.1253C20.6072 8.25 21 8.58656 21 9V15.75ZM18.75 10.875C18.75 11.0975 18.684 11.315 18.5604 11.5C18.4368 11.685 18.2611 11.8292 18.0555 11.9144C17.85 11.9995 17.6238 12.0218 17.4055 11.9784C17.1873 11.935 16.9868 11.8278 16.8295 11.6705C16.6722 11.5132 16.565 11.3127 16.5216 11.0945C16.4782 10.8762 16.5005 10.65 16.5856 10.4445C16.6708 10.2389 16.815 10.0632 17 9.9396C17.185 9.81598 17.4025 9.75 17.625 9.75C17.9234 9.75 18.2095 9.86853 18.4205 10.0795C18.6315 10.2905 18.75 10.5766 18.75 10.875Z" fill="white" />
+                                </svg>
+                                Print Patient Records
                             </button>
                         </div>
                         <div class="flex flex-col items-center">
                             <button id="saveMedicalBtn" type="button" onclick="saveMedicalInformation()"
                                 class="btn-save-medical px-8 py-5 text-lg gap-2">
                                 <svg width="35" height="35" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29.9838 10.3438L25.1562 5.51622C24.9539 5.31221 24.7129 5.15046 24.4475 5.04038C24.182 4.93031 23.8973 4.87409 23.61 4.87501H6.5625C5.98234 4.87501 5.42594 5.10548 5.0157 5.51571C4.60547 5.92595 4.375 6.48235 4.375 7.06251V28.9375C4.375 29.5177 4.60547 30.0741 5.0157 30.4843C5.42594 30.8945 5.98234 31.125 6.5625 31.125H28.4375C29.0177 31.125 29.5741 30.8945 29.9843 30.4843C30.3945 30.0741 30.625 29.5177 30.625 28.9375V11.89C30.6259 11.6027 30.5697 11.318 30.4596 11.0525C30.3495 10.7871 30.1878 10.5462 29.9838 10.3438ZM22.9688 28.9375H12.0312V21.2813H22.9688V28.9375ZM28.4375 28.9375H25.1562V21.2813C25.1562 20.7011 24.9258 20.1447 24.5155 19.7345C24.1053 19.3242 23.5489 19.0938 22.9688 19.0938H12.0312C11.4511 19.0938 10.8947 19.3242 10.4845 19.7345C10.0742 20.1447 9.84375 20.7011 9.84375 21.2813V28.9375H6.5625V7.06251H23.61L28.4375 11.89V28.9375ZM21.875 10.3438C21.875 10.6338 21.7598 10.912 21.5546 11.1172C21.3495 11.3223 21.0713 11.4375 20.7812 11.4375H13.125C12.8349 11.4375 12.5567 11.3223 12.3516 11.1172C12.1465 10.912 12.0312 10.6338 12.0312 10.3438C12.0312 10.0537 12.1465 9.77548 12.3516 9.57036C12.5567 9.36525 12.8349 9.25001 13.125 9.25001H20.7812C21.0713 9.25001 21.3495 9.36525 21.5546 9.57036C21.7598 9.77548 21.875 10.0537 21.875 10.3438Z" fill="white"/>
-</svg>
-Save All Information
+                                    <path d="M29.9838 10.3438L25.1562 5.51622C24.9539 5.31221 24.7129 5.15046 24.4475 5.04038C24.182 4.93031 23.8973 4.87409 23.61 4.87501H6.5625C5.98234 4.87501 5.42594 5.10548 5.0157 5.51571C4.60547 5.92595 4.375 6.48235 4.375 7.06251V28.9375C4.375 29.5177 4.60547 30.0741 5.0157 30.4843C5.42594 30.8945 5.98234 31.125 6.5625 31.125H28.4375C29.0177 31.125 29.5741 30.8945 29.9843 30.4843C30.3945 30.0741 30.625 29.5177 30.625 28.9375V11.89C30.6259 11.6027 30.5697 11.318 30.4596 11.0525C30.3495 10.7871 30.1878 10.5462 29.9838 10.3438ZM22.9688 28.9375H12.0312V21.2813H22.9688V28.9375ZM28.4375 28.9375H25.1562V21.2813C25.1562 20.7011 24.9258 20.1447 24.5155 19.7345C24.1053 19.3242 23.5489 19.0938 22.9688 19.0938H12.0312C11.4511 19.0938 10.8947 19.3242 10.4845 19.7345C10.0742 20.1447 9.84375 20.7011 9.84375 21.2813V28.9375H6.5625V7.06251H23.61L28.4375 11.89V28.9375ZM21.875 10.3438C21.875 10.6338 21.7598 10.912 21.5546 11.1172C21.3495 11.3223 21.0713 11.4375 20.7812 11.4375H13.125C12.8349 11.4375 12.5567 11.3223 12.3516 11.1172C12.1465 10.912 12.0312 10.6338 12.0312 10.3438C12.0312 10.0537 12.1465 9.77548 12.3516 9.57036C12.5567 9.36525 12.8349 9.25001 13.125 9.25001H20.7812C21.0713 9.25001 21.3495 9.36525 21.5546 9.57036C21.7598 9.77548 21.875 10.0537 21.875 10.3438Z" fill="white" />
+                                </svg>
+                                Save All Information
                             </button>
                         </div>
                     </div>
@@ -2983,7 +3225,7 @@ Save All Information
             </div>
         </div>
     </div>
-    
+
     <!-- Global Success Modal -->
     <div id="successModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[100]"
         style="display:none; opacity:0; transition:opacity 0.3s;">
@@ -2996,7 +3238,7 @@ Save All Information
                 class='px-8 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition font-medium'>OK</button>
         </div>
     </div>
-    
+
     <div id="presentPregnantModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal"
         style="display:none;">
 
@@ -3272,7 +3514,7 @@ Save All Information
 
     <!-- Export Modal (Warm Blue & White, Improved UX) -->
     <div id="exportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal" style="display: none;">
-        <div class="bg-white rounded-md shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-white rounded-md shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Sticky Header - Warm Blue -->
             <div class="sticky top-0 z-20 px-10 py-10 flex items-center justify-center">
                 <h3 class="text-2xl font-medium border-b-2 border-gray-300 w-full pb-6 flex items-center gap-3">
@@ -3290,7 +3532,7 @@ Save All Information
                 <!-- Export All Records Section -->
                 <div class="mb-10">
                     <h4 class="text-lg font-semibold mb-2 flex items-center gap-2" style="color: #515151;">
-                        Export All Patient Records
+                        Export Patient Records
                     </h4>
                     <p class="text-[#666666] text-base mb-6">Download all accessible patient records in your preferred format.</p>
                     <div class="flex w-full gap-4">
@@ -3299,12 +3541,13 @@ Save All Information
                             class="w-1/2 px-6 py-4 rounded-md bg-[#3C96E1] transition-all group cursor-pointer flex justify-center items-center gap-4 font-medium">
                             <div class="flex flex-col md:flex-row items-center gap-4">
                                 <div>
-                                    <h5 class="font-medium text-white text-xl">Export as Excel</h5>
+                                    <h5 class="font-medium text-white text-lg">Export All Records as Excel</h5>
                                 </div>
                                 <div>
-                                    <svg width="35" height="35" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M23.625 10.9688C23.625 11.1925 23.5361 11.4071 23.3779 11.5654C23.2196 11.7236 23.005 11.8125 22.7812 11.8125C22.5575 11.8125 22.3429 11.7236 22.1846 11.5654C22.0264 11.4071 21.9375 11.1925 21.9375 10.9688V6.25641L14.9418 13.2532C14.7834 13.4115 14.5687 13.5005 14.3448 13.5005C14.1209 13.5005 13.9062 13.4115 13.7479 13.2532C13.5895 13.0949 13.5006 12.8802 13.5006 12.6562C13.5006 12.4323 13.5895 12.2176 13.7479 12.0593L20.7436 5.0625H16.0312C15.8075 5.0625 15.5929 4.97361 15.4346 4.81537C15.2764 4.65714 15.1875 4.44253 15.1875 4.21875C15.1875 3.99497 15.2764 3.78036 15.4346 3.62213C15.5929 3.4639 15.8075 3.375 16.0312 3.375H22.7812C23.005 3.375 23.2196 3.4639 23.3779 3.62213C23.5361 3.78036 23.625 3.99497 23.625 4.21875V10.9688ZM19.4062 13.5C19.1825 13.5 18.9679 13.5889 18.8096 13.7471C18.6514 13.9054 18.5625 14.12 18.5625 14.3438V21.9375H5.0625V8.4375H12.6562C12.88 8.4375 13.0946 8.34861 13.2529 8.19037C13.4111 8.03214 13.5 7.81753 13.5 7.59375C13.5 7.36997 13.4111 7.15536 13.2529 6.99713C13.0946 6.8389 12.88 6.75 12.6562 6.75H5.0625C4.61495 6.75 4.18572 6.92779 3.86926 7.24426C3.55279 7.56073 3.375 7.98995 3.375 8.4375V21.9375C3.375 22.3851 3.55279 22.8143 3.86926 23.1307C4.18572 23.4472 4.61495 23.625 5.0625 23.625H18.5625C19.0101 23.625 19.4393 23.4472 19.7557 23.1307C20.0722 22.8143 20.25 22.3851 20.25 21.9375V14.3438C20.25 14.12 20.1611 13.9054 20.0029 13.7471C19.8446 13.5889 19.63 13.5 19.4062 13.5Z" fill="white" />
-                                    </svg>
+                                    <svg width="35" height="35" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M24.6998 4.59869L9.43612 1.90338C8.94646 1.81722 8.44263 1.92905 8.03541 2.2143C7.6282 2.49955 7.35095 2.93485 7.26463 3.42448L3.7783 23.2292C3.73566 23.4718 3.74125 23.7204 3.79474 23.9609C3.84824 24.2014 3.94859 24.4289 4.09007 24.6306C4.23155 24.8322 4.41138 25.004 4.61928 25.1362C4.82719 25.2683 5.05909 25.3582 5.30174 25.4006L20.5654 28.096C20.8081 28.1388 21.0569 28.1333 21.2975 28.0799C21.5381 28.0265 21.7658 27.9262 21.9676 27.7847C22.1694 27.6432 22.3413 27.4633 22.4735 27.2553C22.6057 27.0473 22.6956 26.8153 22.7381 26.5725L26.2244 6.76784C26.3098 6.27802 26.1972 5.77434 25.9113 5.36756C25.6254 4.96078 25.1896 4.68422 24.6998 4.59869ZM20.8888 26.2491L5.62401 23.5538L9.11033 3.74909L24.374 6.4444L20.8888 26.2491ZM10.4685 6.84518C10.512 6.60046 10.6508 6.383 10.8545 6.2406C11.0582 6.0982 11.3101 6.04252 11.5549 6.0858L21.2814 7.8026C21.5126 7.8431 21.7202 7.96882 21.8631 8.15493C22.0061 8.34104 22.0741 8.574 22.0536 8.80779C22.0331 9.04158 21.9257 9.25919 21.7526 9.41763C21.5795 9.57607 21.3532 9.66382 21.1185 9.66354C21.0636 9.66346 21.0087 9.65876 20.9545 9.64948L11.2279 7.93151C10.9832 7.88808 10.7657 7.74926 10.6233 7.54555C10.4809 7.34184 10.4253 7.08992 10.4685 6.84518ZM9.81932 10.5389C9.84069 10.4177 9.88574 10.3018 9.9519 10.1979C10.0181 10.094 10.104 10.0042 10.2049 9.9336C10.3058 9.86298 10.4196 9.81292 10.5398 9.78628C10.6601 9.75965 10.7844 9.75696 10.9056 9.77838L20.6322 11.4964C20.865 11.5353 21.0745 11.6606 21.219 11.8472C21.3634 12.0339 21.4322 12.2682 21.4114 12.5033C21.3907 12.7384 21.2821 12.957 21.1072 13.1156C20.9324 13.2741 20.7042 13.3608 20.4681 13.3585C20.4127 13.3586 20.3574 13.3535 20.3029 13.3432L10.5764 11.6264C10.3318 11.5825 10.1147 11.4432 9.97279 11.2393C9.83085 11.0354 9.77565 10.7835 9.81932 10.5389ZM9.16893 14.2315C9.21317 13.9874 9.35234 13.7708 9.55595 13.6292C9.75956 13.4875 10.011 13.4323 10.2553 13.4756L15.1162 14.3299C15.3473 14.3704 15.5547 14.4961 15.6977 14.682C15.8407 14.868 15.9087 15.1008 15.8884 15.3345C15.8681 15.5682 15.7609 15.7858 15.588 15.9444C15.4151 16.1029 15.1891 16.1909 14.9545 16.1909C14.8995 16.1909 14.8446 16.1862 14.7904 16.1768L9.92713 15.3178C9.68263 15.2741 9.46546 15.1352 9.3233 14.9315C9.18114 14.7278 9.12562 14.4761 9.16893 14.2315Z" fill="white"/>
+</svg>
+
                                 </div>
                             </div>
                         </button>
@@ -3313,7 +3556,7 @@ Save All Information
                             class="w-1/2 rounded-md transition-all group cursor-pointer flex justify-center items-center gap-4 px-6 py-4" style="background-color: #3C96E14D;">
                             <div class="flex flex-col md:flex-row items-center gap-4">
                                 <div>
-                                    <h5 class="font-medium text-[#3C96E1] text-xl">Specific Record</h5>
+                                    <h5 class="font-medium text-[#3C96E1] text-lg">Specific Record Selection</h5>
                                 </div>
                                 <div>
                                     <svg width="35" height="35" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3324,17 +3567,21 @@ Save All Information
                         </button>
                     </div>
                 </div>
-                <div class="my-8"></div>
                 <!-- Info Box -->
-                <div class="py-3 justify-center flex items-center">
-                    <p class="text-base" style="color: #51515199">
-                        <i class="fas fa-lightbulb mr-2"></i>
-                        All exports include complete medical information
-                    </p>
+                <div class="py-20 w-full flex justify-center items-center">
+                    <!-- Full‑width image -->
+                    <img
+                        src="../asssets/images/export-image.png"
+                        alt="Export"
+                        class="w-full h-auto" />
                 </div>
+
             </div>
             <!-- Sticky Footer -->
-            <div class="bg-white px-10 py-10 sticky bottom-0 flex justify-end gap-3 shadow-lg">
+            <div class="bg-white p-4 sticky bottom-0 flex items-center justify-between gap-3 shadow-lg">
+                <div>
+                    <p class="px-6 py-3 rounded-lg font-medium" style="background-color: #0000000D; color: #51515180;">Download all accessible patient records in your preferred format.</p>
+                </div>
                 <button type="button" onclick="closeExportModal()"
                     class="px-6 py-3 rounded-lg text-[#3C96E1] text-lg hover:bg-[#357ABD] transition font-medium" style="background-color: #3C96E14D;">
                     <i class="fas fa-times mr-2 "></i>Cancel
@@ -3344,131 +3591,149 @@ Save All Information
     </div>
 
     <!-- Manual Selection Modal (Warm Blue & White) with Search and Pagination -->
-<div id="manualSelectionModal"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal"
-    style="display: none;">
-    <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <!-- Sticky Header -->
-        <div class="sticky top-0 z-20 px-10 py-8 flex items-center justify-between bg-white border-b">
-            <h3 class="text-2xl font-medium flex items-center gap-3">
-                <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 2.8125C12.5895 2.8125 10.2332 3.52728 8.22899 4.86646C6.22477 6.20564 4.66267 8.10907 3.74022 10.336C2.81778 12.563 2.57643 15.0135 3.04668 17.3777C3.51694 19.7418 4.67769 21.9134 6.38214 23.6179C8.08659 25.3223 10.2582 26.4831 12.6223 26.9533C14.9865 27.4236 17.437 27.1822 19.664 26.2598C21.8909 25.3373 23.7944 23.7752 25.1335 21.771C26.4727 19.7668 27.1875 17.4105 27.1875 15C27.1841 11.7687 25.899 8.67076 23.6141 6.3859C21.3292 4.10104 18.2313 2.81591 15 2.8125ZM15 25.3125C12.9604 25.3125 10.9666 24.7077 9.27069 23.5745C7.5748 22.4414 6.25303 20.8308 5.4725 18.9464C4.69197 17.0621 4.48775 14.9886 4.88566 12.9881C5.28357 10.9877 6.26574 9.15019 7.70797 7.70796C9.1502 6.26573 10.9877 5.28356 12.9881 4.88565C14.9886 4.48774 17.0621 4.69196 18.9464 5.47249C20.8308 6.25302 22.4414 7.5748 23.5745 9.27068C24.7077 10.9666 25.3125 12.9604 25.3125 15C25.3094 17.7341 24.2219 20.3553 22.2886 22.2886C20.3553 24.2219 17.7341 25.3094 15 25.3125ZM15 8.4375C13.7021 8.4375 12.4333 8.82238 11.3541 9.54348C10.2749 10.2646 9.43375 11.2895 8.93705 12.4886C8.44035 13.6878 8.31039 15.0073 8.5636 16.2803C8.81682 17.5533 9.44183 18.7226 10.3596 19.6404C11.2774 20.5582 12.4467 21.1832 13.7197 21.4364C14.9927 21.6896 16.3122 21.5597 17.5114 21.063C18.7105 20.5663 19.7354 19.7251 20.4565 18.6459C21.1776 17.5667 21.5625 16.2979 21.5625 15C21.5606 13.2601 20.8686 11.592 19.6383 10.3617C18.408 9.13136 16.7399 8.43936 15 8.4375ZM15 19.6875C14.0729 19.6875 13.1666 19.4126 12.3958 18.8975C11.6249 18.3824 11.0241 17.6504 10.6693 16.7938C10.3145 15.9373 10.2217 14.9948 10.4026 14.0855C10.5834 13.1762 11.0299 12.341 11.6854 11.6854C12.341 11.0299 13.1762 10.5834 14.0855 10.4026C14.9948 10.2217 15.9373 10.3145 16.7938 10.6693C17.6504 11.0241 18.3824 11.6249 18.8975 12.3958C19.4126 13.1666 19.6875 14.0729 19.6875 15C19.6875 16.2432 19.1936 17.4355 18.3146 18.3146C17.4355 19.1936 16.2432 19.6875 15 19.6875Z" fill="#3C96E1" />
-                </svg>
-                <span style="color: #387EC3;">Select Specific Records to Export</span>
-            </h3>
-            <button onclick="closeManualSelectionModal()" class="text-gray-500 hover:text-gray-700 text-2xl transition">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
+    <div id="manualSelectionModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal"
+        style="display: none;">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+            <!-- Sticky Header -->
+            <div class="sticky top-0 z-20 px-10 py-8 flex items-center justify-between bg-white">
+                <h3 class="text-2xl font-medium flex items-center gap-3">
+                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M24.6998 4.59869L9.43612 1.90338C8.94646 1.81722 8.44263 1.92905 8.03541 2.2143C7.6282 2.49955 7.35095 2.93485 7.26463 3.42448L3.7783 23.2292C3.73566 23.4718 3.74125 23.7204 3.79474 23.9609C3.84824 24.2014 3.94859 24.4289 4.09007 24.6306C4.23155 24.8322 4.41138 25.004 4.61928 25.1362C4.82719 25.2683 5.05909 25.3582 5.30174 25.4006L20.5654 28.096C20.8081 28.1388 21.0569 28.1333 21.2975 28.0799C21.5381 28.0265 21.7658 27.9262 21.9676 27.7847C22.1694 27.6432 22.3413 27.4633 22.4735 27.2553C22.6057 27.0473 22.6956 26.8153 22.7381 26.5725L26.2244 6.76784C26.3098 6.27802 26.1972 5.77434 25.9113 5.36756C25.6254 4.96078 25.1896 4.68422 24.6998 4.59869ZM20.8888 26.2491L5.62401 23.5538L9.11033 3.74909L24.374 6.4444L20.8888 26.2491ZM10.4685 6.84518C10.512 6.60046 10.6508 6.383 10.8545 6.2406C11.0582 6.0982 11.3101 6.04252 11.5549 6.0858L21.2814 7.8026C21.5126 7.8431 21.7202 7.96882 21.8631 8.15493C22.0061 8.34104 22.0741 8.574 22.0536 8.80779C22.0331 9.04158 21.9257 9.25919 21.7526 9.41763C21.5795 9.57607 21.3532 9.66382 21.1185 9.66354C21.0636 9.66346 21.0087 9.65876 20.9545 9.64948L11.2279 7.93151C10.9832 7.88808 10.7657 7.74926 10.6233 7.54555C10.4809 7.34184 10.4253 7.08992 10.4685 6.84518ZM9.81932 10.5389C9.84069 10.4177 9.88574 10.3018 9.9519 10.1979C10.0181 10.094 10.104 10.0042 10.2049 9.9336C10.3058 9.86298 10.4196 9.81292 10.5398 9.78628C10.6601 9.75965 10.7844 9.75696 10.9056 9.77838L20.6322 11.4964C20.865 11.5353 21.0745 11.6606 21.219 11.8472C21.3634 12.0339 21.4322 12.2682 21.4114 12.5033C21.3907 12.7384 21.2821 12.957 21.1072 13.1156C20.9324 13.2741 20.7042 13.3608 20.4681 13.3585C20.4127 13.3586 20.3574 13.3535 20.3029 13.3432L10.5764 11.6264C10.3318 11.5825 10.1147 11.4432 9.97279 11.2393C9.83085 11.0354 9.77565 10.7835 9.81932 10.5389ZM9.16893 14.2315C9.21317 13.9874 9.35234 13.7708 9.55595 13.6292C9.75956 13.4875 10.011 13.4323 10.2553 13.4756L15.1162 14.3299C15.3473 14.3704 15.5547 14.4961 15.6977 14.682C15.8407 14.868 15.9087 15.1008 15.8884 15.3345C15.8681 15.5682 15.7609 15.7858 15.588 15.9444C15.4151 16.1029 15.1891 16.1909 14.9545 16.1909C14.8995 16.1909 14.8446 16.1862 14.7904 16.1768L9.92713 15.3178C9.68263 15.2741 9.46546 15.1352 9.3233 14.9315C9.18114 14.7278 9.12562 14.4761 9.16893 14.2315Z" fill="#3C96E1"/>
+</svg>
 
-        <!-- Scrollable Content -->
-        <div class="px-10 flex-1 overflow-y-auto py-6">
-            <!-- Search Bar -->
-            <div class="mb-6">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" 
-                           id="exportPatientSearch" 
-                           placeholder="Search patients by name..." 
-                           class="w-full pl-12 pr-4 py-3 border border-[#3C96E1] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                           oninput="debounceSearchExportPatients()">
-                </div>
+                    <span style="color: #387EC3;">Select Specific Records to Export</span>
+                </h3>
+                <!-- <button onclick="closeManualSelectionModal()" class="text-gray-500 hover:text-gray-700 text-2xl transition">
+                    <i class="fas fa-times"></i>
+                </button> -->
             </div>
-            
-            <!-- Selection Controls -->
-            <div class="mb-4">
-                <div class="flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                        <p class="text-sm text-[#666666]">
-                            <span class="font-medium text-lg">Selected:</span>
-                            <span id="selectedCount" class="font-medium text-lg text-[#3C96E1]">0</span> patients
-                        </p>
+
+            <!-- Scrollable Content -->
+            <div class="px-10 flex-1 overflow-y-auto">
+                <!-- Search Bar -->
+                <div class="mb-6 gap-4 border-b-2 borde-gray-300 pb-6 flex flex-col md:flex-row items-center">
+
+                    <!-- Back Button -->
+                    <button type="button"
+                        onclick="goBackToExportModal()"
+                        class="flex-none inline-flex items-center px-4 py-3 rounded-md text-[#3C96E1] hover:bg-[#F0F7FF] transition font-medium" style="background-color: #3C96E14C;">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Back
+                    </button>
+
+                    <!-- Search Input -->
+                    <div class="relative w-full">
+                        <!-- Icon -->
+                        <span class="absolute inset-y-0 left-2 top-1/2 -translate-y-1/2 flex items-center pl-4">
+                            <i class="fas fa-search mx-3 text-xl text-gray-400"></i>
+                        </span>
+
+                        <!-- Input -->
+                        <input type="text"
+                            id="exportPatientSearch"
+                            placeholder="Search patients by name..."
+                            class="w-full px-10 py-3 border border-[#3C96E1] rounded-md"
+                            oninput="debounceSearchExportPatients()" />
                     </div>
-                    <div class="flex items-center gap-3">
-                        <label class="flex items-center gap-2 cursor-pointer px-4 rounded-lg hover:bg-[#D4E3F7] transition">
-                            <input type="checkbox" id="selectAllPatients"
-                                class="patient-checkbox select-all-checkbox w-5 h-5 accent-[#4A90E2]"
-                                onchange="toggleAllPatients(this)">
-                            <span class="font-medium text-[#357ABD]">Select All on Current Page</span>
-                        </label>
+
+                </div>
+
+
+                <!-- Selection Controls -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                        <div>
+                            <p class="text-sm text-[#666666]">
+                            <h1 class="font-medium text-xl">Record Selection</h1>
+                            <span class="font-normal text-gray-500 text-base">Selected Record :</span>
+                            <span id="selectedCount" class="font-medium text-lg text-[#3C96E1]">0</span>
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="flex items-center gap-1 cursor-pointer px-4 rounded-lg hover:bg-[#D4E3F7] transition">
+                                <input type="checkbox" id="selectAllPatients"
+                                    class="patient-checkbox select-all-checkbox w-5 h-5 accent-[#4A90E2]"
+                                    onchange="toggleAllPatients(this)">
+                                <span class="font-normal text-gray-500 text-lg">Select All on Current Page</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Patients Table -->
-            <div class="overflow-hidden border rounded-lg">
-                <div class="scrollable-table-container" style="max-height: 350px;">
-                    <table class="patient-table w-full">
-                        <thead class="bg-[#F8FBFF] sticky top-0">
-                            <tr>
-                                <th class="checkbox-column w-12 text-center py-3 px-2"></th>
-                                <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Patient Name</th>
-                                <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Age</th>
-                                <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Last Check-up</th>
-                            </tr>
-                        </thead>
-                        <tbody id="patientSelectionList">
-                            <!-- Populated by JavaScript -->
-                            <tr>
-                                <td colspan="4" class="text-center py-8">
-                                    <div class="flex justify-center items-center">
-                                        <div class="loading-spinner mr-3"></div>
-                                        <span class="text-gray-600">Loading patients...</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Patients Table -->
+                <div class="overflow-hidden">
+                    <div class="scrollable-table-container" style="max-height: 350px;">
+                        <table class="patient-table w-full">
+                            <thead class="bg-[#F8FBFF] sticky top-0">
+                                <tr>
+                                    <th class="checkbox-column w-12 text-center py-3 px-2"></th>
+                                    <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Name</th>
+                                    <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Age</th>
+                                    <th class="px-6 py-3 text-left font-bold text-[#2E5C8A]">Last Check-up</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patientSelectionList">
+                                <!-- Populated by JavaScript -->
+                                <tr>
+                                    <td colspan="4" class="text-center py-8">
+                                        <div class="flex justify-center items-center">
+                                            <div class="loading-spinner mr-3"></div>
+                                            <span class="text-gray-600">Loading patients...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pagination will be inserted here dynamically -->
+                <div id="exportPagination" class="flex justify-center gap-2 mb-6"></div>
+
+                <div class="mb-2">
+                    <p class="font-normal text-lg text-gray-500">Download all accessible patient records in your preferred format.</p>
                 </div>
             </div>
-            
-            <!-- Pagination will be inserted here dynamically -->
-            <div id="exportPagination"></div>
-        </div>
 
-        <!-- Sticky Footer -->
-<div class="w-full px-10 py-6 sticky bottom-0 bg-white border-t flex items-center justify-between">
-    <div class="flex items-center gap-4">
-        <!-- Back Button - Navigates to Export Modal -->
-        <button type="button" onclick="goBackToExportModal()" 
-            class="inline-flex items-center px-4 py-2 rounded-lg border border-[#3C96E1] text-[#3C96E1] hover:bg-[#F0F7FF] transition font-medium bg-white">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            Back to Export Options
-        </button>
-        
-        <span class="text-sm text-gray-600">
-            <i class="fas fa-info-circle mr-1 text-blue-500"></i>
-            Select patients to export as Excel or PDF
-        </span>
+            <!-- Sticky Footer -->
+            <div class="w-full px-10 py-6 sticky bottom-0 bg-white flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <!-- Export Excel Button - Green -->
+                    <button type="button" onclick="confirmManualExport('excel')"
+                        class="inline-flex items-center px-6 py-4 gap-2 rounded-lg text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
+                        style="background-color: #10B981; border: none;">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 9.75C21 9.94891 20.921 10.1397 20.7803 10.2803C20.6397 10.421 20.4489 10.5 20.25 10.5C20.0511 10.5 19.8603 10.421 19.7197 10.2803C19.579 10.1397 19.5 9.94891 19.5 9.75V5.56125L13.2816 11.7806C13.1408 11.9214 12.95 12.0004 12.7509 12.0004C12.5519 12.0004 12.361 11.9214 12.2203 11.7806C12.0796 11.6399 12.0005 11.449 12.0005 11.25C12.0005 11.051 12.0796 10.8601 12.2203 10.7194L18.4387 4.5H14.25C14.0511 4.5 13.8603 4.42098 13.7197 4.28033C13.579 4.13968 13.5 3.94891 13.5 3.75C13.5 3.55109 13.579 3.36032 13.7197 3.21967C13.8603 3.07902 14.0511 3 14.25 3H20.25C20.4489 3 20.6397 3.07902 20.7803 3.21967C20.921 3.36032 21 3.55109 21 3.75V9.75ZM17.25 12C17.0511 12 16.8603 12.079 16.7197 12.2197C16.579 12.3603 16.5 12.5511 16.5 12.75V19.5H4.5V7.5H11.25C11.4489 7.5 11.6397 7.42098 11.7803 7.28033C11.921 7.13968 12 6.94891 12 6.75C12 6.55109 11.921 6.36032 11.7803 6.21967C11.6397 6.07902 11.4489 6 11.25 6H4.5C4.10218 6 3.72064 6.15804 3.43934 6.43934C3.15804 6.72064 3 7.10218 3 7.5V19.5C3 19.8978 3.15804 20.2794 3.43934 20.5607C3.72064 20.842 4.10218 21 4.5 21H16.5C16.8978 21 17.2794 20.842 17.5607 20.5607C17.842 20.2794 18 19.8978 18 19.5V12.75C18 12.5511 17.921 12.3603 17.7803 12.2197C17.6397 12.079 17.4489 12 17.25 12Z" fill="white"/>
+</svg>
+
+                        Export as Excel
+                    </button>
+
+                    <!-- Export PDF Button - Red -->
+                    <button type="button" onclick="confirmManualExport('pdf')"
+                        class="inline-flex items-center px-6 py-4 gap-2 rounded-lg text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
+                        style="background-color: #DC2626; border: none;">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M21 9.75C21 9.94891 20.921 10.1397 20.7803 10.2803C20.6397 10.421 20.4489 10.5 20.25 10.5C20.0511 10.5 19.8603 10.421 19.7197 10.2803C19.579 10.1397 19.5 9.94891 19.5 9.75V5.56125L13.2816 11.7806C13.1408 11.9214 12.95 12.0004 12.7509 12.0004C12.5519 12.0004 12.361 11.9214 12.2203 11.7806C12.0796 11.6399 12.0005 11.449 12.0005 11.25C12.0005 11.051 12.0796 10.8601 12.2203 10.7194L18.4387 4.5H14.25C14.0511 4.5 13.8603 4.42098 13.7197 4.28033C13.579 4.13968 13.5 3.94891 13.5 3.75C13.5 3.55109 13.579 3.36032 13.7197 3.21967C13.8603 3.07902 14.0511 3 14.25 3H20.25C20.4489 3 20.6397 3.07902 20.7803 3.21967C20.921 3.36032 21 3.55109 21 3.75V9.75ZM17.25 12C17.0511 12 16.8603 12.079 16.7197 12.2197C16.579 12.3603 16.5 12.5511 16.5 12.75V19.5H4.5V7.5H11.25C11.4489 7.5 11.6397 7.42098 11.7803 7.28033C11.921 7.13968 12 6.94891 12 6.75C12 6.55109 11.921 6.36032 11.7803 6.21967C11.6397 6.07902 11.4489 6 11.25 6H4.5C4.10218 6 3.72064 6.15804 3.43934 6.43934C3.15804 6.72064 3 7.10218 3 7.5V19.5C3 19.8978 3.15804 20.2794 3.43934 20.5607C3.72064 20.842 4.10218 21 4.5 21H16.5C16.8978 21 17.2794 20.842 17.5607 20.5607C17.842 20.2794 18 19.8978 18 19.5V12.75C18 12.5511 17.921 12.3603 17.7803 12.2197C17.6397 12.079 17.4489 12 17.25 12Z" fill="white"/>
+</svg>
+
+                        Export as PDF
+                    </button>
+                </div>
+                <div class="flex gap-3">
+                    <!-- Cancel Button -->
+                    <button type="button" onclick="closeManualSelectionModal()"
+                        class="px-6 py-3 rounded-lg border border-[#3C96E1] text-[#3C96E1] hover:bg-[#F8FBFF] transition font-medium bg-white">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="flex gap-3">
-        <!-- Export Excel Button - Green -->
-        <button type="button" onclick="confirmManualExport('excel')"
-            class="inline-flex items-center px-6 py-3 rounded-lg text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
-            style="background-color: #10B981; border: none;">
-            <i class="fas fa-file-excel mr-2"></i>
-            Export as Excel
-        </button>
-        
-        <!-- Export PDF Button - Red -->
-        <button type="button" onclick="confirmManualExport('pdf')"
-            class="inline-flex items-center px-6 py-3 rounded-lg text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
-            style="background-color: #DC2626; border: none;">
-            <i class="fas fa-file-pdf mr-2"></i>
-            Export as PDF
-        </button>
-        
-        <!-- Cancel Button -->
-        <button type="button" onclick="closeManualSelectionModal()"
-            class="px-6 py-3 rounded-lg border border-[#3C96E1] text-[#3C96E1] hover:bg-[#F8FBFF] transition font-medium bg-white">
-            Cancel
-        </button>
-    </div>
-</div>
-    </div>
-</div>
 
     <!-- Consultation Note Modal -->
     <div id="consultationNoteModal"
@@ -3477,14 +3742,15 @@ Save All Information
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <!-- Sticky Header -->
             <div class="sticky top-0 z-20 px-10 py-6 flex items-center">
-                <h3 class="text-2xl font-sm flex mt-3 border-b-2 border-gray-100 pb-6  text-center w-full items-center text-white">
+                <h3 class="text-2xl font-sm flex mt-3 border-b-2 border-gray-100 pb-6  text-center w-full items-center text-white gap-2">
                     <svg width="40" height="40" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 2.8125C12.5895 2.8125 10.2332 3.52728 8.22899 4.86646C6.22477 6.20564 4.66267 8.10907 3.74022 10.336C2.81778 12.563 2.57643 15.0135 3.04668 17.3777C3.51694 19.7418 4.67769 21.9134 6.38214 23.6179C8.08659 25.3223 10.2582 26.4831 12.6223 26.9533C14.9865 27.4236 17.437 27.1822 19.664 26.2598C21.8909 25.3373 23.7944 23.7752 25.1335 21.771C26.4727 19.7668 27.1875 17.4105 27.1875 15C27.1841 11.7687 25.899 8.67076 23.6141 6.3859C21.3292 4.10104 18.2313 2.81591 15 2.8125ZM15 25.3125C12.9604 25.3125 10.9666 24.7077 9.27069 23.5745C7.5748 22.4414 6.25303 20.8308 5.4725 18.9464C4.69197 17.0621 4.48775 14.9886 4.88566 12.9881C5.28357 10.9877 6.26574 9.15019 7.70797 7.70796C9.1502 6.26573 10.9877 5.28356 12.9881 4.88565C14.9886 4.48774 17.0621 4.69196 18.9464 5.47249C20.8308 6.25302 22.4414 7.5748 23.5745 9.27068C24.7077 10.9666 25.3125 12.9604 25.3125 15C25.3094 17.7341 24.2219 20.3553 22.2886 22.2886C20.3553 24.2219 17.7341 25.3094 15 25.3125ZM20.625 15C20.625 15.2486 20.5262 15.4871 20.3504 15.6629C20.1746 15.8387 19.9361 15.9375 19.6875 15.9375H15.9375V19.6875C15.9375 19.9361 15.8387 20.1746 15.6629 20.3504C15.4871 20.5262 15.2486 20.625 15 20.625C14.7514 20.625 14.5129 20.5262 14.3371 20.3504C14.1613 20.1746 14.0625 19.9361 14.0625 19.6875V15.9375H10.3125C10.0639 15.9375 9.82541 15.8387 9.64959 15.6629C9.47378 15.4871 9.375 15.2486 9.375 15C9.375 14.7514 9.47378 14.5129 9.64959 14.3371C9.82541 14.1613 10.0639 14.0625 10.3125 14.0625H14.0625V10.3125C14.0625 10.0639 14.1613 9.8254 14.3371 9.64959C14.5129 9.47377 14.7514 9.375 15 9.375C15.2486 9.375 15.4871 9.47377 15.6629 9.64959C15.8387 9.8254 15.9375 10.0639 15.9375 10.3125V14.0625H19.6875C19.9361 14.0625 20.1746 14.1613 20.3504 14.3371C20.5262 14.5129 20.625 14.7514 20.625 15Z" fill="#007BFF" />
-                    </svg>
+<path d="M24.6998 4.59869L9.43612 1.90338C8.94646 1.81722 8.44263 1.92905 8.03542 2.2143C7.6282 2.49955 7.35095 2.93485 7.26463 3.42448L3.7783 23.2292C3.73566 23.4718 3.74125 23.7204 3.79474 23.9609C3.84824 24.2014 3.94859 24.4289 4.09007 24.6306C4.23155 24.8322 4.41138 25.004 4.61928 25.1362C4.82719 25.2683 5.05909 25.3582 5.30174 25.4006L20.5654 28.096C20.8081 28.1388 21.0569 28.1333 21.2975 28.0799C21.5381 28.0265 21.7658 27.9262 21.9676 27.7847C22.1694 27.6432 22.3413 27.4633 22.4735 27.2553C22.6057 27.0473 22.6956 26.8153 22.7381 26.5725L26.2244 6.76784C26.3098 6.27802 26.1972 5.77434 25.9113 5.36756C25.6254 4.96078 25.1896 4.68422 24.6998 4.59869ZM20.8889 26.2491L5.62401 23.5538L9.11034 3.74909L24.374 6.4444L20.8889 26.2491ZM10.4685 6.84518C10.512 6.60046 10.6508 6.383 10.8545 6.2406C11.0582 6.0982 11.3101 6.04252 11.5549 6.0858L21.2814 7.8026C21.5126 7.8431 21.7202 7.96882 21.8631 8.15493C22.0061 8.34104 22.0741 8.574 22.0536 8.80779C22.0331 9.04158 21.9257 9.25919 21.7526 9.41763C21.5795 9.57607 21.3532 9.66382 21.1185 9.66354C21.0636 9.66346 21.0087 9.65876 20.9545 9.64948L11.2279 7.93151C10.9832 7.88808 10.7657 7.74926 10.6233 7.54555C10.4809 7.34184 10.4253 7.08992 10.4685 6.84518ZM9.81932 10.5389C9.84069 10.4177 9.88574 10.3018 9.9519 10.1979C10.0181 10.094 10.104 10.0042 10.2049 9.9336C10.3058 9.86298 10.4196 9.81292 10.5398 9.78628C10.6601 9.75965 10.7844 9.75696 10.9056 9.77838L20.6322 11.4964C20.865 11.5353 21.0745 11.6606 21.219 11.8472C21.3634 12.0339 21.4322 12.2682 21.4114 12.5033C21.3907 12.7384 21.2821 12.957 21.1072 13.1156C20.9324 13.2741 20.7042 13.3608 20.4681 13.3585C20.4127 13.3586 20.3574 13.3535 20.3029 13.3432L10.5764 11.6264C10.3318 11.5825 10.1147 11.4432 9.97279 11.2393C9.83085 11.0354 9.77565 10.7835 9.81932 10.5389ZM9.16893 14.2315C9.21317 13.9874 9.35234 13.7708 9.55595 13.6292C9.75956 13.4875 10.011 13.4323 10.2553 13.4756L15.1162 14.3299C15.3473 14.3704 15.5547 14.4961 15.6977 14.682C15.8407 14.868 15.9087 15.1008 15.8884 15.3345C15.8681 15.5682 15.7609 15.7858 15.588 15.9444C15.4151 16.1029 15.1891 16.1909 14.9545 16.1909C14.8995 16.1909 14.8446 16.1862 14.7904 16.1768L9.92713 15.3178C9.68263 15.2741 9.46546 15.1352 9.3233 14.9315C9.18115 14.7278 9.12563 14.4761 9.16893 14.2315Z" fill="#3C96E1"/>
+</svg>
+
 
                     <span style="color: #387EC3;" id="consultationNoteTitle">Add Consultation Note</span>
                 </h3>
-                <button onclick="closeConsultationNoteModal()" class="text-gray-700 hover:text-gray-500 text-3xl transition absolute right-6 top-6">
+                <button onclick="closeConsultationNoteModal()" class="text-gray-500 hover:text-gray-500 text-3xl transition absolute right-8 top-6">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -3502,33 +3768,50 @@ Save All Information
                                 </label>
                                 <input type="text" id="doctor_name" name="doctor_name"
                                     placeholder="Enter doctor's full name"
-                                    class="w-full px-4 py-3 border border-[#85ccfb] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                    class="w-full px-4 py-3 border border-[#85ccfb] rounded-lg"
                                     required>
-                                <p class="text-sm text-gray-500 mt-1">"Dr." will be added automatically.</p>
+                                <!-- <p class="text-sm text-gray-500 mt-1">"Dr." will be added automatically.</p> -->
                             </div>
 
                             <div>
-                                <label for="consultation_date" class="block text-gray-700 mb-2 font-medium">
-                                    Consultation Date <span class="text-red-500">*</span>
+                                <label for="consultation_date" class="block text-gray-500 mb-2 font-medium">
+                                    Consultation Date (Auto Filled)
                                 </label>
                                 <input type="date" id="consultation_date" name="consultation_date"
                                     value="<?= date('Y-m-d') ?>"
-                                    class="w-full px-4 py-3 border border-[#85ccfb] rounded-lg bg-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                    class="w-full px-4 py-3 rounded-lg bg-gray-100 text-gray-700"
                                     readonly aria-readonly="true" required>
                             </div>
                             <div>
-                                <label for="next_consultation_date" class="block text-gray-700 mb-2 font-medium">
-                                    Next Consultation Date
-                                </label>
-                                <input type="date" id="next_consultation_date" name="next_consultation_date"
-                                    class="w-full px-4 py-3 border border-[#85ccfb] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
-                            </div>
+    <label for="next_consultation_date" class="block text-gray-700 mb-2 font-medium">
+        Next Consultation Date <span class="text-red-500">*</span>
+    </label>
+
+    <div class="relative">
+        <input 
+            type="date" 
+            id="next_consultation_date" 
+            name="next_consultation_date"
+            class="w-full px-4 py-3 pr-12 border border-[#a4dafd] rounded-lg"
+        >
+
+        <!-- Icon aligned with input padding -->
+        <span onclick="document.getElementById('next_consultation_date').showPicker()"
+              class="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500">
+            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20.3125 3.125H17.9688V2.34375C17.9688 2.13655 17.8864 1.93784 17.7399 1.79132C17.5934 1.64481 17.3947 1.5625 17.1875 1.5625C16.9803 1.5625 16.7816 1.64481 16.6351 1.79132C16.4886 1.93784 16.4062 2.13655 16.4062 2.34375V3.125H8.59375V2.34375C8.59375 2.13655 8.51144 1.93784 8.36493 1.79132C8.21841 1.64481 8.0197 1.5625 7.8125 1.5625C7.6053 1.5625 7.40659 1.64481 7.26007 1.79132C7.11356 1.93784 7.03125 2.13655 7.03125 2.34375V3.125H4.6875C4.2731 3.125 3.87567 3.28962 3.58265 3.58265C3.28962 3.87567 3.125 4.2731 3.125 4.6875V20.3125C3.125 20.7269 3.28962 21.1243 3.58265 21.4174C3.87567 21.7104 4.2731 21.875 4.6875 21.875H20.3125C20.7269 21.875 21.1243 21.7104 21.4174 21.4174C21.7104 21.1243 21.875 20.7269 21.875 20.3125V4.6875C21.875 4.2731 21.7104 3.87567 21.4174 3.58265C21.1243 3.28962 20.7269 3.125 20.3125 3.125ZM7.03125 4.6875V5.46875C7.03125 5.67595 7.11356 5.87466 7.26007 6.02118C7.40659 6.16769 7.6053 6.25 7.8125 6.25C8.0197 6.25 8.21841 6.16769 8.36493 6.02118C8.51144 5.87466 8.59375 5.67595 8.59375 5.46875V4.6875H16.4062V5.46875C16.4062 5.67595 16.4886 5.87466 16.6351 6.02118C16.7816 6.16769 16.9803 6.25 17.1875 6.25C17.3947 6.25 17.5934 6.16769 17.7399 6.02118C17.8864 5.87466 17.9688 5.67595 17.9688 5.46875V4.6875H20.3125V7.8125H4.6875V4.6875H7.03125ZM20.3125 20.3125H4.6875V9.375H20.3125V20.3125ZM13.6719 12.8906C13.6719 13.1224 13.6031 13.349 13.4744 13.5417C13.3456 13.7344 13.1626 13.8846 12.9485 13.9733C12.7343 14.062 12.4987 14.0852 12.2714 14.04C12.0441 13.9948 11.8352 13.8832 11.6714 13.7193C11.5075 13.5554 11.3959 13.3466 11.3506 13.1192C11.3054 12.8919 11.3286 12.6563 11.4173 12.4422C11.506 12.228 11.6562 12.045 11.8489 11.9162C12.0417 11.7875 12.2682 11.7188 12.5 11.7188C12.8108 11.7188 13.1089 11.8422 13.3286 12.062C13.5484 12.2818 13.6719 12.5798 13.6719 12.8906ZM17.9688 12.8906C17.9688 13.1224 17.9 13.349 17.7713 13.5417C17.6425 13.7344 17.4595 13.8846 17.2453 13.9733C17.0312 14.062 16.7956 14.0852 16.5683 14.04C16.3409 13.9948 16.1321 13.8832 15.9682 13.7193C15.8043 13.5554 15.6927 13.3466 15.6475 13.1192C15.6023 12.8919 15.6255 12.6563 15.7142 12.4422C15.8029 12.228 15.9531 12.045 16.1458 11.9162C16.3385 11.7875 16.5651 11.7188 16.7969 11.7188C17.1077 11.7188 17.4057 11.8422 17.6255 12.062C17.8453 12.2818 17.9688 12.5798 17.9688 12.8906ZM9.375 16.7969C9.375 17.0286 9.30627 17.2552 9.1775 17.4479C9.04874 17.6406 8.86571 17.7908 8.65158 17.8795C8.43745 17.9682 8.20182 17.9914 7.9745 17.9462C7.74718 17.901 7.53837 17.7894 7.37448 17.6255C7.21059 17.4616 7.09898 17.2528 7.05377 17.0255C7.00855 16.7982 7.03176 16.5626 7.12045 16.3484C7.20915 16.1343 7.35935 15.9513 7.55207 15.8225C7.74478 15.6937 7.97135 15.625 8.20312 15.625C8.51393 15.625 8.812 15.7485 9.03177 15.9682C9.25154 16.188 9.375 16.4861 9.375 16.7969ZM13.6719 16.7969C13.6719 17.0286 13.6031 17.2552 13.4744 17.4479C13.3456 17.6406 13.1626 17.7908 12.9485 17.8795C12.7343 17.9682 12.4987 17.9914 12.2714 17.9462C12.0441 17.901 11.8352 17.7894 11.6714 17.6255C11.5075 17.4616 11.3959 17.2528 11.3506 17.0255C11.3054 16.7982 11.3286 16.5626 11.4173 16.3484C11.506 16.1343 11.6562 15.9513 11.8489 15.8225C12.0417 15.6937 12.2682 15.625 12.5 15.625C12.8108 15.625 13.1089 15.7485 13.3286 15.9682C13.5484 16.188 13.6719 16.4861 13.6719 16.7969ZM17.9688 16.7969C17.9688 17.0286 17.9 17.2552 17.7713 17.4479C17.6425 17.6406 17.4595 17.7908 17.2453 17.8795C17.0312 17.9682 16.7956 17.9914 16.5683 17.9462C16.3409 17.901 16.1321 17.7894 15.9682 17.6255C15.8043 17.4616 15.6927 17.2528 15.6475 17.0255C15.6023 16.7982 15.6255 16.5626 15.7142 16.3484C15.8029 16.1343 15.9531 15.9513 16.1458 15.8225C16.3385 15.6937 16.5651 15.625 16.7969 15.625C17.1077 15.625 17.4057 15.7485 17.6255 15.9682C17.8453 16.188 17.9688 16.4861 17.9688 16.7969Z" fill="#1C1C1C"/>
+</svg>
+
+
+        </span>
+    </div>
+</div>
                             <div>
                                 <label for="note" class="block text-gray-700 mb-2 font-medium">
                                     Consultation Note <span class="text-red-500">*</span>
                                 </label>
                                 <textarea id="note" name="note" rows="8"
-                                    class="w-full px-4 py-3 border border-[#85ccfb] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                    class="w-full px-6 py-3 border border-[#85ccfb] rounded-lg"
                                     placeholder="Enter consultation notes, observations, recommendations, and treatment plans..."
                                     required></textarea>
                             </div>
@@ -3555,9 +3838,9 @@ Save All Information
                     <div id="addNoteActions">
                         <button type="button" onclick="saveConsultationNote()" class="btn-add-note px-6 py-6 gap-2">
                             <svg width="30" height="30" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M17.2899 3.21909L6.60528 1.33237C6.26252 1.27205 5.90984 1.35034 5.62479 1.55001C5.33974 1.74968 5.14567 2.05439 5.08524 2.39713L2.64481 16.2604C2.61496 16.4302 2.61887 16.6043 2.65632 16.7726C2.69377 16.9409 2.76401 17.1002 2.86305 17.2414C2.96208 17.3826 3.08796 17.5028 3.2335 17.5953C3.37903 17.6878 3.54136 17.7507 3.71122 17.7805L14.3958 19.6672C14.5657 19.6971 14.7398 19.6933 14.9082 19.6559C15.0767 19.6185 15.236 19.5483 15.3773 19.4493C15.5186 19.3502 15.6389 19.2243 15.7314 19.0787C15.824 18.9331 15.8869 18.7707 15.9166 18.6008L18.3571 4.73748C18.4169 4.39461 18.338 4.04204 18.1379 3.75729C17.9377 3.47255 17.6327 3.27895 17.2899 3.21909ZM14.6222 18.3744L3.93681 16.4876L6.37723 2.62436L17.0618 4.51108L14.6222 18.3744ZM7.32798 4.79163C7.35837 4.62032 7.45555 4.4681 7.59815 4.36842C7.74074 4.26874 7.91708 4.22977 8.08841 4.26006L14.897 5.46182C15.0588 5.49017 15.2041 5.57817 15.3042 5.70845C15.4043 5.83873 15.4518 6.0018 15.4375 6.16545C15.4232 6.3291 15.348 6.48143 15.2268 6.59234C15.1056 6.70325 14.9473 6.76467 14.783 6.76448C14.7445 6.76442 14.7061 6.76113 14.6681 6.75463L7.85954 5.55206C7.68823 5.52166 7.53601 5.42448 7.43633 5.28188C7.33666 5.13929 7.29768 4.96295 7.32798 4.79163ZM6.87352 7.37725C6.88848 7.29236 6.92002 7.21124 6.96633 7.13853C7.01264 7.06583 7.07283 7.00296 7.14345 6.95352C7.21406 6.90408 7.29373 6.86904 7.37789 6.8504C7.46205 6.83175 7.54906 6.82987 7.63395 6.84487L14.4425 8.04745C14.6055 8.0747 14.7522 8.16241 14.8533 8.29307C14.9544 8.42373 15.0025 8.58772 14.988 8.7523C14.9735 8.91688 14.8975 9.06993 14.7751 9.1809C14.6527 9.29187 14.4929 9.35258 14.3277 9.35092C14.2889 9.351 14.2502 9.34743 14.212 9.34026L7.40345 8.1385C7.23227 8.10773 7.08032 8.01027 6.98096 7.86753C6.88159 7.7248 6.84295 7.54846 6.87352 7.37725ZM6.41825 9.96206C6.44922 9.7912 6.54664 9.63959 6.68917 9.54042C6.83169 9.44125 7.00772 9.40261 7.17868 9.43295L10.5813 10.031C10.7431 10.0593 10.8883 10.1472 10.9884 10.2774C11.0885 10.4076 11.1361 10.5706 11.1219 10.7342C11.1077 10.8978 11.0326 11.0501 10.9116 11.1611C10.7906 11.272 10.6323 11.3336 10.4681 11.3336C10.4296 11.3336 10.3912 11.3303 10.3533 11.3238L6.94899 10.7225C6.77784 10.6919 6.62582 10.5946 6.52631 10.4521C6.4268 10.3095 6.38794 10.1333 6.41825 9.96206Z" fill="white"/>
-</svg>
-Save Note
+                                <path d="M17.2899 3.21909L6.60528 1.33237C6.26252 1.27205 5.90984 1.35034 5.62479 1.55001C5.33974 1.74968 5.14567 2.05439 5.08524 2.39713L2.64481 16.2604C2.61496 16.4302 2.61887 16.6043 2.65632 16.7726C2.69377 16.9409 2.76401 17.1002 2.86305 17.2414C2.96208 17.3826 3.08796 17.5028 3.2335 17.5953C3.37903 17.6878 3.54136 17.7507 3.71122 17.7805L14.3958 19.6672C14.5657 19.6971 14.7398 19.6933 14.9082 19.6559C15.0767 19.6185 15.236 19.5483 15.3773 19.4493C15.5186 19.3502 15.6389 19.2243 15.7314 19.0787C15.824 18.9331 15.8869 18.7707 15.9166 18.6008L18.3571 4.73748C18.4169 4.39461 18.338 4.04204 18.1379 3.75729C17.9377 3.47255 17.6327 3.27895 17.2899 3.21909ZM14.6222 18.3744L3.93681 16.4876L6.37723 2.62436L17.0618 4.51108L14.6222 18.3744ZM7.32798 4.79163C7.35837 4.62032 7.45555 4.4681 7.59815 4.36842C7.74074 4.26874 7.91708 4.22977 8.08841 4.26006L14.897 5.46182C15.0588 5.49017 15.2041 5.57817 15.3042 5.70845C15.4043 5.83873 15.4518 6.0018 15.4375 6.16545C15.4232 6.3291 15.348 6.48143 15.2268 6.59234C15.1056 6.70325 14.9473 6.76467 14.783 6.76448C14.7445 6.76442 14.7061 6.76113 14.6681 6.75463L7.85954 5.55206C7.68823 5.52166 7.53601 5.42448 7.43633 5.28188C7.33666 5.13929 7.29768 4.96295 7.32798 4.79163ZM6.87352 7.37725C6.88848 7.29236 6.92002 7.21124 6.96633 7.13853C7.01264 7.06583 7.07283 7.00296 7.14345 6.95352C7.21406 6.90408 7.29373 6.86904 7.37789 6.8504C7.46205 6.83175 7.54906 6.82987 7.63395 6.84487L14.4425 8.04745C14.6055 8.0747 14.7522 8.16241 14.8533 8.29307C14.9544 8.42373 15.0025 8.58772 14.988 8.7523C14.9735 8.91688 14.8975 9.06993 14.7751 9.1809C14.6527 9.29187 14.4929 9.35258 14.3277 9.35092C14.2889 9.351 14.2502 9.34743 14.212 9.34026L7.40345 8.1385C7.23227 8.10773 7.08032 8.01027 6.98096 7.86753C6.88159 7.7248 6.84295 7.54846 6.87352 7.37725ZM6.41825 9.96206C6.44922 9.7912 6.54664 9.63959 6.68917 9.54042C6.83169 9.44125 7.00772 9.40261 7.17868 9.43295L10.5813 10.031C10.7431 10.0593 10.8883 10.1472 10.9884 10.2774C11.0885 10.4076 11.1361 10.5706 11.1219 10.7342C11.1077 10.8978 11.0326 11.0501 10.9116 11.1611C10.7906 11.272 10.6323 11.3336 10.4681 11.3336C10.4296 11.3336 10.3912 11.3303 10.3533 11.3238L6.94899 10.7225C6.77784 10.6919 6.62582 10.5946 6.52631 10.4521C6.4268 10.3095 6.38794 10.1333 6.41825 9.96206Z" fill="white" />
+                            </svg>
+                            Save Note
                         </button>
                     </div>
 
@@ -3596,8 +3879,8 @@ Save Note
                 </h3>
                 <button onclick="closeAddPatientModal()" class="modal-close-btn">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M19.281 18.2198C19.3507 18.2895 19.406 18.3722 19.4437 18.4632C19.4814 18.5543 19.5008 18.6519 19.5008 18.7504C19.5008 18.849 19.4814 18.9465 19.4437 19.0376C19.406 19.1286 19.3507 19.2114 19.281 19.281C19.2114 19.3507 19.1286 19.406 19.0376 19.4437C18.9465 19.4814 18.849 19.5008 18.7504 19.5008C18.6519 19.5008 18.5543 19.4814 18.4632 19.4437C18.3722 19.406 18.2895 19.3507 18.2198 19.281L12.0004 13.0607L5.78104 19.281C5.64031 19.4218 5.44944 19.5008 5.25042 19.5008C5.05139 19.5008 4.86052 19.4218 4.71979 19.281C4.57906 19.1403 4.5 18.9494 4.5 18.7504C4.5 18.5514 4.57906 18.3605 4.71979 18.2198L10.9401 12.0004L4.71979 5.78104C4.57906 5.64031 4.5 5.44944 4.5 5.25042C4.5 5.05139 4.57906 4.86052 4.71979 4.71979C4.86052 4.57906 5.05139 4.5 5.25042 4.5C5.44944 4.5 5.64031 4.57906 5.78104 4.71979L12.0004 10.9401L18.2198 4.71979C18.3605 4.57906 18.5514 4.5 18.7504 4.5C18.9494 4.5 19.1403 4.57906 19.281 4.71979C19.4218 4.86052 19.5008 5.05139 19.5008 5.25042C19.5008 5.44944 19.4218 5.64031 19.281 5.78104L13.0607 12.0004L19.281 18.2198Z" fill="white"/>
-</svg>
+                        <path d="M19.281 18.2198C19.3507 18.2895 19.406 18.3722 19.4437 18.4632C19.4814 18.5543 19.5008 18.6519 19.5008 18.7504C19.5008 18.849 19.4814 18.9465 19.4437 19.0376C19.406 19.1286 19.3507 19.2114 19.281 19.281C19.2114 19.3507 19.1286 19.406 19.0376 19.4437C18.9465 19.4814 18.849 19.5008 18.7504 19.5008C18.6519 19.5008 18.5543 19.4814 18.4632 19.4437C18.3722 19.406 18.2895 19.3507 18.2198 19.281L12.0004 13.0607L5.78104 19.281C5.64031 19.4218 5.44944 19.5008 5.25042 19.5008C5.05139 19.5008 4.86052 19.4218 4.71979 19.281C4.57906 19.1403 4.5 18.9494 4.5 18.7504C4.5 18.5514 4.57906 18.3605 4.71979 18.2198L10.9401 12.0004L4.71979 5.78104C4.57906 5.64031 4.5 5.44944 4.5 5.25042C4.5 5.05139 4.57906 4.86052 4.71979 4.71979C4.86052 4.57906 5.05139 4.5 5.25042 4.5C5.44944 4.5 5.64031 4.57906 5.78104 4.71979L12.0004 10.9401L18.2198 4.71979C18.3605 4.57906 18.5514 4.5 18.7504 4.5C18.9494 4.5 19.1403 4.57906 19.281 4.71979C19.4218 4.86052 19.5008 5.05139 19.5008 5.25042C19.5008 5.44944 19.4218 5.64031 19.281 5.78104L13.0607 12.0004L19.281 18.2198Z" fill="white" />
+                    </svg>
 
                 </button>
             </div>
@@ -3996,25 +4279,25 @@ Save Note
         });
 
         // Variables for pagination in export modal
-let currentExportPage = 1;
-let totalExportPages = 1;
-let currentExportSearch = '';
-let isLoadingPatients = false;
+        let currentExportPage = 1;
+        let totalExportPages = 1;
+        let currentExportSearch = '';
+        let isLoadingPatients = false;
 
-// Populate patient list in manual selection modal with pagination and search
-function populatePatientSelectionList(page = 1, search = '') {
-    const tbody = document.getElementById('patientSelectionList');
-    if (!tbody) return;
-    
-    // Prevent multiple simultaneous requests
-    if (isLoadingPatients) return;
-    
-    currentExportPage = page;
-    currentExportSearch = search;
-    isLoadingPatients = true;
-    
-    // Show loading state
-    tbody.innerHTML = `
+        // Populate patient list in manual selection modal with pagination and search
+        function populatePatientSelectionList(page = 1, search = '') {
+            const tbody = document.getElementById('patientSelectionList');
+            if (!tbody) return;
+
+            // Prevent multiple simultaneous requests
+            if (isLoadingPatients) return;
+
+            currentExportPage = page;
+            currentExportSearch = search;
+            isLoadingPatients = true;
+
+            // Show loading state
+            tbody.innerHTML = `
         <tr>
             <td colspan="4" class="text-center py-8">
                 <div class="flex justify-center items-center">
@@ -4024,54 +4307,56 @@ function populatePatientSelectionList(page = 1, search = '') {
             </td>
         </tr>
     `;
-    
-    // Build URL with parameters
-    let url = window.location.pathname + '?ajax_get_patients=1&page=' + page;
-    if (search) {
-        url += '&search=' + encodeURIComponent(search);
-    }
-    
-    console.log('Fetching patients from:', url); // Debug log
-    
-    // Fetch patients via AJAX with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
-    fetch(url, { signal: controller.signal })
-        .then(response => {
-            clearTimeout(timeoutId);
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.status);
-            }
-            return response.json();
-        })
-        .then(data => {
-            isLoadingPatients = false;
-            if (data.success) {
-                renderPatientTable(data.patients, data.totalPages, data.currentPage, data.totalRecords);
-            } else {
-                showErrorMessage('Error loading patients: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            isLoadingPatients = false;
-            clearTimeout(timeoutId);
-            console.error('Error loading patients:', error);
-            
-            if (error.name === 'AbortError') {
-                showErrorMessage('Request timeout. Please try again.');
-            } else {
-                showErrorMessage('Network error: ' + error.message + '. Please check your connection and try again.');
-            }
-        });
-}
 
-// Show error message in table
-function showErrorMessage(message) {
-    const tbody = document.getElementById('patientSelectionList');
-    if (!tbody) return;
-    
-    tbody.innerHTML = `
+            // Build URL with parameters
+            let url = window.location.pathname + '?ajax_get_patients=1&page=' + page;
+            if (search) {
+                url += '&search=' + encodeURIComponent(search);
+            }
+
+            console.log('Fetching patients from:', url); // Debug log
+
+            // Fetch patients via AJAX with timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            fetch(url, {
+                    signal: controller.signal
+                })
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    isLoadingPatients = false;
+                    if (data.success) {
+                        renderPatientTable(data.patients, data.totalPages, data.currentPage, data.totalRecords);
+                    } else {
+                        showErrorMessage('Error loading patients: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    isLoadingPatients = false;
+                    clearTimeout(timeoutId);
+                    console.error('Error loading patients:', error);
+
+                    if (error.name === 'AbortError') {
+                        showErrorMessage('Request timeout. Please try again.');
+                    } else {
+                        showErrorMessage('Network error: ' + error.message + '. Please check your connection and try again.');
+                    }
+                });
+        }
+
+        // Show error message in table
+        function showErrorMessage(message) {
+            const tbody = document.getElementById('patientSelectionList');
+            if (!tbody) return;
+
+            tbody.innerHTML = `
         <tr>
             <td colspan="4" class="text-center py-8">
                 <div class="flex flex-col items-center justify-center text-red-500">
@@ -4085,34 +4370,40 @@ function showErrorMessage(message) {
             </td>
         </tr>
     `;
-}
+        }
 
-// Render patient table with pagination
-function renderPatientTable(patients, totalPages, currentPage, totalRecords) {
-    const tbody = document.getElementById('patientSelectionList');
-    if (!tbody) return;
-    
-    totalExportPages = totalPages;
-    
-    if (!patients || patients.length === 0) {
-        tbody.innerHTML = `
+        // Render patient table with pagination
+        function renderPatientTable(patients, totalPages, currentPage, totalRecords) {
+            const tbody = document.getElementById('patientSelectionList');
+            if (!tbody) return;
+
+            totalExportPages = totalPages;
+
+            if (!patients || patients.length === 0) {
+                tbody.innerHTML = `
             <tr>
-                <td colspan="4" class="text-center py-8 text-gray-500">
-                    <i class="fas fa-inbox text-4xl mb-3 block"></i>
-                    No patients found
-                </td>
-            </tr>
+    <td colspan="4" class="text-center py-24 text-gray-500">
+        <div class="flex flex-col items-center justify-center min-h-[300px] py-16 px-10 gap-4">
+
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M20 4H4C3.73478 4 3.48043 4.10536 3.29289 4.29289C3.10536 4.48043 3 4.73478 3 5V19C3 19.2652 3.10536 19.5196 3.29289 19.7071C3.48043 19.8946 3.73478 20 4 20H20C20.2652 20 20.5196 19.8946 20.7071 19.7071C20.8946 19.5196 21 19.2652 21 19V5C21 4.73478 20.8946 4.48043 20.7071 4.29289C20.5196 4.10536 20.2652 4 20 4ZM4 2C3.20435 2 2.44129 2.31607 1.87868 2.87868C1.31607 3.44129 1 4.20435 1 5V19C1 19.7956 1.31607 20.5587 1.87868 21.1213C2.44129 21.6839 3.20435 22 4 22H20C20.7956 22 21.5587 21.6839 22.1213 21.1213C22.6839 20.5587 23 19.7956 23 19V5C23 4.20435 22.6839 3.44129 22.1213 2.87868C21.5587 2.31607 20.7956 2 20 2H4ZM6 7H8V9H6V7ZM11 7C10.7348 7 10.4804 7.10536 10.2929 7.29289C10.1054 7.48043 10 7.73478 10 8C10 8.26522 10.1054 8.51957 10.2929 8.70711C10.4804 8.89464 10.7348 9 11 9H17C17.2652 9 17.5196 8.89464 17.7071 8.70711C17.8946 8.51957 18 8.26522 18 8C18 7.73478 17.8946 7.48043 17.7071 7.29289C17.5196 7.10536 17.2652 7 17 7H11ZM8 11H6V13H8V11ZM10 12C10 11.7348 10.1054 11.4804 10.2929 11.2929C10.4804 11.1054 10.7348 11 11 11H17C17.2652 11 17.5196 11.1054 17.7071 11.2929C17.8946 11.4804 18 11.7348 18 12C18 12.2652 17.8946 12.5196 17.7071 12.7071C17.5196 12.8946 17.2652 13 17 13H11C10.7348 13 10.4804 12.8946 10.2929 12.7071C10.1054 12.5196 10 12.2652 10 12ZM8 15H6V17H8V15ZM10 16C10 15.7348 10.1054 15.4804 10.2929 15.2929C10.4804 15.1054 10.7348 15 11 15H17C17.2652 15 17.5196 15.1054 17.7071 15.2929C17.8946 15.4804 18 15.7348 18 16C18 16.2652 17.8946 16.5196 17.7071 16.7071C17.5196 16.8946 17.2652 17 17 17H11C10.7348 17 10.4804 16.8946 10.2929 16.7071C10.1054 16.5196 10 16.2652 10 16Z" fill="#B9B9B9"/>
+</svg>
+
+            <span class="text-lg font-medium text-gray-400">No patients found</span>
+        </div>
+    </td>
+</tr>
         `;
-        updatePaginationControls();
-        return;
-    }
-    
-    let html = '';
-    patients.forEach(patient => {
-        const lastCheckup = patient.last_checkup_formatted || patient.last_checkup || 'N/A';
-        
-        html += `
-            <tr class="border-b border-[#E8F0FE] hover:bg-[#F8FBFF] transition">
+                updatePaginationControls();
+                return;
+            }
+
+            let html = '';
+            patients.forEach(patient => {
+                const lastCheckup = patient.last_checkup_formatted || patient.last_checkup || 'N/A';
+
+                html += `
+            <tr class="hover:bg-[#F8FBFF] transition">
                 <td class="checkbox-column px-4 py-3 text-center">
                     <input type="checkbox" class="patient-select w-5 h-5 accent-[#4A90E2]" 
                            value="${patient.id}" onchange="updateSelectedCount(); updateFooterCount()">
@@ -4122,212 +4413,220 @@ function renderPatientTable(patients, totalPages, currentPage, totalRecords) {
                 <td class="px-6 py-3 text-[#888888] text-sm">${lastCheckup}</td>
             </tr>
         `;
-    });
-    
-    tbody.innerHTML = html;
-    updatePaginationControls();
-    updateSelectedCount();
-}
+            });
 
-// Update pagination controls in the modal
-function updatePaginationControls() {
-    // Check if pagination container exists, if not create it
-    let paginationContainer = document.getElementById('exportPagination');
-    if (!paginationContainer) {
-        const modalContent = document.querySelector('#manualSelectionModal .flex-1.overflow-y-auto');
-        if (modalContent) {
-            paginationContainer = document.createElement('div');
-            paginationContainer.id = 'exportPagination';
-            paginationContainer.className = 'flex items-center justify-between mt-4 py-3 border-t border-gray-200';
-            modalContent.appendChild(paginationContainer);
+            tbody.innerHTML = html;
+            updatePaginationControls();
+            updateSelectedCount();
         }
-    }
-    
-    if (!paginationContainer) return;
-    
-    if (totalExportPages <= 1) {
-        paginationContainer.innerHTML = '';
-        return;
-    }
-    
-    // Build pagination HTML
-    let paginationHtml = `
-        <div class="flex items-center text-sm text-gray-600">
-            <span>Page ${currentExportPage} of ${totalExportPages}</span>
-        </div>
-        <div class="flex items-center gap-2">
-    `;
-    
-    // Previous button
-    paginationHtml += `
-        <button onclick="changeExportPage(${currentExportPage - 1})" 
-                class="px-3 py-1 rounded border ${currentExportPage <= 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-50 text-blue-600'}"
-                ${currentExportPage <= 1 ? 'disabled' : ''}>
-            <i class="fas fa-chevron-left text-sm"></i>
+
+        // Update pagination controls in the modal
+        function updatePaginationControls() {
+            // Check if pagination container exists, if not create it
+            let paginationContainer = document.getElementById('exportPagination');
+            if (!paginationContainer) {
+                const modalContent = document.querySelector('#manualSelectionModal .flex-1.overflow-y-auto');
+                if (modalContent) {
+                    paginationContainer = document.createElement('div');
+                    paginationContainer.id = 'exportPagination';
+                    paginationContainer.className = 'flex items-center justify-between mt-4 py-3 border-t border-gray-200';
+                    modalContent.appendChild(paginationContainer);
+                }
+            }
+
+            if (!paginationContainer) return;
+
+            if (totalExportPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            // Build pagination HTML
+            //         let paginationHtml = `
+            //     <div class="flex items-center text-sm text-gray-600">
+            //         <span>Page ${currentExportPage} of ${totalExportPages}</span>
+            //     </div>
+            //     <div class="flex items-center gap-2">
+            // `;
+
+            // Previous button
+            let paginationHtml = `
+    <button onclick="changeExportPage(${currentExportPage - 1})" 
+            class="px-4 py-2 mx-1 text-lg rounded-full  ${currentExportPage <= 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-50 text-blue-600'}"
+            style="border: 1.5px solid #3498DB;"
+            ${currentExportPage <= 1 ? 'disabled' : ''}>
+        <i class="fas fa-chevron-left text-sm"></i>
+    </button>
+`;
+
+            // Page numbers (show limited range)
+            const startPage = Math.max(1, currentExportPage - 2);
+            const endPage = Math.min(totalExportPages, currentExportPage + 2);
+
+            if (startPage > 1) {
+                paginationHtml += `<button onclick="changeExportPage(1)" class="px-4 py-2 text-lg rounded-full hover:bg-blue-50 text-blue-600" style="border: 1.5px solid #3498DB;">1</button>`;
+                if (startPage > 2) {
+                    // paginationHtml += `<span class="px-4 py-2">...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHtml += `
+        <button onclick="changeExportPage(${i})" 
+                class="px-4 py-2 text-lg rounded-full ${i === currentExportPage ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-blue-600'}"
+                style="border: 1.5px solid #3498DB;"
+                >
+            ${i}
         </button>
     `;
-    
-    // Page numbers (show limited range)
-    const startPage = Math.max(1, currentExportPage - 2);
-    const endPage = Math.min(totalExportPages, currentExportPage + 2);
-    
-    if (startPage > 1) {
-        paginationHtml += `<button onclick="changeExportPage(1)" class="px-3 py-1 rounded border hover:bg-blue-50 text-blue-600">1</button>`;
-        if (startPage > 2) {
-            paginationHtml += `<span class="px-2">...</span>`;
+            }
+
+            if (endPage < totalExportPages) {
+                if (endPage < totalExportPages - 1) {
+                    // paginationHtml += `<span class="px-4 py-2">...</span>`;
+                }
+                paginationHtml += `<button onclick="changeExportPage(${totalExportPages})" class="px-4 py-2 text-lg rounded-full hover:bg-blue-50 text-blue-600" 
+                style="border: 1.5px solid #3498DB;"
+                >${totalExportPages}</button>`;
+            }
+
+            // Next button
+            paginationHtml += `
+    <button onclick="changeExportPage(${currentExportPage + 1})" 
+            class="px-4 py-2 mx-1 text-lg rounded-full ${currentExportPage >= totalExportPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-50 text-blue-600'}"
+            style="border: 1.5px solid #3498DB;"
+            ${currentExportPage >= totalExportPages ? 'disabled' : ''}>
+        <i class="fas fa-chevron-right text-sm"></i>
+    </button>
+`;
+
+
+            paginationHtml += `</div>`;
+
+            paginationContainer.innerHTML = paginationHtml;
         }
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        paginationHtml += `
-            <button onclick="changeExportPage(${i})" 
-                    class="px-3 py-1 rounded border ${i === currentExportPage ? 'bg-blue-600 text-white' : 'hover:bg-blue-50 text-blue-600'}">
-                ${i}
-            </button>
-        `;
-    }
-    
-    if (endPage < totalExportPages) {
-        if (endPage < totalExportPages - 1) {
-            paginationHtml += `<span class="px-2">...</span>`;
+
+        // Change page in export modal
+        function changeExportPage(newPage) {
+            if (newPage < 1 || newPage > totalExportPages || isLoadingPatients) return;
+            populatePatientSelectionList(newPage, currentExportSearch);
         }
-        paginationHtml += `<button onclick="changeExportPage(${totalExportPages})" class="px-3 py-1 rounded border hover:bg-blue-50 text-blue-600">${totalExportPages}</button>`;
-    }
-    
-    // Next button
-    paginationHtml += `
-        <button onclick="changeExportPage(${currentExportPage + 1})" 
-                class="px-3 py-1 rounded border ${currentExportPage >= totalExportPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-50 text-blue-600'}"
-                ${currentExportPage >= totalExportPages ? 'disabled' : ''}>
-            <i class="fas fa-chevron-right text-sm"></i>
-        </button>
-    `;
-    
-    paginationHtml += `</div>`;
-    
-    paginationContainer.innerHTML = paginationHtml;
-}
 
-// Change page in export modal
-function changeExportPage(newPage) {
-    if (newPage < 1 || newPage > totalExportPages || isLoadingPatients) return;
-    populatePatientSelectionList(newPage, currentExportSearch);
-}
+        // Update selected count in modal
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
+            const countElement = document.getElementById('selectedCount');
+            if (countElement) {
+                countElement.textContent = checkboxes.length;
+            }
 
-// Update selected count in modal
-function updateSelectedCount() {
-    const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
-    const countElement = document.getElementById('selectedCount');
-    if (countElement) {
-        countElement.textContent = checkboxes.length;
-    }
-
-    // Update select all checkbox state
-    const selectAllCheckbox = document.getElementById('selectAllPatients');
-    const allCheckboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
-    if (selectAllCheckbox && allCheckboxes.length > 0) {
-        selectAllCheckbox.checked = checkboxes.length === allCheckboxes.length;
-        selectAllCheckbox.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
-    }
-}
-
-// Update footer count
-function updateFooterCount() {
-    const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
-    const footerCount = document.getElementById('footerCount');
-    if (footerCount) {
-        footerCount.textContent = checkboxes.length;
-    }
-}
-
-// Toggle all patients for export
-function toggleAllPatients(checkbox) {
-    const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
-    checkboxes.forEach(cb => {
-        cb.checked = checkbox.checked;
-    });
-    updateSelectedCount();
-    updateFooterCount();
-}
-
-// Open manual selection modal
-function openManualSelectionModal() {
-    closeExportModal();
-
-    const modal = document.getElementById('manualSelectionModal');
-    if (!modal) {
-        console.error('Manual selection modal not found');
-        showNotification('error', 'Modal not found. Please refresh the page.');
-        return;
-    }
-
-    modal.style.display = 'flex';
-    modal.style.opacity = '0';
-
-    setTimeout(() => {
-        modal.style.opacity = '1';
-        modal.style.transition = 'opacity 0.3s ease';
-        // Reset to first page and clear search
-        currentExportPage = 1;
-        currentExportSearch = '';
-        
-        // Clear search input if it exists
-        const searchInput = document.getElementById('exportPatientSearch');
-        if (searchInput) {
-            searchInput.value = '';
+            // Update select all checkbox state
+            const selectAllCheckbox = document.getElementById('selectAllPatients');
+            const allCheckboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
+            if (selectAllCheckbox && allCheckboxes.length > 0) {
+                selectAllCheckbox.checked = checkboxes.length === allCheckboxes.length;
+                selectAllCheckbox.indeterminate = checkboxes.length > 0 && checkboxes.length < allCheckboxes.length;
+            }
         }
-        
-        // Load patients
-        populatePatientSelectionList(1, '');
-    }, 10);
-}
 
-// Close manual selection modal
-function closeManualSelectionModal() {
-    const modal = document.getElementById('manualSelectionModal');
-    if (modal) {
-        modal.style.opacity = '0';
-        setTimeout(() => {
-            modal.style.display = 'none';
-            // Reset loading state
-            isLoadingPatients = false;
-        }, 300);
-    }
-}
+        // Update footer count
+        function updateFooterCount() {
+            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select:checked');
+            const footerCount = document.getElementById('footerCount');
+            if (footerCount) {
+                footerCount.textContent = checkboxes.length;
+            }
+        }
 
-// Search patients in export modal
-function searchExportPatients() {
-    const searchInput = document.getElementById('exportPatientSearch');
-    if (!searchInput) return;
-    
-    const searchTerm = searchInput.value.trim();
-    currentExportSearch = searchTerm;
-    currentExportPage = 1;
-    
-    populatePatientSelectionList(1, searchTerm);
-}
+        // Toggle all patients for export
+        function toggleAllPatients(checkbox) {
+            const checkboxes = document.querySelectorAll('#manualSelectionModal .patient-select');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+            updateSelectedCount();
+            updateFooterCount();
+        }
 
-// Debounce search to avoid too many requests
-let searchTimeout;
-function debounceSearchExportPatients() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        searchExportPatients();
-    }, 500);
-}
+        // Open manual selection modal
+        function openManualSelectionModal() {
+            closeExportModal();
 
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    if (!text) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.toString().replace(/[&<>"']/g, m => map[m]);
-}
+            const modal = document.getElementById('manualSelectionModal');
+            if (!modal) {
+                console.error('Manual selection modal not found');
+                showNotification('error', 'Modal not found. Please refresh the page.');
+                return;
+            }
+
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.style.transition = 'opacity 0.3s ease';
+                // Reset to first page and clear search
+                currentExportPage = 1;
+                currentExportSearch = '';
+
+                // Clear search input if it exists
+                const searchInput = document.getElementById('exportPatientSearch');
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+
+                // Load patients
+                populatePatientSelectionList(1, '');
+            }, 10);
+        }
+
+        // Close manual selection modal
+        function closeManualSelectionModal() {
+            const modal = document.getElementById('manualSelectionModal');
+            if (modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    // Reset loading state
+                    isLoadingPatients = false;
+                }, 300);
+            }
+        }
+
+        // Search patients in export modal
+        function searchExportPatients() {
+            const searchInput = document.getElementById('exportPatientSearch');
+            if (!searchInput) return;
+
+            const searchTerm = searchInput.value.trim();
+            currentExportSearch = searchTerm;
+            currentExportPage = 1;
+
+            populatePatientSelectionList(1, searchTerm);
+        }
+
+        // Debounce search to avoid too many requests
+        let searchTimeout;
+
+        function debounceSearchExportPatients() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchExportPatients();
+            }, 500);
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.toString().replace(/[&<>"']/g, m => map[m]);
+        }
 
         // Consultation Notes Variables
         let currentPatientId = null;
@@ -4541,7 +4840,7 @@ function escapeHtml(text) {
 
             const saveBtn = document.querySelector('#addNoteActions button');
             const originalText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving Record...';
             saveBtn.disabled = true;
 
             fetch('existing_info_patients.php', {
@@ -4928,7 +5227,7 @@ function escapeHtml(text) {
 
             const saveBtn = document.getElementById('saveMedicalBtn');
             const originalBtnText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving Record...';
             saveBtn.disabled = true;
 
             fetch(healthInfoForm.action, {
@@ -5337,19 +5636,19 @@ function escapeHtml(text) {
         }
 
         // Function to view note details
-function viewNoteDetails(noteId) {
-    fetch(`../api/get_note_details.php?id=${noteId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const note = data.note;
-                
-                // Format date only (without time)
-                const createdDate = formatDateOnly(note.created_at);
-                // Format time only
-                const createdTime = formatTimeOnly(note.created_at);
-                
-                const noteHtml = `
+        function viewNoteDetails(noteId) {
+            fetch(`../api/get_note_details.php?id=${noteId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const note = data.note;
+
+                        // Format date only (without time)
+                        const createdDate = formatDateOnly(note.created_at);
+                        // Format time only
+                        const createdTime = formatTimeOnly(note.created_at);
+
+                        const noteHtml = `
                     <div class="bg-white px-3 rounded-lg max-w-2xl">
                         <div class="flex justify-between border-b-2 border-gray-100 pb-4 items-start mb-4">
                             <div>
@@ -5397,36 +5696,36 @@ function viewNoteDetails(noteId) {
                     </div>
                 `;
 
-                showCustomModal(noteHtml, 'Note Details');
-            }
-        })
-        .catch(error => {
-            console.error('Error loading note details:', error);
-            showNotification('error', 'Unable to load note details.');
-        });
-}
+                        showCustomModal(noteHtml, 'Note Details');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading note details:', error);
+                    showNotification('error', 'Unable to load note details.');
+                });
+        }
 
-// Helper function to format date only (e.g., "March 05, 2026")
-function formatDateOnly(dateTimeString) {
-    if (!dateTimeString) return '';
-    const date = new Date(dateTimeString);
-    return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: '2-digit'
-    });
-}
+        // Helper function to format date only (e.g., "March 05, 2026")
+        function formatDateOnly(dateTimeString) {
+            if (!dateTimeString) return '';
+            const date = new Date(dateTimeString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: '2-digit'
+            });
+        }
 
-// Helper function to format time only (e.g., "02:26 PM")
-function formatTimeOnly(dateTimeString) {
-    if (!dateTimeString) return '';
-    const date = new Date(dateTimeString);
-    return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    });
-}
+        // Helper function to format time only (e.g., "02:26 PM")
+        function formatTimeOnly(dateTimeString) {
+            if (!dateTimeString) return '';
+            const date = new Date(dateTimeString);
+            return date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
 
         // Function to show note details in modal
         function showNoteDetailsModal(note) {
@@ -6082,7 +6381,7 @@ function formatTimeOnly(dateTimeString) {
 
             // Show loading
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving Record...';
             submitBtn.disabled = true;
 
             // Submit via AJAX
@@ -6181,7 +6480,7 @@ function formatTimeOnly(dateTimeString) {
 
             // Show loading
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving Record...';
             submitBtn.disabled = true;
 
             // Submit via AJAX
@@ -6346,22 +6645,22 @@ function formatTimeOnly(dateTimeString) {
         });
     </script>
 
-<!-- Go back for Export Option Modal -->
+    <!-- Go back for Export Option Modal -->
     <script>
-// Go back to Export Modal from Manual Selection Modal
-function goBackToExportModal() {
-    // Close manual selection modal
-    closeManualSelectionModal();
-    
-    // Small delay to ensure smooth transition
-    setTimeout(() => {
-        // Open export modal
-        openExportModal();
-    }, 300);
-}
+        // Go back to Export Modal from Manual Selection Modal
+        function goBackToExportModal() {
+            // Close manual selection modal
+            closeManualSelectionModal();
+
+            // Small delay to ensure smooth transition
+            setTimeout(() => {
+                // Open export modal
+                openExportModal();
+            }, 300);
+        }
     </script>
-    
-    
+
+
 </body>
 
 </html>

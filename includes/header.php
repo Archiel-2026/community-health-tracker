@@ -187,22 +187,22 @@ if (isset($_SESSION['user']['id'])) {
     }
 
     /* CLEAN: Resident User Logout Button - Warm Blue Text */
-    .logout-btn-1 {
-        background: white !important;
-        color: #3C96E1 !important;
-        padding: 0.75rem 1.5rem !important;
-        border-radius: 9999px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
-        text-decoration: none !important;
-        cursor: pointer !important;
-        border: none !important;
-        outline: none !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    }
+.logout-btn-1 {
+    background: white !important;
+    color: #3C96E1 !important; /* This already has !important */
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 9999px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
 
     .logout-btn-1:hover {
         background: white !important;
@@ -212,22 +212,23 @@ if (isset($_SESSION['user']['id'])) {
     }
 
     /* CLEAN: Staff Logout Button - Warm Violet Text */
-    .logout-btn-2 {
-        background: white !important;
-        color: #9333EA !important;
-        padding: 0.75rem 1.5rem !important;
-        border-radius: 9999px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
-        text-decoration: none !important;
-        cursor: pointer !important;
-        border: none !important;
-        outline: none !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    }
+    /* CLEAN: Staff Logout Button - Warm Violet Text */
+.logout-btn-2 {
+    background: white !important;
+    color: #9333EA !important;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 9999px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
 
     .logout-btn-2:hover {
         background: white !important;
@@ -261,11 +262,7 @@ if (isset($_SESSION['user']['id'])) {
         box-shadow: 0 4px 8px rgba(60, 150, 225, 0.2) !important;
     }
 
-    /* Remove any conflicting styles */
-    .logout-btn {
-        /* Remove these styles */
-    }
-
+   
     /* NEW: Improved time display containers - Horizontal layout */
     .time-display-container {
         display: flex;
@@ -1185,9 +1182,11 @@ if (isset($_SESSION['user']['id'])) {
                             <span class="font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                         </div>
                         <!-- Enhanced Logout Button - Hidden on mobile -->
-                        <button type="button" onclick="showLogoutModal('user')" class="logout-btn-1">
-                            <span>Signout</span>
-                        </button>
+                        <!-- Enhanced Logout Button - Hidden on mobile -->
+<!-- Enhanced Logout Button - Hidden on mobile -->
+<button type="button" onclick="showLogoutModal('user')" class="logout-btn-1" style="color: #3C96E1 !important;">
+    <span>Signout</span>
+</button>
 
                         <!-- Hamburger Menu Button - Visible on mobile and tablet -->
                         <button type="button" onclick="toggleUserMenu()"
@@ -1502,7 +1501,7 @@ if (isset($_SESSION['user']['id'])) {
             <div id="loginModal"
                 class="fixed inset-0 hidden z-50 h-full w-full backdrop-blur-sm bg-black/30 justify-center items-center">
                 <div
-                    class="relative bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto modal-content">
+                    class="relative bg-white p-4 sm:p-8 rounded-lg shadow-lg w-full max-w-xl mx-auto max-h-xl overflow-y-auto modal-content">
                     <!-- Close Button -->
                     <button onclick="closeModal()"
                         class="modal-close-btn absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
@@ -1520,7 +1519,7 @@ if (isset($_SESSION['user']['id'])) {
 
                     <!-- Main Title -->
                     <div class="text-center mb-4 mx-4">
-                        <h1 class="text-2xl font-bold text-[#4A90E2]">Barangay Luz Cebu City</h1>
+                        <h1 class="text-2xl font-semibold text-[#4A90E2]">Barangay Luz Cebu City</h1>
                     </div>
 
                     <!-- Instruction Text -->

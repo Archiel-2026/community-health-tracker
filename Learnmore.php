@@ -3,433 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barangay Luz · complete system overview</title>
+    <title>Barangay Luz · System Overview</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Poppins font from Google Fonts -->
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Poppins font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            background-color: #f4f9ff; 
+        :root {
+            --warm-blue: #3a7bd5;
+            --warm-blue-light: #4a90e2;
+            --off-white: #f8fafc;
+        }
+        body {
             font-family: 'Poppins', sans-serif;
+            background-color: var(--off-white);
+            line-height: 1.6;
+        }
+        .section-title {
+            position: relative;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background-color: var(--warm-blue);
+            border-radius: 2px;
+        }
+        .info-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #eef2f6;
+            transition: all 0.2s ease;
+        }
+        .info-card:hover {
+            box-shadow: 0 8px 20px rgba(58, 123, 213, 0.08);
+            border-color: #e0e7ff;
+        }
+        .stat-badge {
+            background: #eef2ff;
+            color: #1e4a6b;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .simple-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .simple-list li {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .simple-list li i {
+            color: var(--warm-blue);
+            margin-top: 0.2rem;
+        }
+        hr {
+            border-color: #e2e8f0;
+        }
+        /* Back button transition effect */
+        .back-btn {
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateX(-2px);
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
         }
     </style>
 </head>
-<body class="antialiased text-gray-800">
+<body class="antialiased text-gray-700">
 
-    <main class="max-w-3xl mx-auto px-6 py-12 md:py-16">
-
-        <!-- ========== HEADER ========== -->
-        <div class="text-center mb-10">
-            <h1 class="text-4xl font-light text-[#1e4a6b] tracking-tight" style="font-family: 'Poppins', sans-serif;">Barangay Luz</h1>
-            <p class="text-2xl font-medium text-[#2b6c9e] mt-1" style="font-family: 'Poppins', sans-serif;">monitoring & tracking system</p>
-            <p class="text-[#4a7c9f] text-base mt-3 max-w-lg mx-auto" style="font-family: 'Poppins', sans-serif;">real‑time resident data · incident logging · community programs</p>
-        </div>
-
-        <!-- simple intro paragraph -->
-        <div class="bg-[#e1efff] rounded-xl p-7 mb-9 text-[#1e3b5c]">
-            <p class="text-lg leading-relaxed" style="font-family: 'Poppins', sans-serif;">
-                <span class="font-semibold text-[#1f4d7a]">Learn more</span> — the Barangay Luz system is a straightforward digital platform built to organise resident records, track health updates, and log incidents. All information is centralised to help the barangay respond faster and plan better.
-            </p>
-        </div>
-
-        <!-- three simple sections: resident, incident, health -->
-        <div class="space-y-8 mb-12">
-            <!-- resident profiling -->
-            <div class="bg-[#e9f0fa] p-6 rounded-lg">
-                <h2 class="text-2xl font-medium text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">👥 resident profiles</h2>
-                <p class="text-[#2f4d70] text-base mt-2 leading-relaxed" style="font-family: 'Poppins', sans-serif;">
-                    Complete family profiles including senior citizen / PWD tags, vaccination history, and contact details. Authorised staff can update records in real time.
-                </p>
-                <p class="text-sm text-[#4f6f8f] mt-2" style="font-family: 'Poppins', sans-serif;">~2,400 residents currently mapped</p>
-            </div>
-
-            <!-- incident & safety monitoring -->
-            <div class="bg-[#e9f0fa] p-6 rounded-lg">
-                <h2 class="text-2xl font-medium text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">🚨 incident tracking</h2>
-                <p class="text-[#2f4d70] text-base mt-2 leading-relaxed" style="font-family: 'Poppins', sans-serif;">
-                    Log accidents, fires, or any public safety concern. The system keeps a timestamped log so responders can review and follow up. Helpful for blotter reports and coordination.
-                </p>
-                <p class="text-sm text-[#4f6f8f] mt-2" style="font-family: 'Poppins', sans-serif;">integrated with barangay tanod alerts</p>
-            </div>
-
-            <!-- health & community programs -->
-            <div class="bg-[#e9f0fa] p-6 rounded-lg">
-                <h2 class="text-2xl font-medium text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">📋 health & development</h2>
-                <p class="text-[#2f4d70] text-base mt-2 leading-relaxed" style="font-family: 'Poppins', sans-serif;">
-                    Track immunisation, nutrition programs, and 4Ps beneficiaries. Health center staff can generate simple reports for monthly updates.
-                </p>
-                <p class="text-sm text-[#4f6f8f] mt-2" style="font-family: 'Poppins', sans-serif;">1,200+ health records maintained</p>
-            </div>
-        </div>
-
-        <!-- how it works – plain list -->
-        <div class="bg-[#d4e6fa] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-3" style="font-family: 'Poppins', sans-serif;">simple flow</h3>
-            <ul class="space-y-3 text-[#1e3d5e]">
-                <li class="flex items-start gap-3"><span class="text-[#1e6a9f] text-xl leading-5" style="font-family: 'Poppins', sans-serif;">1.</span> <span style="font-family: 'Poppins', sans-serif;">staff encode resident / incident data using a secure form</span></li>
-                <li class="flex items-start gap-3"><span class="text-[#1e6a9f] text-xl leading-5" style="font-family: 'Poppins', sans-serif;">2.</span> <span style="font-family: 'Poppins', sans-serif;">information is stored in a central database (cloud / local)</span></li>
-                <li class="flex items-start gap-3"><span class="text-[#1e6a9f] text-xl leading-5" style="font-family: 'Poppins', sans-serif;">3.</span> <span style="font-family: 'Poppins', sans-serif;">officials view summaries and generate reports with one click</span></li>
-                <li class="flex items-start gap-3"><span class="text-[#1e6a9f] text-xl leading-5" style="font-family: 'Poppins', sans-serif;">4.</span> <span style="font-family: 'Poppins', sans-serif;">automated alerts (SMS / Viber) for meetings or emergencies</span></li>
-            </ul>
-        </div>
-
-        <!-- benefits -->
-        <div class="bg-[#e1efff] p-7 rounded-xl mb-10">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-3" style="font-family: 'Poppins', sans-serif;">why it matters</h3>
-            <ul class="space-y-2 text-[#1e3d5e]">
-                <li style="font-family: 'Poppins', sans-serif;">✓ transparency – residents can request service summaries</li>
-                <li style="font-family: 'Poppins', sans-serif;">✓ better planning – identify zones needing medical missions or infrastructure</li>
-                <li style="font-family: 'Poppins', sans-serif;">✓ time savings – monthly reports in minutes instead of days</li>
-                <li style="font-family: 'Poppins', sans-serif;">✓ accountability – every entry is logged with timestamp</li>
-                <li style="font-family: 'Poppins', sans-serif;">✓ inclusive – special tags for solo parents, PWDs, senior citizens</li>
-            </ul>
-        </div>
-
-        <!-- quick stats -->
-        <div class="flex flex-wrap gap-3 justify-center text-[#1e4a6b] text-sm mb-8">
-            <span class="bg-[#dbeafe] px-4 py-2 rounded-full" style="font-family: 'Poppins', sans-serif;">📊 7 puroks active</span>
-            <span class="bg-[#dbeafe] px-4 py-2 rounded-full" style="font-family: 'Poppins', sans-serif;">🚒 98% incident log coverage</span>
-            <span class="bg-[#dbeafe] px-4 py-2 rounded-full" style="font-family: 'Poppins', sans-serif;">📋 300+ clearances (March)</span>
-        </div>
-
-        <!-- deeper look: roles & access -->
-        <div class="bg-[#dbeafe] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">👤 who uses the system</h3>
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">barangay captain & council</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">overview dashboards, report generation, decision support</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">secretary & treasurers</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">record encoding, certificate issuance, data verification</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">tanod / safety officers</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">incident logging, alert monitoring, blotter management</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">health workers (BHW)</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">nutrition tracking, immunization schedules, health records</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- sample data categories -->
-        <div class="bg-[#e9f0fa] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">📁 information tracked (examples)</h3>
-            <div class="space-y-3">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">resident basic info</span>
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">family composition</span>
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">vaccination status</span>
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">4Ps member</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">incident type / date</span>
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">blotter records</span>
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">emergency contacts</span>
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">response actions</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">child immunisation</span>
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">nutrition month data</span>
-                    <span class="bg-[#c5d9f0] px-3 py-1 rounded-full text-sm text-[#1e3d5e]" style="font-family: 'Poppins', sans-serif;">medical mission records</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- frequently asked questions -->
-        <div class="bg-[#d4e6fa] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">❓ common questions</h3>
-            <div class="space-y-4">
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">is my personal information safe?</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">yes — access is role‑based and all data is stored with encryption. only authorised personnel can view sensitive details.</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">can residents request a copy of their records?</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">absolutely. you may visit the barangay hall and request a data summary (proof of identity required).</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">how often is the data updated?</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">records are updated in real time during transactions. bulk updates (e.g., health missions) are encoded within the day.</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">does the system work without internet?</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">yes, an offline-capable version is used in areas with poor connectivity; data syncs once connection is restored.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- system requirements & accessibility -->
-        <div class="bg-[#e9f0fa] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">💻 system access & requirements</h3>
-            <div class="space-y-4">
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">supported devices</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">desktop computers, tablets, and smartphones – any device with a web browser</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">internet requirement</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">minimal for regular use; offline mode available for remote puroks</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">training provided</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">all barangay staff receive hands-on training before using the system</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">language</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">interface available in English and Filipino</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- system updates & roadmap -->
-        <div class="bg-[#dbeafe] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">🚀 upcoming features</h3>
-            <div class="space-y-3">
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">•</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">online appointment scheduling for document requests (Q3 2025)</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">•</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">automated SMS notifications for residents (birthday greetings, program announcements)</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">•</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">integration with national ID system for faster verification</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">•</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">public kiosk mode for residents to check announcements and forms</span>
-                </div>
-            </div>
-            <p class="text-xs text-[#4f6f8f] mt-4 italic" style="font-family: 'Poppins', sans-serif;">roadmap subject to change based on community feedback</p>
-        </div>
-
-        <!-- success stories / community impact -->
-        <div class="bg-[#e1efff] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">🌟 community impact stories</h3>
-            <div class="space-y-4">
-                <div class="border-l-4 border-[#1e6a9f] pl-4">
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">faster emergency response</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">"when a fire broke out in purok 3, tanods used the system to quickly identify which houses had senior citizens and children – we evacuated them first." — kagawad Reyes</p>
-                </div>
-                <div class="border-l-4 border-[#1e6a9f] pl-4">
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">targeted medical missions</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">"we used resident data to invite 200+ seniors for a free eye checkup. almost all attended because we sent personalized notices." — BHW coordinator</p>
-                </div>
-                <div class="border-l-4 border-[#1e6a9f] pl-4">
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">reduced paperwork</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">"clearance issuance now takes 5 minutes instead of 2 days. residents are happier." — barangay secretary</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- quick system facts -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-9">
-            <div class="bg-[#dbeafe] p-4 rounded-lg text-center">
-                <p class="text-2xl font-medium text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">3k+</p>
-                <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">residents in database</p>
-            </div>
-            <div class="bg-[#dbeafe] p-4 rounded-lg text-center">
-                <p class="text-2xl font-medium text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">500+</p>
-                <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">incidents logged</p>
-            </div>
-            <div class="bg-[#dbeafe] p-4 rounded-lg text-center">
-                <p class="text-2xl font-medium text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">12</p>
-                <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">trained staff</p>
-            </div>
-            <div class="bg-[#dbeafe] p-4 rounded-lg text-center">
-                <p class="text-2xl font-medium text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">99%</p>
-                <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">uptime</p>
-            </div>
-        </div>
-
-        <!-- get involved / feedback -->
-        <div class="bg-[#bed9ff] p-7 rounded-xl text-center mb-8">
-            <p class="text-xl font-light text-[#0f3b5e]" style="font-family: 'Poppins', sans-serif;">help us improve</p>
-            <p class="text-[#1e4a6b] mt-1" style="font-family: 'Poppins', sans-serif;">your feedback matters — suggest features or report issues</p>
-            <div class="flex flex-wrap gap-3 justify-center mt-4">
-                <span class="bg-white px-4 py-2 rounded-full text-sm text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">📞 (02) 1234 5678</span>
-                <span class="bg-white px-4 py-2 rounded-full text-sm text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">✉️ feedback@luz.gov.ph</span>
-                <span class="bg-white px-4 py-2 rounded-full text-sm text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">🏛️ visit barangay hall</span>
-            </div>
-        </div>
-
-        <!-- ========== CONTINUED: ADDITIONAL INFORMATION SECTIONS ========== -->
+    <main class="max-w-4xl mx-auto px-5 py-12 md:py-16 relative">
         
-        <!-- data privacy and security measures -->
-        <div class="bg-[#e1efff] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">🔒 data privacy & security</h3>
-            <div class="space-y-4">
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">end-to-end encryption for all sensitive data</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">role-based access control – staff only see what they need</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">regular security audits by DICT</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">automated backup every 6 hours</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">GDPR and Data Privacy Act compliant</span>
+        <!-- Back Button - positioned at top left corner -->
+        <div class="absolute left-5 top-6 md:left-8 md:top-8 z-10">
+            <a href="landing.html" id="backButton" class="back-btn inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm text-gray-700 text-sm font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#3a7bd5] focus:ring-offset-2">
+                <i class="fas fa-arrow-left text-[#3a7bd5] text-sm"></i>
+                <span>Back</span>
+            </a>
+        </div>
+
+        <!-- Header / Title (clean, text-focused) with slight margin-top to avoid overlap with back button on mobile -->
+        <div class="text-center mb-10 pt-2 md:pt-0">
+            <h1 class="text-3xl md:text-4xl font-semibold text-[#1e4a6b] tracking-tight">Barangay Luz</h1>
+            <p class="text-xl text-[#2b6c9e] mt-1 font-medium">Monitoring & Tracking System</p>
+            <div class="w-20 h-0.5 bg-[#3a7bd5] mx-auto mt-4 rounded-full"></div>
+        </div>
+
+        <!-- Lead description / Learn more -->
+        <div class="bg-white rounded-2xl p-6 md:p-8 mb-10 shadow-sm border border-gray-100">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-info-circle text-2xl text-[#3a7bd5] mt-1"></i>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">Learn more — the Barangay Luz system</h2>
+                    <p class="text-gray-600 leading-relaxed">A straightforward digital platform built to organise resident records, track health updates, and log incidents. All information is centralised to help the barangay respond faster, plan better, and serve the community with transparency. Authorised staff can update records in real time, while residents benefit from quicker document processing and better-coordinated services.</p>
                 </div>
             </div>
         </div>
 
-        <!-- training and support for staff -->
-        <div class="bg-[#d4e6fa] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">📚 training & support</h3>
-            <div class="space-y-4">
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">initial training program</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">2-day hands-on workshop for all barangay staff and volunteers</p>
+        <!-- Simple stats row (clean text emphasis) -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div class="text-center p-3">
+                <div class="text-2xl font-bold text-[#3a7bd5]">3,200+</div>
+                <div class="text-sm text-gray-500">residents profiled</div>
+            </div>
+            <div class="text-center p-3">
+                <div class="text-2xl font-bold text-[#3a7bd5]">98%</div>
+                <div class="text-sm text-gray-500">incident coverage</div>
+            </div>
+            <div class="text-center p-3">
+                <div class="text-2xl font-bold text-[#3a7bd5]">500+</div>
+                <div class="text-sm text-gray-500">monthly transactions</div>
+            </div>
+            <div class="text-center p-3">
+                <div class="text-2xl font-bold text-[#3a7bd5]">24/7</div>
+                <div class="text-sm text-gray-500">system availability</div>
+            </div>
+        </div>
+
+        <!-- Core modules (3 cards with descriptive text) -->
+        <div class="mb-12">
+            <h2 class="section-title text-2xl font-semibold text-gray-800">Core modules & capabilities</h2>
+            <div class="grid md:grid-cols-3 gap-6 mt-5">
+                <div class="info-card">
+                    <i class="fas fa-users text-2xl text-[#3a7bd5] mb-3 block"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Resident profiles</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Complete family profiles including senior citizen / PWD tags, vaccination history, and contact details. Authorised staff can update records in real time. Approximately 3,200 residents are currently mapped within the system, ensuring accurate household records.</p>
                 </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">refresher courses</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">quarterly seminars for new features and best practices</p>
+                <div class="info-card">
+                    <i class="fas fa-exclamation-triangle text-2xl text-[#3a7bd5] mb-3 block"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Incident tracking</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Log accidents, fires, or any public safety concern. The system keeps a timestamped log so responders can review and follow up. Helpful for blotter reports and coordination. Integrated with barangay tanod alerts for faster emergency response.</p>
                 </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">support channels</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">dedicated IT support hotline and on-site assistance when needed</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a]" style="font-family: 'Poppins', sans-serif;">user manuals</p>
-                    <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">digital and printed guides available in both English and Filipino</p>
+                <div class="info-card">
+                    <i class="fas fa-heartbeat text-2xl text-[#3a7bd5] mb-3 block"></i>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Health & development</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Track immunisation, nutrition programs, and 4Ps beneficiaries. Health center staff generate simple reports for monthly updates. Over 1,800 health records maintained, supporting targeted medical missions and community wellness programs.</p>
                 </div>
             </div>
         </div>
 
-        <!-- integration with national programs -->
-        <div class="bg-[#e9f0fa] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">🇵🇭 national program integrations</h3>
-            <div class="space-y-3">
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">•</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">PhilSys / National ID verification</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">•</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">4Ps (Pantawid Pamilya) beneficiary tracking</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">•</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">Department of Health immunization registry</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">•</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">Philippine National Police blotter system (partial sync)</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">•</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">DSWD social welfare programs</span>
-                </div>
+        <!-- Simple workflow + Why it matters (two columns text) -->
+        <div class="grid md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-chalkboard-user text-[#3a7bd5]"></i> Simple workflow</h3>
+                <ul class="simple-list space-y-3">
+                    <li><i class="fas fa-circle text-xs mt-1.5"></i> <span>Staff encode resident / incident data using a secure form with validation.</span></li>
+                    <li><i class="fas fa-circle text-xs mt-1.5"></i> <span>Information is stored in a central database (cloud / local) with encryption.</span></li>
+                    <li><i class="fas fa-circle text-xs mt-1.5"></i> <span>Officials view summaries and generate reports with one click for planning.</span></li>
+                    <li><i class="fas fa-circle text-xs mt-1.5"></i> <span>Automated alerts (SMS / Viber) for meetings, emergencies, or health programs.</span></li>
+                </ul>
+            </div>
+            <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-chart-simple text-[#3a7bd5]"></i> Why it matters</h3>
+                <ul class="simple-list space-y-2">
+                    <li><i class="fas fa-check-circle text-green-600"></i> <span>Transparency – residents can request service summaries and track requests.</span></li>
+                    <li><i class="fas fa-check-circle text-green-600"></i> <span>Better planning – identify zones needing medical missions or infrastructure.</span></li>
+                    <li><i class="fas fa-check-circle text-green-600"></i> <span>Time savings – monthly reports generated in minutes instead of days.</span></li>
+                    <li><i class="fas fa-check-circle text-green-600"></i> <span>Accountability – every entry is logged with timestamp and user ID.</span></li>
+                    <li><i class="fas fa-check-circle text-green-600"></i> <span>Inclusive – special tags for solo parents, PWDs, senior citizens, and 4Ps.</span></li>
+                </ul>
             </div>
         </div>
 
-        <!-- budget and sustainability -->
-        <div class="bg-[#dbeafe] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">💰 sustainability & funding</h3>
-            <div class="space-y-3">
-                <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">funded by Barangay Luz local government unit with support from DILG</p>
-                <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">annual maintenance: ₱50,000 (includes hosting, support, and updates)</p>
-                <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">open-source core – community contributions welcome</p>
-                <p class="text-sm text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">long-term plan: expand to neighboring barangays by 2026</p>
+        <!-- Who uses the system (text grid) -->
+        <div class="mb-12">
+            <h2 class="section-title text-2xl font-semibold text-gray-800">👥 Who uses the system</h2>
+            <div class="grid sm:grid-cols-2 gap-4 mt-5">
+                <div class="bg-gray-50 p-4 rounded-xl"><span class="font-semibold text-[#1e4a6b]">Barangay Captain & Council</span> — overview dashboards, report generation, decision support for programs.</div>
+                <div class="bg-gray-50 p-4 rounded-xl"><span class="font-semibold text-[#1e4a6b]">Secretary & Treasurers</span> — record encoding, certificate issuance, data verification, resident inquiries.</div>
+                <div class="bg-gray-50 p-4 rounded-xl"><span class="font-semibold text-[#1e4a6b]">Tanod / Safety Officers</span> — incident logging, alert monitoring, blotter management, emergency coordination.</div>
+                <div class="bg-gray-50 p-4 rounded-xl"><span class="font-semibold text-[#1e4a6b]">Health workers (BHW)</span> — nutrition tracking, immunization schedules, health records, home visit logs.</div>
             </div>
         </div>
 
-        <!-- accessibility features -->
-        <div class="bg-[#e1efff] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">♿ accessibility features</h3>
-            <div class="space-y-3">
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">screen reader compatible</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">high contrast mode for visually impaired</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">text size adjustment options</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">voice navigation support (limited)</span>
-                </div>
-                <div class="flex items-start gap-3">
-                    <span class="text-[#1e6a9f] text-sm font-medium" style="font-family: 'Poppins', sans-serif;">✓</span>
-                    <span style="font-family: 'Poppins', sans-serif;" class="text-sm text-[#2f4d70]">assistance available at barangay hall for seniors/PWDs</span>
-                </div>
+        <!-- National integrations & Data privacy (two cards) -->
+        <div class="grid md:grid-cols-2 gap-6 mb-12">
+            <div class="info-card">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2"><i class="fas fa-link text-[#3a7bd5]"></i> National integrations</h3>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>• PhilSys / National ID verification for faster resident validation</li>
+                    <li>• 4Ps (Pantawid Pamilya) beneficiary tracking and updates</li>
+                    <li>• Department of Health immunization registry synchronization</li>
+                    <li>• PNP blotter system (partial sync for incident reports)</li>
+                    <li>• DSWD social welfare programs integration for aid distribution</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2"><i class="fas fa-lock text-[#3a7bd5]"></i> Data privacy & security</h3>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li>✓ End-to-end encryption for all sensitive personal data</li>
+                    <li>✓ Role-based access control – staff only see what they need</li>
+                    <li>✓ Regular security audits conducted by DICT and local IT</li>
+                    <li>✓ Automated backup every 6 hours to prevent data loss</li>
+                    <li>✓ Fully compliant with Data Privacy Act of 2012 (RA 10173)</li>
+                </ul>
             </div>
         </div>
-
-        <!-- technical specifications -->
-        <div class="bg-[#d4e6fa] p-7 rounded-xl mb-9">
-            <h3 class="text-xl font-medium text-[#1e4a6b] mb-4" style="font-family: 'Poppins', sans-serif;">⚙️ technical specifications</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="font-medium text-[#1f4d7a] text-sm" style="font-family: 'Poppins', sans-serif;">platform</p>
-                    <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">web-based (responsive)</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a] text-sm" style="font-family: 'Poppins', sans-serif;">backend</p>
-                    <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">PHP / Laravel</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a] text-sm" style="font-family: 'Poppins', sans-serif;">database</p>
-                    <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">MySQL / MariaDB</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a] text-sm" style="font-family: 'Poppins', sans-serif;">hosting</p>
-                    <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">government cloud (GovCloud)</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a] text-sm" style="font-family: 'Poppins', sans-serif;">security</p>
-                    <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">SSL/TLS, 2FA optional</p>
-                </div>
-                <div>
-                    <p class="font-medium text-[#1f4d7a] text-sm" style="font-family: 'Poppins', sans-serif;">backup</p>
-                    <p class="text-xs text-[#2f4d70]" style="font-family: 'Poppins', sans-serif;">automated daily</p>
-                </div>
-            </div>
+        
+        <!-- Additional subtle footer note (optional) -->
+        <div class="text-center text-xs text-gray-400 pt-6 border-t border-gray-200 mt-4">
+            <i class="fas fa-shield-alt mr-1"></i> Barangay Luz Information System · Secure & Transparent Governance
         </div>
-
-        <!-- get involved / feedback (duplicate removed, keeping one) -->
-        <!-- contact & support – soft callout (keeping the enhanced version) -->
-        <div class="bg-[#bed9ff] p-7 rounded-xl text-center mb-8">
-            <p class="text-xl font-light text-[#0f3b5e]" style="font-family: 'Poppins', sans-serif;">interested to see the system?</p>
-            <p class="text-[#1e4a6b] mt-1" style="font-family: 'Poppins', sans-serif;">contact Barangay Luz hall · (02) 1234 5678</p>
-            <p class="text-sm text-[#2b5f8a] mt-2" style="font-family: 'Poppins', sans-serif;">the system is live and continuously improved with feedback</p>
-            <div class="flex flex-wrap gap-2 justify-center mt-4">
-                <span class="bg-white px-3 py-1 rounded-full text-xs text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">📱 24/7 support</span>
-                <span class="bg-white px-3 py-1 rounded-full text-xs text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">🔧 free training</span>
-                <span class="bg-white px-3 py-1 rounded-full text-xs text-[#1e4a6b]" style="font-family: 'Poppins', sans-serif;">📊 monthly reports</span>
-            </div>
-            <p class="text-xs text-[#2b5f8a] mt-4" style="font-family: 'Poppins', sans-serif;">barangayluz.gov.ph/monitoring  (demo accessible to officials)</p>
-        </div>
-
-        <!-- footer – enhanced with additional info -->
-        <div class="text-center text-sm text-[#5a7390] mt-8 border-t border-[#c5d9f0] pt-6">
-            <p style="font-family: 'Poppins', sans-serif;">Barangay Luz · monitoring & tracking system — for official and community use</p>
-            <p class="mt-1" style="font-family: 'Poppins', sans-serif;">this page is a complete overview · last updated april 2025</p>
-            <p class="mt-2 text-xs" style="font-family: 'Poppins', sans-serif;">📋 data privacy protected · all access logged · v2.1.0</p>
-            <p class="mt-3 text-xs text-[#6f8aa8]" style="font-family: 'Poppins', sans-serif;">🌟 helping Barangay Luz thrive through technology — together we progress</p>
-        </div>
-
     </main>
+
+    <!-- JavaScript for back navigation: uses history.back() as fallback, but also supports direct landing.html if available -->
+    <script>
+        (function() {
+            const backBtn = document.getElementById('backButton');
+            if (backBtn) {
+                backBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Attempt to go back in browser history first (if previous page was landing)
+                    // If history length > 1, we go back; otherwise we redirect to 'landing.html' (relative path)
+                    // This ensures a smooth user experience even when opened directly.
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        // If no history, navigate to landing page (can be index or landing.html)
+                        // Using a try-catch safe approach.
+                        window.location.href = 'landing.html';
+                    }
+                });
+            }
+        })();
+    </script>
 </body>
 </html>

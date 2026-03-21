@@ -1071,9 +1071,9 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                             padding: 40px 30px;
                             background: white;
                         }
-                        .header { 
-                            text-align: center; 
-                            margin-bottom: 40px; 
+                        .header {
+                            text-align: center;
+                            margin-bottom: 40px;
                             border-bottom: 3px solid #e5e7eb;
                             padding-bottom: 30px;
                         }

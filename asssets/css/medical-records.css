@@ -185,6 +185,7 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(231, 76, 60, 0.15);
         }
+        
 
         .btn-add-patient {
             background-color: #2ecc71;
@@ -199,6 +200,10 @@
             align-items: center;
             justify-content: center;
         }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    display: none;
+}
 
         .btn-add-patient:hover {
             background-color: #42d37eff;
