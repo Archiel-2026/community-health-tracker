@@ -887,13 +887,12 @@ $recordsPerPage = 5;
                     <!-- Modal for Full Report Display -->
 <div id="fullReportModal" class="modal-overlay hidden">
     <div class="modal-container modal-desktop cht-document-modal"
-        style="max-width:800px;min-width:350px;width:100%;margin:1rem;display:flex;flex-direction:column;height:auto;max-height:90vh;background:white;border-radius:12px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04);overflow:hidden;">
+        style="max-width:800px;min-width:350px;width:100%;margin:1rem;display:flex;flex-direction:column;height:auto;max-height:90vh;">
         
-        <!-- ========== STICKY HEADER - NEVER SCROLLS ========== -->
-        <div style="flex-shrink:0;background-color:white;border-bottom:1px solid #e5e7eb;">
-            <!-- Main Title Row with Icon and Close Button -->
-            <div style="padding:1.25rem 1.5rem 0.75rem 1.5rem; display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-                <div style="display:flex; align-items:center; gap:0.75rem; flex:1;">
+        <!-- Fixed Header -->
+        <div class="modal-header" style="flex-shrink:0;padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;background-color:white;">
+            <div class="flex justify-between items-center" style="gap:1rem;width:100%;">
+                <div class="flex items-center" style="gap:0.75rem;flex:1;">
                     <svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
                         <path d="M32.9331 6.13159L12.5815 2.53784C11.9286 2.42295 11.2568 2.57207 10.7139 2.9524C10.1709 3.33273 9.80127 3.91313 9.68618 4.56597L5.03774 30.9722C4.98088 31.2957 4.98833 31.6272 5.05966 31.9479C5.13098 32.2685 5.26479 32.5719 5.45343 32.8408C5.64206 33.1097 5.88184 33.3387 6.15904 33.5149C6.43625 33.6911 6.74545 33.8109 7.06899 33.8675L27.4206 37.4613C27.7442 37.5184 28.0758 37.5111 28.3966 37.4399C28.7174 37.3686 29.021 37.2349 29.2901 37.0462C29.5592 36.8576 29.7884 36.6177 29.9647 36.3404C30.1409 36.0631 30.2608 35.7537 30.3174 35.43L34.9659 9.02378C35.0797 8.37069 34.9296 7.69912 34.5483 7.15675C34.1671 6.61438 33.5861 6.24563 32.9331 6.13159ZM27.8518 34.9988L7.49868 31.405L12.1471 4.99878L32.4987 8.59253L27.8518 34.9988ZM13.9581 9.12691C14.016 8.80061 14.2011 8.51066 14.4727 8.3208C14.7443 8.13094 15.0802 8.0567 15.4065 8.11441L28.3752 10.4035C28.6835 10.4575 28.9602 10.6251 29.1508 10.8732C29.3415 11.1214 29.4321 11.432 29.4048 11.7437C29.3775 12.0554 29.2343 12.3456 29.0035 12.5568C28.7726 12.7681 28.471 12.8851 28.1581 12.8847C28.0847 12.8846 28.0116 12.8783 27.9393 12.866L14.9706 10.5753C14.6443 10.5174 14.3543 10.3323 14.1644 10.0607C13.9746 9.78912 13.9003 9.45323 13.9581 9.12691ZM13.0924 14.0519C13.1209 13.8902 13.181 13.7357 13.2692 13.5972C13.3574 13.4587 13.4721 13.339 13.6066 13.2448C13.7411 13.1506 13.8928 13.0839 14.0531 13.0484C14.2134 13.0129 14.3792 13.0093 14.5409 13.0378L27.5096 15.3285C27.82 15.3804 28.0994 15.5475 28.292 15.7963C28.4846 16.0452 28.5762 16.3576 28.5486 16.6711C28.521 16.9845 28.3761 17.2761 28.143 17.4874C27.9098 17.6988 27.6055 17.8144 27.2909 17.8113C27.217 17.8114 27.1432 17.8046 27.0706 17.791L14.1018 15.5019C13.7758 15.4433 13.4863 15.2577 13.2971 14.9858C13.1078 14.7139 13.0342 14.378 13.0924 14.0519ZM12.2252 18.9753C12.2842 18.6499 12.4698 18.3611 12.7413 18.1722C13.0128 17.9833 13.348 17.9097 13.6737 17.9675L20.1549 19.1066C20.463 19.1606 20.7397 19.3281 20.9303 19.5761C21.1209 19.824 21.2116 20.1345 21.1845 20.4461C21.1575 20.7577 21.0146 21.0478 20.784 21.2592C20.5535 21.4706 20.2521 21.5878 19.9393 21.5878C19.866 21.5878 19.7928 21.5815 19.7206 21.5691L13.2362 20.4238C12.9102 20.3655 12.6206 20.1803 12.4311 19.9087C12.2415 19.6371 12.1675 19.3014 12.2252 18.9753Z" fill="#0078DD"/>
                     </svg>
@@ -908,57 +907,36 @@ $recordsPerPage = 5;
                     </svg>
                 </button>
             </div>
-            
-            <!-- Data Privacy & Security Notice - Sticky Header Component (as per image) -->
-            <div style="padding:0 1.5rem 1rem 1.5rem;">
-                <div style="background-color:#f0f9ff; border-left:4px solid #0078DD; padding:0.75rem 1rem; border-radius:8px; display:flex; align-items:center; gap:0.75rem;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
-                        <path d="M12 2L3 7L12 12L21 7L12 2Z" stroke="#0078DD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="white"/>
-                        <path d="M3 12L12 17L21 12" stroke="#0078DD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                        <path d="M3 17L12 22L21 17" stroke="#0078DD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                    </svg>
-                    <div>
-                        <div style="font-size:0.875rem; font-weight:700; color:#075985;">Data Privacy & Security Notice</div>
-                        <div style="font-size:0.813rem; color:#0369a1; margin-top:2px;">Your health information is protected and confidential</div>
-                    </div>
-                </div>
-            </div>
         </div>
         
-        <!-- ========== SCROLLABLE CONTENT AREA - ONLY THIS SCROLLS ========== -->
+        <!-- Scrollable Content Area -->
         <div class="modal-body" style="flex:1;overflow-y:auto;padding:1.5rem;">
-            <div id="fullReportModalContent">
-                <!-- Report content will be dynamically inserted here -->
-                <div style="text-align:center; padding:2rem; color:#6b7280;">
-                    Loading report content...
-                </div>
-            </div>
+            <div id="fullReportModalContent"></div>
         </div>
         
-        <!-- ========== STICKY FOOTER - NEVER SCROLLS (as per image: I Understand and Proceed + Close) ========== -->
-        <div style="flex-shrink:0;padding:1rem 1.5rem;border-top:1px solid #e5e7eb;background-color:white;">
-            <!-- Acknowledgment Text (as shown in image) -->
-            <div style="text-align:center; margin-bottom:1rem;">
-                <span style="font-size:0.75rem; color:#6b7280;">By proceeding, you acknowledge that you have read and understood the data privacy guidelines.</span>
-            </div>
-            <!-- Button Row: I Understand and Proceed + Close -->
-            <div style="display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center;">
-                <!-- I Understand and Proceed Button (Primary Action) -->
-                <button onclick="handleProceed()"
-                    style="min-width:180px; padding:0.625rem 1.5rem; background-color:#0078DD; color:white; border:none; border-radius:0.375rem; cursor:pointer; font-size:0.875rem; font-weight:500; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; transition:background-color 0.2s ease;"
-                    onmouseover="this.style.backgroundColor='#005bb5'"
-                    onmouseout="this.style.backgroundColor='#0078DD'">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="white"/>
+        <!-- Fixed Footer -->
+        <div class="modal-footer" style="flex-shrink:0;padding:1rem 1.5rem;border-top:1px solid #e5e7eb;background-color:white;">
+            <div class="flex flex-wrap gap-3 justify-end">
+                <button onclick="printFullReport()"
+                    class="px-6 py-4 bg-green-600 text-white rounded-md hover:bg-green-700 transition font-normal flex items-center gap-2" 
+                    style="min-width: 115px; justify-content: center;border:none;cursor:pointer;font-size:1rem;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20.1253 6.75H18.75V3.75C18.75 3.55109 18.671 3.36032 18.5303 3.21967C18.3897 3.07902 18.1989 3 18 3H6C5.80109 3 5.61032 3.07902 5.46967 3.21967C5.32902 3.36032 5.25 3.55109 5.25 3.75V6.75H3.87469C2.565 6.75 1.5 7.75969 1.5 9V16.5C1.5 16.6989 1.57902 16.8897 1.71967 17.0303C1.86032 17.171 2.05109 17.25 2.25 17.25H5.25V20.25C5.25 20.4489 5.32902 20.6397 5.46967 20.7803C5.61032 20.921 5.80109 21 6 21H18C18.1989 21 18.3897 20.921 18.5303 20.7803C18.671 20.6397 18.75 20.4489 18.75 20.25V17.25H21.75C21.9489 17.25 22.1397 17.171 22.2803 17.0303C22.421 16.8897 22.5 16.6989 22.5 16.5V9C22.5 7.75969 21.435 6.75 20.1253 6.75ZM6.75 4.5H17.25V6.75H6.75V4.5ZM17.25 19.5H6.75V15H17.25V19.5ZM21 15.75H18.75V14.25C18.75 14.0511 18.671 13.8603 18.5303 13.7197C18.3897 13.579 18.1989 13.5 18 13.5H6C5.80109 13.5 5.61032 13.579 5.46967 13.7197C5.32902 13.8603 5.25 14.0511 5.25 14.25V15.75H3V9C3 8.58656 3.39281 8.25 3.87469 8.25H20.1253C20.6072 8.25 21 8.58656 21 9V15.75ZM18.75 10.875C18.75 11.0975 18.684 11.315 18.5604 11.5C18.4368 11.685 18.2611 11.8292 18.0555 11.9144C17.85 11.9995 17.6238 12.0218 17.4055 11.9784C17.1873 11.935 16.9868 11.8278 16.8295 11.6705C16.6722 11.5132 16.565 11.3127 16.5216 11.0945C16.4782 10.8762 16.5005 10.65 16.5856 10.4445C16.6708 10.2389 16.815 10.0632 17 9.9396C17.185 9.81598 17.4025 9.75 17.625 9.75C17.9234 9.75 18.2095 9.86853 18.4205 10.0795C18.6315 10.2905 18.75 10.5766 18.75 10.875Z" fill="white"/>
                     </svg>
-                    I Understand and Proceed
+                    Print
                 </button>
-                <!-- Close Button -->
+                <button onclick="exportFullReport('pdf')"
+                    class="px-6 py-4 bg-red-600 text-white rounded-md hover:bg-red-700 transition font-normal flex items-center gap-2" 
+                    style="min-width: 115px; justify-content: center;border:none;cursor:pointer;font-size:1rem;">
+                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M26.25 12.1875C26.25 12.4361 26.1512 12.6746 25.9754 12.8504C25.7996 13.0262 25.5611 13.125 25.3125 13.125C25.0639 13.125 24.8254 13.0262 24.6496 12.8504C24.4738 12.6746 24.375 12.4361 24.375 12.1875V6.95156L16.602 14.7258C16.426 14.9017 16.1874 15.0005 15.9387 15.0005C15.6899 15.0005 15.4513 14.9017 15.2754 14.7258C15.0995 14.5499 15.0007 14.3113 15.0007 14.0625C15.0007 13.8137 15.0995 13.5751 15.2754 13.3992L23.0484 5.625H17.8125C17.5639 5.625 17.3254 5.52623 17.1496 5.35041C16.9738 5.1746 16.875 4.93614 16.875 4.6875C16.875 4.43886 16.9738 4.2004 17.1496 4.02459C17.3254 3.84877 17.5639 3.75 17.8125 3.75H25.3125C25.5611 3.75 25.7996 3.84877 25.9754 4.02459C26.1512 4.2004 26.25 4.43886 26.25 4.6875V12.1875ZM21.5625 15C21.3139 15 21.0754 15.0988 20.8996 15.2746C20.7238 15.4504 20.625 15.6889 20.625 15.9375V24.375H5.625V9.375H14.0625C14.3111 9.375 14.5496 9.27623 14.7254 9.10041C14.9012 8.9246 15 8.68614 15 8.4375C15 8.18886 14.9012 7.9504 14.7254 7.77459C14.5496 7.59877 14.3111 7.5 14.0625 7.5H5.625C5.12772 7.5 4.65081 7.69754 4.29917 8.04918C3.94754 8.40081 3.75 8.87772 3.75 9.375V24.375C3.75 24.8723 3.94754 25.3492 4.29917 25.7008C4.65081 26.0525 5.12772 26.25 5.625 26.25H20.625C21.1223 26.25 21.5992 26.0525 21.9508 25.7008C22.3025 25.3492 22.5 24.8723 22.5 24.375V15.9375C22.5 15.6889 22.4012 15.4504 22.2254 15.2746C22.0496 15.0988 21.8111 15 21.5625 15Z" fill="white"/>
+                    </svg>
+                    Export PDF
+                </button>
                 <button type="button" onclick="closeFullReportModal()"
-                    style="min-width:100px; padding:0.625rem 1.25rem; background-color:#e5e7eb; color:#374151; border:none; border-radius:0.375rem; cursor:pointer; font-size:0.875rem; font-weight:500; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; transition:background-color 0.2s ease;"
-                    onmouseover="this.style.backgroundColor='#d1d5db'"
-                    onmouseout="this.style.backgroundColor='#e5e7eb'">
-                    <svg width="16" height="16" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    class="px-6 py-4 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition font-normal flex items-center gap-2" 
+                    style="min-width: 115px; justify-content: center;border:none;cursor:pointer;font-size:1rem;">
+                    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M19.4133 11.9133L16.3254 15L19.4133 18.0867C19.5004 18.1738 19.5695 18.2772 19.6166 18.391C19.6638 18.5048 19.688 18.6268 19.688 18.75C19.688 18.8732 19.6638 18.9952 19.6166 19.109C19.5695 19.2228 19.5004 19.3262 19.4133 19.4133C19.3262 19.5004 19.2228 19.5695 19.109 19.6166C18.9952 19.6638 18.8732 19.688 18.75 19.688C18.6268 19.688 18.5048 19.6638 18.391 19.6166C18.2772 19.5695 18.1738 19.5004 18.0867 19.4133L15 16.3254L11.9133 19.4133C11.8262 19.5004 11.7228 19.5695 11.609 19.6166C11.4952 19.6638 11.3732 19.688 11.25 19.688C11.1268 19.688 11.0048 19.6638 10.891 19.6166C10.7772 19.5695 10.6738 19.5004 10.5867 19.4133C10.4996 19.3262 10.4305 19.2228 10.3834 19.109C10.3362 18.9952 10.312 18.8732 10.312 18.75C10.312 18.6268 10.3362 18.5048 10.3834 18.391C10.4305 18.2772 10.4996 18.1738 10.5867 18.0867L13.6746 15L10.5867 11.9133C10.4108 11.7374 10.312 11.4988 10.312 11.25C10.312 11.0012 10.4108 10.7626 10.5867 10.5867C10.7626 10.4108 11.0012 10.312 11.25 10.312C11.4988 10.312 11.7374 10.4108 11.9133 10.5867L15 13.6746L18.0867 10.5867C18.1738 10.4996 18.2772 10.4305 18.391 10.3834C18.5048 10.3362 18.6268 10.312 18.75 10.312C18.8732 10.312 18.9952 10.3362 19.109 10.3834C19.2228 10.4305 19.3262 10.4996 19.4133 10.5867C19.5004 10.6738 19.5695 10.7772 19.6166 10.891C19.6638 11.0048 19.688 11.1268 19.688 11.25C19.688 11.3732 19.6638 11.4952 19.6166 11.609C19.5695 11.7228 19.5004 11.8262 19.4133 11.9133ZM27.1875 15C27.1875 17.4105 26.4727 19.7668 25.1335 21.771C23.7944 23.7752 21.8909 25.3373 19.664 26.2598C17.437 27.1822 14.9865 27.4236 12.6223 26.9533C10.2582 26.4831 8.08659 25.3223 6.38214 23.6179C4.67769 21.9134 3.51694 19.7418 3.04668 17.3777C2.57643 15.0135 2.81778 12.563 3.74022 10.336C4.66267 8.10907 6.22477 6.20564 8.22899 4.86646C10.2332 3.52728 12.5895 2.8125 15 2.8125C18.2313 2.81591 21.3292 4.10104 23.6141 6.3859C25.899 8.67076 27.1841 11.7687 27.1875 15ZM25.3125 15C25.3125 12.9604 24.7077 10.9666 23.5745 9.27068C22.4414 7.5748 20.8308 6.25302 18.9464 5.47249C17.0621 4.69196 14.9886 4.48774 12.9881 4.88565C10.9877 5.28356 9.1502 6.26573 7.70797 7.70796C6.26574 9.15019 5.28357 10.9877 4.88566 12.9881C4.48775 14.9886 4.69197 17.0621 5.4725 18.9464C6.25303 20.8308 7.5748 22.4414 9.27069 23.5745C10.9666 24.7077 12.9604 25.3125 15 25.3125C17.7341 25.3094 20.3553 24.2219 22.2886 22.2886C24.2219 20.3553 25.3094 17.7341 25.3125 15Z" fill="#555555"/>
                     </svg>
                     Close
@@ -974,19 +952,6 @@ function closeFullReportModal() {
     if (modal) {
         modal.classList.add('hidden');
     }
-}
-
-// Handle the "I Understand and Proceed" action
-function handleProceed() {
-    // You can add your proceed logic here
-    // For example: close modal, proceed to next step, etc.
-    console.log('User acknowledged data privacy guidelines');
-    
-    // Optional: Close modal after proceed
-    // closeFullReportModal();
-    
-    // Or trigger any other action like enabling content, etc.
-    // You can also add a flag to remember user acknowledgment
 }
 
 function printFullReport() {
@@ -1070,6 +1035,13 @@ function exportFullReport(format) {
     display: none;
 }
 
+.modal-container {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+
 .modal-body {
     scrollbar-width: thin;
 }
@@ -1090,6 +1062,30 @@ function exportFullReport(format) {
 
 .modal-body::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+.flex {
+    display: flex;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.gap-3 {
+    gap: 0.75rem;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
 }
 </style>
                     

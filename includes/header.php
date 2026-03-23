@@ -552,7 +552,7 @@ if (isset($_SESSION['user']['id'])) {
     /* Profile Picture Upload Modal */
     .profile-modal-content {
         background: white;
-        border-radius: 20px;
+        border-radius: 8px;
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
 
@@ -568,12 +568,12 @@ if (isset($_SESSION['user']['id'])) {
     }
 
     .profile-upload-btn {
-        background: rgba(74, 144, 226, 0.85);
+        background: #3C96E1;
         color: white;
         padding: 0.9rem 1.5rem;
-        border-radius: 30px;
+        border-radius: 8px;
         font-weight: 500;
-        font-size: 0.95rem;
+        font-size: 1rem;
         transition: all 0.2s ease;
         border: none;
         cursor: pointer;
@@ -586,18 +586,18 @@ if (isset($_SESSION['user']['id'])) {
     }
 
     .profile-upload-btn:hover {
-        background: rgba(74, 144, 226, 0.95);
+        background: #3C96E1;
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
     }
 
     .profile-remove-btn {
-        background: rgba(74, 144, 226, 0.85);
+        background: #DC2626;
         color: white;
         padding: 0.9rem 1.5rem;
-        border-radius: 30px;
+        border-radius: 8px;
         font-weight: 500;
-        font-size: 0.95rem;
+        font-size: 1rem;
         transition: all 0.2s ease;
         border: none;
         cursor: pointer;
@@ -610,7 +610,7 @@ if (isset($_SESSION['user']['id'])) {
     }
 
     .profile-remove-btn:hover {
-        background: rgba(74, 144, 226, 0.95);
+        background: #DC2626;
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
     }
@@ -1596,7 +1596,7 @@ if (isset($_SESSION['user']['id'])) {
 
                 <!-- Modal Title -->
                 <div class="text-center mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800">Profile Picture</h3>
+                    <h3 class="text-2xl font-medium text-gray-800">Profile Picture</h3>
                     <p class="text-gray-500 mt-2 text-sm">Upload or change your profile picture</p>
                 </div>
 
@@ -1623,7 +1623,7 @@ if (isset($_SESSION['user']['id'])) {
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="flex gap-3 mt-6" style="gap: 5px;">
+                        <div class="flex gap-3 mt-6" style="gap: 10px;">
                             <button type="button" onclick="removeProfilePicture()"
                                 class="profile-remove-btn <?php echo !$profile_picture ? 'opacity-50 cursor-not-allowed' : '' ?>"
                                 <?php echo !$profile_picture ? 'disabled' : '' ?>>
@@ -1631,7 +1631,10 @@ if (isset($_SESSION['user']['id'])) {
                                 Remove
                             </button>
                             <button type="submit" class="profile-upload-btn">
-                                <i class="fas fa-cloud-upload-alt"></i>
+                                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M22.5 12.7506V18.7506C22.5 19.1484 22.342 19.5299 22.0607 19.8112C21.7794 20.0926 21.3978 20.2506 21 20.2506H3C2.60218 20.2506 2.22064 20.0926 1.93934 19.8112C1.65804 19.5299 1.5 19.1484 1.5 18.7506V12.7506C1.5 12.3528 1.65804 11.9712 1.93934 11.6899C2.22064 11.4086 2.60218 11.2506 3 11.2506H7.5C7.69891 11.2506 7.88968 11.3296 8.03033 11.4703C8.17098 11.6109 8.25 11.8017 8.25 12.0006C8.25 12.1995 8.17098 12.3903 8.03033 12.5309C7.88968 12.6716 7.69891 12.7506 7.5 12.7506H3V18.7506H21V12.7506H16.5C16.3011 12.7506 16.1103 12.6716 15.9697 12.5309C15.829 12.3903 15.75 12.1995 15.75 12.0006C15.75 11.8017 15.829 11.6109 15.9697 11.4703C16.1103 11.3296 16.3011 11.2506 16.5 11.2506H21C21.3978 11.2506 21.7794 11.4086 22.0607 11.6899C22.342 11.9712 22.5 12.3528 22.5 12.7506ZM8.03063 7.28122L11.25 4.0609V12.0006C11.25 12.1995 11.329 12.3903 11.4697 12.5309C11.6103 12.6716 11.8011 12.7506 12 12.7506C12.1989 12.7506 12.3897 12.6716 12.5303 12.5309C12.671 12.3903 12.75 12.1995 12.75 12.0006V4.0609L15.9694 7.28122C16.1101 7.42195 16.301 7.50101 16.5 7.50101C16.699 7.50101 16.8899 7.42195 17.0306 7.28122C17.1714 7.14048 17.2504 6.94961 17.2504 6.75059C17.2504 6.55157 17.1714 6.3607 17.0306 6.21996L12.5306 1.71997C12.461 1.65023 12.3783 1.59491 12.2872 1.55717C12.1962 1.51943 12.0986 1.5 12 1.5C11.9014 1.5 11.8038 1.51943 11.7128 1.55717C11.6217 1.59491 11.539 1.65023 11.4694 1.71997L6.96937 6.21996C6.82864 6.3607 6.74958 6.55157 6.74958 6.75059C6.74958 6.94961 6.82864 7.14048 6.96938 7.28121C7.11011 7.42195 7.30098 7.50101 7.5 7.50101C7.69902 7.50101 7.88989 7.42195 8.03063 7.28122ZM18.75 15.7506C18.75 15.5281 18.684 15.3106 18.5604 15.1256C18.4368 14.9406 18.2611 14.7964 18.0555 14.7112C17.85 14.6261 17.6238 14.6038 17.4055 14.6472C17.1873 14.6906 16.9868 14.7978 16.8295 14.9551C16.6722 15.1124 16.565 15.3129 16.5216 15.5311C16.4782 15.7493 16.5005 15.9755 16.5856 16.1811C16.6708 16.3867 16.815 16.5624 17 16.686C17.185 16.8096 17.4025 16.8756 17.625 16.8756C17.9234 16.8756 18.2095 16.7571 18.4205 16.5461C18.6315 16.3351 18.75 16.049 18.75 15.7506Z" fill="white"/>
+</svg>
+
                                 Upload
                             </button>
                         </div>
