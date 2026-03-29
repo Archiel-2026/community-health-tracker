@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <script>
                 setTimeout(function() {
-                    window.location.href = '/community-health-tracker/index.php';
+                    window.location.href = '/community-health-tracker/index.php?login=invalid';
                 }, 1500);
             </script>
         </body>
@@ -352,7 +352,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <script>
                 setTimeout(function() {
-                    window.location.href = '../index.php';
+                    window.location.href = '../index.php?login=invalid';
                 }, 1500);
             </script>
         </body>

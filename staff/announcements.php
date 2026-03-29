@@ -25,6 +25,27 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;
 
+function ensureAnnouncementViewsTable()
+{
+    global $pdo;
+
+    static $initialized = false;
+    if ($initialized) {
+        return;
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS announcement_views (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        announcement_id INT NOT NULL,
+        viewer_token VARCHAR(128) NOT NULL,
+        viewed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_announcement_view (announcement_id, viewer_token),
+        KEY idx_announcement_id (announcement_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $initialized = true;
+}
+
 // Send email to specific users for announcement
 function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'basic', $imageUrl = null)
 {
@@ -80,7 +101,6 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Barangay Luz Health Center Announcement</title>
-            <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,700,800&display=swap" rel="stylesheet">
             <style>
                 body {
                     background: #fff;
@@ -255,6 +275,7 @@ if (!isStaff()) {
 }
 
 global $pdo;
+ensureAnnouncementViewsTable();
 
 $staffId = $_SESSION['user']['id'];
 $error = '';
@@ -424,11 +445,17 @@ $archivedAnnouncements = [];
 try {
     $stmt = $pdo->prepare("SELECT a.*, 
                           s.full_name AS staff_full_name, s.position AS staff_position,
-                          COUNT(CASE WHEN ua.status = 'accepted' THEN 1 END) as accepted_count,
-                          COUNT(CASE WHEN ua.status = 'dismissed' THEN 1 END) as dismissed_count,
-                          COUNT(CASE WHEN ua.status IS NULL THEN 1 END) as pending_count
+                          COALESCE(MAX(av.seen_count), 0) as seen_count,
+                          COUNT(CASE WHEN u.id IS NOT NULL AND ua.status = 'accepted' THEN 1 END) as accepted_count,
+                          COUNT(CASE WHEN u.id IS NOT NULL AND ua.status = 'dismissed' THEN 1 END) as dismissed_count,
+                          COUNT(CASE WHEN u.id IS NOT NULL AND ua.status IS NULL THEN 1 END) as pending_count
                           FROM sitio1_announcements a
                           JOIN sitio1_staff s ON a.staff_id = s.id
+                          LEFT JOIN (
+                              SELECT announcement_id, COUNT(*) AS seen_count
+                              FROM announcement_views
+                              GROUP BY announcement_id
+                          ) av ON av.announcement_id = a.id
                           LEFT JOIN sitio1_users u ON u.approved = TRUE AND a.audience_type IN ('public', 'specific')
                           LEFT JOIN user_announcements ua ON ua.announcement_id = a.id AND ua.user_id = u.id
                           WHERE a.status = 'active'
@@ -507,7 +534,6 @@ try {
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/asssets/css/normalize.css">
     <link rel="stylesheet" href="../asssets/css/admin-announcement.css">
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> -->
 
 </head>
 
@@ -740,7 +766,7 @@ try {
             <!-- FORM START (wraps LEFT + CENTER columns only) -->
             <form method="POST" action="" enctype="multipart/form-data"
                 class="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6"
-                onsubmit="return showAnnouncementLoading(this.querySelector('[name=post_lab_result]') ? 'lab_result' : 'basic')">
+                onsubmit="return showAnnouncementLoading(event.submitter && event.submitter.name === 'post_lab_result' ? 'lab_result' : 'basic')">
 
                 <!-- Left Column - Form -->
                 <div class="h-full">
@@ -944,6 +970,8 @@ try {
                                         const priorityInput = document.querySelector('select[name="priority"]');
                                         const expiryInput = document.getElementById('announcement-expiry');
                                         const postBtn = document.querySelector('button[name="post_announcement"]');
+                                        const audienceInputs = document.querySelectorAll('input[name="audience_type"]');
+                                        const specificUserCheckboxes = document.querySelectorAll('.user-checkbox');
 
                                         function isFutureDate(dateStr) {
                                             if (!dateStr) return false;
@@ -958,9 +986,12 @@ try {
                                             const message = messageInput.value.trim();
                                             const priority = priorityInput.value;
                                             const expiry = expiryInput.value;
+                                            const audienceType = document.querySelector('input[name="audience_type"]:checked')?.value;
+                                            const selectedSpecificUsers = document.querySelectorAll('.user-checkbox:checked').length;
                                             const allFilled = title && message && priority && expiry;
                                             const expiryValid = isFutureDate(expiry);
-                                            const enable = allFilled && expiryValid;
+                                            const specificAudienceValid = audienceType !== 'specific' || selectedSpecificUsers > 0;
+                                            const enable = allFilled && expiryValid && specificAudienceValid;
                                             postBtn.disabled = !enable;
                                             postBtn.classList.toggle('opacity-50', !enable);
                                             postBtn.classList.toggle('cursor-not-allowed', !enable);
@@ -970,6 +1001,16 @@ try {
                                             el.addEventListener('input', validateAnnouncementFields);
                                             el.addEventListener('change', validateAnnouncementFields);
                                         });
+
+                                        audienceInputs.forEach(el => {
+                                            el.addEventListener('change', validateAnnouncementFields);
+                                        });
+
+                                        specificUserCheckboxes.forEach(el => {
+                                            el.addEventListener('change', validateAnnouncementFields);
+                                        });
+
+                                        window.validateAnnouncementFields = validateAnnouncementFields;
 
                                         // Initial state
                                         validateAnnouncementFields();
@@ -1043,7 +1084,9 @@ try {
                                                     <?= ucfirst($announcement['priority']) ?>
                                                 </span>
                                                 <?php
-                                                if ($announcement['audience_type'] === 'public') {
+                                                if ($announcement['audience_type'] === 'landing_page') {
+                                                    echo '<span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.85rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.9rem; margin-top: 0.2rem;"><i class="fas fa-eye mr-1"></i>Seen by: ' . (int)$announcement['seen_count'] . '</span>';
+                                                } elseif ($announcement['audience_type'] === 'public') {
                                                     echo '<div style="display:flex;flex-direction:row;gap:0.5rem;margin-top:0.2rem;">';
                                                     echo '<span class="badge stat-accepted" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.7rem;border-radius:4px;"><i class="fas fa-check-circle stat-icon" style="background:none;color:#059669;"></i> ' . $announcement['accepted_count'] . '</span>';
                                                     echo '<span class="badge stat-pending" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.7rem;border-radius:4px;"><i class="fas fa-hourglass-half stat-icon" style="background:none;color:#d97706;"></i> ' . $announcement['pending_count'] . '</span>';
@@ -1326,6 +1369,8 @@ try {
         </div>
 
         <script>
+            const MODAL_TRANSITION_MS = 280;
+
             // Helper function to escape HTML
             function escapeHtml(text) {
                 const div = document.createElement('div');
@@ -1333,25 +1378,48 @@ try {
                 return div.innerHTML;
             }
 
+            function closeModalElement(modal) {
+                if (!modal || !modal.classList.contains('active')) {
+                    return;
+                }
+
+                modal.classList.add('closing');
+                modal.classList.remove('active');
+
+                setTimeout(() => {
+                    modal.classList.remove('closing');
+                    if (!document.querySelector('.modal.active')) {
+                        document.body.style.overflow = 'auto';
+                    }
+                }, MODAL_TRANSITION_MS);
+            }
+
             // Close all modals function
             function closeAllModals() {
-                const modals = document.querySelectorAll('.modal');
+                const modals = document.querySelectorAll('.modal.active');
                 modals.forEach(modal => {
-                    modal.classList.remove('active');
+                    closeModalElement(modal);
                 });
-                document.body.style.overflow = 'auto';
             }
 
             // Show modal function
             function showModal(modalId) {
-                closeAllModals();
                 const modal = document.getElementById(modalId);
-                if (modal) {
-                    setTimeout(() => {
-                        modal.classList.add('active');
-                        document.body.style.overflow = 'hidden';
-                    }, 10);
+                if (!modal) {
+                    return;
                 }
+
+                document.querySelectorAll('.modal.active').forEach(openModal => {
+                    if (openModal !== modal) {
+                        closeModalElement(openModal);
+                    }
+                });
+
+                modal.classList.remove('closing');
+                requestAnimationFrame(() => {
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                });
             }
 
             // Update image name
@@ -1370,6 +1438,9 @@ try {
                 if (countElement) {
                     countElement.textContent = `${count} user${count !== 1 ? 's' : ''} selected`;
                 }
+                if (typeof window.validateAnnouncementFields === 'function') {
+                    window.validateAnnouncementFields();
+                }
             }
 
             // Clear form
@@ -1384,6 +1455,9 @@ try {
                 // Hide lab result button
                 const labResultBtn = document.getElementById('labResultBtn');
                 if (labResultBtn) labResultBtn.style.display = 'none';
+                if (typeof window.validateAnnouncementFields === 'function') {
+                    window.validateAnnouncementFields();
+                }
             }
 
             // Character counter function
@@ -1490,6 +1564,14 @@ try {
                     </div>
                 </div>
                 
+                ${announcement.audience_type === 'landing_page' ? `
+                <div class="grid grid-cols-1 gap-4 text-center mt-2">
+                    <div class="p-3 bg-sky-50 border border-sky-200 rounded" style="border-radius:4px;">
+                        <p class="text-sky-700 font-bold flex items-center justify-center gap-1"><i class='fas fa-eye mr-1'></i> ${announcement.seen_count || 0}</p>
+                        <p class="text-sm text-sky-600">Seen by</p>
+                    </div>
+                </div>
+                ` : `
                 <div class="grid grid-cols-3 gap-4 text-center mt-2">
                     <div class="p-3 bg-green-50 border border-green-200 rounded" style="border-radius:4px;">
                         <p class="text-green-700 font-bold flex items-center justify-center gap-1"><i class='fas fa-check-circle mr-1'></i> ${announcement.accepted_count || 0}</p>
@@ -1504,6 +1586,7 @@ try {
                         <p class="text-sm text-red-600">Dismissed</p>
                     </div>
                 </div>
+                `}
             `;
 
                 modalContent.innerHTML = content;
@@ -1531,6 +1614,16 @@ try {
                 updateCharCounter('edit-message', 'edit-message-counter', 1000);
 
                 showModal('editModal');
+            }
+
+            function openArchiveModalById(announcementId) {
+                const archiveIdInput = document.getElementById('archive-id');
+                if (!archiveIdInput) {
+                    return;
+                }
+
+                archiveIdInput.value = announcementId || '';
+                showModal('archiveModal');
             }
 
             function validateEditForm() {
@@ -1590,10 +1683,40 @@ try {
                         } else {
                             container.innerHTML = announcements.map(announcement => {
                                 const postDate = new Date(announcement.post_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                                let statusHtml = '';
+
+                                if (announcement.audience_type === 'landing_page') {
+                                    statusHtml = `
+                                        <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 0.85rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.9rem;">
+                                            <i class="fas fa-eye mr-1"></i> Seen by: ${announcement.seen_count || 0}
+                                        </span>
+                                    `;
+                                } else if (announcement.audience_type === 'public') {
+                                    statusHtml = `
+                                        <div style="display:flex;flex-direction:row;gap:0.5rem;flex-wrap:wrap;">
+                                            <span class="badge stat-accepted" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.7rem;border-radius:4px;">
+                                                <i class="fas fa-check-circle stat-icon" style="background:none;color:#059669;"></i> ${announcement.accepted_count || 0}
+                                            </span>
+                                            <span class="badge stat-pending" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.7rem;border-radius:4px;">
+                                                <i class="fas fa-hourglass-half stat-icon" style="background:none;color:#d97706;"></i> ${announcement.pending_count || 0}
+                                            </span>
+                                            <span class="badge stat-dismissed" style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.7rem;border-radius:4px;">
+                                                <i class="fas fa-times-circle stat-icon" style="background:none;color:#dc2626;"></i> ${announcement.dismissed_count || 0}
+                                            </span>
+                                        </div>
+                                    `;
+                                } else if ((announcement.accepted_count || 0) > 0) {
+                                    statusHtml = '<span class="badge" style="background: #d1fae5; color: #059669; font-size: 0.85rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.9rem;">Accepted</span>';
+                                } else if ((announcement.dismissed_count || 0) > 0) {
+                                    statusHtml = '<span class="badge" style="background: #fee2e2; color: #dc2626; font-size: 0.85rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.9rem;">Dismissed</span>';
+                                } else {
+                                    statusHtml = '<span class="badge" style="background: #fef3c7; color: #d97706; font-size: 0.85rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 0.9rem;">Pending</span>';
+                                }
+
                                 return `
                                     <div class="announcement-item mb-4 p-4 rounded shadow border bg-white">
-                                        <div class="flex justify-between items-center mb-2">
-                                            <div>
+                                        <div class="flex justify-between items-start mb-2 gap-3">
+                                            <div style="min-width:0;">
                                                 <h4 class="font-semibold text-lg mb-1">${escapeHtml(announcement.title || 'No Title')}</h4>
                                                 <div class="text-xs text-gray-500">Posted by: <b>${escapeHtml(announcement.staff_full_name || '')}</b> (${escapeHtml(announcement.staff_position || '')})</div>
                                             </div>
@@ -1607,12 +1730,32 @@ try {
                                             </span>
                                             <span class="ml-2 text-xs text-gray-400">${postDate}</span>
                                         </div>
+                                        <div class="mb-3">
+                                            ${statusHtml}
+                                        </div>
                                         <div class="mb-2">
                                             <p class="text-gray-500 mb-1">Message:</p>
                                             <div class="bg-gray-50 p-3 rounded border text-gray-700 whitespace-pre-line">${escapeHtml(announcement.message || 'No message')}</div>
                                         </div>
+                                        <div class="flex justify-end items-center mt-3 gap-2">
+                                            <button type="button"
+                                                onclick='openViewModal(${JSON.stringify('__ANNOUNCEMENT__')})'
+                                                class="btn btn-primary btn-sm" title="View" style="background: #e0eaff; color: #2563eb; border: none;">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button"
+                                                onclick='openEditModal(${JSON.stringify('__ANNOUNCEMENT__')})'
+                                                class="btn btn-success btn-sm" title="Edit" style="background: #dcfce7; color: #16a34a; border: none;">
+                                                <i class="fas fa-pen"></i>
+                                            </button>
+                                            <button type="button"
+                                                onclick="openArchiveModalById(${announcement.id})"
+                                                class="btn btn-danger btn-sm" title="Archive" style="background: #fee2e2; color: #dc2626; border: none;">
+                                                <i class="fas fa-archive"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                `;
+                                `.replaceAll('"__ANNOUNCEMENT__"', JSON.stringify(announcement).replace(/"/g, '&quot;'));
                             }).join('');
                         }
                         showModal('allActiveModal');
@@ -1700,7 +1843,7 @@ try {
                 document.querySelectorAll('.modal').forEach(modal => {
                     modal.addEventListener('click', function (e) {
                         if (e.target === this) {
-                            closeAllModals();
+                            closeModalElement(this);
                         }
                     });
                 });
@@ -1716,7 +1859,7 @@ try {
                 document.querySelectorAll('.close-modal').forEach(button => {
                     button.addEventListener('click', function (e) {
                         e.stopPropagation();
-                        closeAllModals();
+                        closeModalElement(this.closest('.modal'));
                     });
                 });
             });

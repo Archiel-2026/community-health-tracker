@@ -204,11 +204,23 @@ if (isset($_SESSION['user']['id'])) {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
+    nav.text-white .logout-btn-1,
+    nav.text-white .logout-btn-1 span,
+    nav.text-white .logout-btn-1 i {
+        color: #3C96E1 !important;
+    }
+
     .logout-btn-1:hover {
         background: white !important;
         color: #2B7CC9 !important;
         transform: translateY(-1px) !important;
         box-shadow: 0 4px 8px rgba(60, 150, 225, 0.2) !important;
+    }
+
+    nav.text-white .logout-btn-1:hover,
+    nav.text-white .logout-btn-1:hover span,
+    nav.text-white .logout-btn-1:hover i {
+        color: #2B7CC9 !important;
     }
 
     /* CLEAN: Staff Logout Button - Warm Violet Text */
@@ -1185,7 +1197,7 @@ if (isset($_SESSION['user']['id'])) {
                         <!-- Enhanced Logout Button - Hidden on mobile -->
 <!-- Enhanced Logout Button - Hidden on mobile -->
 <button type="button" onclick="showLogoutModal('user')" class="logout-btn-1" style="color: #3C96E1 !important;">
-    <span>Signout</span>
+    <span style="color: #3C96E1 !important;">Signout</span>
 </button>
 
                         <!-- Hamburger Menu Button - Visible on mobile and tablet -->
