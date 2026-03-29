@@ -412,7 +412,7 @@ $announcementSummary = [
 try {
     // Preload announcement summary for today (default view)
     $today = date('Y-m-d');
-    $stmt = $pdo->prepare("SELECT id, audience_type FROM sitio1_announcements WHERE DATE(post_date) = ? AND status = 'active' AND (audience_type = 'public' OR audience_type = 'specific') ORDER BY post_date DESC");
+    $stmt = $pdo->prepare("SELECT id, audience_type FROM sitio1_announcements WHERE DATE(post_date) = ? AND (audience_type = 'public' OR audience_type = 'specific') ORDER BY post_date DESC");
     $stmt->execute([$today]);
     $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($announcements as $a) {
@@ -2940,19 +2940,17 @@ function exportFullReport(format) {
                         }
                         // Summarize counts by category and response type
                         let summary = {
-                            'Landing Page': {accepted: 0, dismissed: 0, total: 0, count: 0},
                             'All Users': {accepted: 0, dismissed: 0, total: 0, count: 0},
                             'Specific Users': {accepted: 0, dismissed: 0, total: 0, count: 0}
                         };
                         data.announcements.forEach(a => {
-                            let cat = a.audience_type === 'landing_page' ? 'Landing Page' :
-                                (a.audience_type === 'public' ? 'All Users' : 'Specific Users');
+                            let cat = a.audience_type === 'public' ? 'All Users' : 'Specific Users';
                             summary[cat].accepted += a.response_counts.accepted;
                             summary[cat].dismissed += a.response_counts.dismissed;
                             summary[cat].total += a.response_counts.total;
                             summary[cat].count++;
                         });
-                        let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-6">';
+                        let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
                         Object.keys(summary).forEach(cat => {
                             html += `<div class='bg-white rounded shadow p-4'>` +
                                 `<h4 class='font-semibold text-blue-700 mb-2 text-lg'>${cat}</h4>` +

@@ -46,8 +46,7 @@ try {
                 $where[] = 'YEAR(post_date) = ?';
                 $params[] = date('Y', strtotime($date));
             }
-            // Always show only active announcements
-            $where[] = "status = 'active'";
+            $where[] = "(audience_type = 'public' OR audience_type = 'specific')";
             $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
             $stmt = $pdo->prepare("SELECT id, title, purpose, audience_type, post_date FROM sitio1_announcements $whereSql ORDER BY post_date DESC");
             $stmt->execute($params);
@@ -55,7 +54,13 @@ try {
             // For each announcement, get response counts
             foreach ($announcements as &$a) {
                 $aid = $a['id'];
-                $stmt2 = $pdo->prepare("SELECT status, COUNT(*) as cnt FROM user_announcements WHERE announcement_id = ? GROUP BY status");
+                $stmt2 = $pdo->prepare("
+                    SELECT ua.status, COUNT(*) as cnt
+                    FROM user_announcements ua
+                    JOIN sitio1_users u ON ua.user_id = u.id
+                    WHERE ua.announcement_id = ? AND u.role = 'patient'
+                    GROUP BY ua.status
+                ");
                 $stmt2->execute([$aid]);
                 $counts = ['accepted' => 0, 'dismissed' => 0];
                 $total = 0;

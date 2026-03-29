@@ -76,24 +76,40 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
         }
         $mail->Subject = $subject;
 
-        // Use the correct host for absolute URLs
-        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
-        $logoUrl = 'https://' . $host . '/community-health-tracker/asssets/images/Luz.jpg';
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $logoPath = __DIR__ . '/../asssets/images/Luz.jpg';
+        if (is_file($logoPath)) {
+            $mail->addEmbeddedImage($logoPath, 'barangay-luz-logo', 'Luz.jpg');
+        }
+
         $imageHtml = '';
         if ($imageUrl) {
             if (strpos($imageUrl, 'http') !== 0) {
-                $imageUrl = 'https://' . $host . $imageUrl;
+                $normalizedImagePath = '/' . ltrim($imageUrl, '/');
+                $imageUrl = $scheme . '://' . $host . $normalizedImagePath;
             }
-            $imageHtml = '<div style="text-align:center;margin:24px 0;"><img src="' . htmlspecialchars($imageUrl) . '" alt="Announcement Image" style="max-width:100%;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.10);"></div>';
+            $imageHtml = '
+                <tr>
+                    <td style="padding:0 32px 28px 32px;">
+                        <img src="' . htmlspecialchars($imageUrl) . '" alt="Announcement Image" style="display:block;width:100%;max-width:576px;height:auto;border-radius:18px;border:1px solid #dbe7f4;">
+                    </td>
+                </tr>';
         }
 
-        // Unique, branded email design for Brgy Luz Health Center
         $subtitle = 'Official Announcement';
         if ($type === 'basic') {
             $subtitle = 'Specific Resident Announcement';
         } elseif ($type === 'lab_result') {
             $subtitle = 'Specific Resident Lab Result';
+        } elseif ($type === 'public') {
+            $subtitle = 'For All Resident Users';
         }
+        $escapedTitle = htmlspecialchars($title);
+        $escapedFullName = htmlspecialchars($fullName);
+        $formattedMessage = nl2br(htmlspecialchars($message));
+        $year = date('Y');
+
         $mail->Body = '
         <!DOCTYPE html>
         <html lang="en">
@@ -101,116 +117,80 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Barangay Luz Health Center Announcement</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
             <style>
-                body {
-                    background: #fff;
-                    margin: 0;
-                    padding: 0;
-                    font-family: Poppins, Arial, Helvetica, sans-serif;
-                }
-                .main-container {
-                    max-width: 480px;
-                    margin: 40px auto;
-                    background: #FFFFFF;
-                    border-radius: 16px;
-                    box-shadow: 0 6px 32px rgba(52,152,219,0.18);
-                    overflow: hidden;
-                }
-                .email-header {
-                    background: #3498db;
-                    color: #fff;
-                    text-align: center;
-                    padding: 32px 18px 16px 18px;
-                    box-shadow: 0 2px 12px rgba(52,152,219,0.12);
-                }
-                .email-header .logo {
-                    width: 72px;
-                    height: 72px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    margin-bottom: 10px;
-                    box-shadow: 0 2px 8px rgba(52,152,219,0.18);
-                }
-                .email-header h1 {
-                    margin: 0;
-                    font-size: 1.6rem;
-                    font-weight: 700;
-                    letter-spacing: 1px;
-                    font-family: Poppins, Arial, Helvetica, sans-serif;
-                }
-                .email-header .subtitle {
-                    font-size: 1rem;
-                    font-weight: 500;
-                    margin-top: 4px;
-                    color: #e0eaff;
-                }
-                .email-content {
-                    padding: 24px 18px 18px 18px;
-                    color: #222;
-                    font-size: 1rem;
-                }
-                .email-content h2 {
-                    color: #3498db;
-                    margin-top: 0;
-                    font-size: 1.15rem;
-                    font-weight: 600;
-                }
-                .email-content .greeting {
-                    font-weight: 500;
-                    margin-bottom: 10px;
-                }
-                .email-content .main-message {
-                    background: #f4f8ff;
-                    padding: 14px 16px;
-                    border-radius: 8px;
-                    margin: 14px 0 14px 0;
-                    font-size: 1rem;
-                    box-shadow: 0 2px 8px rgba(52,152,219,0.10);
-                }
-                .email-content .image-section {
-                    margin: 14px 0;
-                    text-align: center;
-                }
-                .email-content .image-section img {
-                    max-width: 90%;
-                    border-radius: 10px;
-                    box-shadow: 0 2px 8px rgba(52,152,219,0.18);
-                }
-                .email-footer {
-                    background: #fff;
-                    color: #3498db;
-                    font-size: 12px;
-                    text-align: center;
-                    padding: 16px 18px;
-                    box-shadow: 0 -2px 8px rgba(52,152,219,0.10);
-                }
-                @media (max-width: 600px) {
-                    .main-container { max-width: 98vw; }
-                    .email-content { padding: 12px 4vw 12px 4vw; }
+                body, table, td, div, p, a, span, h1 {
+                    font-family: \'Poppins\', Arial, Helvetica, sans-serif !important;
                 }
             </style>
         </head>
-        <body>
-            <div class="main-container">
-                <div class="email-header">
-                    <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="logo">
-                    <h1>Barangay Luz Health Center</h1>
-                    <div class="subtitle">' . $subtitle . '</div>
-                </div>
-                <div class="email-content">
-                    <h2>' . htmlspecialchars($title) . '</h2>
-                    <div class="greeting">Dear ' . htmlspecialchars($fullName) . ',</div>
-                    <div class="main-message">' . nl2br(htmlspecialchars($message)) . '</div>
-                    ' . ($imageHtml ? '<div class="image-section">' . $imageHtml . '</div>' : '') . '
-                    <div style="margin-top:1.5em;color:#3498db;font-size:0.95em;">If you have questions, please contact us or visit the health center.</div>
-                </div>
-                <div class="email-footer">
-                    This is an automated message. Please do not reply.<br>
-                    &copy; ' . date('Y') . ' Barangay Luz Health Monitoring and Tracking System
-                </div>
-            </div>
+        <body style="margin:0;padding:0;background-color:#eef4f8;font-family:\'Poppins\',Arial,Helvetica,sans-serif;color:#17324d;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#eef4f8;font-family:\'Poppins\',Arial,Helvetica,sans-serif;">
+                <tr>
+                    <td align="center" style="padding:32px 16px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:640px;background-color:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #d8e5ef;font-family:\'Poppins\',Arial,Helvetica,sans-serif;">
+                            <tr>
+                                <td style="padding:0;background:linear-gradient(135deg,#0d5c91 0%,#1f7fb8 55%,#6ec1d4 100%);">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                        <tr>
+                                            <td style="padding:32px 32px 24px 32px;text-align:center;">
+                                                <img src="cid:barangay-luz-logo" alt="Barangay Luz Health Center Logo" width="88" height="88" style="display:block;margin:0 auto 16px auto;width:88px;height:88px;border-radius:50%;border:4px solid rgba(255,255,255,0.28);object-fit:cover;background-color:#ffffff;">
+                                                <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;letter-spacing:1.6px;text-transform:uppercase;color:#d8f1fb;font-weight:bold;">Barangay Luz, Cebu City</div>
+                                                <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;font-size:30px;line-height:36px;color:#ffffff;font-weight:bold;margin-top:10px;">Barangay Luz Health Center</div>
+                                                <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#e5f6ff;margin-top:10px;">' . htmlspecialchars($subtitle) . '</div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:32px 32px 8px 32px;">
+                                    <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;display:inline-block;background-color:#eaf6fb;color:#0d5c91;border-radius:999px;padding:8px 14px;font-size:12px;line-height:12px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;">Official Notice</div>
+                                    <h1 style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;margin:18px 0 12px 0;font-size:28px;line-height:34px;color:#12395a;font-weight:bold;">' . $escapedTitle . '</h1>
+                                    <p style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;margin:0 0 18px 0;font-size:16px;line-height:26px;color:#38556f;">Dear ' . $escapedFullName . ',</p>
+                                    <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;background-color:#f7fbfd;border:1px solid #d9e8f1;border-radius:18px;padding:22px 20px;font-size:16px;line-height:28px;color:#234764;">
+                                        ' . $formattedMessage . '
+                                    </div>
+                                </td>
+                            </tr>
+                            ' . $imageHtml . '
+                            <tr>
+                                <td style="padding:0 32px 32px 32px;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#0f3552;border-radius:18px;">
+                                        <tr>
+                                            <td style="padding:20px 22px;">
+                                                <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#ffffff;font-weight:bold;">Need assistance?</div>
+                                                <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#d3e9f7;margin-top:6px;">For questions about this announcement, please contact or visit Barangay Luz Health Center during office hours.</div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:22px 32px 28px 32px;border-top:1px solid #e1ecf3;background-color:#fbfdfe;">
+                                    <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;font-size:12px;line-height:20px;color:#647b91;text-align:center;">
+                                        This is an automated message from the Barangay Luz Health Monitoring and Tracking System. Please do not reply directly to this email.
+                                    </div>
+                                    <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;font-size:12px;line-height:20px;color:#647b91;text-align:center;margin-top:8px;">
+                                        &copy; ' . $year . ' Barangay Luz Health Center. All rights reserved.
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
         </body>
         </html>';
+        $mail->AltBody = "Barangay Luz Health Center\n" .
+            $subtitle . "\n\n" .
+            $title . "\n\n" .
+            "Dear " . $fullName . ",\n\n" .
+            $message . "\n\n" .
+            "For questions, please contact or visit Barangay Luz Health Center.\n\n" .
+            "This is an automated message. Please do not reply directly to this email.";
         $mail->send();
         return true;
     } catch (Exception $e) {
