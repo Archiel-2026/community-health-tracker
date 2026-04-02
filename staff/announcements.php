@@ -57,11 +57,11 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'cabanagarchiel@gmail.com';
-        $mail->Password = 'qmdh ofnf bhfj wxsa';
+        $mail->Username = 'bo.luzhealthcentercebucity@gmail.com';
+        $mail->Password = 'ilru ijfn smhz bvdc';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
-        $mail->setFrom('cabanagarchiel@gmail.com', 'Barangay Luz Health Center');
+        $mail->setFrom('bo.luzhealthcentercebucity@gmail.com', 'Barangay Luz Health Center');
         $mail->addAddress($email, $fullName);
         $mail->isHTML(true);
 
@@ -130,7 +130,7 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#eef4f8;font-family:\'Poppins\',Arial,Helvetica,sans-serif;">
                 <tr>
                     <td align="center" style="padding:32px 16px;">
-                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:640px;background-color:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #d8e5ef;font-family:\'Poppins\',Arial,Helvetica,sans-serif;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:640px;background-color:#ffffff;border-radius:6px;overflow:hidden;border:1px solid #d8e5ef;font-family:\'Poppins\',Arial,Helvetica,sans-serif;">
                             <tr>
                                 <td style="padding:0;background:linear-gradient(135deg,#0d5c91 0%,#1f7fb8 55%,#6ec1d4 100%);">
                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -147,10 +147,10 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
                             </tr>
                             <tr>
                                 <td style="padding:32px 32px 8px 32px;">
-                                    <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;display:inline-block;background-color:#eaf6fb;color:#0d5c91;border-radius:999px;padding:8px 14px;font-size:12px;line-height:12px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;">Official Notice</div>
-                                    <h1 style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;margin:18px 0 12px 0;font-size:28px;line-height:34px;color:#12395a;font-weight:bold;">' . $escapedTitle . '</h1>
-                                    <p style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;margin:0 0 18px 0;font-size:16px;line-height:26px;color:#38556f;">Dear ' . $escapedFullName . ',</p>
-                                    <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;background-color:#f7fbfd;border:1px solid #d9e8f1;border-radius:18px;padding:22px 20px;font-size:16px;line-height:28px;color:#234764;">
+                                    <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;display:inline-block;background-color:#eaf6fb;color:#0d5c91;border-radius:6px;padding:8px 14px;font-size:12px;line-height:12px;font-weight:bold;letter-spacing:0.8px;text-transform:uppercase;">Official Notice</div>
+                                    <h1 style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;margin:18px 0 12px 0;font-size:24px;line-height:34px;color:#12395a;font-weight:semi-bold;">' . $escapedTitle . '</h1>
+                                    <p style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;margin:0 0 18px 0;font-size:16px;line-height:26px;color:#38556f;">Good Day! ' . $escapedFullName . ',</p>
+                                    <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;background-color:#f7fbfd;border:1px solid #d9e8f1;border-radius:6px;padding:22px 20px;font-size:16px;line-height:28px;color:#234764;">
                                         ' . $formattedMessage . '
                                     </div>
                                 </td>
@@ -158,7 +158,7 @@ function sendAnnouncementEmail($email, $fullName, $title, $message, $type = 'bas
                             ' . $imageHtml . '
                             <tr>
                                 <td style="padding:0 32px 32px 32px;">
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#0f3552;border-radius:18px;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#0f3552;border-radius:6px;">
                                         <tr>
                                             <td style="padding:20px 22px;">
                                                 <div style="font-family:\'Poppins\',Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#ffffff;font-weight:bold;">Need assistance?</div>
@@ -1052,7 +1052,7 @@ try {
                                         <div class="flex flex-row justify-between items-start mb-2">
                                             <div class="flex flex-col gap-1" style="min-width:0;">
                                                 <h3 class="announcement-title" style="font-size: 1.15rem; color: #2563eb; font-weight: 500; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;" title="<?= htmlspecialchars($announcement['title']) ?>">
-                                                    <?= htmlspecialchars($announcement['title']) ?>0-
+                                                    <?= htmlspecialchars($announcement['title']) ?>
 
                                                     
                                                 </h3>

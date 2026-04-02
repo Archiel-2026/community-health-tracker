@@ -1391,7 +1391,7 @@ Create Account
                                             onclick="showStaffTab('inactive')"
                                             id="inactiveStaffMainTab"
                                             class="py-3 px-6 rounded-md text-base font-semibold">
-                                            Inactive Account
+                                            Paused Accounts
                                         </button>
                                     </div>
                                 </div>
