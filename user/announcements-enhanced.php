@@ -8,8 +8,7 @@ if (!isUser()) {
     exit();
 }
 
-// Check if user has profile image, if not redirect to upload profile page
-redirectIfUserMissingProfile();
+// Profile image upload is now optional - users can upload anytime
 
 global $pdo;
 $userId = $_SESSION['user']['id'];

@@ -563,30 +563,81 @@ if (isset($_SESSION['user']['id'])) {
 
     /* Profile Picture Upload Modal */
     .profile-modal-content {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(60, 150, 225, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(60, 150, 225, 0.1);
+        animation: slideInUp 0.3s ease-out;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .profile-preview {
-        width: 150px;
-        height: 150px;
+        width: 160px;
+        height: 160px;
         border-radius: 50%;
         object-fit: cover;
-        border: 3px solid rgba(74, 144, 226, 0.2);
-        margin: 0 auto 1.5rem;
+        border: 4px solid #3C96E1;
+        margin: 0 auto 2rem;
         display: block;
-        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
+        box-shadow: 0 8px 20px rgba(60, 150, 225, 0.25);
+        transition: transform 0.3s ease;
+    }
+
+    .profile-preview:hover {
+        transform: scale(1.05);
+    }
+
+    /* Enhanced File Input */
+    #profile_image {
+        transition: all 0.3s ease;
+    }
+
+    #profile_image:focus {
+        box-shadow: 0 0 0 3px rgba(60, 150, 225, 0.1) !important;
+    }
+
+    .profile-file-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        border: 2px dashed #3C96E1;
+        border-radius: 12px;
+        background: rgba(60, 150, 225, 0.05);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .profile-file-label:hover {
+        background: rgba(60, 150, 225, 0.1);
+        border-color: #2B7CC9;
+    }
+
+    .profile-file-label.dragover {
+        background: rgba(60, 150, 225, 0.15);
+        border-color: #2B7CC9;
+        transform: scale(1.02);
     }
 
     .profile-upload-btn {
-        background: #3C96E1;
+        background: linear-gradient(135deg, #3C96E1 0%, #2B7CC9 100%);
         color: white;
-        padding: 0.9rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 500;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
         font-size: 1rem;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
         border: none;
         cursor: pointer;
         display: flex;
@@ -595,22 +646,31 @@ if (isset($_SESSION['user']['id'])) {
         gap: 0.6rem;
         flex: 1;
         white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(60, 150, 225, 0.25);
     }
 
-    .profile-upload-btn:hover {
-        background: #3C96E1;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+    .profile-upload-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(60, 150, 225, 0.35);
+    }
+
+    .profile-upload-btn:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    .profile-upload-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .profile-remove-btn {
-        background: #DC2626;
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
         color: white;
-        padding: 0.9rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 500;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
         font-size: 1rem;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
         border: none;
         cursor: pointer;
         display: flex;
@@ -619,12 +679,16 @@ if (isset($_SESSION['user']['id'])) {
         gap: 0.6rem;
         flex: 1;
         white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
     }
 
-    .profile-remove-btn:hover {
-        background: #DC2626;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
+    .profile-remove-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+    }
+
+    .profile-remove-btn:active:not(:disabled) {
+        transform: translateY(0);
     }
 
     .profile-remove-btn:disabled {
@@ -1613,7 +1677,7 @@ if (isset($_SESSION['user']['id'])) {
                 </div>
 
                 <!-- Current Profile Picture Preview -->
-                <div class="mb-6">
+                <div class="mb-6 flex flex-col items-center">
                     <img id="profilePreview"
                         src="<?php echo $profile_picture ?: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEyIiBmaWxsPSIjZDFkNWRiIi8+PHBhdGggZD0iTTEyIDExYTIgMiAwIDEgMCAwLTQgMiAyIDAgMCAwIDAgNHoiIGZpbGw9IiM5Y2EzYWYiLz48cGF0aCBkPSJNMTIgMTVhNCA0IDAgMCAwLTQgNGg4YTQgNCAwIDAgMC00LTR6IiBmaWxsPSIjOWNhM2FmIi8+PC9zdmc+'; ?>" />
                     </div>
@@ -1625,7 +1689,7 @@ if (isset($_SESSION['user']['id'])) {
                         <input type="hidden" name="user_type" id="profileUserType" value="">
 
                         <div>
-                            <label for="profile_image" class="block text-sm font-medium text-gray-700 mb-2">
+                            <label for="profile_image" class="block text-sm font-medium text-gray-700 mb-2 text-center">
                                 Choose Profile Picture
                             </label>
                             <input type="file" id="profile_image" name="profile_image" accept=".jpg,.jpeg,.png,.gif"

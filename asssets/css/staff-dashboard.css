@@ -324,6 +324,13 @@
             color: #3C96E1;
         }
 
+        /* Activity Logs Tab Button */
+        .tab-activity-logs {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
         /* User details styles */
         .user-details-grid {
             display: grid;

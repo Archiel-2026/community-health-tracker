@@ -1415,8 +1415,8 @@ Create Account
                                                                 <?= htmlspecialchars($staff['full_name']) ?>
                                                             </h3>
                                                         </div>
-                                                        <span class="text-sm font-medium text-green-600 bg-green-200 rounded-full px-4 py-2 flex items-center gap-1">
-                                                            Active
+                                                        <span class="text-sm font-medium text-green-600 bg-green-200 rounded-md px-4 py-2 flex items-center gap-1">
+                                                            Used Accounts
                                                         </span>
                                                     </div>
 
@@ -1440,7 +1440,7 @@ Create Account
                                                                 type="submit"
                                                                 name="toggle_staff_status"
                                                                 style="background-color: #DD7D06;"
-                                                                class="py-3 text-sm px-3 text-white rounded-md flex items-center gap-1">
+                                                                class="py-3 text-sm px-6 text-white rounded-md flex items-center gap-1">
                                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                                     <path d="M16.25 6.25H13.75V4.375C13.75 3.38044 13.3549 2.42661 12.6517 1.72335C11.9484 1.02009 10.9946 0.625 10 0.625C9.00544 0.625 8.05161 1.02009 7.34835 1.72335C6.64509 2.42661 6.25 3.38044 6.25 4.375V6.25H3.75C3.41848 6.25 3.10054 6.3817 2.86612 6.61612C2.6317 6.85054 2.5 7.16848 2.5 7.5V16.25C2.5 16.5815 2.6317 16.8995 2.86612 17.1339C3.10054 17.3683 3.41848 17.5 3.75 17.5H16.25C16.5815 17.5 16.8995 17.3683 17.1339 17.1339C17.3683 16.8995 17.5 16.5815 17.5 16.25V7.5C17.5 7.16848 17.3683 6.85054 17.1339 6.61612C16.8995 6.3817 16.5815 6.25 16.25 6.25ZM7.5 4.375C7.5 3.71196 7.76339 3.07607 8.23223 2.60723C8.70107 2.13839 9.33696 1.875 10 1.875C10.663 1.875 11.2989 2.13839 11.7678 2.60723C12.2366 3.07607 12.5 3.71196 12.5 4.375V6.25H7.5V4.375ZM16.25 16.25H3.75V7.5H16.25V16.25ZM10.9375 11.875C10.9375 12.0604 10.8825 12.2417 10.7795 12.3958C10.6765 12.55 10.5301 12.6702 10.3588 12.7411C10.1875 12.8121 9.99896 12.8307 9.8171 12.7945C9.63525 12.7583 9.4682 12.669 9.33709 12.5379C9.20598 12.4068 9.11669 12.2398 9.08051 12.0579C9.04434 11.876 9.06291 11.6875 9.13386 11.5162C9.20482 11.3449 9.32498 11.1985 9.47915 11.0955C9.63332 10.9925 9.81458 10.9375 10 10.9375C10.2486 10.9375 10.4871 11.0363 10.6629 11.2121C10.8387 11.3879 10.9375 11.6264 10.9375 11.875Z" fill="white" />
                                                                 </svg>
@@ -1458,7 +1458,13 @@ Create Account
                                 <div id="inactiveStaffSection" style="display: none;">
                                     <?php if (empty($inactiveStaff)): ?>
                                         <div style="text-align: center; padding: 3rem; background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
-                                            <p style="color: #9ca3af;">No inactive staff accounts</p>
+                                            <div class="flex flex-col items-center justify-center">
+    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M18.75 3H15C14.6022 3 14.2206 3.15804 13.9393 3.43934C13.658 3.72064 13.5 4.10218 13.5 4.5V19.5C13.5 19.8978 13.658 20.2794 13.9393 20.5607C14.2206 20.842 14.6022 21 15 21H18.75C19.1478 21 19.5294 20.842 19.8107 20.5607C20.092 20.2794 20.25 19.8978 20.25 19.5V4.5C20.25 4.10218 20.092 3.72064 19.8107 3.43934C19.5294 3.15804 19.1478 3 18.75 3ZM18.75 19.5H15V4.5H18.75V19.5ZM9 3H5.25C4.85218 3 4.47064 3.15804 4.18934 3.43934C3.90804 3.72064 3.75 4.10218 3.75 4.5V19.5C3.75 19.8978 3.90804 20.2794 4.18934 20.5607C4.47064 20.842 4.85218 21 5.25 21H9C9.39782 21 9.77936 20.842 10.0607 20.5607C10.342 20.2794 10.5 19.8978 10.5 19.5V4.5C10.5 4.10218 10.342 3.72064 10.0607 3.43934C9.77936 3.15804 9.39782 3 9 3ZM9 19.5H5.25V4.5H9V19.5Z" fill="#B1B1B1"/>
+</svg>
+
+    <p class="text-gray-400 mt-2">No Paused Accounts Yet</p>
+</div>
                                         </div>
                                     <?php else: ?>
                                         <div class="grid md:grid-cols-1 gap-4">
@@ -1881,10 +1887,10 @@ Create Resident Account
                     <div class="p-8 rounded-lg border border-gray-300">
                         <div class="flex justify-between items-center mb-4">
                             <div>
-                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Residents</h3>
+                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Resident Account Access</h3>
                                 <p class="text-sm text-gray-500 mt-1">Select a resident account to link</p>
                             </div>
-                            <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full border border-blue-400">
+                            <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-md border border-blue-400">
                                 <?= count($unlinkedResidents) ?> Available
                             </span>
                         </div>
@@ -1964,7 +1970,7 @@ Create Resident Account
                                                     <div class="text-xs text-gray-400 mt-1 resident-sitio">Sitio: <?= htmlspecialchars($resident['sitio']) ?></div>
                                                 <?php endif; ?>
                                             </div>
-                                            <div class="text-xs bg-blue-100 text-blue-800 px-4 py-2 border border-blue-400 rounded-full">Resident</div>
+                                            <div class="text-xs bg-blue-100 text-blue-800 px-4 py-2 border rounded-md">Account Access</div>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -2047,10 +2053,10 @@ Create Resident Account
                     <div class="p-8 rounded-lg border border-gray-300">
                         <div class="flex justify-between items-center mb-4">
                             <div>
-                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Unlinked Patient Records</h3>
+                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Resident Patient Records</h3>
                                 <p class="text-sm text-gray-500 mt-1">Select a patient record to link</p>
                             </div>
-                            <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full border border-green-400">
+                            <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-md border border-green-400">
                                 <?= count($unlinkedPatients) ?> Available
                             </span>
                         </div>
@@ -2133,7 +2139,7 @@ Create Resident Account
                                                     <div class="text-xs text-gray-400 mt-1 patient-contact">Contact: <?= htmlspecialchars($patient['contact']) ?></div>
                                                 <?php endif; ?>
                                             </div>
-                                            <div class="text-xs bg-green-100 text-green-800 px-4 py-2 border border-green-400 rounded-full">Patient</div>
+                                            <div class="text-xs bg-green-100 text-green-800 px-4 py-2 border rounded-md">Regular Patient</div>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>

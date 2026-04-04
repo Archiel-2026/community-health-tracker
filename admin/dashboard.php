@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/activity_logger.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 // --- Auto-logout for resident users after 10 minutes of inactivity ---
 if (isUser()) {
     $now = time();
@@ -343,6 +345,95 @@ if (isset($_GET['get_patient']) && is_numeric($_GET['get_patient'])) {
     }
 }
 
+// Export Activity Logs (Excel)
+if (isset($_GET['export_activity_logs'])) {
+    try {
+        // Determine which log type to export
+        $log_type = isset($_POST['log_type']) ? $_POST['log_type'] : 'resident';
+        $filename = 'activity-logs-' . $log_type . '-' . date('Y-m-d_H-i-s') . '.xlsx';
+        
+        // Create a new spreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Activity Logs');
+        
+        // Get logs based on type
+        if ($log_type === 'resident') {
+            $stmt = $pdo->query("SELECT user_id, action_type, action_timestamp, ip_address, user_agent FROM user_activity_log ORDER BY action_timestamp DESC");
+            $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Set headers
+            $sheet->setCellValue('A1', 'Time Log');
+            $sheet->setCellValue('B1', 'Resident');
+            $sheet->setCellValue('C1', 'Action Performed');
+            $sheet->setCellValue('D1', 'IP Address');
+            
+            // Add data
+            $row = 2;
+            foreach ($logs as $log) {
+                $sheet->setCellValue('A' . $row, date('M j, Y g:i A', strtotime($log['action_timestamp'])));
+                $sheet->setCellValue('B' . $row, 'User #' . $log['user_id']);
+                $sheet->setCellValue('C' . $row, formatActionType(strtolower($log['action_type']))['label']);
+                $sheet->setCellValue('D' . $row, $log['ip_address']);
+                $row++;
+            }
+        } else {
+            // Staff logs
+            $stmt = $pdo->query("SELECT staff_id, action_type, related_id, details, created_at, ip_address FROM staff_activity_log ORDER BY created_at DESC");
+            $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Set headers
+            $sheet->setCellValue('A1', 'Time Log');
+            $sheet->setCellValue('B1', 'Staff Name');
+            $sheet->setCellValue('C1', 'Action Performed');
+            $sheet->setCellValue('D1', 'Details');
+            $sheet->setCellValue('E1', 'IP Address');
+            
+            // Add data
+            $row = 2;
+            foreach ($logs as $log) {
+                // Get staff name
+                $staffStmt = $pdo->prepare("SELECT full_name FROM sitio1_staff WHERE id = ?");
+                $staffStmt->execute([$log['staff_id']]);
+                $staffName = $staffStmt->fetchColumn() ?: 'Unknown Staff';
+                
+                $sheet->setCellValue('A' . $row, date('M j, Y g:i A', strtotime($log['created_at'])));
+                $sheet->setCellValue('B' . $row, $staffName);
+                $sheet->setCellValue('C' . $row, formatActionType(strtolower($log['action_type']))['label']);
+                $sheet->setCellValue('D' . $row, $log['details'] ?: '');
+                $sheet->setCellValue('E' . $row, $log['ip_address']);
+                $row++;
+            }
+        }
+        
+        // Style headers
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '3C96E1']],
+            'alignment' => ['horizontal' => 'center', 'vertical' => 'center'],
+        ];
+        
+        $sheet->getStyle('A1:' . ($log_type === 'resident' ? 'D' : 'E') . '1')->applyFromArray($headerStyle);
+        
+        // Auto-size columns
+        foreach (range('A', $log_type === 'resident' ? 'D' : 'E') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        
+        // Output Excel file
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit();
+    } catch (Exception $e) {
+        error_log('Export activity logs error: ' . $e->getMessage());
+        header('Location: ?');
+        exit();
+    }
+}
+
 // List patients (AJAX, paginated)
 if (isset($_GET['list_patients'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -665,13 +756,40 @@ if (file_exists($logFile)) {
     }
 }
 
-// Also pull from user_activity_log DB
+// Also pull from user_activity_log DB (resident actions including login/logout)
 try {
-    $stmt = $pdo->query("SELECT user_id, action_type, action_timestamp, ip_address, user_agent FROM user_activity_log WHERE action_type IN ('login','logout') ORDER BY action_timestamp DESC LIMIT 500");
+    $stmt = $pdo->query("SELECT user_id, action_type, action_timestamp, ip_address, user_agent FROM user_activity_log ORDER BY action_timestamp DESC LIMIT 500");
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $r['type'] = $r['action_type'];
         $r['created_at'] = $r['action_timestamp'];
         $uid = $r['user_id'];
+        $r['display_name'] = 'User #' . $uid;
+        if ($uid && !isset($userNames[$uid])) {
+            try {
+                $stmt2 = $pdo->prepare("SELECT full_name FROM sitio1_users WHERE id = ?");
+                $stmt2->execute([$uid]);
+                $row = $stmt2->fetch(PDO::FETCH_ASSOC);
+                if ($row && !empty($row['full_name']))
+                    $userNames[$uid] = $row['full_name'];
+            } catch (Exception $e) {
+            }
+        }
+        if ($uid && !empty($userNames[$uid]))
+            $r['display_name'] = $userNames[$uid];
+        $resident_logs[] = $r;
+    }
+} catch (Exception $e) {
+    // ignore
+}
+
+// Also pull resident announcement actions from resident_activity_log DB
+try {
+    $stmt = $pdo->query("SELECT resident_id, action_type, related_id, details, created_at, ip_address FROM resident_activity_log ORDER BY created_at DESC LIMIT 500");
+    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $r['type'] = $r['action_type'];
+        $r['user_id'] = $r['resident_id'];
+        $r['created_at'] = $r['created_at'];
+        $uid = $r['resident_id'];
         $r['display_name'] = 'User #' . $uid;
         if ($uid && !isset($userNames[$uid])) {
             try {
@@ -1109,17 +1227,15 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                 </div>
 
-                <!-- Log Tabs (always visible in modal) -->
-                <div class="flex flex-col md:flex-row w-full justify-between">
-                    <div class="gap-4 flex mb-6" id="activityLogsTabs">
+                <!-- Log Tabs and Export Button -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex gap-2" id="activityLogsTabs">
                         <button class="log-tab log-tab-active" id="residentTabBtn" type="button">Resident Log</button>
                         <button class="log-tab" id="staffTabBtn" type="button">Admin Log</button>
                     </div>
-                    <div>
-                        <button id="exportLogsBtn" class="px-6 py-3 rounded bg-blue-500 text-white font-normal text-lg hover:bg-blue-600 transition" title="Export">
-                            <i class="fas fa-download mr-2"></i>Export
-                        </button>
-                    </div>
+                    <button id="exportLogsBtn" class="log-tab log-tab-active" title="Export">
+                        <i class="fas fa-download"></i>Export
+                    </button>
                 </div>
 
                 <div class="activity-logs-loading" id="activityLogsLoading" aria-live="polite">
@@ -1147,16 +1263,26 @@ require_once __DIR__ . '/../includes/header.php';
                                                 <?= htmlspecialchars($log['display_name'] ?? (isset($log['user_id']) && $log['user_id'] ? 'User #' . $log['user_id'] : 'System')) ?>
                                             </td>
                                             <td>
-                                                <?php $actionType = strtolower($log['type'] ?? $log['action_type'] ?? ''); ?>
-                                                <?php if ($actionType === 'login'): ?>
-                                                        <span class="px-6 py-2 rounded-md text-sm font-medium" style="background-color: rgba(54, 128, 61, 0.3); color: #36803D;">Login</span>
-                                                <?php elseif ($actionType === 'logout'): ?>
-                                                        <span
-                                                            class="px-6 py-2 rounded-md text-sm font-medium" style="background-color: rgba(239, 68, 68, 0.3); color: #EF4444;">Logout</span>
-                                                <?php else: ?>
-                                                        <span
-                                                            class="px-6 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $actionType))) ?></span>
-                                                <?php endif; ?>
+                                                <?php 
+                                                    $actionType = strtolower($log['type'] ?? $log['action_type'] ?? '');
+                                                    $formatted = formatActionType($actionType);
+                                                    $colorMap = [
+                                                        'blue' => 'rgba(29, 78, 216, 0.3)', 'blue-text' => '#1D4ED8',
+                                                        'green' => 'rgba(54, 128, 61, 0.3)', 'green-text' => '#36803D',
+                                                        'red' => 'rgba(239, 68, 68, 0.3)', 'red-text' => '#EF4444',
+                                                        'gray' => 'rgba(107, 114, 128, 0.3)', 'gray-text' => '#6B7280',
+                                                        'cyan' => 'rgba(34, 197, 94, 0.3)', 'cyan-text' => '#22C55E',
+                                                        'orange' => 'rgba(245, 158, 11, 0.3)', 'orange-text' => '#F59E0B',
+                                                        'purple' => 'rgba(168, 85, 247, 0.3)', 'purple-text' => '#A855F7',
+                                                    ];
+                                                    $color = $formatted['color'] ?? 'gray';
+                                                    $bgColor = $colorMap[$color] ?? $colorMap['gray'];
+                                                    $textColor = $colorMap[$color . '-text'] ?? $colorMap['gray-text'];
+                                                ?>
+                                                <span class="px-6 py-2 rounded-md text-sm font-medium" 
+                                                      style="background-color: <?= $bgColor ?>; color: <?= $textColor ?>;">
+                                                    <i class="fas <?= $formatted['icon'] ?> mr-1"></i><?= $formatted['label'] ?>
+                                                </span>
                                             </td>
                                         </tr>
                                 <?php endforeach; ?>
@@ -1206,98 +1332,24 @@ require_once __DIR__ . '/../includes/header.php';
                         <td>
                             <?php 
                             $actionType = strtolower($log['type'] ?? $log['action_type'] ?? '');
-                            
-                            // Define action badges with appropriate colors for all staff actions
-                            $actionStyles = [
-                                // Authentication actions
-                                'staff_login' => ['bg' => 'rgba(29, 78, 216, 0.3)', 'color' => '#1D4ED8', 'label' => 'Staff Login'],
-                                'login' => ['bg' => 'rgba(29, 78, 216, 0.3)', 'color' => '#1D4ED8', 'label' => 'Staff Login'],
-                                'logout' => ['bg' => 'rgba(239, 68, 68, 0.3)', 'color' => '#EF4444', 'label' => 'Staff Logout'],
-                                'staff_logout' => ['bg' => 'rgba(239, 68, 68, 0.3)', 'color' => '#EF4444', 'label' => 'Staff Logout'],
-                                
-                                // Patient record actions
-                                'add_patient' => ['bg' => 'rgba(54, 128, 61, 0.3)', 'color' => '#36803D', 'label' => 'Added Patient'],
-                                'edit_patient' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Patient'],
-                                'update_patient' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Updated Patient'],
-                                'view_patient' => ['bg' => 'rgba(99, 102, 241, 0.3)', 'color' => '#6366F1', 'label' => 'Viewed Patient'],
-                                'delete_patient' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Patient'],
-                                'archive_patient' => ['bg' => 'rgba(124, 58, 237, 0.3)', 'color' => '#7C3AED', 'label' => 'Archived Patient'],
-                                'restore_patient' => ['bg' => 'rgba(16, 185, 129, 0.3)', 'color' => '#10B981', 'label' => 'Restored Patient'],
-                                
-                                // Export/Print actions
-                                'print_record' => ['bg' => 'rgba(139, 92, 246, 0.3)', 'color' => '#8B5CF6', 'label' => 'Printed Record'],
-                                'print_patient' => ['bg' => 'rgba(139, 92, 246, 0.3)', 'color' => '#8B5CF6', 'label' => 'Printed Patient Record'],
-                                'export_records' => ['bg' => 'rgba(236, 72, 153, 0.3)', 'color' => '#EC4899', 'label' => 'Exported Records'],
-                                'export_pdf' => ['bg' => 'rgba(236, 72, 153, 0.3)', 'color' => '#EC4899', 'label' => 'Exported to PDF'],
-                                'export_excel' => ['bg' => 'rgba(16, 185, 129, 0.3)', 'color' => '#10B981', 'label' => 'Exported to Excel'],
-                                'export_csv' => ['bg' => 'rgba(16, 185, 129, 0.3)', 'color' => '#10B981', 'label' => 'Exported to CSV'],
-                                
-                                // Announcement actions
-                                'post_announcement' => ['bg' => 'rgba(217, 119, 6, 0.3)', 'color' => '#D97706', 'label' => 'Posted Announcement'],
-                                'add_announcement' => ['bg' => 'rgba(217, 119, 6, 0.3)', 'color' => '#D97706', 'label' => 'Added Announcement'],
-                                'create_announcement' => ['bg' => 'rgba(217, 119, 6, 0.3)', 'color' => '#D97706', 'label' => 'Created Announcement'],
-                                'edit_announcement' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Announcement'],
-                                'update_announcement' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Updated Announcement'],
-                                'delete_announcement' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Announcement'],
-                                
-                                // Account management actions
-                                'link_account' => ['bg' => 'rgba(37, 99, 235, 0.3)', 'color' => '#2563EB', 'label' => 'Linked Account'],
-                                'unlink_account' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Unlinked Account'],
-                                'approve_resident' => ['bg' => 'rgba(54, 128, 61, 0.3)', 'color' => '#36803D', 'label' => 'Approved Resident'],
-                                'decline_resident' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Declined Resident'],
-                                'pending_resident' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Pending Resident'],
-                                
-                                // Staff management actions
-                                'add_staff' => ['bg' => 'rgba(37, 99, 235, 0.3)', 'color' => '#2563EB', 'label' => 'Added Staff'],
-                                'create_staff' => ['bg' => 'rgba(37, 99, 235, 0.3)', 'color' => '#2563EB', 'label' => 'Created Staff'],
-                                'edit_staff' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Staff'],
-                                'update_staff' => ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Updated Staff'],
-                                'deactivate_staff' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deactivated Staff'],
-                                'activate_staff' => ['bg' => 'rgba(54, 128, 61, 0.3)', 'color' => '#36803D', 'label' => 'Activated Staff'],
-                                'delete_staff' => ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Staff'],
-                                
-                                // System actions
-                                'system_settings' => ['bg' => 'rgba(107, 114, 128, 0.3)', 'color' => '#6B7280', 'label' => 'Modified Settings'],
-                                'backup' => ['bg' => 'rgba(107, 114, 128, 0.3)', 'color' => '#6B7280', 'label' => 'Created Backup'],
-                                'restore_backup' => ['bg' => 'rgba(107, 114, 128, 0.3)', 'color' => '#6B7280', 'label' => 'Restored Backup']
+                            $formatted = formatActionType($actionType);
+                            $colorMap = [
+                                'blue' => 'rgba(29, 78, 216, 0.3)', 'blue-text' => '#1D4ED8',
+                                'green' => 'rgba(54, 128, 61, 0.3)', 'green-text' => '#36803D',
+                                'red' => 'rgba(239, 68, 68, 0.3)', 'red-text' => '#EF4444',
+                                'gray' => 'rgba(107, 114, 128, 0.3)', 'gray-text' => '#6B7280',
+                                'cyan' => 'rgba(34, 197, 94, 0.3)', 'cyan-text' => '#22C55E',
+                                'orange' => 'rgba(245, 158, 11, 0.3)', 'orange-text' => '#F59E0B',
+                                'purple' => 'rgba(168, 85, 247, 0.3)', 'purple-text' => '#A855F7',
+                                'indigo' => 'rgba(99, 102, 241, 0.3)', 'indigo-text' => '#6366F1',
                             ];
-                            
-                            // Check if action type contains keywords for common actions
-                            if (!isset($actionStyles[$actionType])) {
-                                if (strpos($actionType, 'announcement') !== false) {
-                                    if (strpos($actionType, 'add') !== false || strpos($actionType, 'create') !== false || strpos($actionType, 'post') !== false) {
-                                        $actionStyles[$actionType] = ['bg' => 'rgba(217, 119, 6, 0.3)', 'color' => '#D97706', 'label' => 'Announcement Action'];
-                                    } elseif (strpos($actionType, 'edit') !== false || strpos($actionType, 'update') !== false) {
-                                        $actionStyles[$actionType] = ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Announcement'];
-                                    } elseif (strpos($actionType, 'delete') !== false) {
-                                        $actionStyles[$actionType] = ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Announcement'];
-                                    }
-                                } elseif (strpos($actionType, 'patient') !== false || strpos($actionType, 'record') !== false) {
-                                    if (strpos($actionType, 'add') !== false || strpos($actionType, 'create') !== false) {
-                                        $actionStyles[$actionType] = ['bg' => 'rgba(54, 128, 61, 0.3)', 'color' => '#36803D', 'label' => 'Added Patient'];
-                                    } elseif (strpos($actionType, 'edit') !== false || strpos($actionType, 'update') !== false) {
-                                        $actionStyles[$actionType] = ['bg' => 'rgba(245, 158, 11, 0.3)', 'color' => '#F59E0B', 'label' => 'Edited Patient'];
-                                    } elseif (strpos($actionType, 'delete') !== false) {
-                                        $actionStyles[$actionType] = ['bg' => 'rgba(220, 38, 38, 0.3)', 'color' => '#DC2626', 'label' => 'Deleted Patient'];
-                                    } elseif (strpos($actionType, 'archive') !== false) {
-                                        $actionStyles[$actionType] = ['bg' => 'rgba(124, 58, 237, 0.3)', 'color' => '#7C3AED', 'label' => 'Archived Patient'];
-                                    } elseif (strpos($actionType, 'print') !== false) {
-                                        $actionStyles[$actionType] = ['bg' => 'rgba(139, 92, 246, 0.3)', 'color' => '#8B5CF6', 'label' => 'Printed Record'];
-                                    } elseif (strpos($actionType, 'export') !== false) {
-                                        $actionStyles[$actionType] = ['bg' => 'rgba(236, 72, 153, 0.3)', 'color' => '#EC4899', 'label' => 'Exported Records'];
-                                    }
-                                } elseif (strpos($actionType, 'export') !== false) {
-                                    $actionStyles[$actionType] = ['bg' => 'rgba(236, 72, 153, 0.3)', 'color' => '#EC4899', 'label' => 'Exported Data'];
-                                } elseif (strpos($actionType, 'print') !== false) {
-                                    $actionStyles[$actionType] = ['bg' => 'rgba(139, 92, 246, 0.3)', 'color' => '#8B5CF6', 'label' => 'Printed Document'];
-                                }
-                            }
-                            
-                            $style = $actionStyles[$actionType] ?? ['bg' => 'rgba(107, 114, 128, 0.3)', 'color' => '#6B7280', 'label' => ucwords(str_replace('_', ' ', $actionType))];
+                            $color = $formatted['color'] ?? 'gray';
+                            $bgColor = $colorMap[$color] ?? $colorMap['gray'];
+                            $textColor = $colorMap[$color . '-text'] ?? $colorMap['gray-text'];
                             ?>
-                            <span class="px-6 py-2 rounded-md text-md font-medium" 
-                                  style="background-color: <?= $style['bg'] ?>; color: <?= $style['color'] ?>;">
-                                <?= $style['label'] ?>
+                            <span class="px-6 py-2 rounded-md text-sm font-medium" 
+                                  style="background-color: <?= $bgColor ?>; color: <?= $textColor ?>;">
+                                <i class="fas <?= $formatted['icon'] ?> mr-1"></i><?= $formatted['label'] ?>
                             </span>
                         </td>
                     </tr>
@@ -1329,6 +1381,7 @@ require_once __DIR__ . '/../includes/header.php';
                 const staffTabBtn = document.getElementById('staffTabBtn');
                 const residentLogsSection = document.getElementById('residentLogsSection');
                 const staffLogsSection = document.getElementById('staffLogsSection');
+                const exportLogsBtn = document.getElementById('exportLogsBtn');
 
                 function showActivityLogsModal() {
                     activityLogsModal.style.display = 'block';
@@ -1338,9 +1391,36 @@ require_once __DIR__ . '/../includes/header.php';
                     activityLogsModal.style.display = 'none';
                     document.body.style.overflow = '';
                 }
+                
+                function exportActivityLogs() {
+                    // Determine which tab is active
+                    const isResidentTabActive = residentTabBtn.classList.contains('log-tab-active');
+                    const logType = isResidentTabActive ? 'resident' : 'staff';
+                    
+                    // Create a form and submit it via POST
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '?export_activity_logs=1';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'log_type';
+                    input.value = logType;
+                    
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                    document.body.removeChild(form);
+                }
+                
                 if (activityLogsBtn) {
                     activityLogsBtn.addEventListener('click', showActivityLogsModal);
                 }
+                
+                if (exportLogsBtn) {
+                    exportLogsBtn.addEventListener('click', exportActivityLogs);
+                }
+                
                 if (residentTabBtn && staffTabBtn && residentLogsSection && staffLogsSection) {
                     residentTabBtn.addEventListener('click', function () {
                         residentTabBtn.classList.add('log-tab-active');

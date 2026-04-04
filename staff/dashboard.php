@@ -731,7 +731,7 @@ $recordsPerPage = 5;
                 <div class="cht-loader-bounce warmblue-dot"></div>
                 <div class="cht-loader-bounce warmblue-dot"></div>
             </div>
-            <div class="cht-loader-text">Loading analytics...</div>
+            <div class="cht-loader-text">Loading data insights ...</div>
         </div>
     </div>
 
@@ -819,6 +819,22 @@ $recordsPerPage = 5;
                     id="reports-tab" data-tabs-target="#reports" type="button" role="tab" aria-controls="reports"
                     aria-selected="<?= $activeTab === 'reports' ? 'true' : 'false' ?>">
                     Generate Reports
+                </button>
+
+                <button class="nav-tab-button tab-activity-logs" id="activity-logs-tab" type="button" role="tab"
+                    onclick="openActivityLogsModal(); setActiveTab('activity-logs-tab')" aria-controls="activity-logs"
+                    aria-selected="false">
+                    <svg class="w-5 h-5 mr-1 inline" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 2H15V4H9V2Z" fill="currentColor"/>
+                        <path d="M3 5V22H21V5H3ZM5 7H19V20H5V7Z" fill="currentColor"/>
+                        <path d="M7 9H9V11H7V9Z" fill="currentColor" opacity="0.5"/>
+                        <path d="M12 9H14V11H12V9Z" fill="currentColor" opacity="0.5"/>
+                        <path d="M17 9H19V11H17V9Z" fill="currentColor" opacity="0.5"/>
+                        <path d="M7 14H9V16H7V14Z" fill="currentColor" opacity="0.5"/>
+                        <path d="M12 14H14V16H12V14Z" fill="currentColor" opacity="0.5"/>
+                        <path d="M17 14H19V16H17V14Z" fill="currentColor" opacity="0.5"/>
+                    </svg>
+                    Activity Logs
                 </button>
             </div>
         </div>
@@ -1508,6 +1524,93 @@ function exportFullReport(format) {
                     }
                 </script>
             </div>
+
+            <!-- Activity Logs Section Modal -->
+            <div id="activityLogsModal" class="modal-overlay hidden">
+                <div class="modal-container modal-desktop" style="max-width:900px;min-width:350px;width:100%;margin:1rem;display:flex;flex-direction:column;height:auto;max-height:90vh;">
+                    <!-- Fixed Header -->
+                    <div class="modal-header" style="flex-shrink:0;padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;background-color:white;">
+                        <div class="flex justify-between items-center" style="gap:1rem;width:100%;">
+                            <div class="flex items-center" style="gap:0.75rem;flex:1;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="#0078DD"/>
+                                    <path d="M12.5 7H11v6l5.2 3.1.8-1.3-4.5-2.7z" fill="#0078DD"/>
+                                </svg>
+                                <h3 style="margin:0;font-size:1.25rem;font-weight:600;color:#111827;line-height:1.4;">Activity Logs</h3>
+                            </div>
+                            <button onclick="closeActivityLogsModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;padding:0;">×</button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Section -->
+                    <div style="flex-shrink:0;padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;background-color:#f9fafb;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                            <div>
+                                <label style="display:block;font-size:0.875rem;font-weight:500;color:#374151;margin-bottom:0.5rem;">Log Type</label>
+                                <select id="activityLogTypeFilter" onchange="loadActivityLogs()" 
+                                    style="width:100%;padding:0.5rem;border:1px solid #d1d5db;border-radius:0.375rem;font-size:0.875rem;">
+                                    <option value="resident,admin">Resident & Admin Logs</option>
+                                    <option value="all">All Logs</option>
+                                    <option value="resident">Resident Logs Only</option>
+                                    <option value="admin">Admin Logs Only</option>
+                                    <option value="staff">Staff Logs Only</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:0.875rem;font-weight:500;color:#374151;margin-bottom:0.5rem;">Search</label>
+                                <input type="text" id="activityLogSearchInput" placeholder="Search logs..." 
+                                    style="width:100%;padding:0.5rem;border:1px solid #d1d5db;border-radius:0.375rem;font-size:0.875rem;">
+                            </div>
+                            <div style="align-self:flex-end;">
+                                <button onclick="loadActivityLogs()" 
+                                    style="width:100%;padding:0.5rem 1rem;background-color:#3C96E1;color:white;border:none;border-radius:0.375rem;font-weight:500;cursor:pointer;transition:background-color 0.2s;">
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Body Content -->
+                    <div class="modal-body" style="flex:1;overflow-y:auto;padding:1.5rem;">
+                        <div id="activityLogsContainer" style="display:none;">
+                            <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+                                <thead style="background-color:#f3f4f6;position:sticky;top:0;">
+                                    <tr>
+                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">Time</th>
+                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">User ID</th>
+                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">Action</th>
+                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">Type</th>
+                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activityLogsTableBody">
+                                    <tr><td colspan="5" style="padding:2rem;text-align:center;color:#6b7280;">Loading logs...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="activityLogsEmpty" style="text-align:center;padding:3rem;color:#6b7280;">
+                            <p>No logs found</p>
+                        </div>
+                        <div id="activityLogsLoading" style="display:none;text-align:center;padding:2rem;">
+                            <div style="display:inline-block;">
+                                <div class="warmblue-wave-loader" style="margin-bottom:1rem;">
+                                    <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+                                </div>
+                                <p class="text-warmblue" style="margin:0;font-weight:500;">Loading Activity Logs...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="flex-shrink:0;padding:1rem 1.5rem;border-top:1px solid #e5e7eb;background-color:white;display:flex;justify-content:flex-end;gap:0.75rem;">
+                        <button onclick="closeActivityLogsModal()" 
+                            style="padding:0.5rem 1rem;background-color:#e5e7eb;color:#374151;border:none;border-radius:0.375rem;font-weight:500;cursor:pointer;transition:background-color 0.2s;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Analytics Dashboard Section -->
             <div class="<?= $activeTab === 'analytics' ? '' : 'hidden' ?>" id="analytics" role="tabpanel"
                 aria-labelledby="analytics-tab">
@@ -2000,7 +2103,7 @@ function exportFullReport(format) {
                                 <span class="detail-value" id="residentEmail">N/A</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label">Contact Number:</span>
+                                <span class="detail-label">Contact No:</span>
                                 <span class="detail-value" id="residentContact">N/A</span>
                             </div>
                         </div>
@@ -2011,7 +2114,7 @@ function exportFullReport(format) {
             <div class="modal-footer">
                 <div class="flex justify-end">
                     <button type="button" onclick="closeResidentDetailsModal()"
-                        class="px-6 py-3 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400 transition font-medium">
+                        class="px-6 py-3 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition font-medium">
                         <i class="fas fa-times mr-2"></i> Close
                     </button>
                 </div>
@@ -3280,6 +3383,110 @@ function exportFullReport(format) {
     }
     // Auto-load logs on page load
     document.addEventListener('DOMContentLoaded', fetchReportLogs);
+
+    // ========== Activity Logs Modal Functions ==========
+    function setActiveTab(tabId) {
+        // Remove active class from all nav-tab-buttons
+        document.querySelectorAll('.nav-tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-selected', 'false');
+        });
+
+        // Add active class to the clicked button
+        const activeBtn = document.getElementById(tabId);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+            activeBtn.setAttribute('aria-selected', 'true');
+        }
+    }
+
+    function openActivityLogsModal() {
+        const modal = document.getElementById('activityLogsModal');
+        modal.classList.remove('hidden');
+        loadActivityLogs();
+    }
+
+    function closeActivityLogsModal() {
+        const modal = document.getElementById('activityLogsModal');
+        modal.classList.add('hidden');
+        // Remove active state from activity logs tab
+        const activityLogsTab = document.getElementById('activity-logs-tab');
+        if (activityLogsTab) {
+            activityLogsTab.classList.remove('active');
+            activityLogsTab.setAttribute('aria-selected', 'false');
+        }
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('DOMContentLoaded', function() {
+        const activityLogsModal = document.getElementById('activityLogsModal');
+        if (activityLogsModal) {
+            activityLogsModal.addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeActivityLogsModal();
+                }
+            });
+        }
+    });
+
+    function loadActivityLogs() {
+        const container = document.getElementById('activityLogsContainer');
+        const tableBody = document.getElementById('activityLogsTableBody');
+        const emptyMsg = document.getElementById('activityLogsEmpty');
+        const loader = document.getElementById('activityLogsLoading');
+        const logType = document.getElementById('activityLogTypeFilter').value;
+        const searchTerm = document.getElementById('activityLogSearchInput').value;
+
+        loader.style.display = 'block';
+        container.style.display = 'none';
+        emptyMsg.style.display = 'none';
+        tableBody.innerHTML = '';
+
+        let apiUrl = '/community-health-tracker/api/get_activity_logs.php?limit=100&offset=0&type=' + logType;
+        if (searchTerm) {
+            apiUrl += '&search=' + encodeURIComponent(searchTerm);
+        }
+
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                loader.style.display = 'none';
+
+                if (!data.success || !data.data || data.data.length === 0) {
+                    emptyMsg.style.display = 'block';
+                    return;
+                }
+
+                container.style.display = 'block';
+                tableBody.innerHTML = data.data.map(log => `
+                    <tr style="border-bottom:1px solid #e5e7eb;${data.data.indexOf(log) % 2 === 0 ? 'background-color:#f9fafb;' : ''}">
+                        <td style="padding:0.75rem;color:#374151;">${log.formatted_time}</td>
+                        <td style="padding:0.75rem;color:#374151;">${log.user_id || 'N/A'}</td>
+                        <td style="padding:0.75rem;color:#374151;">
+                            <span style="display:inline-block;padding:0.25rem 0.75rem;background-color:#dbeafe;color:#1e40af;border-radius:0.25rem;font-size:0.75rem;font-weight:600;">
+                                ${log.action_type}
+                            </span>
+                        </td>
+                        <td style="padding:0.75rem;color:#374151;">
+                            <span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:0.25rem;font-size:0.75rem;font-weight:600;${
+                                log.log_type === 'staff' ? 'background-color:#fef08a;color:#92400e;' :
+                                log.log_type === 'resident' ? 'background-color:#dcfce7;color:#166534;' :
+                                'background-color:#fee2e2;color:#991b1b;'
+                            }">
+                                ${log.log_type === 'staff' ? 'Staff' : log.log_type === 'resident' ? 'Resident' : 'Admin'}
+                            </span>
+                        </td>
+                        <td style="padding:0.75rem;color:#374151;font-family:monospace;font-size:0.75rem;">${log.ip_address}</td>
+                    </tr>
+                `).join('');
+            })
+            .catch(error => {
+                console.error('Error loading activity logs:', error);
+                loader.style.display = 'none';
+                emptyMsg.innerHTML = '<p>Error loading logs. Please try again.</p>';
+                emptyMsg.style.display = 'block';
+            });
+    }
 </script>
 <style>
     .warmblue-wave-loader {

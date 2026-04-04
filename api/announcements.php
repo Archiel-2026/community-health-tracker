@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/activity_logger.php';
 
 if (!isLoggedIn()) {
     http_response_code(401);
@@ -112,6 +113,11 @@ try {
             if ($announcementId && in_array($status, ['accepted', 'dismissed'])) {
                 $userId = $_SESSION['user']['id'];
                 
+                // Get announcement title for logging
+                $stmtTitle = $pdo->prepare("SELECT title FROM sitio1_announcements WHERE id = ?");
+                $stmtTitle->execute([$announcementId]);
+                $announcement = $stmtTitle->fetch(PDO::FETCH_ASSOC);
+                
                 // Check if response already exists
                 $stmt = $pdo->prepare("SELECT id FROM user_announcements WHERE user_id = ? AND announcement_id = ?");
                 $stmt->execute([$userId, $announcementId]);
@@ -125,6 +131,20 @@ try {
                     $stmt = $pdo->prepare("INSERT INTO user_announcements (user_id, announcement_id, status) VALUES (?, ?, ?)");
                     $stmt->execute([$userId, $announcementId, $status]);
                 }
+                
+                // Log the announcement action
+                $actionType = ($status === 'accepted') ? 'accept_announcement' : 'dismiss_announcement';
+                logActivity(
+                    $pdo,
+                    $userId,
+                    $actionType,
+                    'user',
+                    $announcementId,
+                    [
+                        'announcement_title' => $announcement['title'] ?? 'Unknown',
+                        'status' => $status
+                    ]
+                );
                 
                 echo json_encode(['success' => true]);
             } else {
