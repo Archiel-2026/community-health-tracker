@@ -29,6 +29,16 @@ if (!isStaff()) {
 
 $message = '';
 $error = '';
+$notificationType = '';
+$notificationMessage = '';
+$notificationDuration = 5000;
+
+if (isset($_SESSION['success_message'])) {
+    $message = $_SESSION['success_message'];
+    $notificationType = 'success';
+    $notificationMessage = $_SESSION['success_message'];
+    unset($_SESSION['success_message']);
+}
 
 // Handle patient restoration - FIXED foreign key constraint issues
 if (isset($_GET['restore_patient'])) {
@@ -97,6 +107,8 @@ if (isset($_GET['restore_patient'])) {
 
             if ($existingPatient) {
                 $error = 'This patient already exists in the active records!';
+                $notificationType = 'error';
+                $notificationMessage = $error;
             } else {
                 // Check if this is from soft-deleted records or hard-deleted archive
                 $isFromSoftDelete = !empty($archivedPatient['created_at']) && empty($archivedPatient['deleted_by']);
@@ -467,10 +479,7 @@ if (isset($_GET['restore_patient'])) {
                 }
 
                 // Prepare detailed success message
-                $successMessage = 'Patient record "' . $archivedPatient['full_name'] . '" restored successfully! ';
-                $successMessage .= 'Personal information recovered. ';
-                $successMessage .= $verificationDetails['medical_info'] === 'verified' ? 'Medical history recovered. ' : 'No medical history found. ';
-                $successMessage .= $noteCount > 0 ? $noteCount . ' consultation note(s) recovered.' : 'No consultation notes found.';
+                $successMessage = 'Patient record "' . $archivedPatient['full_name'] . '" restored successfully!';
                 
                 $_SESSION['success_message'] = $successMessage;
                 $_SESSION['restore_details'] = $restorationDetails;
@@ -480,14 +489,20 @@ if (isset($_GET['restore_patient'])) {
             }
         } else {
             $error = 'Archived patient not found!';
+            $notificationType = 'error';
+            $notificationMessage = $error;
         }
     } catch (PDOException $e) {
         $pdo->rollBack();
         $error = 'Error restoring patient record: ' . $e->getMessage();
+        $notificationType = 'error';
+        $notificationMessage = $error;
         error_log('Restoration Error: ' . $e->getMessage());
     } catch (Exception $e) {
         $pdo->rollBack();
         $error = 'Restoration failed: ' . $e->getMessage();
+        $notificationType = 'error';
+        $notificationMessage = $error;
         error_log('Restoration Exception: ' . $e->getMessage());
     }
 }
@@ -1180,21 +1195,10 @@ try {
     <div id="restoreModal" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">
-                <div class="modal-icon">
-                    <svg width="87" height="87" viewBox="0 0 87 87" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_2587_13510)">
-<path d="M74.9448 23.8565L26.5607 10.0608C25.3971 9.72898 24.189 10.401 23.8572 11.5646L10.0615 59.9487C9.72972 61.1123 10.4018 62.3204 11.5653 62.6522L59.9495 76.4479C61.1131 76.7797 62.3212 76.1077 62.653 74.9441L76.4487 26.5599C76.7805 25.3964 76.1084 24.1882 74.9448 23.8565ZM58.6695 70.9649L15.5445 58.6688L27.8407 15.5438L70.9657 27.8399L58.6695 70.9649ZM44.0397 35.5167L56.1357 38.9656C56.4249 39.0481 56.7291 38.8789 56.8116 38.5896L57.7113 35.4341C57.7938 35.1449 57.6246 34.8407 57.3353 34.7583L45.2393 31.3093C44.95 31.2269 44.6459 31.396 44.5634 31.6853L43.6637 34.8408C43.5812 35.13 43.7504 35.4342 44.0397 35.5167ZM41.3405 44.9831L53.4365 48.4321C53.7258 48.5145 54.0299 48.3453 54.1124 48.0561L55.0121 44.9006C55.0946 44.6113 54.9254 44.3072 54.6362 44.2247L42.5401 40.7758C42.2509 40.6933 41.9467 40.8625 41.8642 41.1518L40.9645 44.3073C40.8821 44.5965 41.0512 44.9006 41.3405 44.9831ZM38.6413 54.4496L50.7374 57.8985C51.0266 57.981 51.3308 57.8118 51.4132 57.5226L52.3129 54.3671C52.3954 54.0778 52.2262 53.7737 51.937 53.6912L39.841 50.2423C39.5517 50.1598 39.2476 50.329 39.1651 50.6182L38.2654 53.7737C38.1829 54.063 38.3521 54.3671 38.6413 54.4496ZM34.6471 30.5639C34.4482 31.2613 34.5346 32.0091 34.8871 32.6429C35.2396 33.2766 35.8295 33.7444 36.5269 33.9432C37.2243 34.1421 37.9721 34.0557 38.6059 33.7032C39.2396 33.3507 39.7074 32.7608 39.9062 32.0634C40.1051 31.366 40.0187 30.6182 39.6662 29.9844C39.3137 29.3507 38.7238 28.8829 38.0264 28.6841C37.329 28.4852 36.5812 28.5716 35.9474 28.9241C35.3137 29.2766 34.8459 29.8665 34.6471 30.5639ZM31.9479 40.0303C31.7491 40.7278 31.8354 41.4756 32.1879 42.1093C32.5405 42.7431 33.1303 43.2108 33.8277 43.4097C34.5251 43.6085 35.273 43.5222 35.9067 43.1697C36.5405 42.8171 37.0082 42.2273 37.2071 41.5299C37.4059 40.8325 37.3196 40.0846 36.9671 39.4509C36.6145 38.8171 36.0247 38.3494 35.3273 38.1505C34.6299 37.9517 33.882 38.038 33.2483 38.3906C32.6145 38.7431 32.1468 39.3329 31.9479 40.0303ZM29.2488 49.4968C29.0499 50.1942 29.1362 50.9421 29.4888 51.5758C29.8413 52.2096 30.4312 52.6773 31.1286 52.8761C31.826 53.075 32.5738 52.9887 33.2076 52.6361C33.8413 52.2836 34.3091 51.6937 34.5079 50.9963C34.7068 50.2989 34.6204 49.5511 34.2679 48.9174C33.9154 48.2836 33.3255 47.8159 32.6281 47.617C31.9307 47.4182 31.1829 47.5045 30.5491 47.857C29.9154 48.2096 29.4476 48.7994 29.2488 49.4968Z" fill="#3C96E1"/>
-</g>
-<defs>
-<clipPath id="clip0_2587_13510">
-<rect width="70" height="70" fill="white" transform="translate(19.1953) rotate(15.9144)"/>
-</clipPath>
-</defs>
+                <div class="modal-icon bg-blue-100 p-4">
+                    <svg width="60" height="60" viewBox="0 0 85 85" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M69.9866 13.0335L26.7396 5.39682C25.3522 5.15268 23.9247 5.46955 22.7709 6.27775C21.6171 7.08595 20.8316 8.3193 20.587 9.70659L10.7091 65.8199C10.5883 66.5073 10.6041 67.2118 10.7557 67.8931C10.9072 68.5744 11.1916 69.2192 11.5924 69.7905C11.9933 70.3619 12.5028 70.8487 13.0919 71.2231C13.6809 71.5974 14.338 71.8521 15.0255 71.9724L58.2726 79.6091C58.9603 79.7304 59.6651 79.715 60.3468 79.5636C61.0285 79.4123 61.6736 79.128 62.2454 78.7271C62.8171 78.3262 63.3042 77.8166 63.6788 77.2272C64.0534 76.6379 64.3081 75.9806 64.4284 75.2927L74.3064 19.1794C74.5484 17.7916 74.2292 16.3645 73.4192 15.212C72.6091 14.0595 71.3744 13.2759 69.9866 13.0335ZM59.189 74.3763L15.9386 66.7396L25.8165 10.6263L69.0636 18.263L59.189 74.3763ZM29.6648 19.3986C29.7878 18.7052 30.1811 18.0891 30.7583 17.6856C31.3355 17.2821 32.0493 17.1244 32.7427 17.247L60.3013 22.1113C60.9563 22.226 61.5444 22.5822 61.9494 23.1095C62.3545 23.6368 62.5471 24.2969 62.4891 24.9593C62.4311 25.6217 62.1268 26.2383 61.6363 26.6872C61.1458 27.1361 60.5047 27.3847 59.8398 27.3839C59.684 27.3837 59.5285 27.3704 59.3749 27.3441L31.8163 22.4765C31.123 22.3535 30.5068 21.9601 30.1034 21.383C29.6999 20.8058 29.5421 20.092 29.6648 19.3986ZM27.8253 29.8642C27.8859 29.5206 28.0135 29.1922 28.201 28.898C28.3884 28.6037 28.632 28.3492 28.9179 28.1491C29.2037 27.949 29.5261 27.8072 29.8668 27.7317C30.2075 27.6562 30.5596 27.6486 30.9032 27.7093L58.4618 32.5769C59.1214 32.6872 59.7151 33.0422 60.1244 33.5711C60.5336 34.1 60.7284 34.7637 60.6697 35.4299C60.611 36.096 60.3032 36.7155 59.8077 37.1647C59.3123 37.6138 58.6657 37.8596 57.997 37.8529C57.8399 37.8532 57.6832 37.8387 57.5288 37.8097L29.9702 32.9455C29.2774 32.8209 28.6623 32.4264 28.2602 31.8487C27.858 31.2709 27.7016 30.5572 27.8253 29.8642ZM25.9825 40.3265C26.1079 39.635 26.5022 39.0213 27.0791 38.6199C27.656 38.2185 28.3685 38.0621 29.0605 38.1849L42.8331 40.6054C43.4878 40.7201 44.0757 41.0761 44.4808 41.603C44.8858 42.13 45.0786 42.7896 45.0211 43.4518C44.9635 44.1139 44.6598 44.7305 44.1699 45.1796C43.6801 45.6288 43.0396 45.878 42.3749 45.8781C42.2191 45.878 42.0636 45.8647 41.9101 45.8382L28.1308 43.4044C27.438 43.2806 26.8227 42.887 26.4199 42.3099C26.0172 41.7328 25.8598 41.0195 25.9825 40.3265Z" fill="#0078DD"/>
 </svg>
-
-
-
-
 
                 </div>
                 <h3 class="modal-title">Restore Patient Record</h3>
@@ -1252,29 +1256,6 @@ try {
                 <i class="fas fa-arrow-left"></i> Back to Patient
             </a>
         </div>
-
-        <!-- Success/Error Messages -->
-        <?php if ($message): ?>
-            <div id="successMessage" class="alert-success px-4 py-3 rounded mb-4 flex items-center">
-                <i class="fas fa-check-circle mr-2"></i>
-                <?= htmlspecialchars($message) ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($error): ?>
-            <div class="alert-error px-4 py-3 rounded mb-4 flex items-center">
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                <?= htmlspecialchars($error) ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if (isset($_SESSION['success_message'])): ?>
-            <div id="successMessage" class="alert-success px-4 py-3 rounded mb-4 flex items-center">
-                <i class="fas fa-check-circle mr-2"></i>
-                <?= htmlspecialchars($_SESSION['success_message']) ?>
-            </div>
-            <?php unset($_SESSION['success_message']); ?>
-        <?php endif; ?>
 
         <!-- SEARCH AND FILTER SECTION -->
         <div class="mb-6">
@@ -1537,28 +1518,14 @@ try {
             }
         });
 
-        // Auto-hide messages after 3 seconds
         document.addEventListener('DOMContentLoaded', function () {
-            setTimeout(function () {
-                var successMessages = document.querySelectorAll('#successMessage');
-                var errorMessages = document.querySelectorAll('.alert-error');
+            const initialNotificationType = <?= json_encode($notificationType) ?>;
+            const initialNotificationMessage = <?= json_encode($notificationMessage) ?>;
+            const initialNotificationDuration = <?= (int) $notificationDuration ?>;
 
-                successMessages.forEach(function (message) {
-                    message.style.transition = 'opacity 0.5s ease';
-                    message.style.opacity = '0';
-                    setTimeout(function () {
-                        message.style.display = 'none';
-                    }, 500);
-                });
-
-                errorMessages.forEach(function (message) {
-                    message.style.transition = 'opacity 0.5s ease';
-                    message.style.opacity = '0';
-                    setTimeout(function () {
-                        message.style.display = 'none';
-                    }, 500);
-                });
-            }, 3000);
+            if (initialNotificationType && initialNotificationMessage) {
+                showNotification(initialNotificationType, initialNotificationMessage, initialNotificationDuration);
+            }
         });
 
         // Rotating chevron icon for sort dropdown - FIXED toggle behavior
@@ -1598,7 +1565,7 @@ try {
                 });
 
                 // Handle click outside to close
-                document.addEventListener('click', function (event) {
+        document.addEventListener('click', function (event) {
                     if (!wrapper.contains(event.target) && isOpen) {
                         wrapper.classList.remove('sort-select-open');
                         isOpen = false;
@@ -1616,7 +1583,7 @@ try {
         });
 
         // Show notification function
-        function showNotification(type, message) {
+        function showNotification(type, message, duration = 5000) {
             const existingNotifications = document.querySelectorAll('.custom-notification');
             existingNotifications.forEach(notification => notification.remove());
 
@@ -1638,12 +1605,27 @@ try {
 
             document.body.appendChild(notification);
 
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.opacity = '0';
+                    notification.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, duration);
+
+            notification.style.cursor = 'pointer';
+            notification.addEventListener('click', () => {
+                clearTimeout(timeoutId);
                 if (notification.parentNode) {
                     notification.parentNode.removeChild(notification);
                 }
-            }, 5000);
+            });
         }
+
     </script>
 </body>
 

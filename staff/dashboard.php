@@ -822,7 +822,8 @@ $recordsPerPage = 5;
                 </button>
 
                 <button class="nav-tab-button tab-activity-logs" id="activity-logs-tab" type="button" role="tab"
-                    onclick="openActivityLogsModal(); setActiveTab('activity-logs-tab')" aria-controls="activity-logs"
+                    onclick="openActivityLogsModal()"
+                    aria-controls="activity-logs"
                     aria-selected="false">
                     <svg class="w-5 h-5 mr-1 inline" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M9 2H15V4H9V2Z" fill="currentColor"/>
@@ -1525,89 +1526,82 @@ function exportFullReport(format) {
                 </script>
             </div>
 
-            <!-- Activity Logs Section Modal -->
             <div id="activityLogsModal" class="modal-overlay hidden">
-                <div class="modal-container modal-desktop" style="max-width:900px;min-width:350px;width:100%;margin:1rem;display:flex;flex-direction:column;height:auto;max-height:90vh;">
-                    <!-- Fixed Header -->
-                    <div class="modal-header" style="flex-shrink:0;padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;background-color:white;">
-                        <div class="flex justify-between items-center" style="gap:1rem;width:100%;">
-                            <div class="flex items-center" style="gap:0.75rem;flex:1;">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="#0078DD"/>
-                                    <path d="M12.5 7H11v6l5.2 3.1.8-1.3-4.5-2.7z" fill="#0078DD"/>
-                                </svg>
-                                <h3 style="margin:0;font-size:1.25rem;font-weight:600;color:#111827;line-height:1.4;">Activity Logs</h3>
-                            </div>
-                            <button onclick="closeActivityLogsModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;padding:0;">×</button>
+                <div class="modal-container activity-logs-modal-shell" onclick="event.stopPropagation()">
+                <div class="activity-logs-modal-card">
+                    <div class="activity-logs-modal-header">
+                        <div>
+                            <h2 class="text-xl font-semibold text-secondary mb-1">Activity Logs</h2>
+                            <p class="text-gray-500 text-base">System activity and user actions</p>
                         </div>
-                    </div>
-
-                    <!-- Filter Section -->
-                    <div style="flex-shrink:0;padding:1.25rem 1.5rem;border-bottom:1px solid #e5e7eb;background-color:#f9fafb;">
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;">
-                            <div>
-                                <label style="display:block;font-size:0.875rem;font-weight:500;color:#374151;margin-bottom:0.5rem;">Log Type</label>
-                                <select id="activityLogTypeFilter" onchange="loadActivityLogs()" 
-                                    style="width:100%;padding:0.5rem;border:1px solid #d1d5db;border-radius:0.375rem;font-size:0.875rem;">
-                                    <option value="resident,admin">Resident & Admin Logs</option>
-                                    <option value="all">All Logs</option>
-                                    <option value="resident">Resident Logs Only</option>
-                                    <option value="admin">Admin Logs Only</option>
-                                    <option value="staff">Staff Logs Only</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style="display:block;font-size:0.875rem;font-weight:500;color:#374151;margin-bottom:0.5rem;">Search</label>
-                                <input type="text" id="activityLogSearchInput" placeholder="Search logs..." 
-                                    style="width:100%;padding:0.5rem;border:1px solid #d1d5db;border-radius:0.375rem;font-size:0.875rem;">
-                            </div>
-                            <div style="align-self:flex-end;">
-                                <button onclick="loadActivityLogs()" 
-                                    style="width:100%;padding:0.5rem 1rem;background-color:#3C96E1;color:white;border:none;border-radius:0.375rem;font-weight:500;cursor:pointer;transition:background-color 0.2s;">
-                                    Search
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Body Content -->
-                    <div class="modal-body" style="flex:1;overflow-y:auto;padding:1.5rem;">
-                        <div id="activityLogsContainer" style="display:none;">
-                            <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
-                                <thead style="background-color:#f3f4f6;position:sticky;top:0;">
-                                    <tr>
-                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">Time</th>
-                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">User ID</th>
-                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">Action</th>
-                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">Type</th>
-                                        <th style="padding:0.75rem;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">IP Address</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="activityLogsTableBody">
-                                    <tr><td colspan="5" style="padding:2rem;text-align:center;color:#6b7280;">Loading logs...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div id="activityLogsEmpty" style="text-align:center;padding:3rem;color:#6b7280;">
-                            <p>No logs found</p>
-                        </div>
-                        <div id="activityLogsLoading" style="display:none;text-align:center;padding:2rem;">
-                            <div style="display:inline-block;">
-                                <div class="warmblue-wave-loader" style="margin-bottom:1rem;">
-                                    <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
-                                </div>
-                                <p class="text-warmblue" style="margin:0;font-weight:500;">Loading Activity Logs...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Footer -->
-                    <div style="flex-shrink:0;padding:1rem 1.5rem;border-top:1px solid #e5e7eb;background-color:white;display:flex;justify-content:flex-end;gap:0.75rem;">
-                        <button onclick="closeActivityLogsModal()" 
-                            style="padding:0.5rem 1rem;background-color:#e5e7eb;color:#374151;border:none;border-radius:0.375rem;font-weight:500;cursor:pointer;transition:background-color 0.2s;">
-                            Close
+                        <button onclick="closeActivityLogsModal()" class="activity-logs-close-btn" type="button" aria-label="Close activity logs">
+                            <i class="fas fa-times"></i>
                         </button>
                     </div>
+
+                    <div class="activity-logs-toolbar">
+                        <div class="flex gap-2" id="staffActivityLogsTabs">
+                            <button class="log-tab log-tab-active" id="staffResidentTabBtn" type="button">Resident Log</button>
+                            <button class="log-tab" id="staffAdminTabBtn" type="button">Admin Log</button>
+                        </div>
+                        <div class="activity-logs-actions">
+                            <button type="button" id="staffExportLogsBtn" class="log-tab activity-logs-action-btn" title="Export">
+                                <i class="fas fa-download mr-2"></i>Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="activity-logs-loading" id="dashboardActivityLogsLoading" aria-live="polite">
+                        <div class="activity-logs-spinner" aria-hidden="true"></div>
+                        <div class="activity-logs-loading-text">Loading records...</div>
+                    </div>
+
+                    <div id="staffResidentLogsSection" class="activity-log-panel">
+                        <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl">
+                            <table class="patient-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time Log</th>
+                                        <th>Resident</th>
+                                        <th>Action Performed</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="residentLogsTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="residentLogsEmpty" class="activity-log-empty text-center text-gray-500 py-6 hidden">No resident logs found.</div>
+                        <div id="residentLogsPagination" class="activity-logs-pagination hidden">
+                            <div id="residentLogsPageInfo" class="activity-logs-page-info"></div>
+                            <div class="activity-logs-page-actions">
+                                <button type="button" id="residentLogsPrevBtn" class="activity-logs-page-btn">Prev</button>
+                                <button type="button" id="residentLogsNextBtn" class="activity-logs-page-btn">Next <i class="fas fa-chevron-right ml-1 text-xs"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="staffAdminLogsSection" class="activity-log-panel hidden">
+                        <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl">
+                            <table class="patient-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time Log</th>
+                                        <th>Admin Name</th>
+                                        <th>Action Performed</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminLogsTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="adminLogsEmpty" class="activity-log-empty text-center text-gray-500 py-6 hidden">No admin logs found.</div>
+                        <div id="adminLogsPagination" class="activity-logs-pagination hidden">
+                            <div id="adminLogsPageInfo" class="activity-logs-page-info"></div>
+                            <div class="activity-logs-page-actions">
+                                <button type="button" id="adminLogsPrevBtn" class="activity-logs-page-btn">Prev</button>
+                                <button type="button" id="adminLogsNextBtn" class="activity-logs-page-btn">Next <i class="fas fa-chevron-right ml-1 text-xs"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 </div>
             </div>
 
@@ -2725,14 +2719,20 @@ function exportFullReport(format) {
                 tab.classList.add('hidden');
             });
 
-            document.getElementById(tabId).classList.remove('hidden');
+            const tabPanel = document.getElementById(tabId);
+            if (!tabPanel) {
+                return;
+            }
+            tabPanel.classList.remove('hidden');
 
             document.querySelectorAll('#dashboardTabs button').forEach(tabBtn => {
                 tabBtn.classList.remove('active');
             });
 
             const activeTabBtn = document.querySelector(`#dashboardTabs button[data-tabs-target="#${tabId}"]`);
-            activeTabBtn.classList.add('active');
+            if (activeTabBtn) {
+                activeTabBtn.classList.add('active');
+            }
 
             // Initialize charts when switching to analytics tab
             if (tabId === 'analytics') {
@@ -2752,7 +2752,12 @@ function exportFullReport(format) {
 
             document.querySelectorAll('#dashboardTabs button').forEach(tabBtn => {
                 tabBtn.addEventListener('click', function () {
-                    const targetTab = this.getAttribute('data-tabs-target').replace('#', '');
+                    const targetSelector = this.getAttribute('data-tabs-target');
+                    if (!targetSelector) {
+                        return;
+                    }
+
+                    const targetTab = targetSelector.replace('#', '');
                     switchTab(targetTab);
                 });
             });
@@ -2778,12 +2783,16 @@ function exportFullReport(format) {
         // Close modal when clicking outside
         window.onclick = function (event) {
             const modals = ['userDetailsModal', 'approveConfirmationModal', 'declineModal', 'imageModal',
-                'successModal', 'errorModal', 'residentDetailsModal'];
+                'successModal', 'errorModal', 'residentDetailsModal', 'activityLogsModal'];
 
             modals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if (modal && event.target === modal) {
-                    closeModal(modalId);
+                    if (modalId === 'activityLogsModal') {
+                        closeActivityLogsModal();
+                    } else {
+                        closeModal(modalId);
+                    }
                 }
             });
         }
@@ -3384,111 +3393,653 @@ function exportFullReport(format) {
     // Auto-load logs on page load
     document.addEventListener('DOMContentLoaded', fetchReportLogs);
 
-    // ========== Activity Logs Modal Functions ==========
-    function setActiveTab(tabId) {
-        // Remove active class from all nav-tab-buttons
-        document.querySelectorAll('.nav-tab-button').forEach(btn => {
-            btn.classList.remove('active');
-            btn.setAttribute('aria-selected', 'false');
-        });
+    // ========== Activity Logs Tab Functions ==========
+    let activityLogsLoaded = false;
+    let currentActivityLogView = 'resident';
+    let latestActivityLogData = { resident: [], admin: [] };
+    let pendingActivityLogRequests = 0;
+    const activityLogsPerPage = 10;
+    let activityLogCurrentPage = { resident: 1, admin: 1 };
 
-        // Add active class to the clicked button
-        const activeBtn = document.getElementById(tabId);
-        if (activeBtn) {
-            activeBtn.classList.add('active');
-            activeBtn.setAttribute('aria-selected', 'true');
+    function escapeActivityLogHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function getActivityBadge(log) {
+        const actionType = String(log.action_type || '').toLowerCase();
+        const actionMap = {
+            login: { label: 'Login', icon: 'fa-sign-in-alt', bg: 'rgba(29, 78, 216, 0.3)', text: '#1D4ED8' },
+            logout: { label: 'Logout', icon: 'fa-sign-out-alt', bg: 'rgba(107, 114, 128, 0.3)', text: '#6B7280' },
+            view_announcement: { label: 'Viewed Announcement', icon: 'fa-eye', bg: 'rgba(34, 197, 94, 0.3)', text: '#22C55E' },
+            accept_announcement: { label: 'Accepted Announcement', icon: 'fa-check-circle', bg: 'rgba(54, 128, 61, 0.3)', text: '#36803D' },
+            dismiss_announcement: { label: 'Dismissed Announcement', icon: 'fa-times-circle', bg: 'rgba(239, 68, 68, 0.3)', text: '#EF4444' },
+            add_patient: { label: 'Added Patient', icon: 'fa-user-plus', bg: 'rgba(54, 128, 61, 0.3)', text: '#36803D' },
+            view_patient: { label: 'Viewed Patient Record', icon: 'fa-eye', bg: 'rgba(34, 197, 94, 0.3)', text: '#22C55E' },
+            update_patient: { label: 'Edited Patient Record', icon: 'fa-edit', bg: 'rgba(245, 158, 11, 0.3)', text: '#F59E0B' },
+            edit_patient: { label: 'Edited Patient Record', icon: 'fa-edit', bg: 'rgba(245, 158, 11, 0.3)', text: '#F59E0B' },
+            archive_patient: { label: 'Archived Patient Record', icon: 'fa-archive', bg: 'rgba(168, 85, 247, 0.3)', text: '#A855F7' },
+            print_patient: { label: 'Printed Patient Record', icon: 'fa-print', bg: 'rgba(34, 197, 94, 0.3)', text: '#22C55E' },
+            export_pdf: { label: 'Exported PDF', icon: 'fa-file-pdf', bg: 'rgba(239, 68, 68, 0.3)', text: '#EF4444' },
+            export_excel: { label: 'Exported Excel', icon: 'fa-file-excel', bg: 'rgba(54, 128, 61, 0.3)', text: '#36803D' },
+            send_announcement: { label: 'Posted Announcement', icon: 'fa-bullhorn', bg: 'rgba(168, 85, 247, 0.3)', text: '#A855F7' },
+            edit_announcement: { label: 'Edited Announcement', icon: 'fa-edit', bg: 'rgba(245, 158, 11, 0.3)', text: '#F59E0B' },
+            delete_announcement: { label: 'Archived or Deleted Announcement', icon: 'fa-trash', bg: 'rgba(239, 68, 68, 0.3)', text: '#EF4444' },
+            search_announcement: { label: 'Searched Announcement', icon: 'fa-search', bg: 'rgba(29, 78, 216, 0.3)', text: '#1D4ED8' }
+        };
+
+        return actionMap[actionType] || {
+            label: String(log.description || log.action_type || 'Unknown action'),
+            icon: 'fa-info-circle',
+            bg: 'rgba(107, 114, 128, 0.3)',
+            text: '#6B7280'
+        };
+    }
+
+    function renderActivityLogRows(logs, emptyLabel) {
+        if (!Array.isArray(logs) || logs.length === 0) {
+            return `<tr><td colspan="3" class="px-6 py-8 text-center text-gray-500">${escapeActivityLogHtml(emptyLabel)}</td></tr>`;
+        }
+
+        return logs.map((log, index) => `
+            <tr class="activity-log-row ${index % 2 === 0 ? 'bg-white' : 'bg-white'}">
+                <td class="activity-log-time">${escapeActivityLogHtml(`${log.formatted_date || ''} ${log.formatted_time || ''}`.trim())}</td>
+                <td class="activity-log-name">${escapeActivityLogHtml(log.actor_name || 'Unknown')}</td>
+                <td class="activity-log-action-cell">
+                    <span class="activity-log-badge"
+                          style="background-color: ${getActivityBadge(log).bg}; color: ${getActivityBadge(log).text};">
+                        <i class="fas ${getActivityBadge(log).icon} mr-1"></i>${escapeActivityLogHtml(getActivityBadge(log).label)}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function setActivityLogSectionState(section, state) {
+        const empty = document.getElementById(`${section}LogsEmpty`);
+        const tableBody = document.getElementById(`${section}LogsTableBody`);
+        const pagination = document.getElementById(`${section}LogsPagination`);
+
+        if (empty) {
+            empty.classList.toggle('hidden', state !== 'empty');
+        }
+        if (pagination) {
+            pagination.classList.toggle('hidden', state !== 'table');
+        }
+        if (tableBody && (state === 'loading' || state === 'empty')) {
+            tableBody.innerHTML = '';
+        }
+    }
+
+    function updateActivityLogsLoadingState() {
+        const loading = document.getElementById('dashboardActivityLogsLoading');
+        if (loading) {
+            loading.classList.toggle('active', pendingActivityLogRequests > 0);
         }
     }
 
     function openActivityLogsModal() {
         const modal = document.getElementById('activityLogsModal');
+        const activityLogsTab = document.getElementById('activity-logs-tab');
+        if (!modal) {
+            return;
+        }
+
         modal.classList.remove('hidden');
-        loadActivityLogs();
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        if (activityLogsTab) {
+            activityLogsTab.classList.add('active');
+            activityLogsTab.setAttribute('aria-selected', 'true');
+        }
+
+        loadDashboardActivityLogs(true);
     }
 
     function closeActivityLogsModal() {
         const modal = document.getElementById('activityLogsModal');
-        modal.classList.add('hidden');
-        // Remove active state from activity logs tab
         const activityLogsTab = document.getElementById('activity-logs-tab');
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.add('hidden');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+
         if (activityLogsTab) {
             activityLogsTab.classList.remove('active');
             activityLogsTab.setAttribute('aria-selected', 'false');
         }
     }
 
-    // Close modal when clicking outside
-    document.addEventListener('DOMContentLoaded', function() {
-        const activityLogsModal = document.getElementById('activityLogsModal');
-        if (activityLogsModal) {
-            activityLogsModal.addEventListener('click', function(event) {
-                if (event.target === this) {
-                    closeActivityLogsModal();
+    function showActivityLogPanel(section) {
+        currentActivityLogView = section;
+
+        const residentBtn = document.getElementById('staffResidentTabBtn');
+        const adminBtn = document.getElementById('staffAdminTabBtn');
+        const residentPanel = document.getElementById('staffResidentLogsSection');
+        const adminPanel = document.getElementById('staffAdminLogsSection');
+
+        if (residentBtn && adminBtn) {
+            residentBtn.classList.toggle('log-tab-active', section === 'resident');
+            adminBtn.classList.toggle('log-tab-active', section === 'admin');
+        }
+
+        if (residentPanel && adminPanel) {
+            residentPanel.classList.toggle('hidden', section !== 'resident');
+            adminPanel.classList.toggle('hidden', section !== 'admin');
+        }
+    }
+
+    function renderActivityLogPagination(section) {
+        const logs = latestActivityLogData[section] || [];
+        const pageInfo = document.getElementById(`${section}LogsPageInfo`);
+        const prevBtn = document.getElementById(`${section}LogsPrevBtn`);
+        const nextBtn = document.getElementById(`${section}LogsNextBtn`);
+        const totalPages = Math.max(1, Math.ceil(logs.length / activityLogsPerPage));
+        const currentPage = Math.min(activityLogCurrentPage[section], totalPages);
+        activityLogCurrentPage[section] = currentPage;
+
+        if (pageInfo) {
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
+        if (prevBtn) {
+            prevBtn.disabled = currentPage <= 1;
+        }
+
+        if (nextBtn) {
+            nextBtn.disabled = currentPage >= totalPages;
+        }
+    }
+
+    function renderActivityLogSection(section) {
+        const logs = latestActivityLogData[section] || [];
+        const tableBody = document.getElementById(`${section}LogsTableBody`);
+        const totalPages = Math.max(1, Math.ceil(logs.length / activityLogsPerPage));
+
+        activityLogCurrentPage[section] = Math.min(activityLogCurrentPage[section], totalPages);
+
+        if (!logs.length) {
+            setActivityLogSectionState(section, 'empty');
+            renderActivityLogPagination(section);
+            return;
+        }
+
+        const startIndex = (activityLogCurrentPage[section] - 1) * activityLogsPerPage;
+        const paginatedLogs = logs.slice(startIndex, startIndex + activityLogsPerPage);
+
+        if (tableBody) {
+            tableBody.innerHTML = renderActivityLogRows(
+                paginatedLogs,
+                `No ${section} logs found.`
+            );
+        }
+
+        setActivityLogSectionState(section, 'table');
+        renderActivityLogPagination(section);
+    }
+
+    function loadActivityLogSection(section) {
+        const tableBody = document.getElementById(`${section}LogsTableBody`);
+        const sectionLabel = section === 'resident' ? 'resident' : 'admin';
+
+        setActivityLogSectionState(section, 'loading');
+        pendingActivityLogRequests += 1;
+        updateActivityLogsLoadingState();
+
+        const apiUrl = `/community-health-tracker/api/get_activity_logs.php?category=${sectionLabel}&limit=50`;
+
+        return fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load logs');
+                }
+
+                if (!data.data || data.data.length === 0) {
+                    latestActivityLogData[section] = [];
+                    activityLogCurrentPage[section] = 1;
+                    setActivityLogSectionState(section, 'empty');
+                    if (tableBody) {
+                        tableBody.innerHTML = '';
+                    }
+                    renderActivityLogPagination(section);
+                    return;
+                }
+
+                latestActivityLogData[section] = data.data;
+                activityLogCurrentPage[section] = 1;
+                renderActivityLogSection(section);
+            })
+            .catch(error => {
+                console.error(`Error loading ${sectionLabel} logs:`, error);
+                setActivityLogSectionState(section, 'empty');
+                const empty = document.getElementById(`${section}LogsEmpty`);
+                if (empty) {
+                    empty.textContent = `Error loading ${sectionLabel} logs. Please try again.`;
+                }
+                renderActivityLogPagination(section);
+            })
+            .finally(() => {
+                pendingActivityLogRequests = Math.max(0, pendingActivityLogRequests - 1);
+                updateActivityLogsLoadingState();
+            });
+    }
+
+    function loadDashboardActivityLogs(forceReload = false) {
+        if (activityLogsLoaded && !forceReload) {
+            return;
+        }
+
+        activityLogsLoaded = true;
+        setActivityLogSectionState('resident', 'loading');
+        setActivityLogSectionState('admin', 'loading');
+        loadActivityLogSection('resident');
+        loadActivityLogSection('admin');
+    }
+
+    function exportCurrentActivityLogs() {
+        const currentLogs = latestActivityLogData[currentActivityLogView] || [];
+        if (!currentLogs.length) {
+            return;
+        }
+
+        const header = ['Time Log', currentActivityLogView === 'resident' ? 'Resident' : 'Admin Name', 'Action Performed', 'Details', 'IP Address'];
+        const rows = currentLogs.map(log => [
+            `${log.formatted_date || ''} ${log.formatted_time || ''}`.trim(),
+            log.actor_name || 'Unknown',
+            getActivityBadge(log).label,
+            log.description || '',
+            log.ip_address || 'N/A'
+        ]);
+
+        const csv = [header, ...rows]
+            .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(','))
+            .join('\r\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${currentActivityLogView}-activity-logs.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const residentTabBtn = document.getElementById('staffResidentTabBtn');
+        const adminTabBtn = document.getElementById('staffAdminTabBtn');
+        const exportBtn = document.getElementById('staffExportLogsBtn');
+        const residentPrevBtn = document.getElementById('residentLogsPrevBtn');
+        const residentNextBtn = document.getElementById('residentLogsNextBtn');
+        const adminPrevBtn = document.getElementById('adminLogsPrevBtn');
+        const adminNextBtn = document.getElementById('adminLogsNextBtn');
+
+        showActivityLogPanel('resident');
+
+        if (residentTabBtn) {
+            residentTabBtn.addEventListener('click', function () {
+                showActivityLogPanel('resident');
+            });
+        }
+
+        if (adminTabBtn) {
+            adminTabBtn.addEventListener('click', function () {
+                showActivityLogPanel('admin');
+            });
+        }
+
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportCurrentActivityLogs);
+        }
+
+        if (residentPrevBtn) {
+            residentPrevBtn.addEventListener('click', function () {
+                if (activityLogCurrentPage.resident > 1) {
+                    activityLogCurrentPage.resident -= 1;
+                    renderActivityLogSection('resident');
+                }
+            });
+        }
+
+        if (residentNextBtn) {
+            residentNextBtn.addEventListener('click', function () {
+                const totalPages = Math.ceil((latestActivityLogData.resident || []).length / activityLogsPerPage);
+                if (activityLogCurrentPage.resident < totalPages) {
+                    activityLogCurrentPage.resident += 1;
+                    renderActivityLogSection('resident');
+                }
+            });
+        }
+
+        if (adminPrevBtn) {
+            adminPrevBtn.addEventListener('click', function () {
+                if (activityLogCurrentPage.admin > 1) {
+                    activityLogCurrentPage.admin -= 1;
+                    renderActivityLogSection('admin');
+                }
+            });
+        }
+
+        if (adminNextBtn) {
+            adminNextBtn.addEventListener('click', function () {
+                const totalPages = Math.ceil((latestActivityLogData.admin || []).length / activityLogsPerPage);
+                if (activityLogCurrentPage.admin < totalPages) {
+                    activityLogCurrentPage.admin += 1;
+                    renderActivityLogSection('admin');
                 }
             });
         }
     });
-
-    function loadActivityLogs() {
-        const container = document.getElementById('activityLogsContainer');
-        const tableBody = document.getElementById('activityLogsTableBody');
-        const emptyMsg = document.getElementById('activityLogsEmpty');
-        const loader = document.getElementById('activityLogsLoading');
-        const logType = document.getElementById('activityLogTypeFilter').value;
-        const searchTerm = document.getElementById('activityLogSearchInput').value;
-
-        loader.style.display = 'block';
-        container.style.display = 'none';
-        emptyMsg.style.display = 'none';
-        tableBody.innerHTML = '';
-
-        let apiUrl = '/community-health-tracker/api/get_activity_logs.php?limit=100&offset=0&type=' + logType;
-        if (searchTerm) {
-            apiUrl += '&search=' + encodeURIComponent(searchTerm);
-        }
-
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(data => {
-                loader.style.display = 'none';
-
-                if (!data.success || !data.data || data.data.length === 0) {
-                    emptyMsg.style.display = 'block';
-                    return;
-                }
-
-                container.style.display = 'block';
-                tableBody.innerHTML = data.data.map(log => `
-                    <tr style="border-bottom:1px solid #e5e7eb;${data.data.indexOf(log) % 2 === 0 ? 'background-color:#f9fafb;' : ''}">
-                        <td style="padding:0.75rem;color:#374151;">${log.formatted_time}</td>
-                        <td style="padding:0.75rem;color:#374151;">${log.user_id || 'N/A'}</td>
-                        <td style="padding:0.75rem;color:#374151;">
-                            <span style="display:inline-block;padding:0.25rem 0.75rem;background-color:#dbeafe;color:#1e40af;border-radius:0.25rem;font-size:0.75rem;font-weight:600;">
-                                ${log.action_type}
-                            </span>
-                        </td>
-                        <td style="padding:0.75rem;color:#374151;">
-                            <span style="display:inline-block;padding:0.25rem 0.75rem;border-radius:0.25rem;font-size:0.75rem;font-weight:600;${
-                                log.log_type === 'staff' ? 'background-color:#fef08a;color:#92400e;' :
-                                log.log_type === 'resident' ? 'background-color:#dcfce7;color:#166534;' :
-                                'background-color:#fee2e2;color:#991b1b;'
-                            }">
-                                ${log.log_type === 'staff' ? 'Staff' : log.log_type === 'resident' ? 'Resident' : 'Admin'}
-                            </span>
-                        </td>
-                        <td style="padding:0.75rem;color:#374151;font-family:monospace;font-size:0.75rem;">${log.ip_address}</td>
-                    </tr>
-                `).join('');
-            })
-            .catch(error => {
-                console.error('Error loading activity logs:', error);
-                loader.style.display = 'none';
-                emptyMsg.innerHTML = '<p>Error loading logs. Please try again.</p>';
-                emptyMsg.style.display = 'block';
-            });
-    }
 </script>
 <style>
+    .activity-logs-modal-shell {
+        max-width: 900px;
+        width: calc(100% - 2rem);
+        padding: 0;
+        border-radius: 0.9rem;
+        overflow: hidden;
+        background: #ffffff;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+    }
+
+    .activity-logs-modal-card {
+        padding: 1.75rem 2rem 1.5rem;
+        background: #ffffff;
+    }
+
+    .activity-logs-modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .activity-logs-close-btn {
+        width: 2.25rem;
+        height: 2.25rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: 9999px;
+        background: transparent;
+        color: #6b7280;
+        font-size: 1.15rem;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .activity-logs-close-btn:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
+
+    .activity-logs-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.15rem;
+        flex-wrap: wrap;
+    }
+
+    .activity-logs-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .activity-logs-search-input {
+        width: 20rem;
+        max-width: 100%;
+        padding: 0.75rem 0.95rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.75rem;
+        background: #ffffff;
+        color: #111827;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .activity-logs-search-input:focus {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.25);
+    }
+
+    .log-tab {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.8rem 1.45rem;
+        border-radius: 0.45rem;
+        border: 1px solid #cfe0f5;
+        background: #dceafb;
+        color: #3b82f6;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .log-tab:hover {
+        border-color: #93c5fd;
+        color: #2563eb;
+        background: #cfe3fb;
+    }
+
+    .log-tab-active {
+        background: linear-gradient(180deg, #4da0eb 0%, #3a8fe0 100%);
+        border-color: #4b97e3;
+        color: #ffffff;
+        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+    }
+
+    .activity-logs-action-btn {
+        min-width: 7rem;
+    }
+
+    .activity-logs-wrapper {
+        border: 1px solid #edf2f7;
+        background: #ffffff;
+        min-height: 24rem;
+        border-radius: 0.85rem;
+        max-height: 24rem;
+        overflow-y: auto;
+        overflow-x: auto;
+    }
+
+    .activity-logs-wrapper::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .activity-logs-wrapper::-webkit-scrollbar-thumb {
+        background: #c7cdd8;
+        border-radius: 9999px;
+    }
+
+    .activity-logs-wrapper::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .activity-log-panel {
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        min-height: 27rem;
+    }
+
+    .activity-log-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.85rem;
+        background: #fafafa;
+        padding: 2rem 1rem;
+    }
+
+    .activity-log-empty.hidden {
+        display: none !important;
+    }
+
+    .activity-logs-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 0.25rem;
+    }
+
+    .activity-logs-page-info {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .activity-logs-page-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .activity-logs-page-btn {
+        padding: 0.55rem 0.9rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.65rem;
+        background: #ffffff;
+        color: #374151;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .activity-logs-page-btn:hover:not(:disabled) {
+        background: #f9fafb;
+        border-color: #93c5fd;
+        color: #2563eb;
+    }
+
+    .activity-logs-page-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    .activity-logs-loading {
+        display: none;
+        align-items: center;
+        gap: 0.85rem;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+    }
+
+    .activity-logs-loading.active {
+        display: flex;
+    }
+
+    #activityLogsModal .patient-table th {
+        background: #ffffff;
+        color: #111827;
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        border-bottom: 1px solid #dbe5f0;
+    }
+
+    #activityLogsModal .patient-table th,
+    #activityLogsModal .patient-table td {
+        padding: 1rem 1.1rem;
+        vertical-align: top;
+    }
+
+    #activityLogsModal .patient-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .activity-log-row td {
+        border-bottom: 1px solid #e5edf5;
+    }
+
+    .activity-log-time {
+        color: #667085;
+        font-size: 0.95rem;
+        white-space: nowrap;
+    }
+
+    .activity-log-name {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 0.98rem;
+    }
+
+    .activity-log-action-cell {
+        text-align: left;
+    }
+
+    .activity-log-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 5.8rem;
+        padding: 0.6rem 1rem;
+        border-radius: 0.4rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .activity-logs-modal-shell {
+            width: calc(100% - 1rem);
+        }
+
+        .activity-logs-modal-card {
+            padding: 1rem;
+        }
+
+        .activity-logs-modal-header {
+            padding-bottom: 0.85rem;
+        }
+
+        .activity-logs-toolbar {
+            align-items: stretch;
+        }
+
+        .activity-logs-pagination {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    .activity-logs-spinner {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 9999px;
+        border: 2px solid #dbeafe;
+        border-top-color: #2563eb;
+        animation: activity-spin 0.7s linear infinite;
+    }
+
+    .activity-logs-loading-text {
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    @keyframes activity-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
     .warmblue-wave-loader {
         display: flex;
         align-items: flex-end;

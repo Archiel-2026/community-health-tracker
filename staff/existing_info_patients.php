@@ -143,6 +143,9 @@ if (!isStaff()) {
 
 $message = '';
 $error = '';
+$notificationType = '';
+$notificationMessage = '';
+$notificationDuration = 5000;
 
 // Check if columns exist in the database
 $civilStatusExists = false;
@@ -793,6 +796,17 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_patient'])) {
     $fullName = trim($_POST['full_name']);
     $dateOfBirth = trim($_POST['date_of_birth']);
+    if (!empty($dateOfBirth)) {
+        $normalizedDateOfBirth = DateTime::createFromFormat('m/d/Y', $dateOfBirth);
+        if ($normalizedDateOfBirth instanceof DateTime) {
+            $dateOfBirth = $normalizedDateOfBirth->format('Y-m-d');
+        } else {
+            $timestamp = strtotime($dateOfBirth);
+            if ($timestamp !== false) {
+                $dateOfBirth = date('Y-m-d', $timestamp);
+            }
+        }
+    }
     $age = intval($_POST['age']);
     $gender = trim($_POST['gender']);
     $civil_status = trim($_POST['civil_status']);
@@ -831,6 +845,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_patient'])) {
                      with Date of Birth: <strong>" . date('M d, Y', strtotime($existingPatient['date_of_birth'])) . "</strong><br>
                      Contact: " . htmlspecialchars($existingPatient['contact']) . " <br>
                      <a href='javascript:void(0);' onclick='openViewModal(" . $existingPatient['id'] . ")' class='text-blue-600 hover:text-blue-800 font-semibold'>Click here to view this patient record</a>";
+            $notificationType = 'error';
+            $notificationMessage = $error;
         } else {
             try {
                 // Start transaction
@@ -944,10 +960,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_patient'])) {
             } catch (PDOException $e) {
                 $pdo->rollBack();
                 $error = 'Error adding patient record: ' . $e->getMessage();
+                $notificationType = 'error';
+                $notificationMessage = $error;
             }
         }
     } else {
         $error = 'Full name and date of birth are required.';
+        $notificationType = 'error';
+        $notificationMessage = $error;
     }
 }
 
@@ -1669,6 +1689,8 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
 // Check for success message from session
 if (isset($_SESSION['success_message'])) {
     $message = $_SESSION['success_message'];
+    $notificationType = 'success';
+    $notificationMessage = $_SESSION['success_message'];
     unset($_SESSION['success_message']);
 }
 
@@ -1769,10 +1791,14 @@ if (isset($_GET['delete_patient'])) {
             exit();
         } else {
             $error = 'Patient not found!';
+            $notificationType = 'error';
+            $notificationMessage = $error;
         }
     } catch (PDOException $e) {
         $pdo->rollBack();
         $error = 'Error deleting patient record: ' . $e->getMessage();
+        $notificationType = 'error';
+        $notificationMessage = $error;
     }
 }
 
@@ -2049,6 +2075,7 @@ if (!empty($searchTerm)) {
     <!-- Flatpickr - Professional Calendar Date Picker -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/light.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <link rel="stylesheet" href="/asssets/css/normalize.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
@@ -2127,18 +2154,6 @@ if (!empty($searchTerm)) {
 
 <body class="bg-gray-50">
     <div class="w-full px-24 py-10 lg:px-8">
-
-        <?php if ($message): ?>
-            <div id="successMessage" class="alert-success px-4 py-3 rounded mb-4 flex items-center">
-                <i class="fas fa-check-circle mr-2"></i><?= htmlspecialchars($message) ?>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($error): ?>
-            <div class="alert-error px-4 py-3 rounded mb-4 flex items-center">
-                <i class="fas fa-exclamation-circle mr-2"></i><?= htmlspecialchars($error) ?>
-            </div>
-        <?php endif; ?>
 
         <!-- Main Container - Single Tab Only -->
         <div class=" mb-8">
@@ -3245,7 +3260,7 @@ document.addEventListener('keydown', function(event) {
                     </div>
                     <div class="flex space-x-4">
                         <div class="flex flex-col items-center mt-2">
-                            <button id="printRecordBtn" onclick="printPatientRecord()" class="btn-export text-lg px-8 py-3 font-normal gap-2">
+                            <button id="printRecordBtn" onclick="printPatientRecord()" class="btn-export text-lg px-6 py-3 font-normal gap-2">
                                 <svg width="35" height="35" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M20.1253 6.75H18.75V3.75C18.75 3.55109 18.671 3.36032 18.5303 3.21967C18.3897 3.07902 18.1989 3 18 3H6C5.80109 3 5.61032 3.07902 5.46967 3.21967C5.32902 3.36032 5.25 3.55109 5.25 3.75V6.75H3.87469C2.565 6.75 1.5 7.75969 1.5 9V16.5C1.5 16.6989 1.57902 16.8897 1.71967 17.0303C1.86032 17.171 2.05109 17.25 2.25 17.25H5.25V20.25C5.25 20.4489 5.32902 20.6397 5.46967 20.7803C5.61032 20.921 5.80109 21 6 21H18C18.1989 21 18.3897 20.921 18.5303 20.7803C18.671 20.6397 18.75 20.4489 18.75 20.25V17.25H21.75C21.9489 17.25 22.1397 17.171 22.2803 17.0303C22.421 16.8897 22.5 16.6989 22.5 16.5V9C22.5 7.75969 21.435 6.75 20.1253 6.75ZM6.75 4.5H17.25V6.75H6.75V4.5ZM17.25 19.5H6.75V15H17.25V19.5ZM21 15.75H18.75V14.25C18.75 14.0511 18.671 13.8603 18.5303 13.7197C18.3897 13.579 18.1989 13.5 18 13.5H6C5.80109 13.5 5.61032 13.579 5.46967 13.7197C5.32902 13.8603 5.25 14.0511 5.25 14.25V15.75H3V9C3 8.58656 3.39281 8.25 3.87469 8.25H20.1253C20.6072 8.25 21 8.58656 21 9V15.75ZM18.75 10.875C18.75 11.0975 18.684 11.315 18.5604 11.5C18.4368 11.685 18.2611 11.8292 18.0555 11.9144C17.85 11.9995 17.6238 12.0218 17.4055 11.9784C17.1873 11.935 16.9868 11.8278 16.8295 11.6705C16.6722 11.5132 16.565 11.3127 16.5216 11.0945C16.4782 10.8762 16.5005 10.65 16.5856 10.4445C16.6708 10.2389 16.815 10.0632 17 9.9396C17.185 9.81598 17.4025 9.75 17.625 9.75C17.9234 9.75 18.2095 9.86853 18.4205 10.0795C18.6315 10.2905 18.75 10.5766 18.75 10.875Z" fill="white" />
                                 </svg>
@@ -3254,7 +3269,7 @@ document.addEventListener('keydown', function(event) {
                         </div>
                         <div class="flex flex-col items-center">
                             <button id="saveMedicalBtn" type="button" onclick="saveMedicalInformation()"
-                                class="btn-save-medical px-8 py-5 text-lg gap-2">
+                                class="btn-save-medical px-6 py-5 text-lg gap-2">
                                 <svg width="35" height="35" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M29.9838 10.3438L25.1562 5.51622C24.9539 5.31221 24.7129 5.15046 24.4475 5.04038C24.182 4.93031 23.8973 4.87409 23.61 4.87501H6.5625C5.98234 4.87501 5.42594 5.10548 5.0157 5.51571C4.60547 5.92595 4.375 6.48235 4.375 7.06251V28.9375C4.375 29.5177 4.60547 30.0741 5.0157 30.4843C5.42594 30.8945 5.98234 31.125 6.5625 31.125H28.4375C29.0177 31.125 29.5741 30.8945 29.9843 30.4843C30.3945 30.0741 30.625 29.5177 30.625 28.9375V11.89C30.6259 11.6027 30.5697 11.318 30.4596 11.0525C30.3495 10.7871 30.1878 10.5462 29.9838 10.3438ZM22.9688 28.9375H12.0312V21.2813H22.9688V28.9375ZM28.4375 28.9375H25.1562V21.2813C25.1562 20.7011 24.9258 20.1447 24.5155 19.7345C24.1053 19.3242 23.5489 19.0938 22.9688 19.0938H12.0312C11.4511 19.0938 10.8947 19.3242 10.4845 19.7345C10.0742 20.1447 9.84375 20.7011 9.84375 21.2813V28.9375H6.5625V7.06251H23.61L28.4375 11.89V28.9375ZM21.875 10.3438C21.875 10.6338 21.7598 10.912 21.5546 11.1172C21.3495 11.3223 21.0713 11.4375 20.7812 11.4375H13.125C12.8349 11.4375 12.5567 11.3223 12.3516 11.1172C12.1465 10.912 12.0312 10.6338 12.0312 10.3438C12.0312 10.0537 12.1465 9.77548 12.3516 9.57036C12.5567 9.36525 12.8349 9.25001 13.125 9.25001H20.7812C21.0713 9.25001 21.3495 9.36525 21.5546 9.57036C21.7598 9.77548 21.875 10.0537 21.875 10.3438Z" fill="white" />
                                 </svg>
@@ -4172,8 +4187,18 @@ document.addEventListener('keydown', function(event) {
                                 <label for="modal_last_checkup" class="block text-sm font-medium mb-2">
                                     Last Check-up Date
                                 </label>
-                                <input type="date" id="modal_last_checkup" name="last_checkup"
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                <div class="date-input-with-trigger">
+                                    <input type="date" id="modal_last_checkup" name="last_checkup"
+                                        class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <button type="button" id="modal_last_checkup_trigger"
+                                        class="date-input-trigger hover:text-[#1D4ED8]"
+                                        aria-label="Choose last check-up date">
+                                        <svg width="50" height="50" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M24.375 3.75H21.5625V2.8125C21.5625 2.56386 21.4637 2.3254 21.2879 2.14959C21.1121 1.97377 20.8736 1.875 20.625 1.875C20.3764 1.875 20.1379 1.97377 19.9621 2.14959C19.7863 2.3254 19.6875 2.56386 19.6875 2.8125V3.75H10.3125V2.8125C10.3125 2.56386 10.2137 2.3254 10.0379 2.14959C9.8621 1.97377 9.62364 1.875 9.375 1.875C9.12636 1.875 8.8879 1.97377 8.71209 2.14959C8.53627 2.3254 8.4375 2.56386 8.4375 2.8125V3.75H5.625C5.12772 3.75 4.65081 3.94754 4.29917 4.29917C3.94754 4.65081 3.75 5.12772 3.75 5.625V24.375C3.75 24.8723 3.94754 25.3492 4.29917 25.7008C4.65081 26.0525 5.12772 26.25 5.625 26.25H24.375C24.8723 26.25 25.3492 26.0525 25.7008 25.7008C26.0525 25.3492 26.25 24.8723 26.25 24.375V5.625C26.25 5.12772 26.0525 4.65081 25.7008 4.29917C25.3492 3.94754 24.8723 3.75 24.375 3.75ZM8.4375 5.625V6.5625C8.4375 6.81114 8.53627 7.0496 8.71209 7.22541C8.8879 7.40123 9.12636 7.5 9.375 7.5C9.62364 7.5 9.8621 7.40123 10.0379 7.22541C10.2137 7.0496 10.3125 6.81114 10.3125 6.5625V5.625H19.6875V6.5625C19.6875 6.81114 19.7863 7.0496 19.9621 7.22541C20.1379 7.40123 20.3764 7.5 20.625 7.5C20.8736 7.5 21.1121 7.40123 21.2879 7.22541C21.4637 7.0496 21.5625 6.81114 21.5625 6.5625V5.625H24.375V9.375H5.625V5.625H8.4375ZM24.375 24.375H5.625V11.25H24.375V24.375ZM16.4062 15.4688C16.4062 15.7469 16.3238 16.0188 16.1693 16.25C16.0147 16.4813 15.7951 16.6615 15.5381 16.768C15.2812 16.8744 14.9984 16.9022 14.7257 16.848C14.4529 16.7937 14.2023 16.6598 14.0056 16.4631C13.809 16.2665 13.675 16.0159 13.6208 15.7431C13.5665 15.4703 13.5944 15.1876 13.7008 14.9306C13.8072 14.6736 13.9875 14.454 14.2187 14.2995C14.45 14.145 14.7219 14.0625 15 14.0625C15.373 14.0625 15.7306 14.2107 15.9944 14.4744C16.2581 14.7381 16.4062 15.0958 16.4062 15.4688ZM21.5625 15.4688C21.5625 15.7469 21.48 16.0188 21.3255 16.25C21.171 16.4813 20.9514 16.6615 20.6944 16.768C20.4374 16.8744 20.1547 16.9022 19.8819 16.848C19.6091 16.7937 19.3585 16.6598 19.1619 16.4631C18.9652 16.2665 18.8313 16.0159 18.777 15.7431C18.7228 15.4703 18.7506 15.1876 18.857 14.9306C18.9635 14.6736 19.1437 14.454 19.375 14.2995C19.6062 14.145 19.8781 14.0625 20.1562 14.0625C20.5292 14.0625 20.8869 14.2107 21.1506 14.4744C21.4143 14.7381 21.5625 15.0958 21.5625 15.4688ZM11.25 20.1562C11.25 20.4344 11.1675 20.7063 11.013 20.9375C10.8585 21.1688 10.6389 21.349 10.3819 21.4555C10.1249 21.5619 9.84219 21.5897 9.5694 21.5355C9.29662 21.4812 9.04605 21.3473 8.84938 21.1506C8.65271 20.954 8.51878 20.7034 8.46452 20.4306C8.41026 20.1578 8.43811 19.8751 8.54454 19.6181C8.65098 19.3611 8.83122 19.1415 9.06248 18.987C9.29374 18.8325 9.56562 18.75 9.84375 18.75C10.2167 18.75 10.5744 18.8982 10.8381 19.1619C11.1018 19.4256 11.25 19.7833 11.25 20.1562ZM16.4062 20.1562C16.4062 20.4344 16.3238 20.7063 16.1693 20.9375C16.0147 21.1688 15.7951 21.349 15.5381 21.4555C15.2812 21.5619 14.9984 21.5897 14.7257 21.5355C14.4529 21.4812 14.2023 21.3473 14.0056 21.1506C13.809 20.954 13.675 20.7034 13.6208 20.4306C13.5665 20.1578 13.5944 19.8751 13.7008 19.6181C13.8072 19.3611 13.9875 19.1415 14.2187 18.987C14.45 18.8325 14.7219 18.75 15 18.75C15.373 18.75 15.7306 18.8982 15.9944 19.1619C16.2581 19.4256 16.4062 19.7833 16.4062 20.1562ZM21.5625 20.1562C21.5625 20.4344 21.48 20.7063 21.3255 20.9375C21.171 21.1688 20.9514 21.349 20.6944 21.4555C20.4374 21.5619 20.1547 21.5897 19.8819 21.5355C19.6091 21.4812 19.3585 21.3473 19.1619 21.1506C18.9652 20.954 18.8313 20.7034 18.777 20.4306C18.7228 20.1578 18.7506 19.8751 18.857 19.6181C18.9635 19.3611 19.1437 19.1415 19.375 18.987C19.6062 18.8325 19.8781 18.75 20.1562 18.75C20.5292 18.75 20.8869 18.8982 21.1506 19.1619C21.4143 19.4256 21.5625 19.7833 21.5625 20.1562Z" fill="#3C96E1"/>
+</svg>
+
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -4249,7 +4274,7 @@ document.addEventListener('keydown', function(event) {
 
                     <div class="flex gap-3">
                         <button type="button" onclick="clearAddPatientForm()"
-                            class="flex px-6 py-4 text-center items-center gap-3 rounded-[4px] border border-[#2563EB] text-[#2563EB] hover:bg-gray-200 font-medium">
+                            class="flex px-6 py-4 text-center items-center gap-3 rounded-md border border-[#2563EB] text-[#2563EB] hover:bg-gray-100 font-medium">
                             <svg width="15" height="15" viewBox="0 0 15 15" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -4259,7 +4284,7 @@ document.addEventListener('keydown', function(event) {
                             Clear Form
                         </button>
                         <button type="submit" name="add_patient" form="patientForm"
-                            class="flex items-center text-center gap-3 px-8 py-4 rounded-[6px] bg-blue-600 hover:bg-blue-700 text-white font-medium shadow">
+                            class="flex items-center text-center gap-3 px-6 py-4 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium shadow">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -5427,6 +5452,33 @@ document.addEventListener('keydown', function(event) {
             return null;
         }
 
+        function showSuccessModal(message) {
+            const modal = document.getElementById('successModal');
+            const messageContainer = document.getElementById('successModalMessage');
+
+            if (!modal || !messageContainer) {
+                return;
+            }
+
+            messageContainer.textContent = message;
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => {
+                modal.style.opacity = '1';
+            });
+        }
+
+        function hideSuccessModal() {
+            const modal = document.getElementById('successModal');
+            if (!modal) {
+                return;
+            }
+
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
         function showNotification(type, message, duration = 5000) {
             const existingNotifications = document.querySelectorAll('.custom-notification');
             existingNotifications.forEach(notification => notification.remove());
@@ -5506,20 +5558,14 @@ document.addEventListener('keydown', function(event) {
             }
         });
 
-        // Auto-hide messages after 3 seconds
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                var successMessage = document.getElementById('successMessage');
-                var errorMessage = document.querySelector('.alert-error');
+            const initialNotificationType = <?= json_encode($notificationType) ?>;
+            const initialNotificationMessage = <?= json_encode($notificationMessage) ?>;
+            const initialNotificationDuration = <?= (int) $notificationDuration ?>;
 
-                if (successMessage) {
-                    successMessage.style.display = 'none';
-                }
-
-                if (errorMessage) {
-                    errorMessage.style.display = 'none';
-                }
-            }, 3000);
+            if (initialNotificationType && initialNotificationMessage) {
+                showNotification(initialNotificationType, initialNotificationMessage, initialNotificationDuration);
+            }
         });
 
         // Tab functionality
@@ -6395,6 +6441,7 @@ document.addEventListener('keydown', function(event) {
             }
             
             bindDatePickerTrigger('modal_date_of_birth', 'modal_date_of_birth_trigger');
+            bindDatePickerTrigger('modal_last_checkup', 'modal_last_checkup_trigger');
         }
 
         // Initialize date picker when DOM is ready

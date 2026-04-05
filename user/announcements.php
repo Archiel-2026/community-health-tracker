@@ -544,6 +544,14 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
             margin-bottom: 0.5rem;
         }
 
+        .announcement-badges .badge {
+            padding: 0.62rem 1rem;
+            border-radius: 6px;
+            font-size: 0.94rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
         .announcement-meta {
             margin-bottom: 0.5rem;
         }
@@ -1304,6 +1312,19 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
             modalContent.innerHTML = content;
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            const params = new URLSearchParams();
+            params.append('announcement_id', announcement.id);
+
+            fetch('/community-health-tracker/api/log_resident_announcement_view.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: params.toString()
+            }).catch(() => {
+                // Do not block the resident flow when logging fails.
+            });
         }
 
         // Close View Modal

@@ -330,9 +330,11 @@ if (!function_exists('formatActionType')) {
             'create_announcement' => ['label' => 'Created Announcement', 'icon' => 'fa-bullhorn', 'color' => 'purple'],
             'edit_announcement' => ['label' => 'Edited Announcement', 'icon' => 'fa-edit', 'color' => 'orange'],
             'delete_announcement' => ['label' => 'Deleted Announcement', 'icon' => 'fa-trash', 'color' => 'red'],
+            'search_announcement' => ['label' => 'Searched Announcement', 'icon' => 'fa-search', 'color' => 'blue'],
             
             // Patient Management
             'add_patient' => ['label' => 'Added Patient', 'icon' => 'fa-user-plus', 'color' => 'green'],
+            'view_patient' => ['label' => 'Viewed Patient Record', 'icon' => 'fa-eye', 'color' => 'cyan'],
             'edit_patient' => ['label' => 'Edited Patient', 'icon' => 'fa-user-edit', 'color' => 'orange'],
             'update_patient' => ['label' => 'Updated Patient', 'icon' => 'fa-save', 'color' => 'blue'],
             'archive_patient' => ['label' => 'Archived Patient', 'icon' => 'fa-archive', 'color' => 'gray'],

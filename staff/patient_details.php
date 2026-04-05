@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/activity_logger.php';
 require_once __DIR__ . '/../includes/header.php';
 
 redirectIfNotLoggedIn();
@@ -32,6 +33,18 @@ try {
         header('Location: patient_records.php');
         exit();
     }
+
+    logActivity(
+        $pdo,
+        $_SESSION['user']['id'],
+        'view_patient',
+        'staff',
+        $id,
+        [
+            'patient_id' => $id,
+            'patient_name' => $patient['full_name'] ?? 'Unknown',
+        ]
+    );
     
     // Get medical info
     $stmt = $pdo->prepare("SELECT * FROM existing_info_patients WHERE patient_id = ?");
@@ -133,4 +146,3 @@ try {
         </div>
     </div>
 </div>
-

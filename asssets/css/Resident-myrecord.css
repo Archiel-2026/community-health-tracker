@@ -617,9 +617,9 @@
         background-color: #3C96E1;
         color: white !important;
         font-weight: 400;
+        border-radius: 6px;
         font-size: 1rem;
         padding: 1rem 1.5rem;
-        border-radius: 30px;
         transition: all 0.2s ease;
         border: none;
         cursor: pointer;

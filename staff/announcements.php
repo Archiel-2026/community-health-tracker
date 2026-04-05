@@ -515,8 +515,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['repost_announcement']
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_announcement'])) {
     $id = $_POST['id'];
     try {
-        $stmt = $pdo->prepare("DELETE FROM sitio1_announcements WHERE id = ? AND staff_id = ? AND status = 'archived'");
+        $stmtTitle = $pdo->prepare("SELECT title FROM sitio1_announcements WHERE id = ? AND staff_id = ? AND status = 'archived'");
+        $stmtTitle->execute([$id, $staffId]);
+        $announcement = $stmtTitle->fetch(PDO::FETCH_ASSOC);
+
+        $stmt = $pdo->prepare("UPDATE sitio1_announcements SET status = 'deleted' WHERE id = ? AND staff_id = ? AND status = 'archived'");
         $stmt->execute([$id, $staffId]);
+
+        if ($stmt->rowCount() > 0) {
+            logActivity(
+                $pdo,
+                $staffId,
+                'delete_announcement',
+                'staff',
+                $id,
+                [
+                    'title' => $announcement['title'] ?? 'Unknown',
+                    'action' => 'deleted'
+                ]
+            );
+        }
+
         $success = 'Announcement deleted permanently!';
     } catch (PDOException $e) {
         $error = 'Error deleting announcement: ' . $e->getMessage();

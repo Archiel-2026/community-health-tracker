@@ -1,19 +1,17 @@
 <?php
 /**
  * API Endpoint: Get Activity Logs
- * Fetches activity logs from Staff and Resident tables
- * Only accessible by staff/admin users
+ * Provides activity log data for the staff dashboard activity log tab.
  */
 
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/../includes/header.php';
 
 redirectIfNotLoggedIn();
 
-// Check if user is staff or admin
 if (!isStaff() && !isAdmin()) {
     http_response_code(403);
-    echo json_encode(['error' => 'Access denied']);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'error' => 'Access denied']);
     exit();
 }
 
@@ -21,183 +19,375 @@ global $pdo;
 
 header('Content-Type: application/json');
 
-try {
-    // Get query parameters
-    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
-    $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-    $logType = isset($_GET['type']) ? $_GET['type'] : 'resident,admin'; // Support comma-separated types
-    $searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
-
-    // Parse the log type - can be single or comma-separated
-    $logTypes = array_map('trim', explode(',', $logType));
-    
-    // Ensure 'all' expands to include all types
-    if (in_array('all', $logTypes)) {
-        $logTypes = ['staff', 'resident', 'admin'];
+function safeJsonDecode($value)
+{
+    if (empty($value)) {
+        return [];
     }
+
+    if (is_array($value)) {
+        return $value;
+    }
+
+    $decoded = json_decode($value, true);
+    return is_array($decoded) ? $decoded : [];
+}
+
+function tableExists($pdo, $tableName)
+{
+    static $cache = [];
+
+    if (array_key_exists($tableName, $cache)) {
+        return $cache[$tableName];
+    }
+
+    try {
+        $stmt = $pdo->prepare("SHOW TABLES LIKE ?");
+        $stmt->execute([$tableName]);
+        $cache[$tableName] = (bool) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        $cache[$tableName] = false;
+    }
+
+    return $cache[$tableName];
+}
+
+function resolveAdminName($pdo, $actorId, $fallbackName, $details)
+{
+    if (!empty($fallbackName)) {
+        return $fallbackName;
+    }
+
+    if (!empty($details['full_name'])) {
+        return $details['full_name'];
+    }
+
+    if (!$actorId) {
+        return 'Unknown Admin';
+    }
+
+    $candidateTables = [
+        ['table' => 'sitio1_staff', 'column' => 'full_name'],
+        ['table' => 'sitio1_admins', 'column' => 'full_name'],
+        ['table' => 'admin', 'column' => 'full_name'],
+        ['table' => 'admin', 'column' => 'username'],
+        ['table' => 'sitio1_users', 'column' => 'full_name'],
+        ['table' => 'sitio1_users', 'column' => 'username'],
+    ];
+
+    foreach ($candidateTables as $candidate) {
+        if (!tableExists($pdo, $candidate['table'])) {
+            continue;
+        }
+
+        try {
+            $stmt = $pdo->prepare("SELECT {$candidate['column']} AS actor_name FROM {$candidate['table']} WHERE id = ? LIMIT 1");
+            $stmt->execute([$actorId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!empty($row['actor_name'])) {
+                return $row['actor_name'];
+            }
+        } catch (Throwable $e) {
+            continue;
+        }
+    }
+
+    return 'Unknown Admin';
+}
+
+function matchesSearch($log, $searchTerm)
+{
+    if ($searchTerm === '') {
+        return true;
+    }
+
+    $haystacks = [
+        $log['actor_name'] ?? '',
+        $log['action_type'] ?? '',
+        $log['description'] ?? '',
+        $log['ip_address'] ?? '',
+    ];
+
+    foreach ($haystacks as $haystack) {
+        if (stripos((string) $haystack, $searchTerm) !== false) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function formatResidentDescription($actionType, $details)
+{
+    $title = $details['announcement_title'] ?? $details['title'] ?? null;
+
+    if ($actionType === 'login') {
+        return 'Resident logged in';
+    }
+
+    if ($actionType === 'logout') {
+        return 'Resident logged out';
+    }
+
+    if ($actionType === 'view_announcement') {
+        return $title ? 'Viewed announcement: ' . $title : 'Viewed announcement';
+    }
+
+    if ($actionType === 'accept_announcement') {
+        return $title ? 'Accepted announcement: ' . $title : 'Accepted announcement';
+    }
+
+    if ($actionType === 'dismiss_announcement') {
+        return $title ? 'Dismissed announcement: ' . $title : 'Dismissed announcement';
+    }
+
+    return ucfirst(str_replace('_', ' ', $actionType));
+}
+
+function formatAdminDescription($actionType, $details)
+{
+    $patientName = $details['patient_name'] ?? null;
+    $announcementTitle = $details['announcement_title'] ?? $details['title'] ?? null;
+    $targetUsers = $details['target_users'] ?? null;
+    $actionLabel = ucfirst(str_replace('_', ' ', $actionType));
+
+    switch ($actionType) {
+        case 'add_patient':
+            return $patientName ? 'Added new patient record for ' . $patientName : 'Added new patient record';
+        case 'view_patient':
+            return $patientName ? 'Viewed patient record for ' . $patientName : 'Viewed patient record';
+        case 'edit_patient':
+        case 'update_patient':
+            return $patientName ? 'Edited patient record for ' . $patientName : 'Edited patient record';
+        case 'archive_patient':
+            return $patientName ? 'Archived patient record for ' . $patientName : 'Archived patient record';
+        case 'print_patient':
+            return $patientName ? 'Printed patient record for ' . $patientName : 'Printed patient record';
+        case 'export_pdf':
+            return $patientName ? 'Exported patient record to PDF for ' . $patientName : 'Exported patient records to PDF';
+        case 'export_excel':
+            return $patientName ? 'Exported patient record to Excel for ' . $patientName : 'Exported patient records to Excel';
+        case 'send_announcement':
+            if ($announcementTitle && $targetUsers) {
+                return 'Posted announcement "' . $announcementTitle . '" to ' . $targetUsers;
+            }
+            if ($announcementTitle) {
+                return 'Posted announcement: ' . $announcementTitle;
+            }
+            return 'Posted announcement';
+        case 'edit_announcement':
+            return $announcementTitle ? 'Edited announcement: ' . $announcementTitle : 'Edited announcement';
+        case 'delete_announcement':
+            if (($details['action'] ?? '') === 'archived') {
+                return $announcementTitle ? 'Archived announcement: ' . $announcementTitle : 'Archived announcement';
+            }
+            return $announcementTitle ? 'Deleted announcement: ' . $announcementTitle : 'Deleted announcement';
+        case 'search_announcement':
+            $term = $details['search_term'] ?? null;
+            return $term ? 'Searched announcements for "' . $term . '"' : 'Searched announcements';
+        default:
+            return $actionLabel;
+    }
+}
+
+try {
+    $category = isset($_GET['category']) ? trim($_GET['category']) : 'resident';
+    $limit = isset($_GET['limit']) ? max(1, (int) $_GET['limit']) : 50;
+    $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+    $residentActions = ['view_announcement', 'accept_announcement', 'dismiss_announcement'];
+    $residentAuthActions = ['login', 'logout'];
+    $adminActions = [
+        'add_patient',
+        'view_patient',
+        'edit_patient',
+        'update_patient',
+        'archive_patient',
+        'print_patient',
+        'export_pdf',
+        'export_excel',
+        'send_announcement',
+        'edit_announcement',
+        'delete_announcement',
+        'search_announcement',
+    ];
 
     $logs = [];
-    $totalCount = 0;
 
-    // Fetch Staff Activity Logs
-    if (in_array('staff', $logTypes)) {
-        $query = "SELECT 
-                    id, 
-                    staff_id, 
-                    action_type, 
-                    related_id, 
-                    details, 
-                    ip_address, 
-                    created_at,
-                    'staff' as log_type
-                  FROM staff_activity_log";
-        
-        $params = [];
-        if (!empty($searchTerm)) {
-            $query .= " WHERE action_type LIKE ? OR details LIKE ?";
-            $params = ["%$searchTerm%", "%$searchTerm%"];
-        }
-        
-        $query .= " ORDER BY created_at DESC LIMIT ? OFFSET ?";
-        $params[] = $limit;
-        $params[] = $offset;
+    if ($category === 'resident') {
+        $residentActionPlaceholders = implode(',', array_fill(0, count($residentActions), '?'));
+        $residentSql = "
+            SELECT
+                ral.id,
+                ral.resident_id AS actor_id,
+                u.full_name AS actor_name,
+                ral.action_type,
+                ral.details,
+                ral.ip_address,
+                ral.created_at,
+                'resident' AS source_type
+            FROM resident_activity_log ral
+            LEFT JOIN sitio1_users u ON u.id = ral.resident_id
+            WHERE ral.action_type IN ($residentActionPlaceholders)
+            ORDER BY ral.created_at DESC
+            LIMIT 500
+        ";
+        $stmt = $pdo->prepare($residentSql);
+        $stmt->execute($residentActions);
 
-        $stmt = $pdo->prepare($query);
-        $stmt->execute($params);
-        $staffLogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Get total count for staff logs
-        $countQuery = "SELECT COUNT(*) as total FROM staff_activity_log";
-        if (!empty($searchTerm)) {
-            $countQuery .= " WHERE action_type LIKE ? OR details LIKE ?";
-            $countStmt = $pdo->prepare($countQuery);
-            $countStmt->execute(["%$searchTerm%", "%$searchTerm%"]);
-        } else {
-            $countStmt = $pdo->prepare($countQuery);
-            $countStmt->execute();
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $details = safeJsonDecode($row['details']);
+            $logs[] = [
+                'id' => 'resident-' . $row['id'],
+                'actor_id' => $row['actor_id'],
+                'actor_name' => $row['actor_name'] ?: 'Unknown Resident',
+                'action_type' => $row['action_type'],
+                'description' => formatResidentDescription($row['action_type'], $details),
+                'details' => $details,
+                'ip_address' => $row['ip_address'] ?: 'N/A',
+                'created_at' => $row['created_at'],
+                'formatted_date' => date('M d, Y', strtotime($row['created_at'])),
+                'formatted_time' => date('h:i A', strtotime($row['created_at'])),
+                'source_type' => 'resident',
+            ];
         }
-        $totalCount += $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
-        
-        $logs = array_merge($logs, $staffLogs);
+
+        $residentAuthPlaceholders = implode(',', array_fill(0, count($residentAuthActions), '?'));
+        $authSql = "
+            SELECT
+                ual.id,
+                ual.user_id AS actor_id,
+                u.full_name AS actor_name,
+                ual.action_type,
+                ual.ip_address,
+                ual.action_timestamp AS created_at
+            FROM user_activity_log ual
+            LEFT JOIN sitio1_users u ON u.id = ual.user_id
+            WHERE ual.action_type IN ($residentAuthPlaceholders)
+            ORDER BY ual.action_timestamp DESC
+            LIMIT 500
+        ";
+        $stmt = $pdo->prepare($authSql);
+        $stmt->execute($residentAuthActions);
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $logs[] = [
+                'id' => 'auth-' . $row['id'],
+                'actor_id' => $row['actor_id'],
+                'actor_name' => $row['actor_name'] ?: 'Unknown Resident',
+                'action_type' => $row['action_type'],
+                'description' => formatResidentDescription($row['action_type'], []),
+                'details' => [],
+                'ip_address' => $row['ip_address'] ?: 'N/A',
+                'created_at' => $row['created_at'],
+                'formatted_date' => date('M d, Y', strtotime($row['created_at'])),
+                'formatted_time' => date('h:i A', strtotime($row['created_at'])),
+                'source_type' => 'resident-auth',
+            ];
+        }
+    } elseif ($category === 'admin') {
+        $adminPlaceholders = implode(',', array_fill(0, count($adminActions), '?'));
+
+        $staffSql = "
+            SELECT
+                sal.id,
+                sal.staff_id AS actor_id,
+                s.full_name AS actor_name,
+                sal.action_type,
+                sal.details,
+                sal.ip_address,
+                sal.created_at,
+                'staff' AS source_type
+            FROM staff_activity_log sal
+            LEFT JOIN sitio1_staff s ON s.id = sal.staff_id
+            WHERE sal.action_type IN ($adminPlaceholders)
+            ORDER BY sal.created_at DESC
+            LIMIT 500
+        ";
+        $stmt = $pdo->prepare($staffSql);
+        $stmt->execute($adminActions);
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $details = safeJsonDecode($row['details']);
+            $logs[] = [
+                'id' => 'staff-' . $row['id'],
+                'actor_id' => $row['actor_id'],
+                'actor_name' => resolveAdminName($pdo, $row['actor_id'], $row['actor_name'] ?? '', $details),
+                'action_type' => $row['action_type'],
+                'description' => formatAdminDescription($row['action_type'], $details),
+                'details' => $details,
+                'ip_address' => $row['ip_address'] ?: 'N/A',
+                'created_at' => $row['created_at'],
+                'formatted_date' => date('M d, Y', strtotime($row['created_at'])),
+                'formatted_time' => date('h:i A', strtotime($row['created_at'])),
+                'source_type' => 'staff',
+            ];
+        }
+
+        if (tableExists($pdo, 'sitio1_activity_log')) {
+            $adminSql = "
+                SELECT
+                    al.id,
+                    al.user_id AS actor_id,
+                    NULL AS actor_name,
+                    al.action AS action_type,
+                    al.details,
+                    al.ip_address,
+                    al.created_at,
+                    'admin' AS source_type
+                FROM sitio1_activity_log al
+                WHERE al.action IN ($adminPlaceholders)
+                ORDER BY al.created_at DESC
+                LIMIT 500
+            ";
+            $stmt = $pdo->prepare($adminSql);
+            $stmt->execute($adminActions);
+
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $details = safeJsonDecode($row['details']);
+                $logs[] = [
+                    'id' => 'admin-' . $row['id'],
+                    'actor_id' => $row['actor_id'],
+                    'actor_name' => resolveAdminName($pdo, $row['actor_id'], '', $details),
+                    'action_type' => $row['action_type'],
+                    'description' => formatAdminDescription($row['action_type'], $details),
+                    'details' => $details,
+                    'ip_address' => $row['ip_address'] ?: 'N/A',
+                    'created_at' => $row['created_at'],
+                    'formatted_date' => date('M d, Y', strtotime($row['created_at'])),
+                    'formatted_time' => date('h:i A', strtotime($row['created_at'])),
+                    'source_type' => 'admin',
+                ];
+            }
+        }
+    } else {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid category']);
+        exit();
     }
 
-    // Fetch Resident Activity Logs
-    if (in_array('resident', $logTypes)) {
-        $query = "SELECT 
-                    id, 
-                    resident_id as user_id, 
-                    action_type, 
-                    related_id, 
-                    details, 
-                    ip_address, 
-                    created_at,
-                    'resident' as log_type
-                  FROM resident_activity_log";
-        
-        $params = [];
-        if (!empty($searchTerm)) {
-            $query .= " WHERE action_type LIKE ? OR details LIKE ?";
-            $params = ["%$searchTerm%", "%$searchTerm%"];
-        }
-        
-        $query .= " ORDER BY created_at DESC LIMIT ? OFFSET ?";
-        $params[] = $limit;
-        $params[] = $offset;
+    $logs = array_values(array_filter($logs, function ($log) use ($searchTerm) {
+        return matchesSearch($log, $searchTerm);
+    }));
 
-        $stmt = $pdo->prepare($query);
-        $stmt->execute($params);
-        $residentLogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Get total count for resident logs
-        $countQuery = "SELECT COUNT(*) as total FROM resident_activity_log";
-        if (!empty($searchTerm)) {
-            $countQuery .= " WHERE action_type LIKE ? OR details LIKE ?";
-            $countStmt = $pdo->prepare($countQuery);
-            $countStmt->execute(["%$searchTerm%", "%$searchTerm%"]);
-        } else {
-            $countStmt = $pdo->prepare($countQuery);
-            $countStmt->execute();
-        }
-        $totalCount += $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
-        
-        $logs = array_merge($logs, $residentLogs);
-    }
-
-    // Fetch Admin Activity Logs
-    if (in_array('admin', $logTypes)) {
-        $query = "SELECT 
-                    id, 
-                    user_id, 
-                    action, 
-                    details, 
-                    ip_address, 
-                    created_at,
-                    'admin' as log_type
-                  FROM sitio1_activity_log";
-        
-        $params = [];
-        if (!empty($searchTerm)) {
-            $query .= " WHERE action LIKE ? OR details LIKE ?";
-            $params = ["%$searchTerm%", "%$searchTerm%"];
-        }
-        
-        $query .= " ORDER BY created_at DESC LIMIT ? OFFSET ?";
-        $params[] = $limit;
-        $params[] = $offset;
-
-        $stmt = $pdo->prepare($query);
-        $stmt->execute($params);
-        $adminLogs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Get total count for admin logs
-        $countQuery = "SELECT COUNT(*) as total FROM sitio1_activity_log";
-        if (!empty($searchTerm)) {
-            $countQuery .= " WHERE action LIKE ? OR details LIKE ?";
-            $countStmt = $pdo->prepare($countQuery);
-            $countStmt->execute(["%$searchTerm%", "%$searchTerm%"]);
-        } else {
-            $countStmt = $pdo->prepare($countQuery);
-            $countStmt->execute();
-        }
-        $totalCount += $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
-        
-        $logs = array_merge($logs, $adminLogs);
-    }
-
-    // Sort all logs by created_at descending
-    usort($logs, function($a, $b) {
-        return strtotime($b['created_at']) - strtotime($a['created_at']);
+    usort($logs, function ($a, $b) {
+        return strtotime($b['created_at']) <=> strtotime($a['created_at']);
     });
 
-    // Format logs for display
-    $formattedLogs = array_map(function($log) {
-        return [
-            'id' => $log['id'],
-            'user_id' => $log['user_id'] ?? $log['staff_id'] ?? null,
-            'action_type' => $log['action_type'] ?? $log['action'] ?? 'Unknown',
-            'related_id' => $log['related_id'] ?? null,
-            'details' => $log['details'] ?? null,
-            'ip_address' => $log['ip_address'] ?? 'N/A',
-            'created_at' => $log['created_at'],
-            'formatted_time' => date('M d, Y h:i A', strtotime($log['created_at'])),
-            'log_type' => $log['log_type']
-        ];
-    }, $logs);
+    $logs = array_slice($logs, 0, $limit);
 
     echo json_encode([
         'success' => true,
-        'data' => $formattedLogs,
-        'total' => $totalCount,
-        'count' => count($formattedLogs),
-        'limit' => $limit,
-        'offset' => $offset
+        'category' => $category,
+        'count' => count($logs),
+        'data' => $logs,
     ]);
-
-} catch (Exception $e) {
+} catch (Throwable $e) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage()
+        'error' => $e->getMessage(),
     ]);
 }
 ?>
