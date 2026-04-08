@@ -6,6 +6,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+
 // Handle AJAX request FIRST - before any HTML output
 if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
     // Set JSON header
@@ -374,6 +375,50 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
             'message' => 'Server error: ' . $e->getMessage()
         ]);
         exit();
+    }
+}
+
+// Handle form submission for marking consultation as complete
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['complete_note_id'])) {
+    // Remove session_start() - session already started at line 2
+    // require_once __DIR__ . '/../includes/db_connection.php'; // Remove - already included
+    // require_once __DIR__ . '/../includes/auth.php'; // Remove - already included
+    
+    $noteId = intval($_POST['complete_note_id']);
+    $userId = $_SESSION['user']['id'];
+    $userName = $_SESSION['user']['full_name'] ?? $_SESSION['user']['username'] ?? 'Staff';
+    
+    try {
+        // Check if status column exists first
+        $checkColumn = $pdo->prepare("SHOW COLUMNS FROM consultation_notes LIKE 'status'");
+        $checkColumn->execute();
+        $statusExists = $checkColumn->rowCount() > 0;
+        
+        if (!$statusExists) {
+            // Add status column if it doesn't exist
+            $pdo->exec("ALTER TABLE consultation_notes ADD COLUMN status ENUM('pending', 'completed', 'missed') DEFAULT 'pending'");
+            $pdo->exec("ALTER TABLE consultation_notes ADD COLUMN completed_at DATETIME NULL");
+            $pdo->exec("ALTER TABLE consultation_notes ADD COLUMN completed_by INT NULL");
+            $pdo->exec("ALTER TABLE consultation_notes ADD COLUMN completed_by_name VARCHAR(255) NULL");
+        }
+        
+        $updateStmt = $pdo->prepare("
+            UPDATE consultation_notes 
+            SET status = 'completed', 
+                completed_at = NOW(),
+                completed_by = ?,
+                completed_by_name = ?
+            WHERE id = ? AND (status IS NULL OR status != 'completed')
+        ");
+        
+        if ($updateStmt->execute([$userId, $userName, $noteId])) {
+            echo '<script>alert("Consultation marked as completed successfully!"); window.location.href = window.location.pathname + window.location.search;</script>';
+            exit();
+        } else {
+            echo '<script>alert("Failed to mark consultation as complete. Please try again.");</script>';
+        }
+    } catch (PDOException $e) {
+        echo '<script>alert("Database error: ' . addslashes($e->getMessage()) . '");</script>';
     }
 }
 
@@ -2505,6 +2550,91 @@ if (!empty($searchTerm)) {
                                             select.custom-select-filter::-ms-expand {
                                                 display: none;
                                             }
+                                            /* Status Badge Styles */
+/* Status Badge Styles */
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+    min-width: 140px;
+}
+
+.status-completed {
+    background-color: #10B9814D;
+    color: #059669;
+    border: 1px solid #05966933;
+}
+
+.status-missed {
+    background-color: #EF44444D;
+    color: #DC2626;
+    border: 1px solid #DC262633;
+}
+
+.status-pending {
+    background-color: #F59E0B4D;
+    color: #D97706;
+    border: 1px solid #D9770633;
+}
+
+/* Button Styles */
+.btn-complete-visit {
+    background-color: #10B981;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-complete-visit:hover {
+    background-color: #059669;
+    transform: translateY(-1px);
+}
+
+.btn-view-note {
+    background-color: #3B82F6;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-view-note:hover {
+    background-color: #2563EB;
+    transform: translateY(-1px);
+}
+
+.note-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+/* Spinner animation */
+.spinner-border {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
                                         </style>
                                     </form>
                                 </div>
@@ -3125,7 +3255,7 @@ document.addEventListener('keydown', function(event) {
                                             color: #3498DB;
                                         }
                                     </style>
-                                    <div class="bg-showing-paginate rounded-full px-6 py-2 items-center ">
+                                    <div class="bg-showing-paginate rounded-md px-6 py-2 items-center ">
                                         <div>
                                             <p class="text-md text-[#3498DB] font-medium mt-1">
                                                 <?php if ($viewAll): ?>
@@ -6779,6 +6909,99 @@ document.addEventListener('keydown', function(event) {
         }
     </script>
 
+    <script>
+        function markConsultationComplete(noteId, buttonElement) {
+    // Show loading state
+    const originalText = buttonElement.innerHTML;
+    buttonElement.innerHTML = '<div class="spinner-border spinner-border-sm mr-2" role="status"></div> Processing...';
+    buttonElement.disabled = true;
+    
+    // Send AJAX request to update status
+    fetch('/community-health-tracker/api/mark-consultation-complete.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ note_id: noteId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Find the parent note card
+            const noteCard = buttonElement.closest('.note-card');
+            if (noteCard) {
+                // Update the status badge to Completed
+                const statusBadgeContainer = noteCard.querySelector('.note-header .flex.flex-col.items-end.gap-2');
+                if (statusBadgeContainer) {
+                    // Remove the old badge and add completed badge
+                    const oldBadge = statusBadgeContainer.querySelector('span:last-child');
+                    if (oldBadge) {
+                        oldBadge.remove();
+                    }
+                    
+                    // Add completed badge
+                    const completedBadge = document.createElement('span');
+                    completedBadge.className = 'inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-green-100 text-green-700 text-sm font-medium';
+                    completedBadge.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span class="leading-none">Completed</span>
+                    `;
+                    statusBadgeContainer.appendChild(completedBadge);
+                }
+                
+                // Remove the Complete Visit button
+                const actionsDiv = noteCard.querySelector('.note-actions');
+                if (actionsDiv) {
+                    const completeButton = actionsDiv.querySelector('.btn-complete-visit');
+                    if (completeButton) {
+                        completeButton.remove();
+                    }
+                }
+                
+                // Also update the next consultation date styling if needed
+                const nextConsultationDiv = noteCard.querySelector('[class*="Next Consultation:"]');
+                if (nextConsultationDiv) {
+                    nextConsultationDiv.style.backgroundColor = '#10B9814D';
+                    nextConsultationDiv.style.color = '#059669';
+                }
+                
+                // Show success message
+                showNotification('success', 'Consultation marked as completed successfully!');
+            }
+        } else {
+            alert('Error: ' + (data.message || 'Failed to mark consultation as complete'));
+            buttonElement.innerHTML = originalText;
+            buttonElement.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        buttonElement.innerHTML = originalText;
+        buttonElement.disabled = false;
+    });
+}
+
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg fade-in ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`;
+    notification.style.minWidth = '300px';
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
 
 </body>
 

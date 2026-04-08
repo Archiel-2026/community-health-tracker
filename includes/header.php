@@ -1143,30 +1143,38 @@ if (isset($_SESSION['user']['id'])) {
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
                             <div class="barangay-text text-lg font-semibold">Barangay Luz</div>
-                            <a href="/community-health-tracker/" class="main-title font-light">Health Center Super Admin Panel</a>
+                            <a href="/community-health-tracker/" class="main-title font-light">Health Center Admin Panel</a>
                         </div>
                     </div>
 
                     <div class="flex items-center space-x-4 md:space-x-10">
-                        <div class="hidden md:flex items-center gap-4 user-nav-section">
-                            <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
-                                style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
-                                onclick="openProfileModal('staff')">
+    <div class="hidden md:flex items-center gap-4 user-nav-section">
+        
+        <div class="profile-avatar <?php echo $profile_picture ? 'has-image' : ''; ?>"
+            style="<?php echo $profile_picture ? 'background-image: url(\'' . $profile_picture . '\')' : ''; ?>"
+            onclick="openProfileModal('staff')">
+        </div>
 
-                            </div>
-                            <span class="font-medium">Welcome Staff,
-                                <?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
-                        </div>
-                        <button type="button" onclick="showLogoutModal('staff')" class="logout-btn-2 hidden md:block">
-                            <span class="font-medium">Signout</span>
-                        </button>
+        <!-- TEXT STACKED -->
+        <div class="flex flex-col">
+            <span class="text-sm mt-1">Welcome Admin</span>
+            <span class="font-semibold l-tight">
+                <?= htmlspecialchars($_SESSION['user']['full_name']) ?>
+            </span>
+        </div>
 
-                        <!-- Hamburger Menu Button - Visible only on mobile -->
-                        <button type="button" onclick="toggleStaffMenu()"
-                            class="md:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
-                            <i class="fas fa-bars text-2xl"></i>
-                        </button>
-                    </div>
+    </div>
+
+    <button type="button" onclick="showLogoutModal('staff')" class="logout-btn-2 hidden md:block">
+        <span class="font-medium">Signout</span>
+    </button>
+
+    <!-- Hamburger Menu Button -->
+    <button type="button" onclick="toggleStaffMenu()"
+        class="md:hidden text-white hover:text-[#F0F0F0] focus:outline-none touch-target">
+        <i class="fas fa-bars text-2xl"></i>
+    </button>
+</div>
                 </div>
 
                 <div class="bg-staff-secondary py-2 md:py-3">
@@ -1255,7 +1263,10 @@ if (isset($_SESSION['user']['id'])) {
                                 onclick="openProfileModal('user')">
 
                             </div>
+                            <div class="flex flex-col">
+                            <span class="text-sm mt-1">Welcome Resident</span>
                             <span class="font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
+                            </div>
                         </div>
                         <!-- Enhanced Logout Button - Hidden on mobile -->
                         <!-- Enhanced Logout Button - Hidden on mobile -->

@@ -158,6 +158,82 @@ $activeTab = $_GET['tab'] ?? 'consultations';
 
 <link rel="stylesheet" href="/community-health-tracker/asssets/css/Resident-myrecord.css">
 
+<style>
+    /* Status Badge Styles - Smaller Version */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    gap: 4px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.status-completed {
+    background-color: #10B9814D;
+    color: #059669;
+    border: 1px solid #05966933;
+}
+
+.status-missed {
+    background-color: #EF44444D;
+    color: #DC2626;
+    border: 1px solid #DC262633;
+}
+
+.status-pending {
+    background-color: #F59E0B4D;
+    color: #D97706;
+    border: 1px solid #D9770633;
+}
+
+.status-icon {
+    font-size: 0.65rem;
+    font-weight: bold;
+}
+
+/* Note card button styling */
+.note-actions .btn-view-note {
+    transition: all 0.3s ease;
+}
+
+.note-actions .btn-view-note:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Spinner animation */
+.spinner-border {
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
+
+/* Optional: Even smaller for mobile devices */
+@media (max-width: 640px) {
+    .status-badge {
+        padding: 2px 6px;
+        font-size: 0.65rem;
+        gap: 3px;
+    }
+    
+    .status-icon {
+        font-size: 0.6rem;
+    }
+}
+</style>
+
 <div>
     <div>
         <?php if (!empty($error)): ?>
@@ -257,127 +333,170 @@ $activeTab = $_GET['tab'] ?? 'consultations';
             <!-- Tab Content -->
             <div class="tab-content-wrapper">
                 <!-- Consultations Tab -->
-                <div id="consultations" class="tab-content <?= $activeTab === 'consultations' ? 'active' : 'hidden' ?>">
-                    <?php if (empty($allPatientInfo)): ?>
-                        <div class="text-center py-10 sm:py-20">
-                            <div class="empty-state-icon">
-                                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M53.6665 29.2372L73.5581 34.533M49.4081 45.0538L59.3498 47.7038M49.904 74.858L53.879 75.9205C65.129 78.9205 70.754 80.4163 75.1873 77.8705C79.6165 75.3288 81.1248 69.733 84.1373 58.5497L88.3998 42.7288C91.4165 31.5413 92.9206 25.9497 90.3623 21.5413C87.804 17.133 82.1831 15.6372 70.929 12.6413L66.954 11.5788C55.704 8.57882 50.079 7.08299 45.6498 9.62882C41.2165 12.1705 39.7081 17.7663 36.6915 28.9497L32.4331 44.7705C29.4165 55.958 27.9081 61.5497 30.4706 65.958C33.029 70.3622 38.654 71.8622 49.904 74.858Z"
-                                        stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
-                                    <path
-                                        d="M49.9998 87.273L46.0331 88.3564C34.8081 91.4105 29.1998 92.9397 24.7748 90.3439C20.3581 87.7522 18.8498 82.048 15.8456 70.6439L11.5915 54.5105C8.58312 43.1064 7.07895 37.4022 9.63312 32.9106C11.8415 29.0231 16.6665 29.1647 22.9165 29.1647"
-                                        stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
-                                </svg>
-                            </div>
-                            <h3 class="empty-state-title">No Doctor's Notes</h3>
-                            <p class="empty-state-text mb-8 max-w-sm mx-auto">Your account is not yet linked to any patient
-                                records. <br> Please contact the health center to establish the connection.</p>
-                            <button class="btn-primary"
-                                onclick="alert('Please contact the health center to link your account.')">
-                                <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10.1291 3.84318C9.48557 2.93193 8.59457 2.52131 7.64957 2.53143C6.75295 2.54043 5.87995 2.92406 5.15095 3.43481C4.40739 3.95829 3.77337 4.62212 3.28457 5.38893C2.82332 6.11906 2.49032 6.98193 2.53532 7.82456C2.75245 11.8779 5.03282 16.2092 8.2357 19.4143C11.4363 22.6161 15.7102 24.8413 20.0257 24.4161C20.8717 24.3328 21.6716 23.9019 22.3252 23.3529C23.0012 22.7803 23.5536 22.076 23.9486 21.2829C24.3311 20.5044 24.5594 19.6067 24.4334 18.7326C24.3029 17.8213 23.7933 17.0068 22.8562 16.4668C22.662 16.3542 22.47 16.2379 22.2802 16.1181C22.1114 16.0134 21.9314 15.8998 21.7132 15.7693C21.2674 15.4945 20.797 15.2617 20.3081 15.0741C19.8052 14.8907 19.2303 14.7703 18.6318 14.8524C18.0119 14.9379 17.4359 15.2304 16.9376 15.7547C16.5539 16.1597 15.9892 16.2857 15.1949 16.0562C14.3872 15.8222 13.4782 15.2417 12.6884 14.4564C11.8987 13.6734 11.3013 12.7577 11.0459 11.9308C10.7939 11.1118 10.9053 10.5099 11.2991 10.0948C11.8312 9.53456 12.1147 8.91131 12.1743 8.25206C12.2328 7.61081 12.0731 7.00781 11.8447 6.48131C11.5027 5.69493 10.9222 4.91306 10.4677 4.30331C10.3534 4.15086 10.2409 3.9971 10.1302 3.84206" fill="white"/>
-</svg>
-
-                                Contact Admin Support
-                            </button>
-                        </div>
-                    <?php elseif (empty($allConsultationNotes)): ?>
-                        <div class="text-center py-10 sm:py-20">
-                            <div class="empty-state-icon">
-                                <svg width="100" height="100" viewBox="0 0 100 100" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M53.6665 29.2372L73.5581 34.533M49.4081 45.0538L59.3498 47.7038M49.904 74.858L53.879 75.9205C65.129 78.9205 70.754 80.4163 75.1873 77.8705C79.6165 75.3288 81.1248 69.733 84.1373 58.5497L88.3998 42.7288C91.4165 31.5413 92.9206 25.9497 90.3623 21.5413C87.804 17.133 82.1831 15.6372 70.929 12.6413L66.954 11.5788C55.704 8.57882 50.079 7.08299 45.6498 9.62882C41.2165 12.1705 39.7081 17.7663 36.6915 28.9497L32.4331 44.7705C29.4165 55.958 27.9081 61.5497 30.4706 65.958C33.029 70.3622 38.654 71.8622 49.904 74.858Z"
-                                        stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
-                                    <path
-                                        d="M49.9998 87.273L46.0331 88.3564C34.8081 91.4105 29.1998 92.9397 24.7748 90.3439C20.3581 87.7522 18.8498 82.048 15.8456 70.6439L11.5915 54.5105C8.58312 43.1064 7.07895 37.4022 9.63312 32.9106C11.8415 29.0231 16.6665 29.1647 22.9165 29.1647"
-                                        stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
-                                </svg>
-                            </div>
-                            <h3 class="empty-state-title">No Consultations Yet</h3>
-                            <p class="empty-state-text">Visit the health center for your first consultation and medical
-                                evaluation.</p>
-                        </div>
-                    <?php else: ?>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <?php
-                            $consultationIndex = 1;
-                            foreach ($allConsultationNotes as $note):
-                                $patientName = 'Unknown';
-                                foreach ($allPatientInfo as $patient) {
-                                    if ($patient['id'] == $note['patient_id']) {
-                                        $patientName = $patient['full_name'];
-                                        break;
-                                    }
-                                }
-                                ?>
-                                <div
-                                    class="rounded-xl bg-white px-6 py-6 flex flex-col min-h-[180px] border border-gray-200 w-full">
-                                    <!-- In the consultations tab, replace the consultation header section -->
-<div class="flex gap-4 justify-between">
-    <!-- LEFT: Consultation Info -->
-    <div class="flex flex-col gap-4">
-        <div class="flex items-center">
-            <span class="consultation-header-group inline-flex items-center">
-                Consultation
-                <span class="consultation-count-number font-md rounded-full w-7 h-7 flex items-center justify-center ml-2 text-base">
-                    <?php echo $consultationIndex; ?>
-                </span>
-            </span>
+<div id="consultations" class="tab-content <?= $activeTab === 'consultations' ? 'active' : 'hidden' ?>">
+    <?php if (empty($allPatientInfo)): ?>
+        <div class="text-center py-10 sm:py-20">
+            <div class="empty-state-icon">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M53.6665 29.2372L73.5581 34.533M49.4081 45.0538L59.3498 47.7038M49.904 74.858L53.879 75.9205C65.129 78.9205 70.754 80.4163 75.1873 77.8705C79.6165 75.3288 81.1248 69.733 84.1373 58.5497L88.3998 42.7288C91.4165 31.5413 92.9206 25.9497 90.3623 21.5413C87.804 17.133 82.1831 15.6372 70.929 12.6413L66.954 11.5788C55.704 8.57882 50.079 7.08299 45.6498 9.62882C41.2165 12.1705 39.7081 17.7663 36.6915 28.9497L32.4331 44.7705C29.4165 55.958 27.9081 61.5497 30.4706 65.958C33.029 70.3622 38.654 71.8622 49.904 74.858Z"
+                        stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
+                    <path
+                        d="M49.9998 87.273L46.0331 88.3564C34.8081 91.4105 29.1998 92.9397 24.7748 90.3439C20.3581 87.7522 18.8498 82.048 15.8456 70.6439L11.5915 54.5105C8.58312 43.1064 7.07895 37.4022 9.63312 32.9106C11.8415 29.0231 16.6665 29.1647 22.9165 29.1647"
+                        stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+            </div>
+            <h3 class="empty-state-title">No Doctor's Notes</h3>
+            <p class="empty-state-text mb-8 max-w-sm mx-auto">Your account is not yet linked to any patient
+                records. <br> Please contact the health center to establish the connection.</p>
+            <button class="btn-primary"
+                onclick="alert('Please contact the health center to link your account.')">
+                <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.1291 3.84318C9.48557 2.93193 8.59457 2.52131 7.64957 2.53143C6.75295 2.54043 5.87995 2.92406 5.15095 3.43481C4.40739 3.95829 3.77337 4.62212 3.28457 5.38893C2.82332 6.11906 2.49032 6.98193 2.53532 7.82456C2.75245 11.8779 5.03282 16.2092 8.2357 19.4143C11.4363 22.6161 15.7102 24.8413 20.0257 24.4161C20.8717 24.3328 21.6716 23.9019 22.3252 23.3529C23.0012 22.7803 23.5536 22.076 23.9486 21.2829C24.3311 20.5044 24.5594 19.6067 24.4334 18.7326C24.3029 17.8213 23.7933 17.0068 22.8562 16.4668C22.662 16.3542 22.47 16.2379 22.2802 16.1181C22.1114 16.0134 21.9314 15.8998 21.7132 15.7693C21.2674 15.4945 20.797 15.2617 20.3081 15.0741C19.8052 14.8907 19.2303 14.7703 18.6318 14.8524C18.0119 14.9379 17.4359 15.2304 16.9376 15.7547C16.5539 16.1597 15.9892 16.2857 15.1949 16.0562C14.3872 15.8222 13.4782 15.2417 12.6884 14.4564C11.8987 13.6734 11.3013 12.7577 11.0459 11.9308C10.7939 11.1118 10.9053 10.5099 11.2991 10.0948C11.8312 9.53456 12.1147 8.91131 12.1743 8.25206C12.2328 7.61081 12.0731 7.00781 11.8447 6.48131C11.5027 5.69493 10.9222 4.91306 10.4677 4.30331C10.3534 4.15086 10.2409 3.9971 10.1302 3.84206" fill="white"/>
+                </svg>
+                Contact Admin Support
+            </button>
         </div>
-        <!-- Rest of the consultation info... -->
-                                            <div class="mb-2">
-                                                <span class="text-gray-400 text-sm">Consultation on :</span><br>
-                                                <span class="text-lg font-medium tracking-wide leading-tight">
-                                                    <?php echo date('F d, Y', strtotime($note['consultation_date'] ?? 'now')); ?>
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span class="text-gray-400 text-sm">Doctor Assigned :</span><br>
-                                                <span
-                                                    class="doctor-name-auto-shrink text-lg font-medium tracking-wide leading-tight">
-                                                    <span style="
-                                                        display: inline-block;
-                                                        max-width: 180px;
-                                                        min-width: 80px;
-                                                        white-space: nowrap;
-                                                        overflow: hidden;
-                                                        text-overflow: ellipsis;
-                                                        font-size: clamp(0.85rem, 2vw, 1.125rem);
-                                                        vertical-align: middle;
-                                                    ">
-                                                        <?php echo htmlspecialchars($note['doctor_name']); ?>
-                                                    </span>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <!-- RIGHT: Next Consultation & Button -->
-                                        <div class="flex flex-col items-end justify-between">
-                                            <div>
-                                                <?php if (!empty($note['next_consultation_date'])): ?>
-                                                    <span class="text-gray-400 text-sm mb-2 block">Next Consultation :</span>
-                                                    <span
-                                                        class="block px-4 py-2 rounded-md text-emerald-700 font-sm text-base"
-                                                        style="background-color:#B1F3D4;color:#059669;">
-                                                        <?php echo date('F d, Y', strtotime($note['next_consultation_date'])); ?>
-                                                    </span>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="flex justify-end mt-auto">
-                                                <button
-                                                    onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)"
-                                                    class="rounded-md px-6 py-2 bg-blue-500 text-white font-medium text-md transition hover:bg-blue-600 focus:outline-none">
-                                                    View Note
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php $consultationIndex++; endforeach; ?>
+    <?php elseif (empty($allConsultationNotes)): ?>
+        <div class="text-center py-10 sm:py-20">
+            <div class="empty-state-icon">
+                <svg width="100" height="100" viewBox="0 0 100 100" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M53.6665 29.2372L73.5581 34.533M49.4081 45.0538L59.3498 47.7038M49.904 74.858L53.879 75.9205C65.129 78.9205 70.754 80.4163 75.1873 77.8705C79.6165 75.3288 81.1248 69.733 84.1373 58.5497L88.3998 42.7288C91.4165 31.5413 92.9206 25.9497 90.3623 21.5413C87.804 17.133 82.1831 15.6372 70.929 12.6413L66.954 11.5788C55.704 8.57882 50.079 7.08299 45.6498 9.62882C41.2165 12.1705 39.7081 17.7663 36.6915 28.9497L32.4331 44.7705C29.4165 55.958 27.9081 61.5497 30.4706 65.958C33.029 70.3622 38.654 71.8622 49.904 74.858Z"
+                        stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
+                    <path
+                        d="M49.9998 87.273L46.0331 88.3564C34.8081 91.4105 29.1998 92.9397 24.7748 90.3439C20.3581 87.7522 18.8498 82.048 15.8456 70.6439L11.5915 54.5105C8.58312 43.1064 7.07895 37.4022 9.63312 32.9106C11.8415 29.0231 16.6665 29.1647 22.9165 29.1647"
+                        stroke="black" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round" />
+                </svg>
+            </div>
+            <h3 class="empty-state-title">No Consultations Yet</h3>
+            <p class="empty-state-text">Visit the health center for your first consultation and medical
+                evaluation.</p>
+        </div>
+    <?php else: ?>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <?php
+$consultationIndex = 1;
+$currentDateTime = new DateTime();
+$currentDateOnly = new DateTime();
+$currentDateOnly->setTime(0, 0, 0); // Reset time to midnight for date-only comparison
+
+foreach ($allConsultationNotes as $note):
+    $patientName = 'Unknown';
+    foreach ($allPatientInfo as $patient) {
+        if ($patient['id'] == $note['patient_id']) {
+            $patientName = $patient['full_name'];
+            break;
+        }
+    }
+    
+    // Get status from database
+    $dbStatus = $note['status'] ?? 'pending';
+    $nextConsultationDate = !empty($note['next_consultation_date']) ? $note['next_consultation_date'] : null;
+    
+    // STATUS LOGIC FOR RESIDENT VIEW
+    // Rule 1: If database status is 'completed' -> Show "Completed"
+    // Rule 2: Else if next_consultation_date is NOT empty AND next_consultation_date < current date (PAST) -> Show "Missed"
+    // Rule 3: Else -> Show "Pending" (including today's date or future date)
+    
+    if ($dbStatus === 'completed') {
+        $badgeHtml = '<span class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-green-100 text-green-700 text-sm font-medium mt-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Completed</span>
+        </span>';
+    } 
+    elseif (!empty($nextConsultationDate)) {
+        $nextDateObj = new DateTime($nextConsultationDate);
+        $nextDateObj->setTime(0, 0, 0);
+        
+        // Compare dates - ONLY show Missed if next consultation date is IN THE PAST (strictly less than current date)
+        // If next consultation date is today or in the future, show Pending
+        if ($nextDateObj < $currentDateOnly) {
+            // Next consultation date has already passed (yesterday or earlier)
+            $badgeHtml = '<span class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-red-100 text-red-700 text-sm font-medium mt-2">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16.6508 13.2251L10.5019 2.54677C10.3483 2.28515 10.1289 2.06823 9.8656 1.91751C9.60229 1.76679 9.30415 1.6875 9.00075 1.6875C8.69735 1.6875 8.39922 1.76679 8.13591 1.91751C7.87259 2.06823 7.65324 2.28515 7.49958 2.54677L1.35075 13.2251C1.20291 13.4782 1.125 13.766 1.125 14.059C1.125 14.3521 1.20291 14.6399 1.35075 14.8929C1.50244 15.1561 1.72142 15.3742 1.98523 15.5249C2.24903 15.6755 2.54816 15.7532 2.85193 15.75H15.1496C15.4531 15.753 15.7519 15.6751 16.0155 15.5245C16.279 15.3739 16.4978 15.1559 16.6493 14.8929C16.7974 14.64 16.8756 14.3523 16.8758 14.0592C16.8761 13.7662 16.7984 13.4783 16.6508 13.2251ZM15.6755 14.3297C15.6219 14.4212 15.545 14.4967 15.4525 14.5486C15.3601 14.6005 15.2556 14.6269 15.1496 14.625H2.85193C2.74595 14.6269 2.64139 14.6005 2.54897 14.5486C2.45655 14.4967 2.37959 14.4212 2.32599 14.3297C2.27743 14.2475 2.25182 14.1538 2.25182 14.0583C2.25182 13.9629 2.27743 13.8691 2.32599 13.7869L8.47482 3.10856C8.5295 3.01756 8.60681 2.94226 8.69922 2.88998C8.79162 2.8377 8.89599 2.81022 9.00216 2.81022C9.10833 2.81022 9.2127 2.8377 9.3051 2.88998C9.39751 2.94226 9.47482 3.01756 9.5295 3.10856L15.6783 13.7869C15.7265 13.8694 15.7516 13.9632 15.7511 14.0587C15.7506 14.1542 15.7245 14.2478 15.6755 14.3297ZM8.43825 10.125V7.31255C8.43825 7.16336 8.49752 7.02029 8.60301 6.9148C8.7085 6.80931 8.85157 6.75005 9.00075 6.75005C9.14994 6.75005 9.29301 6.80931 9.3985 6.9148C9.50399 7.02029 9.56325 7.16336 9.56325 7.31255V10.125C9.56325 10.2742 9.50399 10.4173 9.3985 10.5228C9.29301 10.6283 9.14994 10.6875 9.00075 10.6875C8.85157 10.6875 8.7085 10.6283 8.60301 10.5228C8.49752 10.4173 8.43825 10.2742 8.43825 10.125ZM9.8445 12.6563C9.8445 12.8232 9.79502 12.9863 9.70231 13.1251C9.60959 13.2638 9.47782 13.372 9.32364 13.4358C9.16947 13.4997 8.99982 13.5164 8.83615 13.4838C8.67248 13.4513 8.52213 13.3709 8.40413 13.2529C8.28613 13.1349 8.20577 12.9846 8.17322 12.8209C8.14066 12.6572 8.15737 12.4876 8.22123 12.3334C8.28509 12.1792 8.39324 12.0475 8.53199 11.9547C8.67075 11.862 8.83388 11.8125 9.00075 11.8125C9.22453 11.8125 9.43914 11.9014 9.59738 12.0597C9.75561 12.2179 9.8445 12.4325 9.8445 12.6563Z" fill="#B30000"/>
+                </svg>
+                <span>Missed</span>
+            </span>';
+        } else {
+            // Next consultation date is today or in the future -> Pending
+            $badgeHtml = '<span class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-yellow-100 text-yellow-700 text-sm font-medium mt-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18.75 7.09125V3.75C18.75 3.35218 18.592 2.97064 18.3107 2.68934C18.0294 2.40804 17.6478 2.25 17.25 2.25H6.75C6.35218 2.25 5.97064 2.40804 5.68934 2.68934C5.40804 2.97064 5.25 3.35218 5.25 3.75V7.125C5.25051 7.35778 5.30495 7.58727 5.40905 7.79548C5.51315 8.00368 5.66408 8.18493 5.85 8.325L10.7503 12L5.85 15.675C5.66408 15.8151 5.51315 15.9963 5.40905 16.2045C5.30495 16.4127 5.25051 16.6422 5.25 16.875V20.25C5.25 20.6478 5.40804 21.0294 5.68934 21.3107C5.97064 21.592 6.35218 21.75 6.75 21.75H17.25C17.6478 21.75 18.0294 21.592 18.3107 21.3107C18.592 21.0294 18.75 20.6478 18.75 20.25V16.9088C18.7495 16.6769 18.6955 16.4482 18.5922 16.2406C18.489 16.033 18.3393 15.8519 18.1547 15.7116L13.2441 12L18.1547 8.2875C18.3393 8.14742 18.4891 7.96658 18.5924 7.75908C18.6957 7.55158 18.7496 7.32303 18.75 7.09125ZM17.25 20.25H6.75V16.875L12 12.9375L17.25 16.9078V20.25ZM17.25 7.09125L12 11.0625L6.75 7.125V3.75H17.25V7.09125Z" fill="#976200"/>
+                </svg>
+                <span>Pending</span>
+            </span>';
+        }
+    } 
+    else {
+        // No next consultation date set -> Pending
+        $badgeHtml = '<span class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-yellow-100 text-yellow-700 text-sm font-medium mt-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18.75 7.09125V3.75C18.75 3.35218 18.592 2.97064 18.3107 2.68934C18.0294 2.40804 17.6478 2.25 17.25 2.25H6.75C6.35218 2.25 5.97064 2.40804 5.68934 2.68934C5.40804 2.97064 5.25 3.35218 5.25 3.75V7.125C5.25051 7.35778 5.30495 7.58727 5.40905 7.79548C5.51315 8.00368 5.66408 8.18493 5.85 8.325L10.7503 12L5.85 15.675C5.66408 15.8151 5.51315 15.9963 5.40905 16.2045C5.30495 16.4127 5.25051 16.6422 5.25 16.875V20.25C5.25 20.6478 5.40804 21.0294 5.68934 21.3107C5.97064 21.592 6.35218 21.75 6.75 21.75H17.25C17.6478 21.75 18.0294 21.592 18.3107 21.3107C18.592 21.0294 18.75 20.6478 18.75 20.25V16.9088C18.7495 16.6769 18.6955 16.4482 18.5922 16.2406C18.489 16.033 18.3393 15.8519 18.1547 15.7116L13.2441 12L18.1547 8.2875C18.3393 8.14742 18.4891 7.96658 18.5924 7.75908C18.6957 7.55158 18.7496 7.32303 18.75 7.09125ZM17.25 20.25H6.75V16.875L12 12.9375L17.25 16.9078V20.25ZM17.25 7.09125L12 11.0625L6.75 7.125V3.75H17.25V7.09125Z" fill="#976200"/>
+            </svg>
+            <span>Pending</span>
+        </span>';
+    }
+?>
+                <div class="rounded-xl bg-white px-6 py-6 flex flex-col min-h-[180px] border border-gray-200 w-full">
+                    <div class="flex gap-4 justify-between">
+                        <!-- LEFT: Consultation Info -->
+                        <div class="flex flex-col gap-4">
+                            <div class="flex items-center">
+                                <span class="consultation-header-group inline-flex items-center">
+                                    Consultation
+                                    <span class="consultation-count-number font-md rounded-full w-7 h-7 flex items-center justify-center ml-2 text-base">
+                                        <?php echo $consultationIndex; ?>
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-gray-400 text-sm">Consultation on :</span><br>
+                                <span class="text-lg font-medium tracking-wide leading-tight">
+                                    <?php echo date('F d, Y', strtotime($note['consultation_date'] ?? 'now')); ?>
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-sm">Doctor Assigned :</span><br>
+                                <span class="doctor-name-auto-shrink text-lg font-medium tracking-wide leading-tight">
+                                    <span style="display: inline-block; max-width: 180px; min-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(0.85rem, 2vw, 1.125rem); vertical-align: middle;">
+                                        <?php echo htmlspecialchars($note['doctor_name']); ?>
+                                    </span>
+                                </span>
+                            </div>
                         </div>
-                    <?php endif; ?>
+                        
+                        <!-- RIGHT: Next Consultation & Status -->
+                        <div class="flex flex-col items-end justify-between">
+                            <div>
+                                <?php if (!empty($note['next_consultation_date'])): ?>
+                                    <span class="text-gray-400 text-sm mb-2 block">Next Consultation :</span>
+                                    <span class="block px-4 py-2 rounded-md text-emerald-700 font-sm text-base" style="background-color:#B1F3D4;color:#059669;">
+                                        <?php echo date('F d, Y', strtotime($note['next_consultation_date'])); ?>
+                                    </span>
+                                <?php endif; ?>
+                                
+                                <!-- Status Badge -->
+                                <?php echo $badgeHtml; ?>
+                            </div>
+                            
+                            <div class="flex justify-end mt-auto">
+                                <button onclick="viewConsultationNote(<?php echo htmlspecialchars(json_encode($note)); ?>)"
+                                    class="rounded-md px-6 py-2 bg-blue-500 text-white font-medium text-md transition hover:bg-blue-600 focus:outline-none">
+                                    View Note
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                <?php $consultationIndex++; endforeach; ?>
+        </div>
+    <?php endif; ?>
+</div>
 
                 <!-- Patients Tab -->
                 <div id="patients" class="tab-content <?= $activeTab === 'patients' ? 'active' : 'hidden' ?>">
@@ -446,7 +565,12 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                         <!--INFORMATION DATA  -->
                                         <div class="flex flex-col md:flex-row gap-8 w-full items-stretch">
                                             <div class="flex-1 bg-white border-1 shadow-md rounded-lg p-8 min-h-[120px] w-full">
-                                                <!-- Full Name -->
+                                                
+
+                                                <div class="grid grid-cols-2 md:grid-cols-2 gap-6 py-6 record-details-columns">
+                                                    
+
+                                                    <!-- Full Name -->
                                                 <div>
                                                     <p class="text-label text-gray-50 mb-2">Full Name</p>
                                                     <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
@@ -454,8 +578,7 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     </p>
                                                 </div>
 
-                                                <div class="grid grid-cols-2 md:grid-cols-2 gap-6 py-6 record-details-columns">
-                                                    <!-- Date of Birth -->
+                                                <!-- Date of Birth -->
                                                     <?php if (!empty($patient['date_of_birth'])): ?>
                                                         <div>
                                                             <p class="text-label mb-2">Date of Birth</p>
@@ -481,21 +604,6 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                         </div>
                                                     <?php endif; ?>
 
-                                                    <!-- Civil Status -->
-                                                    <?php if (!empty($patient['civil_status'])): ?>
-                                                        <div>
-                                                            <p class="text-label mb-2">Civil Status</p>
-                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
-                                                                <?php echo htmlspecialchars($patient['civil_status']); ?>
-                                                            </p>
-                                                        </div>
-                                                    <?php else: ?>
-                                                        <div>
-                                                            <p class="text-label mb-2">Civil Status</p>
-                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">N/A
-                                                            </p>
-                                                        </div>
-                                                    <?php endif; ?>
 
                                                     <!-- Family No. -->
                                                     <?php if (!empty($patient['family_no'])): ?>
@@ -538,6 +646,12 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                     </div>
                                                 </div>
 
+                                            
+                                            </div>
+                                            
+                                            <div class="flex-1 bg-white border-1 shadow-md rounded-lg p-8 w-full">
+                                                <div class="grid grid-cols-2 md:grid-cols-2 gap-6 record-details-columns">
+
                                                 <div>
                                                     <!-- BHW Assigned -->
                                                     <?php if (!empty($patient['bhw_assigned'])): ?>
@@ -555,9 +669,23 @@ $activeTab = $_GET['tab'] ?? 'consultations';
                                                         </div>
                                                     <?php endif; ?>
                                                 </div>
-                                            </div>
-                                            <div class="flex-1 bg-white border-1 shadow-md rounded-lg p-8 w-full">
-                                                <div class="grid grid-cols-2 md:grid-cols-2 gap-6 record-details-columns">
+
+                                                <!-- Civil Status -->
+                                                    <?php if (!empty($patient['civil_status'])): ?>
+                                                        <div>
+                                                            <p class="text-label mb-2">Civil Status</p>
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">
+                                                                <?php echo htmlspecialchars($patient['civil_status']); ?>
+                                                            </p>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <div>
+                                                            <p class="text-label mb-2">Civil Status</p>
+                                                            <p class="px-4 py-4 bg-gray-100 rounded text-base font-medium">N/A
+                                                            </p>
+                                                        </div>
+                                                    <?php endif; ?>
+
                                                     <!-- Last Check-up -->
                                                     <div>
                                                         <p class="text-label mb-2">Last Check-up</p>
@@ -1289,4 +1417,83 @@ $activeTab = $_GET['tab'] ?? 'consultations';
             }, 100);
         });
     </script>
+
+    <script>
+        // Function to mark consultation as complete
+function markConsultationComplete(noteId, buttonElement) {
+    // Show loading state
+    const originalText = buttonElement.innerHTML;
+    buttonElement.innerHTML = '<div class="spinner-border spinner-border-sm mr-2" role="status"></div> Processing...';
+    buttonElement.disabled = true;
+    
+    // Send AJAX request to update status
+    fetch('/community-health-tracker/api/mark-consultation-complete.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ note_id: noteId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Find the parent note card and update UI
+            const noteCard = buttonElement.closest('.note-card');
+            if (noteCard) {
+                // Hide the button container
+                const buttonContainer = buttonElement.closest('.note-actions');
+                if (buttonContainer) {
+                    buttonContainer.style.display = 'none';
+                }
+                
+                // Add or update status badge
+                let statusBadge = noteCard.querySelector('.consultation-status-badge');
+                if (!statusBadge) {
+                    // Create status badge if doesn't exist
+                    statusBadge = document.createElement('div');
+                    statusBadge.className = 'consultation-status-badge';
+                    // Insert after note-content or next consultation date
+                    const nextConsultationDiv = noteCard.querySelector('[class*="Next Consultation"]')?.parentElement;
+                    if (nextConsultationDiv) {
+                        nextConsultationDiv.insertAdjacentElement('afterend', statusBadge);
+                    } else {
+                        const noteContent = noteCard.querySelector('.note-content');
+                        if (noteContent) {
+                            noteContent.insertAdjacentElement('afterend', statusBadge);
+                        }
+                    }
+                }
+                
+                statusBadge.innerHTML = `
+                    <div class="status-badge status-completed mt-4">
+                        <span class="status-icon">✓</span>
+                        <span class="status-text">Completed</span>
+                    </div>
+                `;
+                
+                // Also update the status in the header if needed
+                const headerBadge = noteCard.querySelector('.note-header > span:last-child');
+                if (headerBadge && headerBadge.style.backgroundColor === '#007BFF4D') {
+                    headerBadge.innerHTML = 'Completed';
+                    headerBadge.style.backgroundColor = '#10B9814D';
+                    headerBadge.style.color = '#059669';
+                }
+            }
+        } else {
+            alert('Error: ' + (data.message || 'Failed to mark consultation as complete'));
+            buttonElement.innerHTML = originalText;
+            buttonElement.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        buttonElement.innerHTML = originalText;
+        buttonElement.disabled = false;
+    });
+}
+    </script>
+    
+    
+
 </div>
