@@ -842,7 +842,7 @@ $recordsPerPage = 5;
 
         <!-- Tab Contents -->
         <div class="tab-content">
-            <style>
+            <style> 
                 .bg-gen-full {
                     background-color: #3C96E1;
                 }
@@ -1526,84 +1526,141 @@ function exportFullReport(format) {
                 </script>
             </div>
 
-            <div id="activityLogsModal" class="modal-overlay hidden">
-                <div class="modal-container activity-logs-modal-shell" onclick="event.stopPropagation()">
-                <div class="activity-logs-modal-card">
-                    <div class="activity-logs-modal-header">
-                        <div>
-                            <h2 class="text-xl font-semibold text-secondary mb-1">Activity Logs</h2>
-                            <p class="text-gray-500 text-base">System activity and user actions</p>
-                        </div>
-                        <button onclick="closeActivityLogsModal()" class="activity-logs-close-btn" type="button" aria-label="Close activity logs">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
+            <div id="activityLogsModal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="modal-container activity-logs-modal-shell w-full max-w-5xl mx-4" onclick="event.stopPropagation()">
 
-                    <div class="activity-logs-toolbar">
-                        <div class="flex gap-2" id="staffActivityLogsTabs">
-                            <button class="log-tab log-tab-active" id="staffResidentTabBtn" type="button">Resident Log</button>
-                            <button class="log-tab" id="staffAdminTabBtn" type="button">Admin Log</button>
-                        </div>
-                        <div class="activity-logs-actions">
-                            <button type="button" id="staffExportLogsBtn" class="log-tab activity-logs-action-btn" title="Export">
-                                <i class="fas fa-download mr-2"></i>Export
-                            </button>
-                        </div>
-                    </div>
+        <div class="activity-logs-modal-card bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
 
-                    <div class="activity-logs-loading" id="dashboardActivityLogsLoading" aria-live="polite">
-                        <div class="activity-logs-spinner" aria-hidden="true"></div>
-                        <div class="activity-logs-loading-text">Loading records...</div>
-                    </div>
-
-                    <div id="staffResidentLogsSection" class="activity-log-panel">
-                        <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl">
-                            <table class="patient-table">
-                                <thead>
-                                    <tr>
-                                        <th>Time Log</th>
-                                        <th>Resident</th>
-                                        <th>Action Performed</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="residentLogsTableBody"></tbody>
-                            </table>
-                        </div>
-                        <div id="residentLogsEmpty" class="activity-log-empty text-center text-gray-500 py-6 hidden">No resident logs found.</div>
-                        <div id="residentLogsPagination" class="activity-logs-pagination hidden">
-                            <div id="residentLogsPageInfo" class="activity-logs-page-info"></div>
-                            <div class="activity-logs-page-actions">
-                                <button type="button" id="residentLogsPrevBtn" class="activity-logs-page-btn">Prev</button>
-                                <button type="button" id="residentLogsNextBtn" class="activity-logs-page-btn">Next <i class="fas fa-chevron-right ml-1 text-xs"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="staffAdminLogsSection" class="activity-log-panel hidden">
-                        <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl">
-                            <table class="patient-table">
-                                <thead>
-                                    <tr>
-                                        <th>Time Log</th>
-                                        <th>Admin Name</th>
-                                        <th>Action Performed</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="adminLogsTableBody"></tbody>
-                            </table>
-                        </div>
-                        <div id="adminLogsEmpty" class="activity-log-empty text-center text-gray-500 py-6 hidden">No admin logs found.</div>
-                        <div id="adminLogsPagination" class="activity-logs-pagination hidden">
-                            <div id="adminLogsPageInfo" class="activity-logs-page-info"></div>
-                            <div class="activity-logs-page-actions">
-                                <button type="button" id="adminLogsPrevBtn" class="activity-logs-page-btn">Prev</button>
-                                <button type="button" id="adminLogsNextBtn" class="activity-logs-page-btn">Next <i class="fas fa-chevron-right ml-1 text-xs"></i></button>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Header -->
+            <div class="activity-logs-modal-header flex items-start justify-between px-6 py-4 border-b">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-1">Activity Logs</h2>
+                    <p class="text-sm text-gray-500">System activity and user actions</p>
                 </div>
+                <button onclick="closeActivityLogsModal()" class="activity-logs-close-btn p-2 rounded-lg hover:bg-gray-100 transition">
+                    <svg width="55" height="55" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M19.281 18.2198C19.3507 18.2895 19.406 18.3722 19.4437 18.4632C19.4814 18.5543 19.5008 18.6519 19.5008 18.7504C19.5008 18.849 19.4814 18.9465 19.4437 19.0376C19.406 19.1286 19.3507 19.2114 19.281 19.281C19.2114 19.3507 19.1286 19.406 19.0376 19.4437C18.9465 19.4814 18.849 19.5008 18.7504 19.5008C18.6519 19.5008 18.5543 19.4814 18.4632 19.4437C18.3722 19.406 18.2895 19.3507 18.2198 19.281L12.0004 13.0607L5.78104 19.281C5.64031 19.4218 5.44944 19.5008 5.25042 19.5008C5.05139 19.5008 4.86052 19.4218 4.71979 19.281C4.57906 19.1403 4.5 18.9494 4.5 18.7504C4.5 18.5514 4.57906 18.3605 4.71979 18.2198L10.9401 12.0004L4.71979 5.78104C4.57906 5.64031 4.5 5.44944 4.5 5.25042C4.5 5.05139 4.57906 4.86052 4.71979 4.71979C4.86052 4.57906 5.05139 4.5 5.25042 4.5C5.44944 4.5 5.64031 4.57906 5.78104 4.71979L12.0004 10.9401L18.2198 4.71979C18.3605 4.57906 18.5514 4.5 18.7504 4.5C18.9494 4.5 19.1403 4.57906 19.281 4.71979C19.4218 4.86052 19.5008 5.05139 19.5008 5.25042C19.5008 5.44944 19.4218 5.64031 19.281 5.78104L13.0607 12.0004L19.281 18.2198Z" fill="black"/>
+</svg>
+
+                </button>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="activity-logs-toolbar flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-4 bg-gray-50 border-b">
+
+                <!-- Tabs -->
+                <div class="flex gap-2" id="staffActivityLogsTabs">
+                    <button class="log-tab log-tab-active flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white"
+                        id="staffResidentTabBtn" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0"/>
+                        </svg>
+                        Resident Log
+                    </button>
+
+                    <button class="log-tab flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        id="staffAdminTabBtn" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0-2.761 2.239-5 5-5M7 6c-2.761 0-5 2.239-5 5m10 0v6m0 0l3-3m-3 3l-3-3"/>
+                        </svg>
+                        Admin Log
+                    </button>
+                </div>
+
+                <!-- Actions -->
+                <div class="activity-logs-actions">
+                    <button type="button" id="staffExportLogsBtn"
+                        class="log-tab activity-logs-action-btn flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"/>
+                        </svg>
+                        Export
+                    </button>
                 </div>
             </div>
+
+            <!-- Loading -->
+            <div class="activity-logs-loading flex flex-col items-center justify-center py-10 gap-3"
+                id="dashboardActivityLogsLoading">
+                <div class="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                <div class="activity-logs-loading-text text-sm text-gray-500">Loading records...</div>
+            </div>
+
+            <!-- Resident Logs -->
+            <div id="staffResidentLogsSection" class="activity-log-panel px-6 py-4">
+                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl border">
+                    <table class="patient-table min-w-full text-sm text-left">
+                        <thead class="bg-gray-100 text-gray-600">
+                            <tr>
+                                <th class="px-4 py-3">Time Log</th>
+                                <th class="px-4 py-3">Resident</th>
+                                <th class="px-4 py-3">Action Performed</th>
+                            </tr>
+                        </thead>
+                        <tbody id="residentLogsTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+
+                <div id="residentLogsEmpty" class="activity-log-empty text-center text-gray-500 py-6 hidden">
+                    No resident logs found.
+                </div>
+
+                <div id="residentLogsPagination" class="activity-logs-pagination hidden flex items-center justify-between">
+                    <div id="residentLogsPageInfo" class="activity-logs-page-info text-sm text-gray-500"></div>
+                    <div class="activity-logs-page-actions flex gap-2">
+                        <button type="button" id="residentLogsPrevBtn"
+                            class="activity-logs-page-btn px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-100">Prev</button>
+
+                        <button type="button" id="residentLogsNextBtn"
+                            class="activity-logs-page-btn px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-100 flex items-center gap-1">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Logs -->
+            <div id="staffAdminLogsSection" class="activity-log-panel hidden px-6 py-4">
+                <div class="overflow-x-auto mb-4 activity-logs-wrapper rounded-xl border">
+                    <table class="patient-table min-w-full text-sm text-left">
+                        <thead class="bg-gray-100 text-gray-600">
+                            <tr>
+                                <th class="px-4 py-3">Time Log</th>
+                                <th class="px-4 py-3">Admin Name</th>
+                                <th class="px-4 py-3">Action Performed</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminLogsTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+
+                <div id="adminLogsEmpty" class="activity-log-empty text-center text-gray-500 py-6 hidden">
+                    No admin logs found.
+                </div>
+
+                <div id="adminLogsPagination" class="activity-logs-pagination hidden flex items-center justify-between">
+                    <div id="adminLogsPageInfo" class="activity-logs-page-info text-sm text-gray-500"></div>
+                    <div class="activity-logs-page-actions flex gap-2">
+                        <button type="button" id="adminLogsPrevBtn"
+                            class="activity-logs-page-btn px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-100">Prev</button>
+
+                        <button type="button" id="adminLogsNextBtn"
+                            class="activity-logs-page-btn px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-100 flex items-center gap-1">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
 
             <!-- Analytics Dashboard Section -->
             <div class="<?= $activeTab === 'analytics' ? '' : 'hidden' ?>" id="analytics" role="tabpanel"

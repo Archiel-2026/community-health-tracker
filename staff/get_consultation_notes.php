@@ -64,18 +64,14 @@ try {
             $createdAt = date('M d, Y h:i A', strtotime($note['created_at']));
             $notePreview = htmlspecialchars(substr($note['note'], 0, 200)) . (strlen($note['note']) > 200 ? '...' : '');
             
-            // Get current date for comparison (date only, no time) - SAME AS RESIDENT
+            // Get current date for comparison
             $currentDateOnly = new DateTime();
             $currentDateOnly->setTime(0, 0, 0);
             
             $dbStatus = $note['status'] ?? 'pending';
             $nextConsultationDate = !empty($note['next_consultation_date']) ? $note['next_consultation_date'] : null;
             
-            // STATUS LOGIC - EXACTLY THE SAME AS RESIDENT USER
-            // 1. If status is 'completed' from database -> Show "Completed"
-            // 2. Else if next_consultation_date is past and status is not 'completed' -> Show "Missed"
-            // 3. Else -> Show "Pending"
-            
+            // STATUS LOGIC - SAME AS RESIDENT USER
             if ($dbStatus === 'completed') {
                 $badgeHtml = '<span class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-green-100 text-green-700 text-sm font-medium">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,12 +80,14 @@ try {
     <span class="leading-none">Completed</span>
 </span>';
                 $showCompleteButton = false;
+                $buttonDisabled = true;
+                $buttonTitle = 'Already completed';
             } 
             elseif (!empty($nextConsultationDate)) {
                 $nextDateObj = new DateTime($nextConsultationDate);
                 $nextDateObj->setTime(0, 0, 0);
                 
-                // Check if next consultation date has passed (compare dates only)
+                // Check if next consultation date has passed (for Missed status)
                 if ($nextDateObj < $currentDateOnly) {
                     // Missed - next consultation date is in the past
                     $badgeHtml = '<span class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-red-100 text-red-700 text-sm font-medium">
@@ -99,19 +97,41 @@ try {
     <span class="leading-none">Missed</span>
 </span>';
                     $showCompleteButton = false;
-                } else {
-                    // Pending - next consultation is today or in the future
+                    $buttonDisabled = true;
+                    $buttonTitle = 'Consultation has been missed';
+                } 
+                // Check if next consultation date is today or in the future
+                elseif ($nextDateObj == $currentDateOnly) {
+                    // TODAY - Button should be enabled (can mark as completed today)
+                    // Add (Today) indicator to the status badge ONLY
                     $badgeHtml = '<span class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-yellow-100 text-yellow-700 text-sm font-medium">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M18.75 7.09125V3.75C18.75 3.35218 18.592 2.97064 18.3107 2.68934C18.0294 2.40804 17.6478 2.25 17.25 2.25H6.75C6.35218 2.25 5.97064 2.40804 5.68934 2.68934C5.40804 2.97064 5.25 3.35218 5.25 3.75V7.125C5.25051 7.35778 5.30495 7.58727 5.40905 7.79548C5.51315 8.00368 5.66408 8.18493 5.85 8.325L10.7503 12L5.85 15.675C5.66408 15.8151 5.51315 15.9963 5.40905 16.2045C5.30495 16.4127 5.25051 16.6422 5.25 16.875V20.25C5.25 20.6478 5.40804 21.0294 5.68934 21.3107C5.97064 21.592 6.35218 21.75 6.75 21.75H17.25C17.6478 21.75 18.0294 21.592 18.3107 21.3107C18.592 21.0294 18.75 20.6478 18.75 20.25V16.9088C18.7495 16.6769 18.6955 16.4482 18.5922 16.2406C18.489 16.033 18.3393 15.8519 18.1547 15.7116L13.2441 12L18.1547 8.2875C18.3393 8.14742 18.4891 7.96658 18.5924 7.75908C18.6957 7.55158 18.7496 7.32303 18.75 7.09125ZM17.25 20.25H6.75V16.875L12 12.9375L17.25 16.9078V20.25ZM17.25 7.09125L12 11.0625L6.75 7.125V3.75H17.25V7.09125Z" fill="#976200"/>
 </svg>
     <span class="leading-none">Pending</span>
+    <span class="text-xs ml-1 text-yellow-600">(Today)</span>
 </span>';
                     $showCompleteButton = true;
+                    $buttonDisabled = false;
+                    $buttonTitle = 'Mark consultation as completed for today';
+                } 
+                else {
+                    // Future date - Button should be DISABLED (can't complete before the date)
+                    // Add (Upcoming) indicator to the status badge ONLY
+                    $badgeHtml = '<span class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-yellow-100 text-yellow-700 text-sm font-medium">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M18.75 7.09125V3.75C18.75 3.35218 18.592 2.97064 18.3107 2.68934C18.0294 2.40804 17.6478 2.25 17.25 2.25H6.75C6.35218 2.25 5.97064 2.40804 5.68934 2.68934C5.40804 2.97064 5.25 3.35218 5.25 3.75V7.125C5.25051 7.35778 5.30495 7.58727 5.40905 7.79548C5.51315 8.00368 5.66408 8.18493 5.85 8.325L10.7503 12L5.85 15.675C5.66408 15.8151 5.51315 15.9963 5.40905 16.2045C5.30495 16.4127 5.25051 16.6422 5.25 16.875V20.25C5.25 20.6478 5.40804 21.0294 5.68934 21.3107C5.97064 21.592 6.35218 21.75 6.75 21.75H17.25C17.6478 21.75 18.0294 21.592 18.3107 21.3107C18.592 21.0294 18.75 20.6478 18.75 20.25V16.9088C18.7495 16.6769 18.6955 16.4482 18.5922 16.2406C18.489 16.033 18.3393 15.8519 18.1547 15.7116L13.2441 12L18.1547 8.2875C18.3393 8.14742 18.4891 7.96658 18.5924 7.75908C18.6957 7.55158 18.7496 7.32303 18.75 7.09125ZM17.25 20.25H6.75V16.875L12 12.9375L17.25 16.9078V20.25ZM17.25 7.09125L12 11.0625L6.75 7.125V3.75H17.25V7.09125Z" fill="#976200"/>
+</svg>
+    <span class="leading-none">Pending</span>
+    <span class="text-xs ml-1 text-yellow-600">(Upcoming)</span>
+</span>';
+                    $showCompleteButton = true;
+                    $buttonDisabled = true; // DISABLED - cannot complete before the date
+                    $buttonTitle = 'Cannot complete before the scheduled date';
                 }
             } 
             else {
-                // No next consultation date set
+                // No next consultation date set - No indicator
                 $badgeHtml = '<span class="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-md bg-yellow-100 text-yellow-700 text-sm font-medium">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M18.75 7.09125V3.75C18.75 3.35218 18.592 2.97064 18.3107 2.68934C18.0294 2.40804 17.6478 2.25 17.25 2.25H6.75C6.35218 2.25 5.97064 2.40804 5.68934 2.68934C5.40804 2.97064 5.25 3.35218 5.25 3.75V7.125C5.25051 7.35778 5.30495 7.58727 5.40905 7.79548C5.51315 8.00368 5.66408 8.18493 5.85 8.325L10.7503 12L5.85 15.675C5.66408 15.8151 5.51315 15.9963 5.40905 16.2045C5.30495 16.4127 5.25051 16.6422 5.25 16.875V20.25C5.25 20.6478 5.40804 21.0294 5.68934 21.3107C5.97064 21.592 6.35218 21.75 6.75 21.75H17.25C17.6478 21.75 18.0294 21.592 18.3107 21.3107C18.592 21.0294 18.75 20.6478 18.75 20.25V16.9088C18.7495 16.6769 18.6955 16.4482 18.5922 16.2406C18.489 16.033 18.3393 15.8519 18.1547 15.7116L13.2441 12L18.1547 8.2875C18.3393 8.14742 18.4891 7.96658 18.5924 7.75908C18.6957 7.55158 18.7496 7.32303 18.75 7.09125ZM17.25 20.25H6.75V16.875L12 12.9375L17.25 16.9078V20.25ZM17.25 7.09125L12 11.0625L6.75 7.125V3.75H17.25V7.09125Z" fill="#976200"/>
@@ -119,6 +139,8 @@ try {
     <span class="leading-none">Pending</span>
 </span>';
                 $showCompleteButton = true;
+                $buttonDisabled = false;
+                $buttonTitle = 'Mark consultation as completed';
             }
 
             echo '<div class="note-card">
@@ -130,12 +152,6 @@ try {
                             </div>
                             <div class="text-xs text-gray-500 mt-1">';
 
-            // Display doctor name if available
-            // if (!empty($note['doctor_name'])) {
-            //     echo '<i class="fas fa-user-md mr-1 text-blue-500"></i> ' . htmlspecialchars($note['doctor_name']);
-            // } else {
-            //     echo 'By: ' . htmlspecialchars($note['created_by_name'] ?? 'Staff');
-            // }
             echo '</div>
                         </div>
                         <div class="flex flex-col items-end gap-2">
@@ -153,14 +169,23 @@ try {
 
             if (!empty($note['next_consultation_date'])) {
                 $nextDate = date('M d, Y', strtotime($note['next_consultation_date']));
-                // Check if next consultation date is past for styling (same as resident)
+                // Check if next consultation date is past for styling
                 $nextDateObj = new DateTime($note['next_consultation_date']);
                 $nextDateObj->setTime(0, 0, 0);
                 $currentDateOnly = new DateTime();
                 $currentDateOnly->setTime(0, 0, 0);
                 $isPastDue = ($nextDateObj < $currentDateOnly) && ($dbStatus !== 'completed');
-                $dateStyle = $isPastDue ? 'color: #DC2626; background-color: #FEE2E2;' : 'color: #007BFF; background-color: #007BFF4D;';
+                $isToday = ($nextDateObj == $currentDateOnly) && ($dbStatus !== 'completed');
                 
+                if ($isPastDue) {
+                    $dateStyle = 'color: #DC2626; background-color: #FEE2E2;';
+                } elseif ($isToday) {
+                    $dateStyle = 'color: #D97706; background-color: #FEF3C7;';
+                } else {
+                    $dateStyle = 'color: #007BFF; background-color: #007BFF4D;';
+                }
+                
+                // NO indicator here - just the date
                 echo '<div class="text-sm font-medium mb-6 py-2 px-4 rounded-md" style="' . $dateStyle . ' width: fit-content;">
                             Next Consultation: ' . $nextDate . '
                         </div>';
@@ -168,18 +193,24 @@ try {
 
             echo '<div class="note-actions">';
             
-            // Only show Complete Visit button if status is not completed and next consultation is not past
-if ($showCompleteButton) {
-    echo '<form method="POST" action="" style="display: inline;" onsubmit="return false;">
-            <input type="hidden" name="complete_note_id" value="' . $note['id'] . '">
-            <button type="button" onclick="markConsultationComplete(' . $note['id'] . ', this)" class="btn-complete-visit flex flex-row items-center">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-1">
-                    <path d="M17.9425 6.06754L7.94254 16.0675C7.88449 16.1256 7.81556 16.1717 7.73969 16.2032C7.66381 16.2347 7.58248 16.2508 7.50035 16.2508C7.41821 16.2508 7.33688 16.2347 7.26101 16.2032C7.18514 16.1717 7.11621 16.1256 7.05816 16.0675L2.68316 11.6925C2.56588 11.5753 2.5 11.4162 2.5 11.2503C2.5 11.0845 2.56588 10.9254 2.68316 10.8082C2.80044 10.6909 2.9595 10.625 3.12535 10.625C3.2912 10.625 3.45026 10.6909 3.56753 10.8082L7.50035 14.7418L17.0582 5.18316C17.1754 5.06588 17.3345 5 17.5003 5C17.6662 5 17.8253 5.06588 17.9425 5.18316C18.0598 5.30044 18.1257 5.4595 18.1257 5.62535C18.1257 5.7912 18.0598 5.95026 17.9425 6.06754Z" fill="white"/>
-                </svg>  
-                Complete Visit
-            </button>
-          </form>';
-}
+            // Only show Complete Visit button if applicable
+            if ($showCompleteButton) {
+                $disabledAttr = $buttonDisabled ? 'disabled' : '';
+                $disabledClass = $buttonDisabled ? 'opacity-50 cursor-not-allowed' : '';
+                $titleAttr = $buttonDisabled ? 'title="' . $buttonTitle . '"' : '';
+                
+                echo '<form method="POST" action="" style="display: inline;" onsubmit="return false;">
+                        <input type="hidden" name="complete_note_id" value="' . $note['id'] . '">
+                        <button type="button" ' . $disabledAttr . ' ' . $titleAttr . ' 
+                                onclick="' . ($buttonDisabled ? 'return false;' : 'markConsultationComplete(' . $note['id'] . ', this)') . '" 
+                                class="btn-complete-visit flex flex-row items-center ' . $disabledClass . '">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="mr-1">
+                                <path d="M17.9425 6.06754L7.94254 16.0675C7.88449 16.1256 7.81556 16.1717 7.73969 16.2032C7.66381 16.2347 7.58248 16.2508 7.50035 16.2508C7.41821 16.2508 7.33688 16.2347 7.26101 16.2032C7.18514 16.1717 7.11621 16.1256 7.05816 16.0675L2.68316 11.6925C2.56588 11.5753 2.5 11.4162 2.5 11.2503C2.5 11.0845 2.56588 10.9254 2.68316 10.8082C2.80044 10.6909 2.9595 10.625 3.12535 10.625C3.2912 10.625 3.45026 10.6909 3.56753 10.8082L7.50035 14.7418L17.0582 5.18316C17.1754 5.06588 17.3345 5 17.5003 5C17.6662 5 17.8253 5.06588 17.9425 5.18316C18.0598 5.30044 18.1257 5.4595 18.1257 5.62535C18.1257 5.7912 18.0598 5.95026 17.9425 6.06754Z" fill="white"/>
+                            </svg>  
+                            Complete Visit
+                        </button>
+                      </form>';
+            }
             
             // Always show View button
             echo '<button onclick="viewNoteDetails(' . $note['id'] . ')" class="btn-view-note flex flex-row items-center">
