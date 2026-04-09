@@ -1684,7 +1684,7 @@ function exportFullReport(format) {
 </svg>
 
 
-                            Patient Records Trend
+                            System Records Trend
                         </h3>
                         <div class="chart-wrapper">
                             <canvas id="patientRegistrationChart" height="300"></canvas>

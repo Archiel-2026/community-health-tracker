@@ -1024,7 +1024,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <p class="text-gray-500 text-base">Access key features</p>
                 </div>
                 <div class="flex flex-col gap-3">
-                    <a href="viewpatients.php"
+                    <a href=""
                         class="flex items-center justify-between p-4 rounded-lg border border-purple-100 shadow-md bg-purple-50 hover:bg-blue-50 transition group"
                         title="View All Patients">
                         <div class="flex items-center gap-3">
@@ -1039,19 +1039,15 @@ require_once __DIR__ . '/../includes/header.php';
                                 </svg>
                             </span>
                             <div>
-                                <div class="font-semibold text-purple-700 text-lg ">View All Patients</div>
+                                <div class="font-semibold text-purple-700 text-lg ">Resident Patients</div>
                                 <div class="text-base text-gray-500">Browse Patient Records</div>
                             </div>
                         </div>
                         <div>
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M5.46937 17.469L16.1897 6.74958H8.25C8.05109 6.74958 7.86032 6.67057 7.71967 6.52991C7.57902 6.38926 7.5 6.19849 7.5 5.99958C7.5 5.80067 7.57902 5.6099 7.71967 5.46925C7.86032 5.3286 8.05109 5.24958 8.25 5.24958H18C18.1989 5.24958 18.3897 5.3286 18.5303 5.46925C18.671 5.6099 18.75 5.80067 18.75 5.99958V15.7496C18.75 15.9485 18.671 16.1393 18.5303 16.2799C18.3897 16.4206 18.1989 16.4996 18 16.4996C17.8011 16.4996 17.6103 16.4206 17.4697 16.2799C17.329 16.1393 17.25 15.9485 17.25 15.7496V7.8099L6.53063 18.5302C6.46094 18.5999 6.37822 18.6552 6.28717 18.6929C6.19613 18.7306 6.09855 18.75 6 18.75C5.90145 18.75 5.80387 18.7306 5.71283 18.6929C5.62178 18.6552 5.53906 18.5999 5.46937 18.5302C5.39969 18.4605 5.34442 18.3778 5.30671 18.2868C5.26899 18.1957 5.24958 18.0981 5.24958 17.9996C5.24958 17.901 5.26899 17.8035 5.30671 17.7124C5.34442 17.6214 5.39969 17.5386 5.46937 17.469Z"
-                                    fill="#3C96E1" />
-                            </svg>
+                            
                         </div>
                     </a>
-                    <a href="staffrecords.php"
+                    <a href=""
                         class="flex items-center justify-between p-4 rounded-lg border border-cyan-100 shadow-md hover:bg-blue-50 transition group"
                         title="Admin Records">
                         <div class="flex items-center gap-3">
@@ -1074,11 +1070,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </div>
                         </div>
                         <div>
-                            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M5.46937 17.469L16.1897 6.74958H8.25C8.05109 6.74958 7.86032 6.67057 7.71967 6.52991C7.57902 6.38926 7.5 6.19849 7.5 5.99958C7.5 5.80067 7.57902 5.6099 7.71967 5.46925C7.86032 5.3286 8.05109 5.24958 8.25 5.24958H18C18.1989 5.24958 18.3897 5.3286 18.5303 5.46925C18.671 5.6099 18.75 5.80067 18.75 5.99958V15.7496C18.75 15.9485 18.671 16.1393 18.5303 16.2799C18.3897 16.4206 18.1989 16.4996 18 16.4996C17.8011 16.4996 17.6103 16.4206 17.4697 16.2799C17.329 16.1393 17.25 15.9485 17.25 15.7496V7.8099L6.53063 18.5302C6.46094 18.5999 6.37822 18.6552 6.28717 18.6929C6.19613 18.7306 6.09855 18.75 6 18.75C5.90145 18.75 5.80387 18.7306 5.71283 18.6929C5.62178 18.6552 5.53906 18.5999 5.46937 18.5302C5.39969 18.4605 5.34442 18.3778 5.30671 18.2868C5.26899 18.1957 5.24958 18.0981 5.24958 17.9996C5.24958 17.901 5.26899 17.8035 5.30671 17.7124C5.34442 17.6214 5.39969 17.5386 5.46937 17.469Z"
-                                    fill="#3C96E1" />
-                            </svg>
+                            
                         </div>
                     </a>
                     <a id="activityLogsBtn"
