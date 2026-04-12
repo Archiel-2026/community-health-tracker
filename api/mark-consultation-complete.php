@@ -12,6 +12,12 @@ if (!isset($_SESSION['user']['id']) || !isStaff()) {
     exit();
 }
 
+if (!staffCanAccessConsultationNotes()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Only Assistant Doctor accounts can manage consultation notes']);
+    exit();
+}
+
 // Get the request data (supports both JSON and form data)
 $input = json_decode(file_get_contents('php://input'), true);
 $noteId = isset($input['note_id']) ? (int)$input['note_id'] : (isset($_POST['note_id']) ? (int)$_POST['note_id'] : 0);

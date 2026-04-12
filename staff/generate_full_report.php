@@ -110,7 +110,7 @@ function generate_health_report($pdo) {
     $report['admin'] = [];
     $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_patients");
     $totalPatients = (int)$stmt->fetchColumn();
-    $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_staff WHERE position = 'Doctor'");
+    $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_staff WHERE position IN ('Assistant Doctor', 'Doctor')");
     $totalDoctors = (int)$stmt->fetchColumn();
     $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_staff WHERE position = 'Nurse'");
     $totalNurses = (int)$stmt->fetchColumn();
@@ -278,7 +278,7 @@ $report['public_health']['community_trends'] = $trend;
 $report['admin'] = [];
 $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_patients");
 $totalPatients = (int)$stmt->fetchColumn();
-$stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_staff WHERE position = 'Doctor'");
+$stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_staff WHERE position IN ('Assistant Doctor', 'Doctor')");
 $totalDoctors = (int)$stmt->fetchColumn();
 $stmt = $pdo->query("SELECT COUNT(*) FROM sitio1_staff WHERE position = 'Nurse'");
 $totalNurses = (int)$stmt->fetchColumn();

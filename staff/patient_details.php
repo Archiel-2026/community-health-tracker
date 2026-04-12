@@ -138,9 +138,15 @@ try {
         </div>
         
         <div class="mt-8 flex justify-between">
+            <?php if (staffCanManagePatientRecords()): ?>
             <a href="edit_patient.php?id=<?= $patient['id'] ?>" class="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition">Edit Record</a>
+            <?php else: ?>
+            <span class="bg-gray-100 text-gray-600 py-2 px-6 rounded-lg">View Only</span>
+            <?php endif; ?>
             <div class="space-x-2">
+                <?php if (staffCanArchivePatientRecords()): ?>
                 <a href="soft_delete_patient.php?id=<?= $patient['id'] ?>" class="bg-yellow-500 text-white py-2 px-6 rounded-lg hover:bg-yellow-600 transition" onclick="return confirm('Move this patient record to archive?')">Archive</a>
+                <?php endif; ?>
                 <a href="delete_patient.php?id=<?= $patient['id'] ?>" class="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition" onclick="return confirm('Are you sure you want to permanently delete this patient record?')">Delete</a>
             </div>
         </div>

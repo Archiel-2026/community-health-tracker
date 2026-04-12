@@ -34,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Barangay Luz, Cebu City</title>
-    <link rel="icon" type="image/png" href="./asssets/images/Luz.jpg">
+    <title>Login | Cebu Eastern College Incorporated</title>
+    <link rel="icon" type="image/png" href="./asssets/images/finallogo.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Local Font Awesome for offline support -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
@@ -83,8 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         /* --- Left Branding with Background Image --- */
         .left-section {
             flex: 1;
-            background: linear-gradient(135deg, rgba(58, 148, 223, 0.85) 0%, rgba(46, 124, 192, 0.85) 100%), 
-                        url('./asssets/images/brgyluz.jpg') no-repeat center center/cover;
+            background: linear-gradient(
+  135deg,
+  rgba(30, 60, 200, 0.85) 0%,
+  rgba(1, 4, 137, 0.85) 100%
+),url('./asssets/images/cecmainbg.jpg') no-repeat center center/cover;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -97,19 +100,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .logo-container {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            overflow: hidden;
+            width: 200px;
+            height: 200px;
             margin-bottom: 35px;
-            border: 6px solid rgba(255, 255, 255, 0.25);
-            background: white;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
 
         .logo-container img { width: 100%; height: 100%; object-fit: cover; }
-        .left-title { font-size: 32px; font-weight: 500; margin-bottom: 12px; letter-spacing: -0.5px; }
-        .left-subtitle { font-size: 18px; opacity: 0.95; margin-bottom: 45px; font-weight: 400; }
+        .left-title { font-size: 28px; font-weight: 500; margin-bottom: 12px; letter-spacing: -0.5px; }
+        .left-subtitle { font-size: 20px; opacity: 0.95; margin-bottom: 45px; font-weight: 400; }
 
         .feature {
             display: flex;
@@ -224,7 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .btn-login {
             width: 100%;
             height: 52px;
-            background: linear-gradient(135deg, #3a94df 0%, #2e7cc0 100%);
+            background: #010489;
             color: white;
             border: none;
             border-radius: 8px;
@@ -241,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .btn-login:disabled { background: #d1d5db; cursor: not-allowed; }
-        .btn-login:hover:not(:disabled) { background: linear-gradient(135deg, #2e7cc0 0%, #1f5a9f 100%); box-shadow: 0 6px 16px rgba(58, 148, 223, 0.28); transform: translateY(-1px); }
+        .btn-login:hover:not(:disabled) { background: #010489; box-shadow: 0 6px 16px rgba(58, 148, 223, 0.28); transform: translateY(-1px); }
 
         .support-text { text-align: center; margin-top: 36px; color: black; font-size: 16px; font-weight: 400; }
 
@@ -347,9 +345,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <div class="left-section">
             <div class="logo-container">
-                <img src="asssets/images/Luz.jpg" alt="Logo">
+                <img src="asssets/images/finallogo.png" alt="Logo">
             </div>
-            <h1 class="left-title">Barangay Luz, Cebu City</h1>
+            <h1 class="left-title"> Cebu Eastern College Incorporated</h1>
             <p class="left-subtitle">Healthcare Management System</p>
             
             <div class="instructions-box">

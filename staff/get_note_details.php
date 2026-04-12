@@ -6,6 +6,12 @@ require_once __DIR__ . '/../includes/functions.php';
 
 redirectIfNotLoggedIn();
 
+if (!staffCanAccessConsultationNotes()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Access denied']);
+    exit;
+}
+
 if (!isset($_GET['id'])) {
     echo json_encode(['success' => false, 'error' => 'Note ID required']);
     exit;

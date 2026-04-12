@@ -8,6 +8,12 @@ if (!isStaff()) {
     exit();
 }
 
+if (!staffCanArchivePatientRecords()) {
+    $_SESSION['error'] = 'Only Nurse and Working Scholar accounts can archive patient records.';
+    header('Location: patient_records.php');
+    exit();
+}
+
 if (isset($_GET['id'])) {
     $patientId = intval($_GET['id']);
     

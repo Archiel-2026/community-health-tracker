@@ -870,9 +870,9 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
                                             </div>
                                             <div class="announcement-badges">
                                                 <?php if (isset($announcement['audience_type']) && $announcement['audience_type'] === 'public'): ?>
-                                                    <span class="badge bg-[#2563EB] text-[#FFFFFF]">For All Residents</span>
+                                                    <span class="badge bg-[#2563EB] text-[#FFFFFF]">For All Students</span>
                                                 <?php elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'specific'): ?>
-                                                    <span class="badge bg-[#2563EB] text-[#FFFFFF]">For Specific Resident</span>
+                                                    <span class="badge bg-[#2563EB] text-[#FFFFFF]">For Specific Students</span>
                                                 <?php endif; ?>
                                                 <!-- PRIORITY -->
                                                 <span class="badge badge-<?= $announcement['priority'] ?>">
@@ -1086,12 +1086,12 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
                                     <span class="font-bold text-lg text-gray-900"><?= htmlspecialchars($a['title']) ?></span>
                                     <div class="announcement-badges">
                                         <?php if (isset($a['announcement_type']) && $a['announcement_type'] === 'lab_result'): ?>
-                                            <span class="badge badge-lab-result">Lab Result</span>
+                                            <span class="badge badge-lab-result">Student Lab Result</span>
                                         <?php else: ?>
                                             <?php if (isset($a['audience_type']) && $a['audience_type'] === 'public'): ?>
-                                                <span class="badge bg-[#2563EB] text-[#FFFFFF]">For All Residents</span>
+                                                <span class="badge bg-[#2563EB] text-[#FFFFFF]">For All Students</span>
                                             <?php elseif (isset($a['audience_type']) && $a['audience_type'] === 'specific'): ?>
-                                                <span class="badge bg-[#2563EB] text-[#FFFFFF]">For Specific Resident</span>
+                                                <span class="badge bg-[#2563EB] text-[#FFFFFF]">For Specific Students</span>
                                             <?php endif; ?>
                                         <?php endif; ?>
                                         <span class="badge badge-<?= $a['priority'] ?>">

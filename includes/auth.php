@@ -21,6 +21,158 @@ function isUser() {
     return isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'user';
 }
 
+function normalizeStaffPosition(?string $position): string {
+    $position = trim((string) $position);
+
+    $positionMap = [
+        'Doctor' => 'Assistant Doctor',
+        'Midwife' => 'Working Scholar',
+        'Encoder' => 'Working Scholar',
+        'BHW' => 'Working Scholar',
+        'Medical Technologist' => 'Working Scholar',
+        'Administrative Staff' => 'Working Scholar',
+    ];
+
+    return $positionMap[$position] ?? $position;
+}
+
+function getSupportedStaffPositions(): array {
+    return ['Nurse', 'Assistant Doctor', 'Working Scholar'];
+}
+
+function getDefaultStaffRolePermissions(?string $position): array {
+    $position = normalizeStaffPosition($position);
+
+    $defaults = [
+        'can_manage_patient_records' => false,
+        'can_access_consultation_notes' => false,
+        'can_create_consultation_notes' => false,
+        'can_export_patient_records' => false,
+        'can_archive_patient_records' => false,
+        'can_print_patient_records' => false,
+    ];
+
+    switch ($position) {
+        case 'Assistant Doctor':
+            $defaults['can_access_consultation_notes'] = true;
+            $defaults['can_create_consultation_notes'] = true;
+            $defaults['can_print_patient_records'] = true;
+            break;
+        case 'Nurse':
+        case 'Working Scholar':
+            $defaults['can_manage_patient_records'] = true;
+            $defaults['can_export_patient_records'] = true;
+            $defaults['can_archive_patient_records'] = true;
+            $defaults['can_print_patient_records'] = true;
+            break;
+    }
+
+    return $defaults;
+}
+
+function getStaffRolePermissions(?string $position = null): array {
+    static $permissionCache = [];
+
+    $position = normalizeStaffPosition($position ?? getCurrentStaffPosition());
+
+    if ($position === '') {
+        return getDefaultStaffRolePermissions($position);
+    }
+
+    if (isset($permissionCache[$position])) {
+        return $permissionCache[$position];
+    }
+
+    $permissions = getDefaultStaffRolePermissions($position);
+    global $pdo;
+
+    if (!isset($pdo)) {
+        $permissionCache[$position] = $permissions;
+        return $permissions;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                can_manage_patient_records,
+                can_access_consultation_notes,
+                can_create_consultation_notes,
+                can_export_patient_records,
+                can_archive_patient_records,
+                can_print_patient_records
+            FROM staff_role_permissions
+            WHERE position = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$position]);
+        $storedPermissions = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($storedPermissions) {
+            foreach ($permissions as $key => $value) {
+                if (array_key_exists($key, $storedPermissions)) {
+                    $permissions[$key] = (bool) $storedPermissions[$key];
+                }
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('Unable to resolve staff role permissions: ' . $e->getMessage());
+    }
+
+    $permissionCache[$position] = $permissions;
+    return $permissions;
+}
+
+function getCurrentStaffPosition(): string {
+    if (!isStaff()) {
+        return '';
+    }
+
+    if (!empty($_SESSION['user']['position'])) {
+        return normalizeStaffPosition($_SESSION['user']['position']);
+    }
+
+    global $pdo;
+
+    if (empty($_SESSION['user']['id']) || !isset($pdo)) {
+        return '';
+    }
+
+    try {
+        $stmt = $pdo->prepare("SELECT position FROM sitio1_staff WHERE id = ?");
+        $stmt->execute([$_SESSION['user']['id']]);
+        $position = normalizeStaffPosition($stmt->fetchColumn() ?: '');
+        $_SESSION['user']['position'] = $position;
+        return $position;
+    } catch (Throwable $e) {
+        error_log('Unable to resolve staff position: ' . $e->getMessage());
+        return '';
+    }
+}
+
+function staffCanManagePatientRecords(): bool {
+    return getStaffRolePermissions()['can_manage_patient_records'];
+}
+
+function staffCanAccessConsultationNotes(): bool {
+    return getStaffRolePermissions()['can_access_consultation_notes'];
+}
+
+function staffCanCreateConsultationNotes(): bool {
+    return getStaffRolePermissions()['can_create_consultation_notes'];
+}
+
+function staffCanExportPatientRecords(): bool {
+    return getStaffRolePermissions()['can_export_patient_records'];
+}
+
+function staffCanArchivePatientRecords(): bool {
+    return getStaffRolePermissions()['can_archive_patient_records'];
+}
+
+function staffCanPrintPatientRecords(): bool {
+    return getStaffRolePermissions()['can_print_patient_records'];
+}
+
 function hasProfileImage() {
     if (!isLoggedIn()) {
         return false;
@@ -79,6 +231,7 @@ function redirectBasedOnRole() {
         exit();
     }
 }
+
 
 function loginUser($username, $password, $role) {
     global $pdo;
@@ -144,7 +297,8 @@ function loginUser($username, $password, $role) {
             'id' => $user['id'],
             'username' => $user['username'],
             'full_name' => $user['full_name'],
-            'role' => $role
+            'role' => $role,
+            'position' => $role === 'staff' ? normalizeStaffPosition($user['position'] ?? '') : null
         ];
 
         // Log login to database table and to file (create table if missing)
@@ -231,4 +385,7 @@ function loginUser($username, $password, $role) {
     }
     return false;
 }
+
+
+
 ?>

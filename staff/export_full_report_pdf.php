@@ -83,7 +83,7 @@ function renderReportHtml($data) {
         <div class="pdf-section">
             <div class="pdf-section-title">Administrative Data</div>
             <table class="pdf-table">
-                <tr><th>Average Patients per Doctor</th><td><?= htmlspecialchars($data['admin']['avg_patients_per_doctor']) ?></td></tr>
+                <tr><th>Average Patients per Assistant Doctor</th><td><?= htmlspecialchars($data['admin']['avg_patients_per_doctor']) ?></td></tr>
                 <tr><th>Average Patients per Nurse</th><td><?= htmlspecialchars($data['admin']['avg_patients_per_nurse']) ?></td></tr>
             </table>
         </div>

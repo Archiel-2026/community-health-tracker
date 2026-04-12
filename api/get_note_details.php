@@ -8,6 +8,12 @@ redirectIfNotLoggedIn();
 
 header('Content-Type: application/json');
 
+if (!isStaff() || !staffCanAccessConsultationNotes()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Access denied']);
+    exit;
+}
+
 $note_id = $_GET['id'] ?? 0;
 
 if (!$note_id) {

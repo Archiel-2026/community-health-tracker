@@ -13,6 +13,12 @@ if (!isStaff()) {
     exit();
 }
 
+if (!staffCanAccessConsultationNotes()) {
+    header('Content-Type: application/json');
+    echo json_encode(['hasNotes' => false, 'noteCount' => 0]);
+    exit();
+}
+
 header('Content-Type: application/json');
 
 try {

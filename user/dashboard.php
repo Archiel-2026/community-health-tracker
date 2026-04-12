@@ -707,7 +707,7 @@ function getTimeAgo($datetime)
                 
                 if ((isset($announcement['announcement_type']) && $announcement['announcement_type'] === 'lab_result') || 
                     (isset($announcement['announcement_category']) && $announcement['announcement_category'] === 'lab_result')) {
-                    $badge = '<span class="px-4 py-2 rounded bg-lab-result font-semibold text-base" ' . $greenColor . '>Lab Result</span>';
+                    $badge = '<span class="px-4 py-2 rounded bg-lab-result font-semibold text-base" ' . $greenColor . '>Student Lab Result</span>';
                     if ($priority === 'high') {
                         $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
                     } elseif ($priority === 'medium') {
@@ -716,7 +716,7 @@ function getTimeAgo($datetime)
                         $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-semibold text-base">' . ucfirst($announcement['priority']) . '</span>';
                     }
                 } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'public') {
-                    $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For All Resident</span>';
+                    $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For All Students</span>';
                     if ($priority === 'high') {
                         $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
                     } elseif ($priority === 'medium') {
@@ -725,7 +725,7 @@ function getTimeAgo($datetime)
                         $priorityBadge = '<span class="px-4 py-2 rounded bg-blue-100 text-[#3C96E1] font-semibold text-base ml-2">' . ucfirst($announcement['priority']) . '</span>';
                     }
                 } elseif (isset($announcement['audience_type']) && $announcement['audience_type'] === 'specific') {
-                    $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For Specific Resident</span>';
+                    $badge = '<span class="px-4 py-2 rounded bg-[#2563EB] text-[#FFFFFF] font-semibold text-base">For Specific Students</span>';
                     if ($priority === 'high') {
                         $priorityBadge = '<span class="px-4 py-2 rounded font-semibold text-base ml-2" ' . $highBg . '>' . ucfirst($announcement['priority']) . '</span>';
                     } elseif ($priority === 'medium') {

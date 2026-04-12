@@ -41,8 +41,8 @@ if (isset($_SESSION['user']['id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barangay Luz Health Monitoring and Tracking</title>
-    <link rel="icon" type="image/png" href="../asssets/images/Luz.jpg">
+    <title>Cebu Eastern College Incorporated Monitoring and Tracking</title>
+    <link rel="icon" type="image/png" href="../asssets/images/finallogo.png">
     <!-- Tailwind CSS - Offline Local Build -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
     <!-- Local Font Awesome for offline support -->
@@ -443,11 +443,10 @@ if (isset($_SESSION['user']['id'])) {
 
     /* Logo image styles */
     .logo-image {
-        width: 65px;
-        height: 65px;
-        border-radius: 50%;
-        object-fit: cover;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 50%;
     }
 
     /* Header title styles */
@@ -1037,10 +1036,10 @@ if (isset($_SESSION['user']['id'])) {
                 <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="logo-image">
+                        <img src="../asssets/images/finallogo.png" alt="Cebu Eastern College Inc." class="logo-image">
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
-                            <div class="barangay-text mb-2">Barangay Luz</div>
+                            <div class="barangay-text mb-2">Cebu Eastern College Incorporated</div>
                             <a href="/community-health-tracker/" class="main-title">Health Center Super-Admin Panel</a>
                         </div>
                     </div>
@@ -1139,10 +1138,10 @@ if (isset($_SESSION['user']['id'])) {
                 <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="logo-image">
+                        <img src="../asssets/images/finallogo.png" alt="Cebu Eastern College Inc." class="logo-image">
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
-                            <div class="barangay-text text-lg font-semibold">Barangay Luz</div>
+                            <div class="barangay-text text-lg font-semibold">Cebu Eastern College Incorporated</div>
                             <a href="/community-health-tracker/" class="main-title font-light">Health Center Admin Panel</a>
                         </div>
                     </div>
@@ -1239,11 +1238,11 @@ if (isset($_SESSION['user']['id'])) {
                 <div class="px-4 md:px-16 py-4 md:py-8 flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <!-- Barangay Toong Logo -->
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="logo-image">
+                        <img src="../asssets/images/finallogo.png" alt="Cebu Eastern College Inc." class="logo-image">
                         <!-- Updated Header Title with Barangay Toong text -->
                         <div class="header-title-container">
-                            <div class="barangay-text text-lg font-semibold">Barangay Luz</div>
-                            <a href="/community-health-tracker/" class="main-title font-light">Resident Consultation Portal</a>
+                            <div class="barangay-text text-lg font-medium">Cebu Eastern College Inc.</div>
+                            <a href="/community-health-tracker/" class="main-title font-light mt-1">Student Consultation Portal</a>
                         </div>
                     </div>
 
@@ -1264,7 +1263,7 @@ if (isset($_SESSION['user']['id'])) {
 
                             </div>
                             <div class="flex flex-col">
-                            <span class="text-sm mt-1">Welcome Resident</span>
+                            <span class="text-sm mt-1">Welcome Student</span>
                             <span class="font-medium"><?= htmlspecialchars($_SESSION['user']['full_name']) ?></span>
                             </div>
                         </div>
@@ -1350,10 +1349,10 @@ if (isset($_SESSION['user']['id'])) {
 
                     <!-- Logo Section -->
                     <div class="flex flex-col items-center mb-8">
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo" class="w-24 h-24 mb-4 object-cover">
+                        <img src="../asssets/images/finallogo.png" alt="Cebu Eastern College Inc. Logo" class="w-24 h-24 mb-4 object-cover">
                         <div class="text-center">
-                            <h2 class="text-lg font-bold text-gray-900">Barangay Luz</h2>
-                            <p class="text-sm font-medium text-gray-900 mt-1">Resident Consultation Portal</p>
+                            <h2 class="text-lg font-bold text-gray-900">Cebu Eastern College Incorporated</h2>
+                            <p class="text-sm font-medium text-gray-900 mt-1">Student Consultation Portal</p>
                         </div>
                     </div>
 
@@ -1402,13 +1401,13 @@ if (isset($_SESSION['user']['id'])) {
 
                     <!-- Logo Section -->
                     <div class="flex justify-center mb-6">
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
+                        <img src="../asssets/images/finallogo.png" alt="Cebu Eastern College Inc. Logo"
                             class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
                     </div>
 
                     <!-- Branding -->
                     <div class="text-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-800">Barangay Luz</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Cebu Eastern College Incorporated</h2>
                         <p class="text-sm text-gray-600 mt-1">Health Center Admin Panel</p>
                     </div>
 
@@ -1455,13 +1454,13 @@ if (isset($_SESSION['user']['id'])) {
 
                     <!-- Logo Section -->
                     <div class="flex justify-center mb-6">
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Logo"
+                        <img src="../asssets/images/finallogo.png" alt="Cebu Eastern College Inc."
                             class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
                     </div>
 
                     <!-- Branding -->
                     <div class="text-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-800">Barangay Luz</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Cebu Eastern College Incorporated</h2>
                         <p class="text-sm text-gray-600 mt-1">Health Center Staff Panel</p>
                     </div>
 
@@ -1600,20 +1599,22 @@ if (isset($_SESSION['user']['id'])) {
 
                     <!-- Logo at the top -->
                     <div class="flex justify-center mb-6 mx-4">
-                        <img src="./asssets/images/Luz.jpg" alt="Barangay Luz Logo"
-                            class="w-20 h-20 rounded-full object-cover border-4 border-[#3C96E1] shadow-lg">
+                        <img src="./asssets/images/ceclogo.jpg" alt="Cebu Eastern College Logo"
+                            class="w-20 h-20">
                     </div>
 
                     <!-- Main Title -->
                     <div class="text-center mb-4 mx-4">
-                        <h1 class="text-2xl font-semibold text-[#4A90E2]">Barangay Luz Cebu City</h1>
+                        <h1 class="text-2xl font-semibold text-[#010489]">Cebu Eastern College Inc.</h1>
                     </div>
 
                     <!-- Instruction Text -->
                     <div class="flex flex-col items-center mb-8 mx-4">
                         <p class="text-sm text-center text-gray-600 max-w-md leading-relaxed">
-                            Please log in with your authorized account to access health records, appointments, and other
-                            health services.
+                            Please log in with your authorized student account
+                            to access your health records, appointments,
+                            and other school health services. 
+
                         </p>
                     </div>
 
@@ -1626,7 +1627,7 @@ if (isset($_SESSION['user']['id'])) {
                                 <label for="login-username" class="block text-sm font-medium text-gray-700 mb-2">Username
                                     <span class="text-red-500">*</span></label>
                                 <input type="text" name="username" id="login-username" placeholder="Enter Username"
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3C96E1] form-input"
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#010489] form-input"
                                     required />
                             </div>
 
@@ -1636,7 +1637,7 @@ if (isset($_SESSION['user']['id'])) {
                                     <span class="text-red-500">*</span></label>
                                 <div class="relative">
                                     <input id="login-password" name="password" type="password" placeholder="Password"
-                                        class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3C96E1] form-input"
+                                        class="w-full p-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#010489] form-input"
                                         required />
                                     <button type="button" onclick="toggleLoginPassword()"
                                         class="absolute top-1/2 right-3 transform -translate-y-1/2 text-gray-500">
@@ -1650,14 +1651,14 @@ if (isset($_SESSION['user']['id'])) {
                             <!-- Login Button -->
                             <div class="mt-8">
                                 <button type="submit"
-                                    class="complete-btn bg-[#3C96E1] w-full p-3 rounded-md text-white transition-all duration-200 font-medium shadow-md hover:shadow-lg text-lg h-14">
+                                    class="bg-[#010489] w-full p-3 rounded-md text-white transition-all duration-200 font-medium shadow-md hover:shadow-lg text-lg h-14">
                                     Login
                                 </button>
                             </div>
 
                             <!-- Registration Notice -->
                             <div class="text-center text-sm text-gray-600 mt-6">
-                                <p>New residents need to register at the Barangay Health Center to obtain login credentials.
+                                <p>New students must register at the School Health Center to obtain their login credentials.
                                 </p>
                             </div>
                         </div>

@@ -28,6 +28,18 @@ try {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (created_by) REFERENCES admin(id)
         )",
+
+        "CREATE TABLE IF NOT EXISTS staff_role_permissions (
+            position VARCHAR(100) NOT NULL PRIMARY KEY,
+            can_manage_patient_records TINYINT(1) NOT NULL DEFAULT 0,
+            can_access_consultation_notes TINYINT(1) NOT NULL DEFAULT 0,
+            can_create_consultation_notes TINYINT(1) NOT NULL DEFAULT 0,
+            can_export_patient_records TINYINT(1) NOT NULL DEFAULT 0,
+            can_archive_patient_records TINYINT(1) NOT NULL DEFAULT 0,
+            can_print_patient_records TINYINT(1) NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )",
         
         "CREATE TABLE IF NOT EXISTS sitio1_users (
                 id INT AUTO_INCREMENT PRIMARY KEY,

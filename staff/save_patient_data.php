@@ -9,6 +9,16 @@ if (!isStaff()) {
     exit();
 }
 
+if (!staffCanManagePatientRecords()) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'message' => 'Only Nurse and Working Scholar accounts can edit and save patient records.'
+    ]);
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_health_info'])) {
     $patientId = intval($_POST['patient_id']);
     $response = ['success' => false, 'message' => ''];

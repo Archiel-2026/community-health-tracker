@@ -216,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = trim($_POST['username']);
         $password = trim($_POST['password']);
         $fullName = trim($_POST['full_name']);
-        $position = trim($_POST['position'] ?? '');
+        $position = normalizeStaffPosition(trim($_POST['position'] ?? ''));
         $specialization = trim($_POST['specialization'] ?? '');
         $license_number = trim($_POST['license_number'] ?? '');
         
@@ -1554,12 +1554,9 @@ try {
                     <select name="position" required 
                             class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
                         <option value="">Select Position</option>
-                        <option value="BHW">Barangay Health Worker (BHW)</option>
                         <option value="Nurse">Nurse</option>
-                        <option value="Midwife">Midwife</option>
-                        <option value="Doctor">Doctor</option>
-                        <option value="Medical Technologist">Medical Technologist</option>
-                        <option value="Administrative Staff">Administrative Staff</option>
+                        <option value="Assistant Doctor">Assistant Doctor</option>
+                        <option value="Working Scholar">Working Scholar</option>
                     </select>
                 </div>
                 <div class="form-group">

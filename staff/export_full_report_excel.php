@@ -29,12 +29,19 @@ $row += 2;
 
 // Helper function
 function writeSection($sheet, &$row, $title, $data) {
+    $labelMap = [
+        'avg_patients_per_doctor' => 'Average Patients per Assistant Doctor',
+        'avg_patients_per_nurse' => 'Average Patients per Nurse',
+    ];
+
     $sheet->setCellValue('A'.$row, $title);
     $sheet->getStyle('A'.$row)->getFont()->setBold(true)->setSize(13);
     $row++;
     foreach ($data as $label => $value) {
+        $displayLabel = $labelMap[$label] ?? ucwords(str_replace('_', ' ', $label));
+
         if (is_array($value)) {
-            $sheet->setCellValue('A'.$row, $label);
+            $sheet->setCellValue('A'.$row, $displayLabel);
             $sheet->getStyle('A'.$row)->getFont()->setBold(true);
             $row++;
             if (empty($value)) {
@@ -57,7 +64,7 @@ function writeSection($sheet, &$row, $title, $data) {
                 }
             }
         } else {
-            $sheet->setCellValue('A'.$row, $label);
+            $sheet->setCellValue('A'.$row, $displayLabel);
             $sheet->setCellValue('B'.$row, ($value === '' || $value === null) ? '(None)' : $value);
             $row++;
         }

@@ -74,8 +74,9 @@ echo <<<HTML
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logging Out</title>
+    <title>Logout | Cebu Eastern College Incorporated</title>
     <!-- Tailwind CSS - Offline Local Build -->
+     <link rel="icon" type="image/png" href="../asssets/images/finallogo.png">
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
 </head>
 <body class="bg-gray-100">

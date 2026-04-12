@@ -87,6 +87,12 @@ try {
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);
     $staff = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($staff as &$staffMember) {
+        if (isset($staffMember['position'])) {
+            $staffMember['position'] = normalizeStaffPosition($staffMember['position']);
+        }
+    }
+    unset($staffMember);
 } catch (PDOException $e) {
     error_log("Main Query Error: " . $e->getMessage());
     $_SESSION['error_message'] = "Unable to fetch staff. Please try again later.";

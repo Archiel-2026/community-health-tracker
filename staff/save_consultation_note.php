@@ -13,6 +13,14 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['role']) || $_SESSION[
     exit();
 }
 
+require_once __DIR__ . '/../includes/auth.php';
+
+if (!staffCanCreateConsultationNotes()) {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Only Assistant Doctor accounts can add consultation notes.']);
+    exit();
+}
+
 header('Content-Type: application/json');
 
 try {

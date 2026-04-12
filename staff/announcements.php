@@ -567,6 +567,10 @@ try {
                           ORDER BY a.post_date DESC");
     $stmt->execute();
     $activeAnnouncements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($activeAnnouncements as &$announcement) {
+        $announcement['staff_position'] = normalizeStaffPosition($announcement['staff_position'] ?? '');
+    }
+    unset($announcement);
 
     $stmt = $pdo->prepare("SELECT a.*, s.full_name AS staff_full_name, s.position AS staff_position
                           FROM sitio1_announcements a
@@ -575,6 +579,10 @@ try {
                           ORDER BY a.post_date DESC");
     $stmt->execute();
     $archivedAnnouncements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($archivedAnnouncements as &$announcement) {
+        $announcement['staff_position'] = normalizeStaffPosition($announcement['staff_position'] ?? '');
+    }
+    unset($announcement);
 
     // Get detailed responses
     foreach ($activeAnnouncements as &$announcement) {
@@ -1191,8 +1199,8 @@ try {
 
                                                     
                                                 </h3>
-                                                <div class="text-xs text-gray-400 mb-1">Posted by : <span class="badge badge-normal" style="background: #e0eaff; color: #2563eb; font-size: 0.85rem; padding: 0.2rem 0.7rem; border-radius: 999px;">Encoder</span></div>
-                                                <div class="text-base text-gray-700">Leandro Labos</div>
+                                                <div class="text-xs text-gray-400 mb-1">Posted by : <span class="badge badge-normal" style="background: #e0eaff; color: #2563eb; font-size: 0.85rem; padding: 0.2rem 0.7rem; border-radius: 999px;"><?= htmlspecialchars($announcement['staff_position'] ?? 'Staff') ?></span></div>
+                                                <div class="text-base text-gray-700"><?= htmlspecialchars($announcement['staff_full_name'] ?? 'Unknown Staff') ?></div>
                                             </div>
                                             <div class="flex flex-col items-end gap-2">
                                                 <span class="badge badge-<?= $announcement['priority'] ?>" style="background: <?= $announcement['priority'] === 'high' ? '#fee2e2' : '#e0eaff' ?>; color: <?= $announcement['priority'] === 'high' ? '#dc2626' : '#2563eb' ?>; font-size: 0.95rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 1.2rem; min-width: 70px; text-align: center;">
@@ -1268,8 +1276,8 @@ try {
                                                 <h3 class="announcement-title" style="font-size: 1.15rem; color: #2563eb; font-weight: 500; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;" title="<?= htmlspecialchars($announcement['title']) ?>">
                                                     <?= htmlspecialchars($announcement['title']) ?>
                                                 </h3>
-                                                <div class="text-xs text-gray-400 mb-1">Posted by : <span class="badge badge-normal" style="background: #e0eaff; color: #2563eb; font-size: 0.85rem; padding: 0.2rem 0.7rem; border-radius: 999px;">Encoder</span></div>
-                                                <div class="text-base text-gray-700">Leandro Labos</div>
+                                                <div class="text-xs text-gray-400 mb-1">Posted by : <span class="badge badge-normal" style="background: #e0eaff; color: #2563eb; font-size: 0.85rem; padding: 0.2rem 0.7rem; border-radius: 999px;"><?= htmlspecialchars($announcement['staff_position'] ?? 'Staff') ?></span></div>
+                                                <div class="text-base text-gray-700"><?= htmlspecialchars($announcement['staff_full_name'] ?? 'Unknown Staff') ?></div>
                                                 <div class="text-xs text-gray-400 mt-2">Archived on : <span style="color: #222; font-weight: 500;"><?= date('M d, Y', strtotime($announcement['post_date'])) ?></span></div>
                                             </div>
                                             <span class="badge badge-<?= $announcement['priority'] ?>" style="background: <?= $announcement['priority'] === 'high' ? '#fee2e2' : '#e0eaff' ?>; color: <?= $announcement['priority'] === 'high' ? '#dc2626' : '#2563eb' ?>; font-size: 0.95rem; font-weight: 500; border-radius: 999px; padding: 0.2rem 1.2rem; min-width: 70px; text-align: center;">

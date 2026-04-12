@@ -6,6 +6,11 @@ require_once __DIR__ . '/../includes/auth.php';
 
 redirectIfNotLoggedIn();
 
+if (!staffCanAccessConsultationNotes()) {
+    http_response_code(403);
+    die('Only Assistant Doctor accounts can access consultation notes');
+}
+
 if (!isset($_GET['patient_id'])) {
     die('Patient ID is required');
 }

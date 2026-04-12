@@ -1390,7 +1390,7 @@ function exportFullReport(format) {
                             <div class="cht-report-modal-section">
                                 <div class="cht-report-modal-section-title">Administrative Data</div>
                                 <table class="cht-report-modal-table">
-                                    <tr><th>Average Patients per Doctor</th><td>${data.admin.avg_patients_per_doctor}</td></tr>
+                                    <tr><th>Average Patients per Assistant Doctor</th><td>${data.admin.avg_patients_per_doctor}</td></tr>
                                     <tr><th>Average Patients per Nurse</th><td>${data.admin.avg_patients_per_nurse}</td></tr>
                                 </table>
                             </div>
@@ -1493,7 +1493,7 @@ function exportFullReport(format) {
                         let a = data.admin;
                         html += `<div class='cht-section-title'>Administrative Data</div>`;
                         html += `<table class='cht-report-table'>`;
-                        html += `<tr><th>Average Patients per Doctor</th><td>${a.avg_patients_per_doctor}</td></tr>`;
+                        html += `<tr><th>Average Patients per Assistant Doctor</th><td>${a.avg_patients_per_doctor}</td></tr>`;
                         html += `<tr><th>Average Patients per Nurse</th><td>${a.avg_patients_per_nurse}</td></tr>`;
                         html += `<tr><th>Medical Supplies Used/Needed</th><td>${a.supplies}</td></tr>`;
                         html += `<tr><th>Challenges Encountered</th><td>${a.challenges}</td></tr>`;

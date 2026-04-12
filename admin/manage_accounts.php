@@ -91,6 +91,41 @@ if (empty($_SESSION['csrf_token'])) {
 
 global $pdo;
 
+function normalizeStaffPositionRecords(array $staffRecords): array
+{
+    foreach ($staffRecords as &$staffRecord) {
+        if (isset($staffRecord['position'])) {
+            $staffRecord['position'] = normalizeStaffPosition($staffRecord['position']);
+        }
+    }
+    unset($staffRecord);
+
+    return $staffRecords;
+}
+
+function getRolePermissionLabels(): array
+{
+    return [
+        'can_manage_patient_records' => 'View, Edit and save patient records',
+        'can_access_consultation_notes' => 'View notes',
+        'can_create_consultation_notes' => 'Add notes',
+        'can_export_patient_records' => 'Export',
+        'can_archive_patient_records' => 'Archive',
+        'can_print_patient_records' => 'Print',
+    ];
+}
+
+function getManageAccountsRolePermissions(PDO $pdo): array
+{
+    $permissionsByRole = [];
+
+    foreach (getSupportedStaffPositions() as $position) {
+        $permissionsByRole[$position] = getStaffRolePermissions($position);
+    }
+
+    return $permissionsByRole;
+}
+
 // Handle patient search AJAX request (for manage_accounts.php)
 if (isset($_GET['search_patients']) && isset($_GET['term'])) {
     $term = trim($_GET['term']);
@@ -479,12 +514,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: manage_accounts.php');
             exit();
         }
+    } elseif (isset($_POST['save_role_permissions'])) {
+        $permissionKeys = array_keys(getRolePermissionLabels());
+
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO staff_role_permissions (
+                    position,
+                    can_manage_patient_records,
+                    can_access_consultation_notes,
+                    can_create_consultation_notes,
+                    can_export_patient_records,
+                    can_archive_patient_records,
+                    can_print_patient_records
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    can_manage_patient_records = VALUES(can_manage_patient_records),
+                    can_access_consultation_notes = VALUES(can_access_consultation_notes),
+                    can_create_consultation_notes = VALUES(can_create_consultation_notes),
+                    can_export_patient_records = VALUES(can_export_patient_records),
+                    can_archive_patient_records = VALUES(can_archive_patient_records),
+                    can_print_patient_records = VALUES(can_print_patient_records)
+            ");
+
+            foreach (getSupportedStaffPositions() as $position) {
+                $submittedPermissions = $_POST['role_permissions'][$position] ?? [];
+                $permissionValues = [];
+
+                foreach ($permissionKeys as $permissionKey) {
+                    $permissionValues[] = isset($submittedPermissions[$permissionKey]) ? 1 : 0;
+                }
+
+                $stmt->execute(array_merge([$position], $permissionValues));
+            }
+
+            $_SESSION['message'] = 'Role permissions updated successfully.';
+            $_SESSION['message_type'] = 'success';
+            header('Location: manage_accounts.php');
+            exit();
+        } catch (PDOException $e) {
+            $_SESSION['message'] = 'Error updating role permissions: ' . $e->getMessage();
+            $_SESSION['message_type'] = 'error';
+            header('Location: manage_accounts.php');
+            exit();
+        }
     } elseif (isset($_POST['create_staff'])) {
         // Sanitize and validate input
         $username = trim($_POST['username'] ?? '');
         $password = trim($_POST['password'] ?? '');
         $fullName = trim($_POST['full_name'] ?? '');
-        $position = trim($_POST['position'] ?? '');
+        $position = normalizeStaffPosition(trim($_POST['position'] ?? ''));
         $specialization = trim($_POST['specialization'] ?? '');
         $license_number = trim($_POST['license_number'] ?? '');
 
@@ -1051,6 +1130,8 @@ function getUnlinkedPatients($pdo)
 // Get all staff accounts
 $activeStaff = [];
 $inactiveStaff = [];
+$rolePermissionLabels = getRolePermissionLabels();
+$rolePermissions = [];
 
 // Get all resident accounts
 $pendingResidents = [];
@@ -1071,7 +1152,7 @@ try {
                          LEFT JOIN sitio1_staff creator ON s.created_by = creator.id
                          WHERE s.is_active = 1
                          ORDER BY s.created_at DESC");
-    $activeStaff = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $activeStaff = normalizeStaffPositionRecords($stmt->fetchAll(PDO::FETCH_ASSOC));
 
     // Inactive staff
     $stmt = $pdo->query("SELECT s.*, creator.username as creator_username 
@@ -1079,7 +1160,7 @@ try {
                          LEFT JOIN sitio1_staff creator ON s.created_by = creator.id
                          WHERE s.is_active = 0
                          ORDER BY s.created_at DESC");
-    $inactiveStaff = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $inactiveStaff = normalizeStaffPositionRecords($stmt->fetchAll(PDO::FETCH_ASSOC));
 
     // All active staff for reassignment
     $stmt = $pdo->query("SELECT id, full_name, username FROM sitio1_staff WHERE is_active = 1 ORDER BY full_name");
@@ -1102,6 +1183,9 @@ try {
 
     // Unlinked patient records
     $unlinkedPatients = getUnlinkedPatients($pdo);
+
+    // Staff role permissions
+    $rolePermissions = getManageAccountsRolePermissions($pdo);
 } catch (PDOException $e) {
     error_log('Error loading data in manage_accounts.php: ' . $e->getMessage());
     $_SESSION['message'] = 'A database error occurred while loading account data. Please try again later or contact support.';
@@ -1269,6 +1353,53 @@ try {
                 <!-- Staff Section (with updated Position dropdown) -->
                 <div id="staffSection" class="tab-section" style="display: block;">
                     <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Staff Account</h2>
+                    <div class="mb-8 p-8 rounded-lg border border-gray-300">
+                        <div class="flex items-start justify-between gap-4 mb-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Role Permissions</h3>
+                                <p class="text-sm text-gray-500">Super Admin can assign which actions each staff role is allowed to use.</p>
+                            </div>
+                        </div>
+                        <form method="POST" action="">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+                                    <thead style="background-color: #F9FAFB;">
+                                        <tr>
+                                            <th class="text-left px-4 py-3 border-b border-gray-200">Role</th>
+                                            <?php foreach ($rolePermissionLabels as $label): ?>
+                                                <th class="text-center px-4 py-3 border-b border-gray-200"><?= htmlspecialchars($label) ?></th>
+                                            <?php endforeach; ?>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach (getSupportedStaffPositions() as $position): ?>
+                                            <tr>
+                                                <td class="px-4 py-4 border-b border-gray-200 font-medium text-gray-800"><?= htmlspecialchars($position) ?></td>
+                                                <?php foreach (array_keys($rolePermissionLabels) as $permissionKey): ?>
+                                                    <td class="px-4 py-4 border-b border-gray-200 text-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            name="role_permissions[<?= htmlspecialchars($position) ?>][<?= htmlspecialchars($permissionKey) ?>]"
+                                                            value="1"
+                                                            <?= !empty($rolePermissions[$position][$permissionKey]) ? 'checked' : '' ?>>
+                                                    </td>
+                                                <?php endforeach; ?>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-4">
+                                <button
+                                    type="submit"
+                                    name="save_role_permissions"
+                                    class="w-auto px-6 py-3 bg-[#3C96E1] text-white rounded-md text-base font-medium hover:bg-blue-600 transition">
+                                    Save Role Permissions
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                     <!-- Create Staff Form -->
                     <div class="flex flex-col md:flex-row w-full gap-8">
                         <!-- LEFT CONTENT -->
@@ -1330,9 +1461,8 @@ try {
                                         class="w-full py-3 px-6 border border-blue-500 text-base rounded-md focus:ring-1 focus:ring-blue-400 focus:border-blue-500 custom-select">
                                         <option value="">Select Position</option>
                                         <option value="Nurse">Nurse</option>
-                                        <option value="Midwife">Midwife</option>
-                                        <option value="Doctor">Doctor</option>
-                                        <option value="Encoder">Encoder</option>
+                                        <option value="Assistant Doctor">Assistant Doctor</option>
+                                        <option value="Working Scholar">Working Scholar</option>
                                     </select>
                                 </div>
 
