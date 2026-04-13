@@ -1937,8 +1937,7 @@ if (!empty($searchTerm)) {
         <!-- Main Container - Single Tab Only -->
         <div class="mb-8">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-medium text-gray-700 flex items-center text-secondary">Resident Patient
-                    Records</h2>
+                <h2 class="text-2xl font-medium text-gray-700 flex items-center text-secondary">Student Patient Records</h2>
             </div>
             <!-- Single Tab with Add Patient Button on the right -->
             <div class="flex justify-between items-center">

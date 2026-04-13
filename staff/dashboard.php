@@ -758,7 +758,7 @@ $recordsPerPage = 5;
 
                     </div>
                 </div>
-                <h3 class="text-xl font-medium text-gray-500">Total Patients</h3>
+                <h3 class="text-xl font-medium text-gray-500">Total Student Patients</h3>
             </div>
             <div class="bg-white p-6 rounded-lg shadow stat-card inline-block">
                 <div class="flex flex-col md:flex-row items-center justify-between mb-12">
@@ -773,7 +773,7 @@ $recordsPerPage = 5;
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-xl font-medium text-gray-500">Resident Accounts</h3>
+                    <h3 class="text-xl font-medium text-gray-500">Student Accounts</h3>
                 </div>
             </div>
             <div class="bg-white p-6 rounded-lg shadow stat-card inline-block">
@@ -812,7 +812,7 @@ $recordsPerPage = 5;
                     id="account-tab" data-tabs-target="#account-management" type="button" role="tab"
                     aria-controls="account-management"
                     aria-selected="<?= $activeTab === 'account-management' ? 'true' : 'false' ?>">
-                    Resident Accounts
+                    Student Accounts
                     <span class="count-badge"><?= $stats['resident_users'] ?></span>
                 </button>
                 <button class="nav-tab-button tab-reports <?= $activeTab === 'reports' ? 'active' : '' ?>"
@@ -1555,7 +1555,7 @@ function exportFullReport(format) {
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.88 17.8M15 11a3 3 0 11-6 0"/>
                         </svg>
-                        Resident Log
+                        Student Log
                     </button>
 
                     <button class="log-tab flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -1764,7 +1764,7 @@ function exportFullReport(format) {
             <div class="<?= $activeTab === 'account-management' ? '' : 'hidden' ?>" id="account-management"
                 role="tabpanel" aria-labelledby="account-tab">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-semibold text-gray-700">Resident Accounts</h2>
+                    <h2 class="text-2xl font-semibold text-gray-700">Students Accounts</h2>
                     <!-- <div class="text-sm text-gray-600">
                         Total: <span class="font-semibold"><?= $totalResidentUsers ?></span> residents
                     </div> -->

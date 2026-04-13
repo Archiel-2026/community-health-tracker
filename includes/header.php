@@ -1599,7 +1599,7 @@ if (isset($_SESSION['user']['id'])) {
 
                     <!-- Logo at the top -->
                     <div class="flex justify-center mb-6 mx-4">
-                        <img src="./asssets/images/ceclogo.jpg" alt="Cebu Eastern College Logo"
+                        <img src="./asssets/images/finallogo.png" alt="Cebu Eastern College Logo"
                             class="w-20 h-20">
                     </div>
 

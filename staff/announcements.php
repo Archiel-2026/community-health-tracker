@@ -733,7 +733,7 @@ try {
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-2xl font-medium mb-2">Announcement Management</h1>
-            <p class="text-lg text-gray-500">Create and manage community health announcements</p>
+            <p class="text-lg text-gray-500">Create and manage School health announcements</p>
         </div>
 
         <!-- Stats -->
@@ -995,10 +995,10 @@ try {
                                         <label for="audience-public" class="radio-label">
                                             <div class="flex flex-col md:flex-row items-center justify-between">
                                                 <div class="flex flex-col">
-                                                    <h2 class="font-normal text-xl mb-2 text-[#1D85DD]">All Residents
+                                                    <h2 class="font-normal text-xl mb-2 text-[#1D85DD]">All Students
                                                     </h2>
                                                     <span class="text-lg font-normal text-gray-500">Send directly to all
-                                                        users</span>
+                                                        students</span>
                                                 </div>
                                                 <div>
                                                     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1016,10 +1016,10 @@ try {
                                             <div class="flex flex-col md:flex-row items-center justify-between">
                                                 <div class="flex flex-col">
                                                     <h2 class="font-normal text-xl mb-2 text-[#1D85DD]">Specific
-                                                        Resident
+                                                        User
                                                     </h2>
                                                     <span class="text-lg font-normal text-gray-500">Send directly to
-                                                        specific user</span>
+                                                        specific Student</span>
                                                 </div>
                                                 <div>
                                                     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1666,7 +1666,7 @@ try {
                         <div>
                             <p class="text-gray-500">Audience:</p>
                             <p class="font-medium">
-                                ${announcement.audience_type === 'public' ? 'All Residents' :
+                                ${announcement.audience_type === 'public' ? 'All Students' :
                         announcement.audience_type === 'landing_page' ? 'Landing Page' :
                             'Specific Users'}
                             </p>
