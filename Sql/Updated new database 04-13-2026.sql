@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 08, 2026 at 04:01 AM
+-- Generation Time: Apr 12, 2026 at 10:16 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -129,7 +129,9 @@ INSERT INTO `announcement_targets` (`id`, `announcement_id`, `user_id`, `created
 (248, 366, 223, '2026-04-06 05:59:12'),
 (249, 367, 223, '2026-04-06 06:04:49'),
 (250, 368, 235, '2026-04-07 07:19:03'),
-(251, 370, 223, '2026-04-07 15:26:29');
+(251, 370, 223, '2026-04-07 15:26:29'),
+(252, 371, 232, '2026-04-08 08:28:09'),
+(253, 372, 222, '2026-04-08 23:50:39');
 
 -- --------------------------------------------------------
 
@@ -157,7 +159,10 @@ INSERT INTO `announcement_views` (`id`, `announcement_id`, `viewer_token`, `view
 (15, 332, 'fa96df75b2aa63fcfe59deb1ddba1342', '2026-04-01 23:41:28'),
 (16, 319, '64d31d4e127eb0f2a992c673c0e30d00', '2026-04-02 15:32:18'),
 (17, 363, '5a75bdf9d8c862d3bcb431627e1e8f44', '2026-04-05 01:11:47'),
-(18, 369, '6d29e9bf724b98367448de599178f67c', '2026-04-07 16:40:38');
+(18, 369, '6d29e9bf724b98367448de599178f67c', '2026-04-07 16:40:38'),
+(20, 373, '28a8b31cf0cc2c16ccca3ce9d8c32421', '2026-04-09 21:28:50'),
+(21, 375, 'a792a22563307a9bd23352d939ae9500', '2026-04-11 11:59:29'),
+(22, 377, 'e1b65d5acf842b8f8963eb3091ce7f45', '2026-04-12 03:28:20');
 
 -- --------------------------------------------------------
 
@@ -310,15 +315,18 @@ INSERT INTO `consultation_notes` (`id`, `patient_id`, `note`, `consultation_date
 (114, 820, 'Hello sir', '2026-04-03', NULL, '2026-04-04', 'Dr. Gina Tan', 13, '2026-04-03 14:35:01', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
 (115, 819, 'asdasdsadas', '2026-04-03', NULL, '2026-04-04', 'Dr. Willy Ong', 13, '2026-04-03 15:12:56', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
 (116, 820, 'asdsad', '2026-04-04', NULL, NULL, 'Dr. asdsad', 13, '2026-04-04 07:55:49', '2026-04-07 06:39:44', 'completed', '2026-04-07 14:39:44', 13, 'Archiel R. Cabanag'),
-(119, 815, 'adsasd', '2026-04-07', NULL, '2026-04-08', 'Dr. asdsad', 13, '2026-04-07 05:36:38', '2026-04-07 06:40:59', 'completed', '2026-04-07 14:40:59', 13, 'Archiel R. Cabanag'),
 (120, 811, 'Hello sir', '2026-04-07', NULL, '2026-04-08', 'Dr. Warren Miras', 13, '2026-04-07 06:05:32', '2026-04-07 06:48:45', 'completed', '2026-04-07 14:48:45', 13, 'Archiel R. Cabanag'),
 (121, 819, 'Hello Everyone', '2026-04-07', NULL, '2026-04-08', 'Dr. Ramon Arancillo', 13, '2026-04-07 06:57:27', NULL, 'pending', NULL, NULL, NULL),
 (124, 811, 'Hello everyone', '2026-04-07', NULL, '2026-04-08', 'Dr. Rowelisa Cabanag', 13, '2026-04-07 13:22:40', '2026-04-07 23:48:53', 'completed', NULL, NULL, NULL),
-(125, 815, 'Hello Sir Warren Miras', '2026-04-07', NULL, '2026-04-08', 'Dr. Archiel R. Cabanag', 13, '2026-04-07 14:23:43', '2026-04-08 00:07:41', 'completed', NULL, NULL, NULL),
-(126, 815, 'Hello Sir', '2026-04-07', NULL, '2026-04-08', 'Dr. Gil Arda', 13, '2026-04-07 14:26:18', NULL, 'pending', NULL, NULL, NULL),
-(127, 815, 'Hello Sir', '2026-04-07', NULL, '2026-04-12', 'Dr. John Ramon Arancillo', 13, '2026-04-07 23:17:11', NULL, 'pending', NULL, NULL, NULL),
 (130, 821, 'Hello Maam', '2026-04-08', NULL, '2026-04-08', 'Dr. Nicanor Abueva', 13, '2026-04-08 00:10:29', NULL, 'pending', NULL, NULL, NULL),
-(131, 821, 'Hello Sir Raffy', '2026-04-08', NULL, '2026-04-09', 'Dr. Raffy Tulfo', 13, '2026-04-08 00:12:53', NULL, 'pending', NULL, NULL, NULL);
+(131, 821, 'Hello Sir Raffy', '2026-04-08', NULL, '2026-04-09', 'Dr. Raffy Tulfo', 13, '2026-04-08 00:12:53', NULL, 'pending', NULL, NULL, NULL),
+(134, 811, 'Hello Sir', '2026-04-08', NULL, '2026-04-09', 'Dr. Leandro Miras', 13, '2026-04-08 08:43:59', NULL, 'pending', NULL, NULL, NULL),
+(135, 824, 'You need rest', '2026-04-09', NULL, '2026-04-13', 'Dr. Willy Ong', 12, '2026-04-09 13:13:46', NULL, 'pending', NULL, NULL, NULL),
+(138, 815, 'adasd', '2026-04-11', NULL, '2026-04-13', 'Dr. asdasd', 16, '2026-04-11 17:31:58', NULL, 'pending', NULL, NULL, NULL),
+(139, 815, 'adasd', '2026-04-11', NULL, '2026-04-13', 'Dr. dasdsa', 15, '2026-04-11 18:38:21', NULL, 'pending', NULL, NULL, NULL),
+(140, 815, 'test', '2026-04-11', NULL, '2026-04-13', 'Dr. Hey', 16, '2026-04-11 18:57:05', NULL, 'pending', NULL, NULL, NULL),
+(141, 828, 'asdasdas', '2026-04-11', NULL, '2026-04-13', 'Dr. sdfsdfsd', 14, '2026-04-11 19:24:12', NULL, 'pending', NULL, NULL, NULL),
+(142, 823, 'test', '2026-04-11', NULL, '2026-04-13', 'Dr. test', 14, '2026-04-11 19:24:42', NULL, 'pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -402,7 +410,9 @@ INSERT INTO `deleted_patients` (`id`, `original_id`, `full_name`, `date_of_birth
 (152, 319, 'Ramon Santos', '1983-06-21', 42, 'Male', '258 Panganiban St.', '09901234567', '2026-01-20', 12, NULL, '2026-04-05 07:31:06', 13),
 (153, 320, 'Carmen Hernandez', '1987-10-05', 38, 'Female', '369 Roxas Blvd.', '09012345678', '2026-02-08', 12, NULL, '2026-04-05 07:31:09', 13),
 (155, 822, 'Archiel R. Cabanag', '2002-05-05', 23, 'Male', 'Barangay Luz, Cebu City', '09504206113', '2026-03-31', 13, NULL, '2026-04-05 07:31:14', 13),
-(158, 825, 'Allan Khey', '1967-08-11', 58, 'Male', 'Barangay Luz, Cebu City', '09504206113', '2026-02-24', 12, NULL, '2026-04-06 03:28:13', 13);
+(158, 825, 'Allan Khey', '1967-08-11', 58, 'Male', 'Barangay Luz, Cebu City', '09504206113', '2026-02-24', 12, NULL, '2026-04-06 03:28:13', 13),
+(161, 826, 'Jhea Claire L. Oropesa', '2002-01-26', 24, 'Female', 'Barangay Luz, Cebu City', '09816497664', '2025-09-02', 13, 235, '2026-04-08 08:18:41', 13),
+(163, 827, 'Warren Miguel Miras', '2022-06-22', 3, 'Male', 'Barangay Luz, Cebu City', '09312312421', '2026-04-10', 13, NULL, '2026-04-10 00:59:42', 13);
 
 -- --------------------------------------------------------
 
@@ -481,11 +491,11 @@ INSERT INTO `existing_info_patients` (`id`, `patient_id`, `gender`, `height`, `w
 (342, 818, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', NULL, 45.00, '120/80', 'None', 'None', NULL),
 (343, 819, 'Male', 45.00, 45.00, 'A-', 'asdf', 'asdsa', 'asd', 'asd', '2026-04-04 16:54:00', 45.00, '120/80', 'asd', 'asdas', NULL),
 (344, 820, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', NULL, 45.00, '120/80', 'None', 'None', NULL),
-(345, 821, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', '2026-04-05 13:01:59', 45.00, '120/90', 'None', 'None', NULL),
+(345, 821, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', '2026-04-11 16:53:04', 45.00, '120/90', 'None', 'None', NULL),
 (347, 823, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', '2026-04-05 00:21:16', 45.00, '120/90', 'None', 'None', NULL),
-(348, 824, 'Female', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', NULL, 45.00, '120/90', 'None', 'None', NULL),
-(363, 815, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'Final Testing', '2026-04-07 15:36:37', 45.00, '120/90', 'None', 'None', NULL),
-(365, 826, 'Female', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', '2026-04-08 00:12:05', 45.00, '120/90', 'None', 'None', NULL);
+(348, 824, 'Female', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', '2026-04-09 13:10:52', 45.00, '120/90', 'None', 'None', NULL),
+(368, 815, 'Male', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(369, 828, 'Male', 45.00, 45.00, 'O+', 'None', 'None', 'None', 'None', '2026-04-11 19:22:39', 45.00, '120/90', 'None', 'None', NULL);
 
 -- --------------------------------------------------------
 
@@ -589,7 +599,18 @@ INSERT INTO `resident_activity_log` (`id`, `resident_id`, `action_type`, `relate
 (24, 235, 'view_announcement', 368, '{\"announcement_title\":\"Jhea Claire Oropesa Announcement\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-07 16:38:42'),
 (25, 235, 'accept_announcement', 368, '{\"announcement_title\":\"Jhea Claire Oropesa Announcement\",\"status\":\"accepted\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-07 16:38:44'),
 (26, 223, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-07 23:25:47'),
-(27, 223, 'view_announcement', 370, '{\"announcement_title\":\"Warren Announcement\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-07 23:26:47');
+(27, 223, 'view_announcement', 370, '{\"announcement_title\":\"Warren Announcement\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-07 23:26:47'),
+(28, 222, 'view_announcement', 372, '{\"announcement_title\":\"Lab Result\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-09 07:52:43'),
+(29, 222, 'accept_announcement', 372, '{\"announcement_title\":\"Lab Result\",\"status\":\"accepted\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-09 07:53:21'),
+(30, 222, 'view_announcement', 372, '{\"announcement_title\":\"Lab Result\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-09 07:53:34'),
+(31, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-09 07:53:48'),
+(32, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-09 07:54:19'),
+(33, 222, 'view_announcement', 374, '{\"announcement_title\":\"For All Resident\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-09 21:32:51'),
+(34, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-10 06:50:42'),
+(35, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-10 06:52:57'),
+(36, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-12 00:35:42'),
+(37, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-12 00:39:42'),
+(38, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-12 00:39:47');
 
 -- --------------------------------------------------------
 
@@ -736,7 +757,13 @@ INSERT INTO `sitio1_activity_log` (`id`, `user_id`, `action`, `details`, `ip_add
 (107, NULL, 'staff_status_change', 'Activated staff: Archiel R. Cabanag', '::1', '2026-04-04 15:47:23'),
 (108, NULL, 'account_linking', 'Linked resident: Creshiel Manloloyo to patient: Creshiel Manloloyo', '::1', '2026-04-05 20:58:26'),
 (109, NULL, 'resident_created', 'Created resident account: Jhea Claire Oropesa', '::1', '2026-04-07 15:18:26'),
-(110, NULL, 'account_linking', 'Linked resident: Jhea Claire Oropesa to patient: Jhea Claire L. Oropesa', '::1', '2026-04-07 15:22:48');
+(110, NULL, 'account_linking', 'Linked resident: Jhea Claire Oropesa to patient: Jhea Claire L. Oropesa', '::1', '2026-04-07 15:22:48'),
+(111, NULL, 'staff_status_change', 'Deactivated staff: Archiel R. Cabanag', '::1', '2026-04-10 09:09:02'),
+(112, NULL, 'staff_status_change', 'Activated staff: Archiel R. Cabanag', '::1', '2026-04-10 09:09:12'),
+(113, NULL, 'account_linking', 'Linked resident: Cezar Montano to patient: Jociel Studio', '::1', '2026-04-10 09:11:02'),
+(114, NULL, 'staff_created', 'Created staff account: Lance Christine Gallardo', '::1', '2026-04-12 00:45:56'),
+(115, NULL, 'staff_created', 'Created staff account: Warren Miguel Miras', '::1', '2026-04-12 00:49:00'),
+(116, NULL, 'staff_created', 'Created staff account: Leandro Labos', '::1', '2026-04-12 00:52:09');
 
 -- --------------------------------------------------------
 
@@ -785,9 +812,16 @@ INSERT INTO `sitio1_announcements` (`id`, `staff_id`, `title`, `message`, `prior
 (365, 13, 'Warren Miras', 'Miras Miras Miras Miguel', 'medium', 'lab_result', '2026-04-07', '2026-04-06 03:49:44', NULL, 'expired', 'specific', 'basic', NULL),
 (366, 13, 'Warren Miras', 'Warren Warren Warren Warren', 'normal', 'lab_result', '2026-04-07', '2026-04-06 05:59:12', NULL, 'expired', 'specific', 'basic', NULL),
 (367, 13, 'Warren- Specific Resident', 'warre', 'normal', '', '2026-04-07', '2026-04-06 06:04:49', NULL, 'expired', 'specific', 'basic', NULL),
-(368, 13, 'Jhea Claire Oropesa Announcement', 'Important Announcement', 'medium', '', '2026-04-08', '2026-04-07 07:19:03', NULL, 'active', 'specific', 'basic', NULL),
-(369, 13, 'Hello Landing Page', 'For Announcement', 'high', '', '2026-04-08', '2026-04-07 08:39:56', NULL, 'active', 'landing_page', 'basic', NULL),
-(370, 13, 'Warren Announcement', 'Hello Warren', 'normal', 'lab_result', '2026-04-08', '2026-04-07 15:26:29', NULL, 'active', 'specific', 'basic', NULL);
+(368, 13, 'Jhea Claire Oropesa Announcement', 'Important Announcement', 'medium', '', '2026-04-08', '2026-04-07 07:19:03', NULL, 'expired', 'specific', 'basic', NULL),
+(369, 13, 'Hello Landing Page', 'For Announcement', 'high', '', '2026-04-08', '2026-04-07 08:39:56', NULL, 'expired', 'landing_page', 'basic', NULL),
+(370, 13, 'Warren Announcement', 'Hello Warren', 'normal', 'lab_result', '2026-04-08', '2026-04-07 15:26:29', NULL, 'expired', 'specific', 'basic', NULL),
+(371, 13, 'Announcement', 'Lab Result', 'medium', 'lab_result', '2026-04-09', '2026-04-08 08:28:09', NULL, 'expired', 'specific', 'basic', NULL),
+(372, 12, 'Lab Result', 'Lab Result', 'high', 'lab_result', '2026-04-10', '2026-04-08 23:50:39', NULL, 'expired', 'specific', 'basic', NULL),
+(373, 12, 'Cebu Eastern College', '4rth Year Oral Defense', 'normal', '', '2026-04-10', '2026-04-09 13:27:51', NULL, 'expired', 'landing_page', 'basic', NULL),
+(374, 12, 'For All Resident', 'Oral Defense for all students', 'medium', '', '2026-04-10', '2026-04-09 13:30:35', NULL, 'expired', 'public', 'basic', NULL),
+(375, 13, 'Test Announcemnt', 'Test', 'normal', '', '2026-04-11', '2026-04-10 01:04:06', NULL, 'expired', 'landing_page', 'basic', NULL),
+(376, 13, 'TEst2 Announcement', 'awdwd', 'medium', '', '2026-04-11', '2026-04-10 01:04:52', NULL, 'expired', 'public', 'basic', NULL),
+(377, 15, 'Hello Announcement', 'Hello Announcement', 'normal', '', '2026-04-13', '2026-04-11 19:27:46', NULL, 'active', 'landing_page', 'basic', NULL);
 
 -- --------------------------------------------------------
 
@@ -907,16 +941,16 @@ INSERT INTO `sitio1_patients` (`id`, `user_id`, `phic_no`, `bhw_assigned`, `fami
 (360, NULL, '414243444546', 'Nora Aunor', 'FAM050', 'No', 'Vilma Santos', '1985-11-20', 40, '419 Juana Osmena St.', 'Zapatera', 'Diabetes', NULL, '09011223344', '2026-02-19', 'Diabetes', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Single', 'Actress', 1, '2026-02-23 08:09:33', 'PAT-20260219-VIL-4142'),
 (811, 222, '0000000', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Archiel R. Cabanag', '2002-05-26', 23, 'Labangon Cebu City', 'San Vicente', NULL, NULL, '09816497664', '2026-02-09', NULL, NULL, '2026-02-28 02:31:49', NULL, '2026-02-28 02:31:49', 'Male', '2026-04-02 12:30:00', 'onsite', 'Single', 'Student Teacher', 0, NULL, 'PAT-20260310-ARC-8402'),
 (814, NULL, '524323', 'Jinky Figuracion', '09206001470', 'Yes', 'Creshiel Manloloyo', '2002-07-04', 23, 'Barangay Luz, Cebu City', 'Sto.niño lll', NULL, NULL, '09816497664', '2026-03-03', NULL, NULL, '2026-03-02 16:58:45', NULL, NULL, 'Male', '2026-03-28 14:54:32', 'onsite', 'Single', 'Student Teacher', 1, '2026-03-03 00:58:45', 'PAT-20260305-CRE-4178'),
-(815, 223, '524323', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Warren Miguel Miras', '1998-02-03', 28, 'tisa cebu', 'Kalinao', NULL, NULL, '09504206113', '2026-03-12', NULL, 12, '2026-04-07 04:27:36', NULL, '2026-04-07 04:27:36', 'Male', '2026-04-07 15:36:37', 'onsite', 'Single', 'Student Teacher', 0, NULL, NULL),
+(815, 223, NULL, NULL, NULL, 'No', 'Warren Miguel Miras', '1998-02-03', 28, 'tisa cebu', '', NULL, NULL, '09504206113', '2026-03-12', NULL, 12, '2026-04-11 17:02:42', NULL, '2026-04-11 17:02:42', 'Male', '2026-04-11 17:02:42', 'onsite', '', '', 0, NULL, NULL),
 (816, 226, '09087656n', 'Archiel R. Cabanag', '0000', 'Yes', 'Juzaly VIllaruz', '1989-07-06', 36, '440 Kalinao St Bo luz Cebu City', 'City Central', NULL, NULL, '09290880524', '2026-03-05', NULL, NULL, '2026-03-05 06:24:12', NULL, NULL, 'Female', '2026-04-01 13:57:58', 'onsite', 'Married', 'Teacher', 1, '2026-03-05 14:24:12', 'PAT-20260313-JUZ-8159'),
 (817, 229, '123456', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Lance Christine Gallardo', '2000-09-08', 25, 'Lahug, Cebu City Philippines', 'San Vicente', NULL, NULL, '09816497664', '2026-04-03', NULL, 13, '2026-04-03 11:30:05', NULL, NULL, 'Female', '2026-04-03 11:30:23', 'onsite', 'Married', 'Teacher', 1, '2026-04-03 19:30:05', 'PAT-20260403-LAN-6271'),
 (818, 231, '524323', 'Archiel R. Cabanag', '098231421423423', 'Yes', 'Jaycar Otida', '2002-06-12', 23, 'Barangay Luz, Cebu City', 'Zapatera', NULL, NULL, '09504206113', '2026-04-03', NULL, 13, '2026-04-03 13:02:57', NULL, NULL, 'Male', '2026-04-03 13:03:15', 'onsite', 'Single', 'Student Teacher', 1, '2026-04-03 21:02:57', 'PAT-20260403-JAY-1838'),
 (819, 232, '524323', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Clint Mingo', '2006-10-20', 19, 'Barangay Luz, Cebu City', 'San. Antonio', NULL, NULL, '09312312421', '2026-04-06', NULL, 13, '2026-04-03 13:27:43', NULL, NULL, 'Male', '2026-04-04 16:54:00', 'onsite', 'Married', 'Student', 1, '2026-04-03 21:27:43', 'PAT-20260403-CLI-8785'),
 (820, 234, '524323', 'Jinky Figuracion', '098231421423423', 'Yes', 'Christian Figuracion', '2002-10-17', 23, 'Labangon Cebu City', 'City Central', NULL, NULL, '09290880524', '2026-04-03', NULL, 13, '2026-04-03 14:29:19', NULL, NULL, 'Male', '2026-04-03 14:32:16', 'onsite', 'Married', 'Teacher', 1, '2026-04-03 22:29:19', 'PAT-20260403-CHR-8236'),
-(821, 227, '524323', 'Jinky Figuracion', '09206001470', 'No', 'Creshiel Manloloyo', '2001-05-31', 24, 'Labangon Cebu City', 'San. Antonio', NULL, NULL, '09504206113', '2025-09-10', NULL, 13, '2026-04-04 18:30:47', NULL, NULL, 'Male', '2026-04-05 13:01:59', 'onsite', 'Married', 'Student Teacher', 1, '2026-04-05 02:30:47', 'PAT-20260405-CRE-3279'),
+(821, 227, '524323', 'Jinky Figuracion', '09206001470', 'No', 'Creshiel Manloloyo', '2001-05-31', 24, 'Labangon Cebu City', 'San. Antonio', NULL, NULL, '09504206113', '2025-09-10', NULL, 13, '2026-04-04 18:30:47', NULL, NULL, 'Male', '2026-04-11 16:53:04', 'onsite', 'Married', 'Student Teacher', 1, '2026-04-05 02:30:47', 'PAT-20260405-CRE-3279'),
 (823, NULL, '524323', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Jerecho Latosa', '2002-05-08', 23, 'Barangay Luz, Cebu City', 'San Vicente', NULL, NULL, '09290880524', '2002-06-11', NULL, 12, '2026-04-05 00:14:53', NULL, NULL, 'Male', '2026-04-05 00:21:16', 'onsite', 'Married', 'Teacher', 1, '2026-04-05 08:14:53', NULL),
-(824, NULL, '524323', 'Jinky Figuracion', '098231421423423', 'Yes', 'Jociel Studio', '2002-05-09', 23, 'Barangay Luz, Cebu City', 'San Roque', NULL, NULL, '09206001470', '2026-03-29', NULL, 12, '2026-04-05 00:20:09', NULL, NULL, 'Female', '2026-04-05 00:20:09', 'onsite', 'Married', 'Student Teacher', 1, '2026-04-05 08:20:09', NULL),
-(826, 235, '524323', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Jhea Claire L. Oropesa', '2002-01-26', 24, 'Barangay Luz, Cebu City', 'Nangka', NULL, NULL, '09816497664', '2025-09-02', NULL, 13, '2026-04-08 00:10:54', NULL, '2026-04-08 00:10:54', 'Female', '2026-04-08 00:12:05', 'onsite', 'Single', 'Student Teacher', 0, NULL, NULL);
+(824, 233, '524323', 'Jinky Figuracion', '09206001470', 'Yes', 'Jociel Studio', '2002-05-09', 23, 'Barangay Luz, Cebu City', 'San Roque', NULL, NULL, '09206001470', '2026-03-29', NULL, 12, '2026-04-05 00:20:09', NULL, NULL, 'Female', '2026-04-10 01:11:02', 'onsite', 'Married', 'Student Teacher', 1, '2026-04-05 08:20:09', 'PAT-20260410-JOC-5078'),
+(828, NULL, '524323', 'Jinky Figuracion', '09206001470', 'Yes', 'Creshiel Manloloyo', '2026-03-29', 0, 'Labangon Cebu City', 'San. Antonio', NULL, NULL, '09312312421', '2026-04-12', NULL, 16, '2026-04-11 18:51:24', NULL, NULL, 'Male', '2026-04-11 19:22:39', 'onsite', 'Single', 'Student Teacher', 1, '2026-04-12 02:51:24', NULL);
 
 -- --------------------------------------------------------
 
@@ -946,7 +980,10 @@ CREATE TABLE `sitio1_staff` (
 
 INSERT INTO `sitio1_staff` (`id`, `username`, `password`, `full_name`, `position`, `created_by`, `created_at`, `updated_at`, `status`, `is_active`, `work_days`, `specialization`, `license_number`) VALUES
 (12, 'Russel', '$2y$10$YzVlgLQg7V2zgnLMMOPSdO9NMq6EZQNFrtfPuUr.jd5kc4F8G7qb.', 'Russel Evan Loquinario', 'Nurse', NULL, '2026-03-10 15:06:02', '2026-03-11 13:06:31', 'active', 1, '1111100', 'operation', '53123213'),
-(13, 'Archiel', '$2y$10$J47TKGo72XKyzUGOsXdFBuLnZNr9Zsgo1wHCdgrtbV19dyYpUurd2', 'Archiel R. Cabanag', 'Nurse', NULL, '2026-03-13 04:36:06', '2026-04-04 15:47:23', 'active', 1, '1111100', 'operation', '53123213');
+(13, 'Archiel', '$2y$10$J47TKGo72XKyzUGOsXdFBuLnZNr9Zsgo1wHCdgrtbV19dyYpUurd2', 'Archiel R. Cabanag', 'Nurse', NULL, '2026-03-13 04:36:06', '2026-04-10 09:09:12', 'active', 1, '1111100', 'operation', '53123213'),
+(14, 'Lance', '$2y$10$hQcd7gYmoACPkgU3A74q/u7oRlroS9KVrlwBCsZfcFCIVNa6POrwm', 'Lance Christine Gallardo', 'Nurse', NULL, '2026-04-11 16:45:56', NULL, 'active', 1, '1111100', 'General Medecine', '123456'),
+(15, 'Warren', '$2y$10$2bq.nlqZtWXYaO0q3avpXu3e9NDk4GuA1iPNr5fBPKAtLWOx4d.CO', 'Warren Miguel Miras', 'Assistant Doctor', NULL, '2026-04-11 16:49:00', NULL, 'active', 1, '1111100', 'General Medecine', '123456'),
+(16, 'Leandro', '$2y$10$Bs.T61dtyw43xR4mEEY2j.daxMWWLY9NEjz6dejEzxdQSRiylEr4i', 'Leandro Labos', 'Working Scholar', NULL, '2026-04-11 16:52:09', NULL, 'active', 1, '1111100', 'General Medecine', '123456');
 
 -- --------------------------------------------------------
 
@@ -1000,7 +1037,7 @@ CREATE TABLE `sitio1_users` (
 --
 
 INSERT INTO `sitio1_users` (`id`, `username`, `password`, `email`, `full_name`, `gender`, `age`, `date_of_birth`, `address`, `sitio`, `contact`, `civil_status`, `occupation`, `approved`, `approved_by`, `unique_number`, `created_at`, `last_login`, `status`, `role`, `specialization`, `license_number`, `updated_at`, `verification_method`, `id_image_path`, `profile_image`, `verification_notes`, `verification_consent`, `id_verified`, `verified_at`, `account_linked`, `patient_record_id`, `patient_record_uid`, `failed_login_attempts`, `last_failed_login`, `account_locked_until`, `password_reset_token`, `password_reset_token_expires`) VALUES
-(222, 'Archiel', '$2y$10$NE.sZ12vOSNrfeHkaJvnEOeHb0Yob3TgWUxt0JzJA6aZECuknbjq2', 'cabanagarchielrosel@gmail.com', 'Archiel R. Cabanag', 'male', 23, '2002-05-26', NULL, 'San Roque', '09816497664', NULL, NULL, 1, NULL, 'RESSAN202603595', '2026-03-10 14:34:21', NULL, 'approved', 'patient', NULL, NULL, '2026-04-07 05:03:06', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-03-10 14:34:21', 0, NULL, 'PAT-20260310-ARC-8402', 0, NULL, NULL, NULL, NULL),
+(222, 'Archiel', '$2y$10$NE.sZ12vOSNrfeHkaJvnEOeHb0Yob3TgWUxt0JzJA6aZECuknbjq2', 'cabanagarchielrosel@gmail.com', 'Archiel R. Cabanag', 'male', 23, '2002-05-26', NULL, 'San Roque', '09816497664', NULL, NULL, 1, NULL, 'RESSAN202603595', '2026-03-10 14:34:21', NULL, 'approved', 'patient', NULL, NULL, '2026-04-08 08:40:44', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-03-10 14:34:21', 0, NULL, 'PAT-20260310-ARC-8402', 0, NULL, NULL, NULL, NULL),
 (223, 'Warren', '$2y$10$dnCiRssAzE9NW/c4GZWhCOiMwD7nO5n/zMxHwmpTKVcccjv.lmnjS', 'warrenmiguel789@gmail.com', 'Warren Miguel Miras', 'male', 23, '2002-03-12', NULL, 'San Vicente', '09206001470', NULL, NULL, 1, NULL, 'RESSAN202603643', '2026-03-11 03:12:46', NULL, 'approved', 'patient', NULL, NULL, '2026-03-28 12:38:59', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-03-11 03:12:46', 0, NULL, 'PAT-20260311-WAR-1609', 0, NULL, NULL, NULL, NULL),
 (226, 'Juzaly', '$2y$10$.RK59/lllAyGjeQpVrGDeeQFmjTqSRsMPn6AMAosyPnEKpxurmqia', 'juzalyvillaruz@gmail.com', 'Juzaly VIllaruz', 'male', 36, '1989-07-06', NULL, 'Mabuhay', '09816497664', NULL, NULL, 1, NULL, 'RESMAB202603425', '2026-03-13 13:58:33', NULL, 'approved', 'patient', NULL, NULL, '2026-03-13 13:59:54', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-03-13 13:58:33', 0, NULL, 'PAT-20260313-JUZ-8159', 0, NULL, NULL, NULL, NULL),
 (227, 'Creshiel', '$2y$10$oe.ciJBuXRXMfxwEvBudEOlvLTR1hzTpd8IJ27Ers4jiBBvRWVeoi', 'creshielmanloloyo@gmail.com', 'Creshiel Manloloyo', 'female', 23, '2002-06-19', NULL, 'Mabuhay', '09816497664', NULL, NULL, 1, NULL, 'RESMAB202603758', '2026-03-15 03:35:17', NULL, 'approved', 'patient', NULL, NULL, '2026-04-05 12:58:26', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-03-15 03:35:17', 0, NULL, 'PAT-20260405-CRE-3279', 0, NULL, NULL, NULL, NULL),
@@ -1008,7 +1045,7 @@ INSERT INTO `sitio1_users` (`id`, `username`, `password`, `email`, `full_name`, 
 (230, 'Roselan', '$2y$10$6QkxpaH5Uo9Ti68faib0AOy0IApdck8hzTOSpH.D4yhI1B9SnqcKu', 'roselancabanag01@gmail.com', 'Roselan T. Cabanag', 'male', 47, '1978-07-28', NULL, 'San. Antonio', '09206001470', NULL, NULL, 1, NULL, 'RESSAN202604595', '2026-04-03 00:42:12', NULL, 'approved', 'patient', NULL, NULL, NULL, 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-04-03 00:42:12', 0, NULL, NULL, 0, NULL, NULL, NULL, NULL),
 (231, 'Jaycar', '$2y$10$R.F76GKqCecENpP3H2OjEOHXQG15y7gi4xAoLaheigJIMOahoo.cC', 'jaycarotida@gmail.com', 'Jaycar Otida', 'male', 23, '2002-06-05', NULL, 'San. Antonio', NULL, NULL, NULL, 1, NULL, 'RESSAN202604555', '2026-04-03 12:01:16', NULL, 'approved', 'patient', NULL, NULL, '2026-04-03 13:03:15', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-04-03 12:01:16', 0, NULL, 'PAT-20260403-JAY-1838', 0, NULL, NULL, NULL, NULL),
 (232, 'Clint', '$2y$10$UEf0rTtRISiRHxAwkom/EOQ3VCLXVAVxQmP8Z1lw5UNDoz26wpKte', 'clintmingo@gmail.com', 'Clint Mingo', 'male', 18, '2007-11-24', NULL, 'Zapatera', '09206001470', NULL, NULL, 1, NULL, 'RESZAP202604833', '2026-04-03 13:04:10', NULL, 'approved', 'patient', NULL, NULL, '2026-04-03 13:27:52', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-04-03 13:04:10', 0, NULL, 'PAT-20260403-CLI-8785', 0, NULL, NULL, NULL, NULL),
-(233, 'Cezar', '$2y$10$etv0XZirSUOA3Ak5/Nds5ubcRZYBzOw4npG6ItmPqJ0WT.L6d4.le', 'cezarmontano@gmail.com', 'Cezar Montano', 'male', 22, '2003-11-21', NULL, 'Sto.niño lll', '09206001470', NULL, NULL, 1, NULL, 'RESSTO202604637', '2026-04-03 13:29:23', NULL, 'approved', 'patient', NULL, NULL, NULL, 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-04-03 13:29:23', 0, NULL, NULL, 0, NULL, NULL, NULL, NULL),
+(233, 'Cezar', '$2y$10$etv0XZirSUOA3Ak5/Nds5ubcRZYBzOw4npG6ItmPqJ0WT.L6d4.le', 'cezarmontano@gmail.com', 'Cezar Montano', 'male', 22, '2003-11-21', NULL, 'Sto.niño lll', '09206001470', NULL, NULL, 1, NULL, 'RESSTO202604637', '2026-04-03 13:29:23', NULL, 'approved', 'patient', NULL, NULL, '2026-04-10 01:11:02', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-04-03 13:29:23', 0, NULL, 'PAT-20260410-JOC-5078', 0, NULL, NULL, NULL, NULL),
 (234, 'Christian', '$2y$10$qHEen/i11dGUuE.amZ0CvO608StKQb4wfEO1jOr0vWYoVlLK.hG5W', 'christianfiguracion@gmail.com', 'Christian Figuracion', 'male', 21, '2004-07-17', NULL, 'San. Antonio', '09206001470', NULL, NULL, 1, NULL, 'RESSAN202604500', '2026-04-03 13:42:30', NULL, 'approved', 'patient', NULL, NULL, '2026-04-03 14:32:16', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-04-03 13:42:30', 0, NULL, 'PAT-20260403-CHR-8236', 0, NULL, NULL, NULL, NULL),
 (235, 'Jhea', '$2y$10$akpCpM6i29lGTF2Ba0.i9OFpzJ5JH4njc/G7bstkHUkuTRXcpiwhi', 'clairexxi02@gmail.com', 'Jhea Claire Oropesa', 'female', 23, '2002-06-19', NULL, 'San Roque', '09206001470', NULL, NULL, 1, NULL, 'RESSAN202604289', '2026-04-07 07:18:26', NULL, 'approved', 'patient', NULL, NULL, '2026-04-07 07:22:48', 'manual_verification', NULL, NULL, NULL, 0, 1, '2026-04-07 07:18:26', 0, NULL, 'PAT-20260407-JHE-6777', 0, NULL, NULL, NULL, NULL);
 
@@ -1618,7 +1655,254 @@ INSERT INTO `staff_activity_log` (`id`, `staff_id`, `action_type`, `related_id`,
 (704, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 08:12:03'),
 (705, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 08:12:08'),
 (706, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 08:12:22'),
-(707, 13, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 08:12:33');
+(707, 13, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 08:12:33'),
+(708, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:10:56'),
+(709, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:11:05'),
+(710, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:11:56'),
+(711, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:21:13'),
+(712, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:27:43'),
+(713, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:28:31'),
+(714, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:28:40'),
+(715, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:35:08'),
+(716, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:35:14'),
+(717, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:43:36'),
+(718, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:47:05'),
+(719, 13, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:47:17'),
+(720, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:47:31'),
+(721, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:48:33'),
+(722, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 13:48:37'),
+(723, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 15:49:32'),
+(724, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:14:54'),
+(725, 13, 'print_patient', 826, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Jhea Claire L. Oropesa\",\"patient_id\":826}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:15:23'),
+(726, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:15:38'),
+(727, 13, 'view_patient', 826, '{\"patient_id\":826,\"patient_name\":\"Jhea Claire L. Oropesa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:18:17'),
+(728, 13, 'archive_patient', 826, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Jhea Claire L. Oropesa\",\"original_id\":\"826\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:18:41'),
+(729, 13, 'send_announcement', 371, '{\"title\":\"Announcement\",\"audience_type\":\"specific\",\"target_count\":1,\"announcement_type\":\"lab_result\",\"target_users\":\"Clint Mingo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:28:17'),
+(730, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:42:27'),
+(731, 13, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:42:40'),
+(732, 13, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:43:31'),
+(733, 13, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:43:41'),
+(734, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:47:38'),
+(735, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:53:26'),
+(736, 13, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:53:37'),
+(737, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 16:54:45'),
+(738, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 17:29:14'),
+(739, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 19:48:43'),
+(740, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 19:49:17'),
+(741, 12, 'staff_login', NULL, '{\"full_name\":\"Russel Evan Loquinario\",\"username\":\"Russel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 22:05:40'),
+(742, 12, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 22:06:02'),
+(743, 12, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 22:07:08'),
+(744, 12, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 23:36:32'),
+(745, 12, 'print_patient', 815, '{\"full_name\":\"Russel Evan Loquinario\",\"patient_name\":\"Warren Miguel Miras\",\"patient_id\":815}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-08 23:36:36'),
+(746, 12, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 00:20:43'),
+(747, 12, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 00:21:00'),
+(748, 12, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 00:23:07'),
+(749, 12, 'staff_login', NULL, '{\"full_name\":\"Russel Evan Loquinario\",\"username\":\"Russel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 07:36:48'),
+(750, 12, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 07:37:06'),
+(751, 12, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 07:37:18'),
+(752, 12, 'send_announcement', 372, '{\"title\":\"Lab Result\",\"audience_type\":\"specific\",\"target_count\":1,\"announcement_type\":\"lab_result\",\"target_users\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 07:50:46'),
+(753, 12, 'staff_logout', NULL, '{\"full_name\":\"Russel Evan Loquinario\",\"username\":\"Russel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 07:54:38'),
+(754, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 09:11:21'),
+(755, 12, 'staff_login', NULL, '{\"full_name\":\"Russel Evan Loquinario\",\"username\":\"Russel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 13:52:07'),
+(756, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 15:50:37'),
+(757, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 17:04:46'),
+(758, 13, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 17:04:59'),
+(759, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 17:07:55'),
+(760, 13, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 17:08:03'),
+(761, 12, 'staff_login', NULL, '{\"full_name\":\"Russel Evan Loquinario\",\"username\":\"Russel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:07:13'),
+(762, 12, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:07:36'),
+(763, 12, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:07:49'),
+(764, 12, 'view_patient', 820, '{\"patient_id\":820,\"patient_name\":\"Christian Figuracion\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:07:51'),
+(765, 12, 'view_patient', 816, '{\"patient_id\":816,\"patient_name\":\"Juzaly VIllaruz\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:09:17'),
+(766, 12, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:10:02'),
+(767, 12, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:10:05'),
+(768, 12, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:10:54'),
+(769, 12, 'print_patient', 824, '{\"full_name\":\"Russel Evan Loquinario\",\"patient_name\":\"Jociel Studio\",\"patient_id\":824}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:11:07'),
+(770, 12, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:12:09'),
+(771, 12, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:12:20'),
+(772, 12, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:12:25'),
+(773, 12, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:16:07'),
+(774, 12, 'archive_patient', 815, '{\"full_name\":\"Russel Evan Loquinario\",\"patient_name\":\"Warren Miguel Miras\",\"original_id\":\"815\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:16:58'),
+(775, 12, 'restore_patient', 815, '{\"patient_id\":\"815\",\"patient_name\":\"Warren Miguel Miras\",\"restore_time\":\"2026-04-09 21:18:20\",\"restored_by\":\"Russel Evan Loquinario\",\"restore_type\":\"hard_delete\",\"user_id_handled\":\"preserved\",\"added_by_handled\":\"preserved\",\"consultation_notes_restored\":0,\"medical_info_restored\":true,\"medical_fields_restored\":[\"gender\"],\"verification\":{\"patient_record\":\"verified\",\"user_id_final\":223,\"added_by_final\":12,\"medical_info\":\"verified\",\"consultation_notes_count\":0,\"consultation_notes\":\"none_found\"}}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:18:20'),
+(776, 12, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:22:39'),
+(777, 12, 'send_announcement', 373, '{\"title\":\"Cebu Eastern College\",\"audience_type\":\"landing_page\",\"announcement_type\":\"basic\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:27:51'),
+(778, 12, 'send_announcement', 374, '{\"title\":\"For All Resident\",\"audience_type\":\"public\",\"target_count\":11,\"announcement_type\":\"basic\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:31:55'),
+(779, 12, 'staff_logout', NULL, '{\"full_name\":\"Russel Evan Loquinario\",\"username\":\"Russel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-09 21:45:19'),
+(780, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-10 08:49:08'),
+(781, 13, 'add_patient', 827, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Warren Miguel Miras\",\"patient_id\":\"827\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-10 08:53:50'),
+(782, 13, 'view_patient', 827, '{\"patient_id\":827,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-10 08:54:26'),
+(783, 13, 'view_patient', 827, '{\"patient_id\":827,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-10 08:54:57'),
+(784, 13, 'print_patient', 827, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Warren Miguel Miras\",\"patient_id\":827}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-10 08:55:05'),
+(785, 13, 'archive_patient', 827, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Warren Miguel Miras\",\"original_id\":\"827\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-10 08:59:42'),
+(786, 13, 'send_announcement', 375, '{\"title\":\"Test Announcemnt\",\"audience_type\":\"landing_page\",\"announcement_type\":\"basic\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-10 09:04:06'),
+(787, 13, 'send_announcement', 376, '{\"title\":\"TEst2 Announcement\",\"audience_type\":\"public\",\"target_count\":11,\"announcement_type\":\"basic\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-10 09:05:53'),
+(788, 13, 'staff_logout', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-10 09:06:00'),
+(789, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:27:17'),
+(790, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:37:35'),
+(791, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:46:02'),
+(792, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:47:56'),
+(793, 13, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:47:58'),
+(794, 13, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:48:01'),
+(795, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:48:23'),
+(796, 13, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:48:28'),
+(797, 13, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:48:30'),
+(798, 13, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:48:33'),
+(799, 13, 'view_patient', 820, '{\"patient_id\":820,\"patient_name\":\"Christian Figuracion\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:48:35'),
+(800, 13, 'view_patient', 820, '{\"patient_id\":820,\"patient_name\":\"Christian Figuracion\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:48:39'),
+(801, 13, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:08'),
+(802, 13, 'view_patient', 820, '{\"patient_id\":820,\"patient_name\":\"Christian Figuracion\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:11'),
+(803, 13, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:13'),
+(804, 13, 'staff_logout', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:19'),
+(805, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:28'),
+(806, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:44'),
+(807, 15, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:47'),
+(808, 15, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:50'),
+(809, 15, 'view_patient', 820, '{\"patient_id\":820,\"patient_name\":\"Christian Figuracion\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:53'),
+(810, 15, 'view_patient', 820, '{\"patient_id\":820,\"patient_name\":\"Christian Figuracion\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:49:57'),
+(811, 15, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:51:33'),
+(812, 15, 'view_patient', 820, '{\"patient_id\":820,\"patient_name\":\"Christian Figuracion\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:51:35'),
+(813, 15, 'staff_logout', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:52:28'),
+(814, 16, 'staff_login', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:52:44'),
+(815, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:52:52'),
+(816, 16, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:52:59'),
+(817, 16, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:53:07'),
+(818, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:53:55'),
+(819, 16, 'staff_logout', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:53:58'),
+(820, 14, 'staff_login', NULL, '{\"full_name\":\"Lance Christine Gallardo\",\"username\":\"Lance\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:54:16'),
+(821, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:54:22'),
+(822, 14, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:54:25'),
+(823, 14, 'view_patient', 820, '{\"patient_id\":820,\"patient_name\":\"Christian Figuracion\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:54:27'),
+(824, 14, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:54:30'),
+(825, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:57:11'),
+(826, 14, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:57:20'),
+(827, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:59:09'),
+(828, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:59:36'),
+(829, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 00:59:58'),
+(830, 14, 'print_patient', 815, '{\"full_name\":\"Lance Christine Gallardo\",\"patient_name\":\"Warren Miguel Miras\",\"patient_id\":815}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:00:01'),
+(831, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:00:21'),
+(832, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:00:31'),
+(833, 14, 'staff_logout', NULL, '{\"full_name\":\"Lance Christine Gallardo\",\"username\":\"Lance\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:00:35'),
+(834, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:00:46'),
+(835, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:00:53'),
+(836, 15, 'archive_patient', 815, '{\"full_name\":\"Warren Miguel Miras\",\"patient_name\":\"Warren Miguel Miras\",\"original_id\":\"815\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:02:37'),
+(837, 15, 'restore_patient', 815, '{\"patient_id\":\"815\",\"patient_name\":\"Warren Miguel Miras\",\"restore_time\":\"2026-04-12 01:02:42\",\"restored_by\":\"Warren Miguel Miras\",\"restore_type\":\"hard_delete\",\"user_id_handled\":\"preserved\",\"added_by_handled\":\"preserved\",\"consultation_notes_restored\":0,\"medical_info_restored\":true,\"medical_fields_restored\":[\"gender\"],\"verification\":{\"patient_record\":\"verified\",\"user_id_final\":223,\"added_by_final\":12,\"medical_info\":\"verified\",\"consultation_notes_count\":0,\"consultation_notes\":\"none_found\"}}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:02:42'),
+(838, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:07:00'),
+(839, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:07:05'),
+(840, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:07:11'),
+(841, 15, 'staff_logout', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:07:22'),
+(842, 14, 'staff_login', NULL, '{\"full_name\":\"Lance Christine Gallardo\",\"username\":\"Lance\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:18:16'),
+(843, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:18:25'),
+(844, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:18:41'),
+(845, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:18:44'),
+(846, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:19:01'),
+(847, 14, 'staff_logout', NULL, '{\"full_name\":\"Lance Christine Gallardo\",\"username\":\"Lance\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:19:25'),
+(848, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:19:42'),
+(849, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:19:49'),
+(850, 15, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:19:58'),
+(851, 15, 'staff_logout', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:21:06'),
+(852, 16, 'staff_login', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:21:25'),
+(853, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:21:33'),
+(854, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:21:43'),
+(855, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:26:20'),
+(856, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:27:08'),
+(857, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:30:42'),
+(858, 16, 'staff_logout', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:30:51'),
+(859, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:30:58'),
+(860, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:31:04'),
+(861, 15, 'staff_logout', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:31:35'),
+(862, 16, 'staff_login', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:31:42'),
+(863, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:31:47'),
+(864, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:40:01'),
+(865, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:50:54'),
+(866, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:51:53'),
+(867, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 01:53:20'),
+(868, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:34:32'),
+(869, 16, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:36:09'),
+(870, 16, 'staff_logout', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:36:25'),
+(871, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:36:33'),
+(872, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:36:49'),
+(873, 15, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:36:53'),
+(874, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:37:13'),
+(875, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:37:27'),
+(876, 15, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:37:45'),
+(877, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:38:08'),
+(878, 15, 'staff_logout', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:38:34'),
+(879, 16, 'staff_login', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:38:42'),
+(880, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:38:49'),
+(881, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:39:21'),
+(882, 16, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:40:10');
+INSERT INTO `staff_activity_log` (`id`, `staff_id`, `action_type`, `related_id`, `details`, `ip_address`, `user_agent`, `created_at`) VALUES
+(883, 16, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:40:19'),
+(884, 16, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:40:37'),
+(885, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:40:40'),
+(886, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:41:53'),
+(887, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:42:58'),
+(888, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:43:19'),
+(889, 16, 'staff_logout', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:43:31'),
+(890, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:43:38'),
+(891, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:43:44'),
+(892, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:44:31'),
+(893, 15, 'staff_logout', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:44:36'),
+(894, 16, 'staff_login', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:44:45'),
+(895, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:44:52'),
+(896, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:46:43'),
+(897, 16, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:47:24'),
+(898, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:47:33'),
+(899, 16, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:47:46'),
+(900, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:47:50'),
+(901, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:49:14'),
+(902, 16, 'add_patient', 828, '{\"full_name\":\"Leandro Labos\",\"patient_name\":\"Creshiel Manloloyo\",\"patient_id\":\"828\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:51:24'),
+(903, 16, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:51:27'),
+(904, 16, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:52:03'),
+(905, 16, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:52:24'),
+(906, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:52:30'),
+(907, 16, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:54:35'),
+(908, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:55:11'),
+(909, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:55:27'),
+(910, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:55:35'),
+(911, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:56:21'),
+(912, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:56:40'),
+(913, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:56:44'),
+(914, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:56:56'),
+(915, 16, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:57:58'),
+(916, 16, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:58:08'),
+(917, 16, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:58:11'),
+(918, 16, 'staff_logout', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:58:14'),
+(919, 14, 'staff_login', NULL, '{\"full_name\":\"Lance Christine Gallardo\",\"username\":\"Lance\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:58:22'),
+(920, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:58:39'),
+(921, 14, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:58:42'),
+(922, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:59:02'),
+(923, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:59:26'),
+(924, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 02:59:50'),
+(925, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:17:44'),
+(926, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:22:02'),
+(927, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:22:18'),
+(928, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:22:22'),
+(929, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:22:27'),
+(930, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:22:31'),
+(931, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:22:41'),
+(932, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:23:26'),
+(933, 14, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:23:28'),
+(934, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:23:40'),
+(935, 14, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:23:42'),
+(936, 14, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:24:05'),
+(937, 14, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:24:22'),
+(938, 14, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:24:30'),
+(939, 14, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:24:46'),
+(940, 14, 'staff_logout', NULL, '{\"full_name\":\"Lance Christine Gallardo\",\"username\":\"Lance\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:25:17'),
+(941, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:25:43'),
+(942, 15, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:26:01'),
+(943, 15, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:26:58'),
+(944, 15, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:27:08'),
+(945, 15, 'send_announcement', 377, '{\"title\":\"Hello Announcement\",\"audience_type\":\"landing_page\",\"announcement_type\":\"basic\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:27:46'),
+(946, 15, 'staff_logout', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:37:12'),
+(947, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:38:20'),
+(948, 13, 'staff_logout', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 03:38:27'),
+(949, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:03:35'),
+(950, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:03:49'),
+(951, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:05:11'),
+(952, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:05:18'),
+(953, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:05:37');
 
 -- --------------------------------------------------------
 
@@ -1646,6 +1930,34 @@ CREATE TABLE `staff_documents` (
 
 INSERT INTO `staff_documents` (`id`, `title`, `description`, `file_name`, `file_type`, `file_size`, `uploaded_by`, `uploaded_at`, `is_public`, `created_at`, `updated_at`) VALUES
 (7, 'Health Records - 2025-2026', 'For Keeps', '1746553255_consultations_report_2025-05-01_to_2025-05-31.csv', '', 0, 1, '2025-05-06 17:40:55', 0, '2025-05-06 17:40:55', '2025-05-06 17:40:55');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `staff_role_permissions`
+--
+
+CREATE TABLE `staff_role_permissions` (
+  `position` varchar(100) NOT NULL,
+  `can_manage_patient_records` tinyint(1) NOT NULL DEFAULT 0,
+  `can_access_consultation_notes` tinyint(1) NOT NULL DEFAULT 0,
+  `can_create_consultation_notes` tinyint(1) NOT NULL DEFAULT 0,
+  `can_export_patient_records` tinyint(1) NOT NULL DEFAULT 0,
+  `can_archive_patient_records` tinyint(1) NOT NULL DEFAULT 0,
+  `can_print_patient_records` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `can_add_patient_records` tinyint(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `staff_role_permissions`
+--
+
+INSERT INTO `staff_role_permissions` (`position`, `can_manage_patient_records`, `can_access_consultation_notes`, `can_create_consultation_notes`, `can_export_patient_records`, `can_archive_patient_records`, `can_print_patient_records`, `created_at`, `updated_at`, `can_add_patient_records`) VALUES
+('Assistant Doctor', 1, 0, 0, 0, 0, 0, '2026-04-11 17:16:46', '2026-04-11 19:26:54', 0),
+('Nurse', 1, 0, 0, 1, 0, 0, '2026-04-11 17:16:46', '2026-04-12 01:05:31', 1),
+('Working Scholar', 1, 0, 0, 1, 0, 1, '2026-04-11 17:16:46', '2026-04-11 18:58:05', 0);
 
 -- --------------------------------------------------------
 
@@ -2380,7 +2692,112 @@ INSERT INTO `user_activity_log` (`id`, `user_id`, `action_type`, `action_timesta
 (709, 235, 'logout', '2026-04-08 08:06:18', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
 (710, 223, 'login', '2026-04-08 08:06:30', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
 (711, 223, 'logout', '2026-04-08 08:09:30', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
-(712, 227, 'login', '2026-04-08 08:09:41', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0');
+(712, 227, 'login', '2026-04-08 08:09:41', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(713, 222, 'login', '2026-04-08 13:06:44', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(714, 13, 'login', '2026-04-08 13:10:55', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(715, 222, 'logout', '2026-04-08 13:11:16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(716, 235, 'login', '2026-04-08 13:11:26', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(717, 13, 'login', '2026-04-08 15:49:32', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(718, 222, 'login', '2026-04-08 16:40:44', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(719, 222, 'logout', '2026-04-08 16:48:31', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(720, 223, 'login', '2026-04-08 16:48:39', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(721, 223, 'logout', '2026-04-08 17:29:35', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(722, 13, 'login', '2026-04-08 19:48:43', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(723, 222, 'login', '2026-04-08 22:05:18', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(724, 12, 'login', '2026-04-08 22:05:40', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(725, 222, 'logout', '2026-04-08 23:36:11', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(726, 12, 'login', '2026-04-09 07:36:48', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(727, 222, 'login', '2026-04-09 07:44:07', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(728, 222, 'view_announcement', '2026-04-09 07:52:43', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(729, 222, 'accept_announcement', '2026-04-09 07:53:21', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(730, 222, 'view_announcement', '2026-04-09 07:53:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(731, 222, 'view_announcement', '2026-04-09 07:53:48', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(732, 222, 'view_announcement', '2026-04-09 07:54:19', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(733, 12, 'logout', '2026-04-09 07:54:38', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(734, 222, 'logout', '2026-04-09 09:09:58', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(735, 13, 'login', '2026-04-09 09:11:21', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(736, 12, 'login', '2026-04-09 13:52:07', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(737, 13, 'login', '2026-04-09 15:50:37', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(738, 222, 'login', '2026-04-09 17:04:23', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(739, 13, 'login', '2026-04-09 17:04:46', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(740, 12, 'login', '2026-04-09 21:07:13', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(741, 222, 'logout', '2026-04-09 21:28:16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(742, 222, 'login', '2026-04-09 21:32:38', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(743, 222, 'view_announcement', '2026-04-09 21:32:51', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(744, 12, 'logout', '2026-04-09 21:45:19', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(745, 1, 'login', '2026-04-09 21:45:28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(746, 222, 'login', '2026-04-10 06:43:24', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(747, 222, 'view_announcement', '2026-04-10 06:50:42', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(748, 222, 'view_announcement', '2026-04-10 06:52:57', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(749, 222, 'logout', '2026-04-10 07:21:20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(750, 222, 'login', '2026-04-10 08:46:09', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(751, 13, 'login', '2026-04-10 08:49:08', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(752, 222, 'logout', '2026-04-10 09:04:16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(753, 13, 'logout', '2026-04-10 09:06:00', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(754, 1, 'login', '2026-04-10 09:06:11', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(755, 222, 'login', '2026-04-11 18:39:19', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(756, 222, 'logout', '2026-04-11 19:08:28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(757, 222, 'login', '2026-04-11 22:46:48', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(758, 222, 'logout', '2026-04-11 22:55:18', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(759, 222, 'login', '2026-04-11 22:56:14', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(760, 222, 'logout', '2026-04-11 22:56:18', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(761, 222, 'login', '2026-04-11 22:56:29', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(762, 222, 'logout', '2026-04-11 22:56:33', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(763, 222, 'login', '2026-04-11 22:57:18', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(764, 222, 'logout', '2026-04-11 22:57:21', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(765, 222, 'login', '2026-04-11 23:34:30', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(766, 222, 'logout', '2026-04-11 23:34:43', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(767, 13, 'login', '2026-04-12 00:27:17', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(768, 1, 'login', '2026-04-12 00:35:02', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(769, 222, 'login', '2026-04-12 00:35:29', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(770, 222, 'view_announcement', '2026-04-12 00:35:42', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(771, 222, 'view_announcement', '2026-04-12 00:39:42', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(772, 222, 'view_announcement', '2026-04-12 00:39:47', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(773, 13, 'logout', '2026-04-12 00:49:19', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(774, 15, 'login', '2026-04-12 00:49:28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(775, 15, 'logout', '2026-04-12 00:52:28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(776, 16, 'login', '2026-04-12 00:52:44', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(777, 16, 'logout', '2026-04-12 00:53:58', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(778, 14, 'login', '2026-04-12 00:54:16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(779, 14, 'logout', '2026-04-12 01:00:35', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(780, 15, 'login', '2026-04-12 01:00:46', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(781, 15, 'logout', '2026-04-12 01:07:22', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(782, 14, 'login', '2026-04-12 01:18:16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(783, 14, 'logout', '2026-04-12 01:19:25', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(784, 15, 'login', '2026-04-12 01:19:42', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(785, 15, 'logout', '2026-04-12 01:21:06', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(786, 16, 'login', '2026-04-12 01:21:25', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(787, 16, 'logout', '2026-04-12 01:30:51', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(788, 15, 'login', '2026-04-12 01:30:58', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(789, 15, 'logout', '2026-04-12 01:31:35', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(790, 16, 'login', '2026-04-12 01:31:42', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(791, 16, 'logout', '2026-04-12 02:36:25', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(792, 15, 'login', '2026-04-12 02:36:33', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(793, 15, 'logout', '2026-04-12 02:38:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(794, 16, 'login', '2026-04-12 02:38:42', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(795, 16, 'logout', '2026-04-12 02:43:31', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(796, 15, 'login', '2026-04-12 02:43:38', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(797, 15, 'logout', '2026-04-12 02:44:36', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(798, 16, 'login', '2026-04-12 02:44:45', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(799, 16, 'logout', '2026-04-12 02:58:14', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(800, 14, 'login', '2026-04-12 02:58:22', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(801, 14, 'logout', '2026-04-12 03:25:17', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(802, 15, 'login', '2026-04-12 03:25:43', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(803, 222, 'logout', '2026-04-12 03:28:05', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(804, 15, 'logout', '2026-04-12 03:37:12', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(805, 13, 'login', '2026-04-12 03:38:20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(806, 13, 'logout', '2026-04-12 03:38:27', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(807, 222, 'login', '2026-04-12 03:41:21', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(808, 222, 'logout', '2026-04-12 03:41:28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(809, 222, 'login', '2026-04-12 03:41:36', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(810, 222, 'logout', '2026-04-12 03:41:40', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(811, 222, 'login', '2026-04-12 03:41:52', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(812, 222, 'logout', '2026-04-12 03:41:58', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(813, 222, 'login', '2026-04-12 03:42:07', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(814, 222, 'logout', '2026-04-12 03:42:51', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(815, 222, 'login', '2026-04-12 03:43:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(816, 222, 'logout', '2026-04-12 03:43:55', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(817, 13, 'login', '2026-04-12 09:03:35', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36');
 
 -- --------------------------------------------------------
 
@@ -2415,7 +2832,8 @@ INSERT INTO `user_announcements` (`id`, `user_id`, `announcement_id`, `status`, 
 (200, 222, 364, 'accepted', '2026-04-06 03:51:41', '2026-04-06 03:51:41'),
 (201, 223, 366, 'accepted', '2026-04-06 06:02:17', '2026-04-06 06:02:17'),
 (202, 223, 352, 'dismissed', '2026-04-06 06:02:44', '2026-04-06 06:02:44'),
-(203, 235, 368, 'accepted', '2026-04-07 08:38:44', '2026-04-07 08:38:44');
+(203, 235, 368, 'accepted', '2026-04-07 08:38:44', '2026-04-07 08:38:44'),
+(204, 222, 372, 'accepted', '2026-04-08 23:53:21', '2026-04-08 23:53:21');
 
 -- --------------------------------------------------------
 
@@ -2648,6 +3066,12 @@ ALTER TABLE `staff_documents`
   ADD KEY `uploaded_by` (`uploaded_by`);
 
 --
+-- Indexes for table `staff_role_permissions`
+--
+ALTER TABLE `staff_role_permissions`
+  ADD PRIMARY KEY (`position`);
+
+--
 -- Indexes for table `user_activity_log`
 --
 ALTER TABLE `user_activity_log`
@@ -2701,13 +3125,13 @@ ALTER TABLE `announcement_messages`
 -- AUTO_INCREMENT for table `announcement_targets`
 --
 ALTER TABLE `announcement_targets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=252;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=254;
 
 --
 -- AUTO_INCREMENT for table `announcement_views`
 --
 ALTER TABLE `announcement_views`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `audit_logs`
@@ -2731,19 +3155,19 @@ ALTER TABLE `city_health_report_logs`
 -- AUTO_INCREMENT for table `consultation_notes`
 --
 ALTER TABLE `consultation_notes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=132;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
 
 --
 -- AUTO_INCREMENT for table `deleted_patients`
 --
 ALTER TABLE `deleted_patients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=165;
 
 --
 -- AUTO_INCREMENT for table `existing_info_patients`
 --
 ALTER TABLE `existing_info_patients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=366;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=370;
 
 --
 -- AUTO_INCREMENT for table `health_campaigns`
@@ -2767,7 +3191,7 @@ ALTER TABLE `report_logs`
 -- AUTO_INCREMENT for table `resident_activity_log`
 --
 ALTER TABLE `resident_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `sitio1_account_linking_history`
@@ -2779,13 +3203,13 @@ ALTER TABLE `sitio1_account_linking_history`
 -- AUTO_INCREMENT for table `sitio1_activity_log`
 --
 ALTER TABLE `sitio1_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=117;
 
 --
 -- AUTO_INCREMENT for table `sitio1_announcements`
 --
 ALTER TABLE `sitio1_announcements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=371;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=378;
 
 --
 -- AUTO_INCREMENT for table `sitio1_appointments`
@@ -2803,13 +3227,13 @@ ALTER TABLE `sitio1_consultations`
 -- AUTO_INCREMENT for table `sitio1_patients`
 --
 ALTER TABLE `sitio1_patients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=827;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=829;
 
 --
 -- AUTO_INCREMENT for table `sitio1_staff`
 --
 ALTER TABLE `sitio1_staff`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `sitio1_users`
@@ -2821,7 +3245,7 @@ ALTER TABLE `sitio1_users`
 -- AUTO_INCREMENT for table `staff_activity_log`
 --
 ALTER TABLE `staff_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=708;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=954;
 
 --
 -- AUTO_INCREMENT for table `staff_documents`
@@ -2833,13 +3257,13 @@ ALTER TABLE `staff_documents`
 -- AUTO_INCREMENT for table `user_activity_log`
 --
 ALTER TABLE `user_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=713;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=818;
 
 --
 -- AUTO_INCREMENT for table `user_announcements`
 --
 ALTER TABLE `user_announcements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=204;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=205;
 
 --
 -- AUTO_INCREMENT for table `user_appointments`
