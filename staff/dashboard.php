@@ -711,7 +711,7 @@ $recordsPerPage = 5;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Dashboard - Community Health Tracker</title>
+    <title>Admin Dashboard | Cebu Eastern College Incorporated</title>
     <!-- Tailwind CSS - Offline Local Build -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
     <!-- Local Font Awesome for offline support -->

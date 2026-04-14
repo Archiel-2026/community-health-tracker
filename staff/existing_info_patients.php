@@ -1768,7 +1768,7 @@ if (!empty($searchTerm)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Health Records - Barangay Luz Health Center</title>
+    <title>Student Medical Records | Cebu Eastern College Incorporated</title>
     <!-- Tailwind CSS - Offline Local Build -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
     <!-- Local Font Awesome for offline support -->

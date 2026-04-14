@@ -265,7 +265,7 @@ if (!in_array($activeTab, ['announcements', 'stats'])) {
     <?php endif; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barangay Luz - Community Announcements</title>
+    <title>Student Announcements | Cebu Eastern College Incorporated</title>
     <!-- Tailwind CSS - Offline Local Build -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
     <!-- Local Font Awesome for offline support -->

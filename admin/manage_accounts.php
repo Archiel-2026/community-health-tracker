@@ -1199,7 +1199,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Management - Barangay Luz Health Center</title>
+    <title>Account Management | Cebu Eastern College Incorporated</title>
     <!-- Tailwind CSS - Offline Local Build -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
     <!-- Local Font Awesome for offline support -->
@@ -1303,7 +1303,7 @@ try {
                             </div>
                         </div>
                         <div>
-                            <span class="stat-label">Resident Accounts</span>
+                            <span class="stat-label">Student Accounts</span>
                         </div>
                     </div>
 
@@ -1340,10 +1340,10 @@ try {
 
                 <!-- Main Navigation Tabs -->
                 <div class="main-nav-tabs">
-                    <div class="main-nav-tab active" onclick="switchTab('staff')" id="staffMainTab">Staff Management</div>
-                    <div class="main-nav-tab" onclick="switchTab('resident')" id="residentMainTab">Resident Management</div>
+                    <div class="main-nav-tab active" onclick="switchTab('staff')" id="staffMainTab">Admin Account Management</div>
+                    <div class="main-nav-tab" onclick="switchTab('resident')" id="residentMainTab">Student Account Management</div>
                     <?php if (count($unlinkedResidents) > 0 || count($unlinkedPatients) > 0): ?>
-                        <div class="main-nav-tab" onclick="switchTab('linking')" id="linkingMainTab">Manual Linking</div>
+                        <div class="main-nav-tab" onclick="switchTab('linking')" id="linkingMainTab">Manual Account Linking</div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1352,7 +1352,7 @@ try {
             <div>
                 <!-- Staff Section (with updated Position dropdown) -->
                 <div id="staffSection" class="tab-section" style="display: block;">
-                    <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Staff Account</h2>
+                    <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Admin Account</h2>
                     <div class="mb-8 p-8 rounded-lg border border-gray-300">
                         <div class="flex items-start justify-between gap-4 mb-6">
                             <div>
@@ -1643,7 +1643,7 @@ Create Account
 
                 <!-- Resident Section (with updated Gender and Sitio dropdowns) -->
                 <div id="residentSection" class="tab-section" style="display: none;">
-                    <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Resident Account</h2>
+                    <h2 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 1.5rem;">Create New Student Account</h2>
                     
                     <!-- Create Resident Form -->
                     <div class="flex flex-col md:flex-row w-full gap-8">
@@ -1796,7 +1796,7 @@ Create Resident Account
                                 <!-- Resident Header -->
                                 <div class="mb-6">
                                     <h3 class="text-xl font-semibold text-gray-800">Accounts Created</h3>
-                                    <p class="text-sm text-gray-500 mt-1">List of all resident accounts</p>
+                                    <p class="text-sm text-gray-500 mt-1">List of all student accounts</p>
                                 </div>
 
                                 <!-- All Residents -->
@@ -1806,7 +1806,7 @@ Create Resident Account
                                             <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                             </svg>
-                                            <p class="text-gray-500">No resident accounts created yet</p>
+                                            <p class="text-gray-500">No student accounts created yet</p>
                                             <p class="text-sm text-gray-400 mt-1">Create a new resident account using the form</p>
                                         </div>
                                     <?php else: ?>
@@ -2017,7 +2017,7 @@ Create Resident Account
                     <div class="p-8 rounded-lg border border-gray-300">
                         <div class="flex justify-between items-center mb-4">
                             <div>
-                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Resident Account Access</h3>
+                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Student Account Access</h3>
                                 <p class="text-sm text-gray-500 mt-1">Select a resident account to link</p>
                             </div>
                             <span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-md border border-blue-400">
@@ -2183,7 +2183,7 @@ Create Resident Account
                     <div class="p-8 rounded-lg border border-gray-300">
                         <div class="flex justify-between items-center mb-4">
                             <div>
-                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Resident Patient Records</h3>
+                                <h3 style="font-size: 1.125rem; font-weight: 600; color: #111827;">Student Patient Records</h3>
                                 <p class="text-sm text-gray-500 mt-1">Select a patient record to link</p>
                             </div>
                             <span class="bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-md border border-green-400">
@@ -2240,7 +2240,7 @@ Create Resident Account
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                 </svg>
                                 <p class="text-gray-500">No unlinked patient records available</p>
-                                <p class="text-sm text-gray-400 mt-1">All patients are linked to resident accounts</p>
+                                <p class="text-sm text-gray-400 mt-1">All patients are linked to Students accounts</p>
                             </div>
                         <?php else: ?>
                             <div id="patientsList" class="space-y-2 max-h-[500px] overflow-y-auto pr-2">

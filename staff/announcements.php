@@ -642,7 +642,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Announcement Management - Barangay Luz Health Center</title>
+    <title>Announcement Management | Cebu Eastern College Incorporated</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/asssets/css/normalize.css">
     <link rel="stylesheet" href="../asssets/css/admin-announcement.css">
@@ -709,7 +709,7 @@ try {
                     msg = 'Sending General Announcement to specific residents and sending email notifications...';
                 }
             } else if (audienceType === 'public') {
-                msg = 'Broadcasting General Announcement to all residents and sending email notifications...';
+                msg = 'Broadcasting General Announcement to all students and sending email notifications...';
             }
             loadingMsg.textContent = msg;
             loadingDiv.style.display = 'flex';
@@ -812,7 +812,7 @@ try {
         <!-- CREATE ANNOUNCEMENT TITLE HEADER -->
         <div>
             <div class="border-b-2 border-gray-100 pb-4 mb-6">
-                <h2 class="text-2xl font-bold mb-2">Create New Announcement</h2>
+                <h2 class="text-2xl font-semibold mb-2">Create New Announcement</h2>
             </div>
         </div>
 
@@ -995,7 +995,7 @@ try {
                                         <label for="audience-public" class="radio-label">
                                             <div class="flex flex-col md:flex-row items-center justify-between">
                                                 <div class="flex flex-col">
-                                                    <h2 class="font-normal text-xl mb-2 text-[#1D85DD]">All Students
+                                                    <h2 class="font-normal text-xl mb-2 text-[#1D85DD]">All Users
                                                     </h2>
                                                     <span class="text-lg font-normal text-gray-500">Send directly to all
                                                         students</span>

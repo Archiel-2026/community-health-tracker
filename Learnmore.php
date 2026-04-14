@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barangay Luz | Learn More</title>
+    <title>Important Instructions | Cebu Eastern College Incorporated</title>
+    <link rel="icon" type="image/png" href="../asssets/images/finallogo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -40,7 +41,7 @@
             overflow: hidden;
             background:
                 linear-gradient(135deg, rgba(30, 74, 107, 0.88), rgba(58, 123, 213, 0.78)),
-                url('./asssets/images/brgyluz.jpg') center/cover no-repeat;
+                url('./asssets/images/cecmainbg.jpg') center/cover no-repeat;
             color: #ffffff;
         }
 
@@ -330,7 +331,7 @@
         (function() {
             const translations = {
                 en: {
-                    pageTitle: 'Barangay Luz | Learn More',
+                    pageTitle: 'Important Instructions | Cebu Eastern College Incorporated',
                     back: 'Back',
                     heroLabel: 'Barangay Luz Health Monitoring and Tracking System',
                     heroTitle: 'Community information presented in a clearer and more focused layout.',

@@ -377,6 +377,7 @@ function getTimeAgo($datetime)
 <link rel="stylesheet" href="/asssets/css/normalize.css">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- Local Font Awesome for offline support -->
+ <title>Student Dashboard | Cebu Eastern College Incorporated</title>
 <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
 <link rel="stylesheet" href="/community-health-tracker/asssets/css/resident-dashboard.css">
 <!-- Chart.js Library -->

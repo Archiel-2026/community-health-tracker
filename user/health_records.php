@@ -156,6 +156,7 @@ foreach ($allPatientInfo as $patient) {
 $activeTab = $_GET['tab'] ?? 'consultations';
 ?>
 
+<title>Student Health Records | Cebu Eastern College Incorporated</title>
 <link rel="stylesheet" href="/community-health-tracker/asssets/css/Resident-myrecord.css">
 
 <style>
