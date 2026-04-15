@@ -41,7 +41,7 @@ if (isset($_SESSION['user']['id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../asssets/images/finallogo.png">
+    <link rel="icon" type="image/png" href="/community-health-tracker/asssets/images/finallogo.png">
     <!-- Tailwind CSS - Offline Local Build -->
     <link rel="stylesheet" href="/community-health-tracker/asssets/css/tailwind.css">
     <!-- Local Font Awesome for offline support -->
@@ -2527,3 +2527,4 @@ if (isset($_SESSION['user']['id'])) {
     </body>
 
 </html>
+

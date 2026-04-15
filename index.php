@@ -150,7 +150,7 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="./asssets/images/finallogo.png">
+    <!-- <link rel="icon" type="image/png" href="/community-health-tracker/asssets/images/finallogo.png"> -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // Show login modal and error if redirected with ?login=invalid
@@ -1477,7 +1477,7 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-
                         <div class="flex items-start gap-3">
                             <div>
                                 <h3 class="font-semibold text-gray-800 mb-2" data-i18n="privacyConfidentialityTitle">Confidentiality Assurance</h3>
-                                <p class="text-gray-600" data-i18n="privacyConfidentialityBody">
+                                <p class="text-gray-600">
                                     Cebu Eastern College Incorporated Health Center strictly adheres to the Data Privacy Act of 2012 (RA 10173). 
                                     Your personal and health information is confidential and will only be accessible to authorized 
                                     healthcare personnel involved in your care.
@@ -1490,8 +1490,8 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-
                         <div class="flex items-start gap-3">
                             <div>
                                 <h3 class="font-semibold text-gray-800 mb-2" data-i18n="privacyAccountSecurityTitle">Personal Account Security</h3>
-                                <p class="text-gray-600" data-i18n="privacyAccountSecurityBody">
-                                    Each resident is provided with a unique username and password. Your login credentials 
+                                <p class="text-gray-600">
+                                    Each Student is provided with a unique username and password. Your login credentials 
                                     are personal and should not be shared with anyone. The system tracks access to ensure 
                                     only authorized viewing of your health records.
                                 </p>
@@ -1522,12 +1522,12 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-
                             <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mt-1"></i>
                             <div>
                                 <h3 class="font-semibold text-gray-800 mb-2" data-i18n="privacyRemindersTitle">Important Reminders</h3>
-                                <p class="text-gray-600" data-i18n-html="privacyRemindersBody">
+                                <p class="text-gray-600">
                                     • Never share your login credentials with others<br>
                                     • Log out after each session, especially on shared devices<br>
                                     • Report any unauthorized access to your account immediately<br>
                                     • Update your password regularly for added security<br>
-                                    • Contact the Health Center for any account-related concerns
+                                    • Contact the Clinic for any account-related concerns
                                 </p>
                             </div>
                         </div>
@@ -2258,3 +2258,4 @@ $badgeClass = $isWeekend ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-
 </body>
 
 </html>
+

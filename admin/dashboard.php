@@ -948,7 +948,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </svg>
                     </span>
                 </div>
-                <div class="text-gray-500 text-xl">Resident Accounts</div>
+                <div class="text-gray-500 text-xl">Students Accounts</div>
             </div>
 
             <!-- PATIENT RECORDS -->
@@ -967,7 +967,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </svg>
                     </span>
                 </div>
-                <div class="text-gray-500 text-xl">Patient Records</div>
+                <div class="text-gray-500 text-xl">Students Records</div>
             </div>
 
             <!-- LINKED ACCOUNTS -->
@@ -1039,7 +1039,7 @@ require_once __DIR__ . '/../includes/header.php';
                                 </svg>
                             </span>
                             <div>
-                                <div class="font-semibold text-purple-700 text-lg ">Resident Patients</div>
+                                <div class="font-semibold text-purple-700 text-lg ">Student Patients</div>
                                 <div class="text-base text-gray-500">Browse Patient Records</div>
                             </div>
                         </div>
@@ -2514,7 +2514,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     pointBorderWidth: 2
                                 },
                                 {
-                                    label: 'Resident Accounts (created)',
+                                    label: 'Students Accounts (created)',
                                     data: residentData,
                                     borderColor: '#059669',
                                     backgroundColor: gradResident,
@@ -2528,7 +2528,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     pointBorderWidth: 2
                                 },
                                 {
-                                    label: 'Patient Records (created)',
+                                    label: 'Students Records (created)',
                                     data: patientData,
                                     borderColor: '#7c3aed',
                                     backgroundColor: gradPatient,
