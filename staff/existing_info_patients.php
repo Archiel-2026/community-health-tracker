@@ -296,13 +296,21 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
 
         error_log("AJAX Request: page=$page, search=$search, offset=$offset");
 
-        $countQuery = "SELECT COUNT(*) as total FROM sitio1_patients p WHERE p.deleted_at IS NULL";
+        $countQuery = "SELECT COUNT(*) as total FROM sitio1_patients p 
+                       LEFT JOIN existing_info_patients e ON p.id = e.patient_id
+                       WHERE p.deleted_at IS NULL";
         $selectQuery = "SELECT 
             p.id,
             p.full_name,
+            COALESCE(e.student_first_name, p.full_name) as display_name,
             p.age,
             p.last_checkup,
             e.blood_type,
+            e.student_mobile_number,
+            e.student_email_address,
+            e.student_last_name,
+            e.student_first_name,
+            e.student_middle_name,
             CASE 
                 WHEN p.user_id IS NOT NULL THEN 'Registered Patient'
                 ELSE 'Regular Patient'
@@ -316,10 +324,23 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
 
         if (!empty($search)) {
             $searchTerm = "%$search%";
-            $countQuery .= " AND p.full_name LIKE ?";
-            $selectQuery .= " AND p.full_name LIKE ?";
-            $params[] = $searchTerm;
-            $countParams[] = $searchTerm;
+            $countQuery .= " AND (p.full_name LIKE ? 
+                              OR e.student_last_name LIKE ? 
+                              OR e.student_first_name LIKE ?
+                              OR e.student_nickname LIKE ?
+                              OR e.student_mobile_number LIKE ?
+                              OR e.student_email_address LIKE ?)";
+            $selectQuery .= " AND (p.full_name LIKE ? 
+                              OR e.student_last_name LIKE ? 
+                              OR e.student_first_name LIKE ?
+                              OR e.student_nickname LIKE ?
+                              OR e.student_mobile_number LIKE ?
+                              OR e.student_email_address LIKE ?)";
+            
+            for ($i = 0; $i < 6; $i++) {
+                $params[] = $searchTerm;
+                $countParams[] = $searchTerm;
+            }
         }
 
         if (!staff_can_view_all()) {
@@ -355,6 +376,13 @@ if (isset($_GET['ajax_get_patients']) && $_GET['ajax_get_patients'] == '1') {
                 $patient['last_checkup_formatted'] = date('M d, Y', strtotime($patient['last_checkup']));
             } else {
                 $patient['last_checkup_formatted'] = 'N/A';
+            }
+            // Use student name if available, otherwise use full_name
+            if (!empty($patient['student_first_name']) && !empty($patient['student_last_name'])) {
+                $patient['display_name'] = $patient['student_last_name'] . ', ' . $patient['student_first_name'];
+                if (!empty($patient['student_middle_name'])) {
+                    $patient['display_name'] .= ' ' . $patient['student_middle_name'];
+                }
             }
         }
 
@@ -421,7 +449,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['complete_note_id'])) 
     }
 }
 
-// Handle form submission for editing health info - WITH PERMISSION CHECK
+// Handle updating existing patient health information (from the modal)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_health_info'])) {
     // Check if user has permission to manage patient records
     if (!$canManage) {
@@ -429,187 +457,380 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_health_info'])) 
         $notificationType = 'error';
         $notificationMessage = $error;
     } else {
-        $required = ['patient_id', 'full_name', 'date_of_birth', 'gender', 'address', 'contact', 'height', 'weight', 'blood_type'];
-        $missing = [];
-
-        foreach ($required as $field) {
-            if (empty($_POST[$field])) {
-                $missing[] = $field;
+        try {
+            $patientId = isset($_POST['patient_id']) ? (int)$_POST['patient_id'] : 0;
+            
+            if (!$patientId) {
+                throw new Exception('Patient ID is required');
             }
-        }
-
-        if (!empty($missing)) {
-            $error = "Please fill in all required fields: " . implode(', ', str_replace('_', ' ', $missing));
-        } else {
+            
+            // Verify staff has access to this patient
+            if (!staff_can_view_all()) {
+                $checkStmt = $pdo->prepare("SELECT id FROM sitio1_patients WHERE id = ? AND added_by = ? AND deleted_at IS NULL");
+                $checkStmt->execute([$patientId, $_SESSION['user']['id']]);
+                if (!$checkStmt->fetch()) {
+                    throw new Exception('Access denied to update this patient');
+                }
+            }
+            
+            $pdo->beginTransaction();
+            
+            // Process allergy items
+            $allergyItems = isset($_POST['allergy_items']) ? $_POST['allergy_items'] : [];
+            $allergyOther = isset($_POST['student_allergy_other']) ? trim($_POST['student_allergy_other']) : '';
+            if (!empty($allergyOther)) {
+                $allergyItems[] = $allergyOther;
+            }
+            $allergyItemsStr = !empty($allergyItems) ? implode(', ', $allergyItems) : null;
+            
+            // Process conditions
+            $conditions = isset($_POST['student_conditions']) ? $_POST['student_conditions'] : [];
+            $conditionOther = isset($_POST['student_condition_other']) ? trim($_POST['student_condition_other']) : '';
+            if (!empty($conditionOther)) {
+                $conditions[] = $conditionOther;
+            }
+            $conditionsStr = !empty($conditions) ? implode(', ', $conditions) : null;
+            
+            // ========== NEW: Process Medical Conditions ==========
+            $medicalConditions = isset($_POST['medical_conditions']) ? $_POST['medical_conditions'] : [];
+            $medicalConditionsOther = isset($_POST['medical_conditions_other']) ? trim($_POST['medical_conditions_other']) : '';
+            if (!empty($medicalConditionsOther)) {
+                $medicalConditions[] = $medicalConditionsOther;
+            }
+            // Store as JSON for better structure
+            $medicalConditionsJson = !empty($medicalConditions) ? json_encode($medicalConditions) : null;
+            
+            // ========== NEW: Process Blood Pressure ==========
+            $bpSystolic = isset($_POST['blood_pressure_systolic']) ? trim($_POST['blood_pressure_systolic']) : '';
+            $bpDiastolic = isset($_POST['blood_pressure_diastolic']) ? trim($_POST['blood_pressure_diastolic']) : '';
+            $bloodPressure = '';
+            if (!empty($bpSystolic) && !empty($bpDiastolic)) {
+                $bloodPressure = $bpSystolic . '/' . $bpDiastolic;
+            } elseif (!empty($_POST['blood_pressure'])) {
+                $bloodPressure = $_POST['blood_pressure'];
+            }
+            
+            // Check if record exists in existing_info_patients
+            $checkExisting = $pdo->prepare("SELECT id FROM existing_info_patients WHERE patient_id = ?");
+            $checkExisting->execute([$patientId]);
+            
+            if ($checkExisting->rowCount() > 0) {
+                // Update existing record - UPDATED with new fields
+                $updateSql = "UPDATE existing_info_patients SET 
+                    student_last_name = ?, 
+                    student_first_name = ?, 
+                    student_middle_name = ?,
+                    student_birthdate = ?, 
+                    student_religion = ?, 
+                    student_home_address = ?,
+                    student_occupation = ?, 
+                    student_effective_date = ?, 
+                    student_sex = ?,
+                    student_nickname = ?, 
+                    student_home_phone = ?, 
+                    student_office_phone = ?,
+                    student_fax_number = ?, 
+                    student_mobile_number = ?, 
+                    student_email_address = ?,
+                    parent_guardian_name = ?, 
+                    parent_guardian_occupation = ?,
+                    student_physician_name = ?, 
+                    student_physician_specialty = ?,
+                    student_physician_office_address = ?, 
+                    student_physician_office_number = ?,
+                    student_good_health = ?, 
+                    student_under_treatment = ?, 
+                    student_treatment_condition = ?,
+                    student_serious_illness_surgery = ?, 
+                    student_serious_illness_details = ?,
+                    student_hospitalized = ?, 
+                    student_hospitalization_details = ?,
+                    student_taking_medication = ?, 
+                    student_medication_details = ?,
+                    student_uses_tobacco = ?, 
+                    student_uses_alcohol_drugs = ?,
+                    student_has_allergies = ?, 
+                    student_allergy_items = ?,
+                    student_allergy_other = ?,
+                    student_bleeding_time = ?, 
+                    student_is_pregnant = ?, 
+                    student_is_nursing = ?,
+                    student_takes_birth_control = ?, 
+                    student_menarche = ?, 
+                    student_lmp = ?,
+                    student_gravida = ?, 
+                    student_para = ?, 
+                    student_abortion = ?,
+                    student_conditions = ?, 
+                    student_condition_other = ?,
+                    student_signature_name = ?,
+                    -- NEW FIELDS:
+                    blood_type = ?,
+                    blood_pressure = ?,
+                    blood_pressure_systolic = ?,
+                    blood_pressure_diastolic = ?,
+                    medical_conditions = ?,
+                    medical_conditions_other = ?,
+                    height = ?,
+                    weight = ?,
+                    temperature = ?,
+                    updated_at = NOW()
+                    WHERE patient_id = ?";
+                
+                $stmt = $pdo->prepare($updateSql);
+                $stmt->execute([
+                    $_POST['student_last_name'] ?? null,
+                    $_POST['student_first_name'] ?? null,
+                    $_POST['student_middle_name'] ?? null,
+                    $_POST['student_birthdate'] ?? null,
+                    $_POST['student_religion'] ?? null,
+                    $_POST['student_home_address'] ?? null,
+                    $_POST['student_occupation'] ?? null,
+                    $_POST['student_effective_date'] ?? null,
+                    $_POST['student_sex'] ?? null,
+                    $_POST['student_nickname'] ?? null,
+                    $_POST['student_home_phone'] ?? null,
+                    $_POST['student_office_phone'] ?? null,
+                    $_POST['student_fax_number'] ?? null,
+                    $_POST['student_mobile_number'] ?? null,
+                    $_POST['student_email_address'] ?? null,
+                    $_POST['parent_guardian_name'] ?? null,
+                    $_POST['parent_guardian_occupation'] ?? null,
+                    $_POST['student_physician_name'] ?? null,
+                    $_POST['student_physician_specialty'] ?? null,
+                    $_POST['student_physician_office_address'] ?? null,
+                    $_POST['student_physician_office_number'] ?? null,
+                    $_POST['student_good_health'] ?? null,
+                    $_POST['student_under_treatment'] ?? null,
+                    $_POST['student_treatment_condition'] ?? null,
+                    $_POST['student_serious_illness_surgery'] ?? null,
+                    $_POST['student_serious_illness_details'] ?? null,
+                    $_POST['student_hospitalized'] ?? null,
+                    $_POST['student_hospitalization_details'] ?? null,
+                    $_POST['student_taking_medication'] ?? null,
+                    $_POST['student_medication_details'] ?? null,
+                    $_POST['student_uses_tobacco'] ?? null,
+                    $_POST['student_uses_alcohol_drugs'] ?? null,
+                    $_POST['student_has_allergies'] ?? null,
+                    $allergyItemsStr,
+                    $allergyOther,
+                    $_POST['student_bleeding_time'] ?? null,
+                    $_POST['student_is_pregnant'] ?? null,
+                    $_POST['student_is_nursing'] ?? null,
+                    $_POST['student_takes_birth_control'] ?? null,
+                    $_POST['student_menarche'] ?? null,
+                    $_POST['student_lmp'] ?? null,
+                    $_POST['student_gravida'] ?? null,
+                    $_POST['student_para'] ?? null,
+                    $_POST['student_abortion'] ?? null,
+                    $conditionsStr,
+                    $conditionOther,
+                    $_POST['student_signature_name'] ?? null,
+                    // NEW FIELDS values:
+                    $_POST['blood_type'] ?? null,
+                    $bloodPressure,
+                    $bpSystolic,
+                    $bpDiastolic,
+                    $medicalConditionsJson,
+                    $medicalConditionsOther,
+                    !empty($_POST['height']) ? floatval($_POST['height']) : null,
+                    !empty($_POST['weight']) ? floatval($_POST['weight']) : null,
+                    !empty($_POST['temperature']) ? floatval($_POST['temperature']) : null,
+                    $patientId
+                ]);
+            } else {
+                // Insert new record - UPDATED with new fields
+                $insertSql = "INSERT INTO existing_info_patients SET 
+                    patient_id = ?,
+                    student_last_name = ?, 
+                    student_first_name = ?, 
+                    student_middle_name = ?,
+                    student_birthdate = ?, 
+                    student_religion = ?, 
+                    student_home_address = ?,
+                    student_occupation = ?, 
+                    student_effective_date = ?, 
+                    student_sex = ?,
+                    student_nickname = ?, 
+                    student_home_phone = ?, 
+                    student_office_phone = ?,
+                    student_fax_number = ?, 
+                    student_mobile_number = ?, 
+                    student_email_address = ?,
+                    parent_guardian_name = ?, 
+                    parent_guardian_occupation = ?,
+                    student_physician_name = ?, 
+                    student_physician_specialty = ?,
+                    student_physician_office_address = ?, 
+                    student_physician_office_number = ?,
+                    student_good_health = ?, 
+                    student_under_treatment = ?, 
+                    student_treatment_condition = ?,
+                    student_serious_illness_surgery = ?, 
+                    student_serious_illness_details = ?,
+                    student_hospitalized = ?, 
+                    student_hospitalization_details = ?,
+                    student_taking_medication = ?, 
+                    student_medication_details = ?,
+                    student_uses_tobacco = ?, 
+                    student_uses_alcohol_drugs = ?,
+                    student_has_allergies = ?, 
+                    student_allergy_items = ?,
+                    student_allergy_other = ?,
+                    student_bleeding_time = ?, 
+                    student_is_pregnant = ?, 
+                    student_is_nursing = ?,
+                    student_takes_birth_control = ?, 
+                    student_menarche = ?, 
+                    student_lmp = ?,
+                    student_gravida = ?, 
+                    student_para = ?, 
+                    student_abortion = ?,
+                    student_conditions = ?, 
+                    student_condition_other = ?,
+                    student_signature_name = ?,
+                    -- NEW FIELDS:
+                    blood_type = ?,
+                    blood_pressure = ?,
+                    blood_pressure_systolic = ?,
+                    blood_pressure_diastolic = ?,
+                    medical_conditions = ?,
+                    medical_conditions_other = ?,
+                    height = ?,
+                    weight = ?,
+                    temperature = ?,
+                    created_at = NOW()";
+                
+                $stmt = $pdo->prepare($insertSql);
+                $stmt->execute(array_merge(
+                    [$patientId],
+                    [
+                        $_POST['student_last_name'] ?? null,
+                        $_POST['student_first_name'] ?? null,
+                        $_POST['student_middle_name'] ?? null,
+                        $_POST['student_birthdate'] ?? null,
+                        $_POST['student_religion'] ?? null,
+                        $_POST['student_home_address'] ?? null,
+                        $_POST['student_occupation'] ?? null,
+                        $_POST['student_effective_date'] ?? null,
+                        $_POST['student_sex'] ?? null,
+                        $_POST['student_nickname'] ?? null,
+                        $_POST['student_home_phone'] ?? null,
+                        $_POST['student_office_phone'] ?? null,
+                        $_POST['student_fax_number'] ?? null,
+                        $_POST['student_mobile_number'] ?? null,
+                        $_POST['student_email_address'] ?? null,
+                        $_POST['parent_guardian_name'] ?? null,
+                        $_POST['parent_guardian_occupation'] ?? null,
+                        $_POST['student_physician_name'] ?? null,
+                        $_POST['student_physician_specialty'] ?? null,
+                        $_POST['student_physician_office_address'] ?? null,
+                        $_POST['student_physician_office_number'] ?? null,
+                        $_POST['student_good_health'] ?? null,
+                        $_POST['student_under_treatment'] ?? null,
+                        $_POST['student_treatment_condition'] ?? null,
+                        $_POST['student_serious_illness_surgery'] ?? null,
+                        $_POST['student_serious_illness_details'] ?? null,
+                        $_POST['student_hospitalized'] ?? null,
+                        $_POST['student_hospitalization_details'] ?? null,
+                        $_POST['student_taking_medication'] ?? null,
+                        $_POST['student_medication_details'] ?? null,
+                        $_POST['student_uses_tobacco'] ?? null,
+                        $_POST['student_uses_alcohol_drugs'] ?? null,
+                        $_POST['student_has_allergies'] ?? null,
+                        $allergyItemsStr,
+                        $allergyOther,
+                        $_POST['student_bleeding_time'] ?? null,
+                        $_POST['student_is_pregnant'] ?? null,
+                        $_POST['student_is_nursing'] ?? null,
+                        $_POST['student_takes_birth_control'] ?? null,
+                        $_POST['student_menarche'] ?? null,
+                        $_POST['student_lmp'] ?? null,
+                        $_POST['student_gravida'] ?? null,
+                        $_POST['student_para'] ?? null,
+                        $_POST['student_abortion'] ?? null,
+                        $conditionsStr,
+                        $conditionOther,
+                        $_POST['student_signature_name'] ?? null,
+                        // NEW FIELDS values:
+                        $_POST['blood_type'] ?? null,
+                        $bloodPressure,
+                        $bpSystolic,
+                        $bpDiastolic,
+                        $medicalConditionsJson,
+                        $medicalConditionsOther,
+                        !empty($_POST['height']) ? floatval($_POST['height']) : null,
+                        !empty($_POST['weight']) ? floatval($_POST['weight']) : null,
+                        !empty($_POST['temperature']) ? floatval($_POST['temperature']) : null
+                    ]
+                ));
+            }
+            
+            // Also update the main patients table with key fields
+            $updatePatient = $pdo->prepare("UPDATE sitio1_patients SET 
+                full_name = CONCAT(?, ', ', ?, ' ', COALESCE(?, '')),
+                date_of_birth = ?,
+                age = TIMESTAMPDIFF(YEAR, ?, CURDATE()),
+                address = ?,
+                contact = ?,
+                updated_at = NOW()
+                WHERE id = ?");
+            
+            $fullNameLast = $_POST['student_last_name'] ?? '';
+            $fullNameFirst = $_POST['student_first_name'] ?? '';
+            $fullNameMiddle = $_POST['student_middle_name'] ?? '';
+            $birthdate = $_POST['student_birthdate'] ?? null;
+            $address = $_POST['student_home_address'] ?? null;
+            $contact = $_POST['student_mobile_number'] ?? null;
+            
+            $updatePatient->execute([
+                $fullNameLast, $fullNameFirst, $fullNameMiddle,
+                $birthdate, $birthdate, $address, $contact, $patientId
+            ]);
+            
+            // Log activity
             try {
-                $patient_id = $_POST['patient_id'];
-
-                $full_name = $_POST['full_name'];
-                $date_of_birth = $_POST['date_of_birth'];
-                $age = $_POST['age'];
-                $gender = $_POST['gender'];
-                $address = $_POST['address'];
-                $sitio = $_POST['sitio'];
-                $civil_status = $_POST['civil_status'];
-                $occupation = !empty($_POST['occupation']) ? $_POST['occupation'] : null;
-                $contact = $_POST['contact'];
-                $last_checkup = !empty($_POST['last_checkup']) ? $_POST['last_checkup'] : null;
-
-                $phic_no = !empty($_POST['phic_no']) ? $_POST['phic_no'] : null;
-                $bhw_assigned = !empty($_POST['bhw_assigned']) ? $_POST['bhw_assigned'] : null;
-                $family_no = !empty($_POST['family_no']) ? $_POST['family_no'] : null;
-                $fourps_member = !empty($_POST['fourps_member']) ? $_POST['fourps_member'] : 'No';
-
-                $height = $_POST['height'];
-                $weight = $_POST['weight'];
-                $blood_type = $_POST['blood_type'];
-                $temperature = !empty($_POST['temperature']) ? $_POST['temperature'] : null;
-                $blood_pressure = !empty($_POST['blood_pressure']) ? $_POST['blood_pressure'] : null;
-                $allergies = !empty($_POST['allergies']) ? $_POST['allergies'] : null;
-                $medical_history = !empty($_POST['medical_history']) ? $_POST['medical_history'] : null;
-                $current_medications = !empty($_POST['current_medications']) ? $_POST['current_medications'] : null;
-                $family_history = !empty($_POST['family_history']) ? $_POST['family_history'] : null;
-                $immunization_record = !empty($_POST['immunization_record']) ? $_POST['immunization_record'] : null;
-                $chronic_conditions = !empty($_POST['chronic_conditions']) ? $_POST['chronic_conditions'] : null;
-
-                $pdo->beginTransaction();
-
-                if (staff_can_view_all()) {
-                    $updatePatientQuery = "UPDATE sitio1_patients SET 
-                        full_name = ?, 
-                        date_of_birth = ?, 
-                        age = ?, 
-                        gender = ?, 
-                        address = ?, 
-                        sitio = ?, 
-                        civil_status = ?, 
-                        occupation = ?, 
-                        contact = ?, 
-                        last_checkup = ?,
-                        phic_no = ?, 
-                        bhw_assigned = ?, 
-                        family_no = ?, 
-                        fourps_member = ?,
-                        updated_at = NOW()
-                        WHERE id = ?";
-
-                    $stmt = $pdo->prepare($updatePatientQuery);
-                    $stmt->execute([
-                        $full_name,
-                        $date_of_birth,
-                        $age,
-                        $gender,
-                        $address,
-                        $sitio,
-                        $civil_status,
-                        $occupation,
-                        $contact,
-                        $last_checkup,
-                        $phic_no,
-                        $bhw_assigned,
-                        $family_no,
-                        $fourps_member,
-                        $patient_id
-                    ]);
-                } else {
-                    $updatePatientQuery = "UPDATE sitio1_patients SET 
-                        full_name = ?, 
-                        date_of_birth = ?, 
-                        age = ?, 
-                        gender = ?, 
-                        address = ?, 
-                        sitio = ?, 
-                        civil_status = ?, 
-                        occupation = ?, 
-                        contact = ?, 
-                        last_checkup = ?,
-                        phic_no = ?, 
-                        bhw_assigned = ?, 
-                        family_no = ?, 
-                        fourps_member = ?,
-                        updated_at = NOW()
-                        WHERE id = ? AND added_by = ?";
-
-                    $stmt = $pdo->prepare($updatePatientQuery);
-                    $stmt->execute([
-                        $full_name,
-                        $date_of_birth,
-                        $age,
-                        $gender,
-                        $address,
-                        $sitio,
-                        $civil_status,
-                        $occupation,
-                        $contact,
-                        $last_checkup,
-                        $phic_no,
-                        $bhw_assigned,
-                        $family_no,
-                        $fourps_member,
-                        $patient_id,
-                        $_SESSION['user']['id']
-                    ]);
-                }
-
-                $stmt = $pdo->prepare("SELECT id FROM existing_info_patients WHERE patient_id = ?");
-                $stmt->execute([$patient_id]);
-
-                if ($stmt->fetch()) {
-                    $stmt = $pdo->prepare("UPDATE existing_info_patients SET 
-                        gender = ?, height = ?, weight = ?, blood_type = ?, temperature = ?, 
-                        blood_pressure = ?, allergies = ?, medical_history = ?, 
-                        current_medications = ?, family_history = ?, immunization_record = ?,
-                        chronic_conditions = ?, updated_at = NOW()
-                        WHERE patient_id = ?");
-                    $stmt->execute([
-                        $gender,
-                        $height,
-                        $weight,
-                        $blood_type,
-                        $temperature,
-                        $blood_pressure,
-                        $allergies,
-                        $medical_history,
-                        $current_medications,
-                        $family_history,
-                        $immunization_record,
-                        $chronic_conditions,
-                        $patient_id
-                    ]);
-                } else {
-                    $stmt = $pdo->prepare("INSERT INTO existing_info_patients 
-                        (patient_id, gender, height, weight, blood_type, temperature,
-                        blood_pressure, allergies, medical_history, current_medications, 
-                        family_history, immunization_record, chronic_conditions)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    $stmt->execute([
-                        $patient_id,
-                        $gender,
-                        $height,
-                        $weight,
-                        $blood_type,
-                        $temperature,
-                        $blood_pressure,
-                        $allergies,
-                        $medical_history,
-                        $current_medications,
-                        $family_history,
-                        $immunization_record,
-                        $chronic_conditions
-                    ]);
-                }
-
-                $pdo->commit();
-                $message = "Patient information saved successfully!";
-            } catch (PDOException $e) {
-                $pdo->rollBack();
-                $error = "Error saving patient information: " . $e->getMessage();
+                $staff_id = $_SESSION['user']['id'] ?? null;
+                $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+                $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                
+                $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'update_patient', ?, ?, ?, ?, NOW())");
+                $stmtLog->execute([
+                    $staff_id, 
+                    $patientId, 
+                    json_encode([
+                        'patient_name' => $fullNameLast . ', ' . $fullNameFirst,
+                        'patient_id' => $patientId,
+                        'medical_conditions' => $medicalConditionsJson,
+                        'blood_pressure' => $bloodPressure,
+                        'blood_type' => $_POST['blood_type'] ?? null
+                    ]), 
+                    $ip, 
+                    $ua
+                ]);
+            } catch (Exception $e) {
+                error_log('Staff activity log error (update_patient): ' . $e->getMessage());
             }
+            
+            $pdo->commit();
+            
+            // Set success message
+            $_SESSION['success_message'] = 'Patient information saved successfully!';
+            $message = 'Patient information saved successfully!';
+            $notificationType = 'success';
+            $notificationMessage = $message;
+            
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $error = 'Error saving patient information: ' . $e->getMessage();
+            $notificationType = 'error';
+            $notificationMessage = $error;
+            error_log("Update patient error: " . $e->getMessage());
         }
     }
 }
 
-/**
+/** 
  * Function to check if a patient record already exists
  * Checks by full name and date of birth combination
  * 
@@ -828,49 +1049,124 @@ try {
 
 // Handle form submission for adding new patient
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_patient'])) {
-    $fullName = trim($_POST['full_name']);
-    $dateOfBirth = trim($_POST['date_of_birth']);
-    if (!empty($dateOfBirth)) {
-        $normalizedDateOfBirth = DateTime::createFromFormat('m/d/Y', $dateOfBirth);
+    // Personal Information
+    $studentLastName = trim($_POST['student_last_name'] ?? '');
+    $studentFirstName = trim($_POST['student_first_name'] ?? '');
+    $studentMiddleName = trim($_POST['student_middle_name'] ?? '');
+    
+    // Combine full name
+    $fullName = trim($studentLastName . ', ' . $studentFirstName . ($studentMiddleName ? ' ' . $studentMiddleName : ''));
+    
+    $studentBirthdate = trim($_POST['student_birthdate'] ?? '');
+    if (!empty($studentBirthdate)) {
+        $normalizedDateOfBirth = DateTime::createFromFormat('m/d/Y', $studentBirthdate);
         if ($normalizedDateOfBirth instanceof DateTime) {
-            $dateOfBirth = $normalizedDateOfBirth->format('Y-m-d');
+            $studentBirthdate = $normalizedDateOfBirth->format('Y-m-d');
         } else {
-            $timestamp = strtotime($dateOfBirth);
+            $timestamp = strtotime($studentBirthdate);
             if ($timestamp !== false) {
-                $dateOfBirth = date('Y-m-d', $timestamp);
+                $studentBirthdate = date('Y-m-d', $timestamp);
             }
         }
     }
-    $age = intval($_POST['age']);
-    $gender = trim($_POST['gender']);
-    $civil_status = trim($_POST['civil_status']);
-    $occupation = trim($_POST['occupation']);
-    $address = trim($_POST['address']);
-    $sitio = trim($_POST['sitio']);
-    $contact = trim($_POST['contact']);
-    $lastCheckup = trim($_POST['last_checkup']);
-    $phic_no = trim($_POST['phic_no']);
-    $bhw_assigned = trim($_POST['bhw_assigned']);
-    $family_no = trim($_POST['family_no']);
-    $fourps_member = trim($_POST['fourps_member']);
-    $consent_given = 1;
-    $userId = !empty($_POST['user_id']) ? intval($_POST['user_id']) : null;
-
+    
+    // Calculate age
+    $age = null;
+    if (!empty($studentBirthdate)) {
+        $dob = new DateTime($studentBirthdate);
+        $today = new DateTime();
+        $age = $today->diff($dob)->y;
+    }
+    
+    $studentReligion = trim($_POST['student_religion'] ?? '');
+    $studentHomeAddress = trim($_POST['student_home_address'] ?? '');
+    $studentOccupation = trim($_POST['student_occupation'] ?? '');
+    $studentEffectiveDate = trim($_POST['student_effective_date'] ?? '');
+    $studentSex = trim($_POST['student_sex'] ?? '');
+    $studentNickname = trim($_POST['student_nickname'] ?? '');
+    $studentHomePhone = trim($_POST['student_home_phone'] ?? '');
+    $studentOfficePhone = trim($_POST['student_office_phone'] ?? '');
+    $studentFaxNumber = trim($_POST['student_fax_number'] ?? '');
+    $studentMobileNumber = trim($_POST['student_mobile_number'] ?? '');
+    $studentEmailAddress = trim($_POST['student_email_address'] ?? '');
+    
+    // Parent/Guardian
+    $parentGuardianName = trim($_POST['parent_guardian_name'] ?? '');
+    $parentGuardianOccupation = trim($_POST['parent_guardian_occupation'] ?? '');
+    
+    // Physician Information
+    $studentPhysicianName = trim($_POST['student_physician_name'] ?? '');
+    $studentPhysicianSpecialty = trim($_POST['student_physician_specialty'] ?? '');
+    $studentPhysicianOfficeAddress = trim($_POST['student_physician_office_address'] ?? '');
+    $studentPhysicianOfficeNumber = trim($_POST['student_physician_office_number'] ?? '');
+    
+    // Health Questions
+    $studentGoodHealth = trim($_POST['student_good_health'] ?? '');
+    $studentUnderTreatment = trim($_POST['student_under_treatment'] ?? '');
+    $studentTreatmentCondition = trim($_POST['student_treatment_condition'] ?? '');
+    $studentSeriousIllnessSurgery = trim($_POST['student_serious_illness_surgery'] ?? '');
+    $studentSeriousIllnessDetails = trim($_POST['student_serious_illness_details'] ?? '');
+    $studentHospitalized = trim($_POST['student_hospitalized'] ?? '');
+    $studentHospitalizationDetails = trim($_POST['student_hospitalization_details'] ?? '');
+    $studentTakingMedication = trim($_POST['student_taking_medication'] ?? '');
+    $studentMedicationDetails = trim($_POST['student_medication_details'] ?? '');
+    $studentUsesTobacco = trim($_POST['student_uses_tobacco'] ?? '');
+    $studentUsesAlcoholDrugs = trim($_POST['student_uses_alcohol_drugs'] ?? '');
+    $studentHasAllergies = trim($_POST['student_has_allergies'] ?? '');
+    $allergyItems = isset($_POST['allergy_items']) ? implode(', ', $_POST['allergy_items']) : '';
+    $studentAllergyOther = trim($_POST['student_allergy_other'] ?? '');
+    $studentBleedingTime = trim($_POST['student_bleeding_time'] ?? '');
+    
+    // Women's Health
+    $studentIsPregnant = trim($_POST['student_is_pregnant'] ?? '');
+    $studentIsNursing = trim($_POST['student_is_nursing'] ?? '');
+    $studentTakesBirthControl = trim($_POST['student_takes_birth_control'] ?? '');
+    $studentMenarche = trim($_POST['student_menarche'] ?? '');
+    $studentLMP = trim($_POST['student_lmp'] ?? '');
+    $studentGravida = trim($_POST['student_gravida'] ?? '');
+    $studentPara = trim($_POST['student_para'] ?? '');
+    $studentAbortion = trim($_POST['student_abortion'] ?? '');
+    $studentConditions = isset($_POST['student_conditions']) ? implode(', ', $_POST['student_conditions']) : '';
+    $studentConditionOther = trim($_POST['student_condition_other'] ?? '');
+    
+    // Signature
+    $studentSignatureName = trim($_POST['student_signature_name'] ?? '');
+    
+    // ========== NEW FIELDS for Medical Conditions ==========
+    $medicalConditions = isset($_POST['medical_conditions']) ? $_POST['medical_conditions'] : [];
+    $medicalConditionsOther = trim($_POST['medical_conditions_other'] ?? '');
+    if (!empty($medicalConditionsOther)) {
+        $medicalConditions[] = $medicalConditionsOther;
+    }
+    $medicalConditionsJson = !empty($medicalConditions) ? json_encode($medicalConditions) : null;
+    
+    // ========== NEW FIELDS for Blood Pressure ==========
+    $bpSystolic = trim($_POST['blood_pressure_systolic'] ?? '');
+    $bpDiastolic = trim($_POST['blood_pressure_diastolic'] ?? '');
+    $bloodPressure = '';
+    if (!empty($bpSystolic) && !empty($bpDiastolic)) {
+        $bloodPressure = $bpSystolic . '/' . $bpDiastolic;
+    } elseif (!empty($_POST['blood_pressure'])) {
+        $bloodPressure = $_POST['blood_pressure'];
+    }
+    
+    // ========== NEW FIELDS for Vital Signs ==========
     $height = !empty($_POST['height']) ? floatval($_POST['height']) : null;
     $weight = !empty($_POST['weight']) ? floatval($_POST['weight']) : null;
     $temperature = !empty($_POST['temperature']) ? floatval($_POST['temperature']) : null;
-    $blood_pressure = trim($_POST['blood_pressure']);
-    $bloodType = trim($_POST['blood_type']);
-    $allergies = trim($_POST['allergies']);
-    $medicalHistory = trim($_POST['medical_history']);
-    $currentMedications = trim($_POST['current_medications']);
-    $familyHistory = trim($_POST['family_history']);
-    $immunizationRecord = trim($_POST['immunization_record']);
-    $chronicConditions = trim($_POST['chronic_conditions']);
-
-    if (!empty($fullName) && !empty($dateOfBirth)) {
-        $existingPatient = checkDuplicatePatient($pdo, $fullName, $dateOfBirth, $_SESSION['user']['id'], staff_can_view_all());
-
+    $bloodType = trim($_POST['blood_type'] ?? '');
+    
+    $consent_given = 1;
+    $userId = !empty($_POST['user_id']) ? intval($_POST['user_id']) : null;
+    
+    // Validate required fields
+    if (empty($fullName) || empty($studentBirthdate) || empty($studentHomeAddress) || empty($studentMobileNumber) || empty($studentSex) || empty($studentEffectiveDate)) {
+        $error = 'Please fill in all required fields (Last Name, First Name, Birthdate, Address, Mobile Number, Sex, Effective Date).';
+        $notificationType = 'error';
+        $notificationMessage = $error;
+    } else {
+        $existingPatient = checkDuplicatePatient($pdo, $fullName, $studentBirthdate, $_SESSION['user']['id'], staff_can_view_all());
+        
         if ($existingPatient) {
             $error = "This patient record already exists! <br><strong>" . htmlspecialchars($existingPatient['full_name']) . "</strong> 
                      with Date of Birth: <strong>" . date('M d, Y', strtotime($existingPatient['date_of_birth'])) . "</strong><br>
@@ -881,122 +1177,157 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_patient'])) {
         } else {
             try {
                 $pdo->beginTransaction();
-
-                $columns = ["full_name", "date_of_birth", "age", "gender", "address", "contact", "last_checkup", "consent_given", "consent_date", "added_by", "user_id"];
-                $placeholders = ["?", "?", "?", "?", "?", "?", "?", "?", "NOW()", "?", "?"];
-                $values = [$fullName, $dateOfBirth, $age, $gender, $address, $contact, $lastCheckup, $consent_given, $_SESSION['user']['id'], $userId];
-
-                if ($sitioExists) {
-                    $columns[] = "sitio";
-                    $placeholders[] = "?";
-                    $values[] = $sitio;
-                }
-
-                if ($civilStatusExists) {
-                    $columns[] = "civil_status";
-                    $placeholders[] = "?";
-                    $values[] = $civil_status;
-                }
-
-                if ($occupationExists) {
-                    $columns[] = "occupation";
-                    $placeholders[] = "?";
-                    $values[] = $occupation;
-                }
-
-                if ($phicNoExists) {
-                    $columns[] = "phic_no";
-                    $placeholders[] = "?";
-                    $values[] = $phic_no;
-                }
-
-                if ($bhwAssignedExists) {
-                    $columns[] = "bhw_assigned";
-                    $placeholders[] = "?";
-                    $values[] = $bhw_assigned;
-                }
-
-                if ($familyNoExists) {
-                    $columns[] = "family_no";
-                    $placeholders[] = "?";
-                    $values[] = $family_no;
-                }
-
-                if ($fourpsMemberExists) {
-                    $columns[] = "fourps_member";
-                    $placeholders[] = "?";
-                    $values[] = $fourps_member;
-                }
-
-                $insertQuery = "INSERT INTO sitio1_patients (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $placeholders) . ")";
-
-                $stmt = $pdo->prepare($insertQuery);
-                $stmt->execute($values);
-                $patientId = $pdo->lastInsertId();
-
-                $stmt = $pdo->prepare("INSERT INTO existing_info_patients 
-                (patient_id, gender, height, weight, temperature, blood_pressure, 
-                blood_type, allergies, medical_history, current_medications, 
-                family_history, immunization_record, chronic_conditions) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                
+                // Insert into sitio1_patients
+                $insertPatientQuery = "INSERT INTO sitio1_patients 
+                    (full_name, date_of_birth, age, address, contact, last_checkup, consent_given, consent_date, added_by, user_id, created_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, NOW())";
+                
+                $lastCheckup = date('Y-m-d');
+                
+                $stmt = $pdo->prepare($insertPatientQuery);
                 $stmt->execute([
-                    $patientId,
-                    $gender,
-                    $height,
-                    $weight,
-                    $temperature,
-                    $blood_pressure,
-                    $bloodType,
-                    $allergies,
-                    $medicalHistory,
-                    $currentMedications,
-                    $familyHistory,
-                    $immunizationRecord,
-                    $chronicConditions
+                    $fullName,
+                    $studentBirthdate,
+                    $age,
+                    $studentHomeAddress,
+                    $studentMobileNumber,
+                    $lastCheckup,
+                    $consent_given,
+                    $_SESSION['user']['id'],
+                    $userId
                 ]);
-
+                $patientId = $pdo->lastInsertId();
+                
+                // ========== CORRECTED INSERT QUERY - COUNT THE PARAMETERS ==========
+                // Total parameters: 58 (patient_id + 57 data fields)
+                $insertInfoQuery = "INSERT INTO existing_info_patients 
+                    (patient_id, 
+                     student_last_name, student_first_name, student_middle_name,
+                     student_birthdate, student_religion, student_home_address, student_occupation,
+                     student_effective_date, student_sex, student_nickname,
+                     student_home_phone, student_office_phone, student_fax_number,
+                     student_mobile_number, student_email_address,
+                     parent_guardian_name, parent_guardian_occupation,
+                     student_physician_name, student_physician_specialty,
+                     student_physician_office_address, student_physician_office_number,
+                     student_good_health, student_under_treatment, student_treatment_condition,
+                     student_serious_illness_surgery, student_serious_illness_details,
+                     student_hospitalized, student_hospitalization_details,
+                     student_taking_medication, student_medication_details,
+                     student_uses_tobacco, student_uses_alcohol_drugs,
+                     student_has_allergies, student_allergy_items, student_allergy_other,
+                     student_bleeding_time,
+                     student_is_pregnant, student_is_nursing, student_takes_birth_control,
+                     student_conditions, student_condition_other,
+                     student_menarche, student_lmp, student_gravida, student_para, student_abortion,
+                     student_signature_name,
+                     blood_type, blood_pressure, blood_pressure_systolic, blood_pressure_diastolic,
+                     medical_conditions, medical_conditions_other, height, weight, temperature)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                
+                $stmt = $pdo->prepare($insertInfoQuery);
+                $stmt->execute([
+                    $patientId,                                          // 1
+                    $studentLastName,                                    // 2
+                    $studentFirstName,                                   // 3
+                    $studentMiddleName,                                  // 4
+                    $studentBirthdate,                                   // 5
+                    $studentReligion,                                    // 6
+                    $studentHomeAddress,                                 // 7
+                    $studentOccupation,                                  // 8
+                    $studentEffectiveDate,                               // 9
+                    $studentSex,                                         // 10
+                    $studentNickname,                                    // 11
+                    $studentHomePhone,                                   // 12
+                    $studentOfficePhone,                                 // 13
+                    $studentFaxNumber,                                   // 14
+                    $studentMobileNumber,                                // 15
+                    $studentEmailAddress,                                // 16
+                    $parentGuardianName,                                 // 17
+                    $parentGuardianOccupation,                           // 18
+                    $studentPhysicianName,                               // 19
+                    $studentPhysicianSpecialty,                          // 20
+                    $studentPhysicianOfficeAddress,                      // 21
+                    $studentPhysicianOfficeNumber,                       // 22
+                    $studentGoodHealth,                                  // 23
+                    $studentUnderTreatment,                              // 24
+                    $studentTreatmentCondition,                          // 25
+                    $studentSeriousIllnessSurgery,                       // 26
+                    $studentSeriousIllnessDetails,                       // 27
+                    $studentHospitalized,                                // 28
+                    $studentHospitalizationDetails,                      // 29
+                    $studentTakingMedication,                            // 30
+                    $studentMedicationDetails,                           // 31
+                    $studentUsesTobacco,                                 // 32
+                    $studentUsesAlcoholDrugs,                            // 33
+                    $studentHasAllergies,                                // 34
+                    $allergyItems,                                       // 35
+                    $studentAllergyOther,                                // 36
+                    $studentBleedingTime,                                // 37
+                    $studentIsPregnant,                                  // 38
+                    $studentIsNursing,                                   // 39
+                    $studentTakesBirthControl,                           // 40
+                    $studentConditions,                                  // 41
+                    $studentConditionOther,                              // 42
+                    $studentMenarche,                                    // 43
+                    $studentLMP,                                         // 44
+                    $studentGravida,                                     // 45
+                    $studentPara,                                        // 46
+                    $studentAbortion,                                    // 47
+                    $studentSignatureName,                               // 48
+                    $bloodType,                                          // 49 - NEW
+                    $bloodPressure,                                      // 50 - NEW
+                    $bpSystolic,                                         // 51 - NEW
+                    $bpDiastolic,                                        // 52 - NEW
+                    $medicalConditionsJson,                              // 53 - NEW
+                    $medicalConditionsOther,                             // 54 - NEW
+                    $height,                                             // 55 - NEW
+                    $weight,                                             // 56 - NEW
+                    $temperature                                         // 57 - NEW
+                ]);
+                
                 $pdo->commit();
-
+                
+                // Log activity
                 try {
                     $staff_id = $_SESSION['user']['id'] ?? null;
                     $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
                     $ip = $_SERVER['REMOTE_ADDR'] ?? '';
                     $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
-
+                    
+                    // Create table if not exists (for safety)
                     $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    staff_id INT,
-                    action_type VARCHAR(100),
-                    related_id INT,
-                    details JSON,
-                    ip_address VARCHAR(45),
-                    user_agent TEXT,
-                    created_at DATETIME
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        staff_id INT,
+                        action_type VARCHAR(100),
+                        related_id INT,
+                        details JSON,
+                        ip_address VARCHAR(45),
+                        user_agent TEXT,
+                        created_at DATETIME
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                    
                     $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'add_patient', ?, ?, ?, ?, NOW())");
                     $stmtLog->execute([$staff_id, $patientId, json_encode(['full_name' => $staff_name, 'patient_name' => $fullName, 'patient_id' => $patientId]), $ip, $ua]);
                 } catch (Exception $e) {
                     error_log('Staff activity log error (add_patient): ' . $e->getMessage());
                 }
-
-                $_SESSION['success_message'] = 'Patient record added successfully!';
+                
+                $_SESSION['success_message'] = 'Student record added successfully!';
                 header('Location: existing_info_patients.php?tab=patients-tab');
                 exit();
+                
             } catch (PDOException $e) {
                 $pdo->rollBack();
                 $error = 'Error adding patient record: ' . $e->getMessage();
                 $notificationType = 'error';
                 $notificationMessage = $error;
+                error_log("Add patient error: " . $e->getMessage());
             }
         }
-    } else {
-        $error = 'Full name and date of birth are required.';
-        $notificationType = 'error';
-        $notificationMessage = $error;
     }
 }
-
 // Handle adding consultation note with doctor name - WITH PERMISSION CHECK
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_consultation_note'])) {
     // Check if user has permission to create consultation notes
@@ -1365,15 +1696,86 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
             $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
             $searchBy = isset($_GET['search_by']) ? trim($_GET['search_by']) : 'name';
 
+            // Comprehensive query with all updated health information
             $query = "SELECT 
-                p.*,
-                e.*,
+                p.id,
+                p.full_name,
+                p.age,
+                p.date_of_birth,
+                p.address,
+                p.contact,
+                p.last_checkup,
+                p.user_id,
+                -- Personal Information from existing_info_patients
+                e.student_last_name,
+                e.student_first_name,
+                e.student_middle_name,
+                e.student_birthdate,
+                e.student_religion,
+                e.student_home_address,
+                e.student_occupation,
+                e.student_effective_date,
+                e.student_sex as gender,
+                e.student_nickname,
+                e.student_home_phone,
+                e.student_office_phone,
+                e.student_fax_number,
+                e.student_mobile_number,
+                e.student_email_address,
+                e.parent_guardian_name,
+                e.parent_guardian_occupation,
+                -- Physician Information
+                e.student_physician_name,
+                e.student_physician_specialty,
+                e.student_physician_office_address,
+                e.student_physician_office_number,
+                -- Health Questionnaire
+                e.student_good_health,
+                e.student_under_treatment,
+                e.student_treatment_condition,
+                e.student_serious_illness_surgery,
+                e.student_serious_illness_details,
+                e.student_hospitalized,
+                e.student_hospitalization_details,
+                e.student_taking_medication,
+                e.student_medication_details,
+                e.student_uses_tobacco,
+                e.student_uses_alcohol_drugs,
+                e.student_has_allergies,
+                e.student_allergy_items,
+                e.student_allergy_other,
+                e.student_bleeding_time,
+                -- Women's Health
+                e.student_is_pregnant,
+                e.student_is_nursing,
+                e.student_takes_birth_control,
+                e.student_menarche,
+                e.student_lmp,
+                e.student_gravida,
+                e.student_para,
+                e.student_abortion,
+                e.student_conditions,
+                e.student_condition_other,
+                -- Medical Information
+                e.student_signature_name,
+                e.blood_type,
+                e.height, 
+                e.weight, 
+                e.temperature, 
+                e.blood_pressure,
+                e.allergies, 
+                e.medical_history, 
+                e.current_medications, 
+                e.family_history,
+                e.immunization_record, 
+                e.chronic_conditions,
+                -- User Information (for registered patients)
+                u.email as user_email,
+                u.unique_number,
                 CASE 
                     WHEN p.user_id IS NOT NULL THEN 'Registered Patient'
                     ELSE 'Regular Patient'
-                END as patient_type,
-                u.email as user_email,
-                u.unique_number
+                END as patient_type
             FROM sitio1_patients p
             LEFT JOIN existing_info_patients e ON p.id = e.patient_id
             LEFT JOIN sitio1_users u ON p.user_id = u.id
@@ -1393,7 +1795,9 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                     )";
                     $params[] = "%$searchTerm%";
                 } else {
-                    $query .= " AND p.full_name LIKE ?";
+                    $query .= " AND (p.full_name LIKE ? OR e.student_last_name LIKE ? OR e.student_first_name LIKE ?)";
+                    $params[] = "%$searchTerm%";
+                    $params[] = "%$searchTerm%";
                     $params[] = "%$searchTerm%";
                 }
             }
@@ -1417,26 +1821,398 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                 $filename = 'Regular_Patients_Export_' . date('Y-m-d');
             }
             if (!empty($searchTerm)) {
-                $filename .= '_search_' . substr($searchTerm, 0, 20);
+                $filename .= '_search_' . substr(preg_replace('/[^a-zA-Z0-9]/', '_', $searchTerm), 0, 20);
             }
             $filename .= '.xls';
 
+            // Clean output buffer
             ob_clean();
 
+            // Set headers for Excel download
             header("Content-Type: application/vnd.ms-excel");
             header("Content-Disposition: attachment; filename=\"$filename\"");
             header("Pragma: no-cache");
             header("Expires: 0");
+            header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
 
-            // Output the Excel content (simplified for brevity - same as original)
-            // ... (keep the existing Excel export HTML output code)
+            // Output the Excel content
+            echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+            echo '<head>';
+            echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
+            echo '<style>';
+            echo '
+                body { font-family: "Calibri", "Arial", sans-serif; font-size: 11pt; }
+                table { border-collapse: collapse; width: 100%; }
+                th { 
+                    background-color: #4472C4; 
+                    color: white; 
+                    border: 0.5pt solid #000000; 
+                    padding: 8px; 
+                    text-align: center; 
+                    vertical-align: middle;
+                    font-weight: bold;
+                }
+                td { 
+                    border: 0.5pt solid #000000; 
+                    padding: 5px 8px; 
+                    vertical-align: top;
+                    color: #000000;
+                }
+                .title { 
+                    font-size: 18pt; 
+                    font-weight: bold; 
+                    color: #1F4E78; 
+                    text-align: center; 
+                    border: none;
+                }
+                .subtitle { 
+                    font-size: 14pt; 
+                    color: #1F4E78; 
+                    text-align: center; 
+                    border: none;
+                }
+                .meta-label { 
+                    font-weight: bold; 
+                    background-color: #D9E1F2; 
+                }
+                .text-center { text-align: center; }
+                .text-bold { font-weight: bold; }
+                .alt-row { background-color: #F2F2F2; }
+                .fmt-text { mso-number-format:"\@"; }
+                .fmt-date { mso-number-format:"Short Date"; }
+            ';
+            echo '</style>';
+            echo '</head>';
+            echo '<body>';
+
+            // Header Section
+            echo '<table>';
+            echo '<tr><td colspan="11" class="title">BARANGAY LUZ HEALTH CENTER</th></tr>';
+            echo '<tr><td colspan="11" class="subtitle">Complete Patient Health Records Export</th></tr>';
+            echo '<tr><td colspan="11">&nbsp;</th></tr>';
+
+            // Meta Information
+            echo '<tr>';
+            echo '<td colspan="2" class="meta-label">Export Date:</th>';
+            echo '<td colspan="2" class="fmt-text">' . date('Y-m-d') . '</th>';
+            echo '<td colspan="2" class="meta-label">Time:</th>';
+            echo '<td colspan="2">' . date('h:i A') . '</th>';
+            echo '<td colspan="2" class="meta-label">Generated By:</th>';
+            echo '<td colspan="1">' . htmlspecialchars($_SESSION['user']['full_name'] ?? 'System') . '</th>';
+            echo '</tr>';
+            echo '<tr>';
+            echo '<td colspan="2" class="meta-label">Total Records:</th>';
+            echo '<td colspan="2">' . count($patients) . '</th>';
+            echo '<td colspan="2" class="meta-label">Patient Type:</th>';
+            echo '<td colspan="2">' . ucfirst(str_replace('_', ' ', $patientType)) . '</th>';
+            echo '<td colspan="3"></th>';
+            echo '</tr>';
+            echo '<tr><td colspan="11">&nbsp;</th></tr>';
+            echo '</table>';
+
+            // Data Table - Basic Information
+            echo '<h3>I. BASIC PATIENT INFORMATION</h3>';
+            echo '<table>';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th>No.</th>';
+            echo '<th>Patient ID</th>';
+            echo '<th>Full Name</th>';
+            echo '<th>Age</th>';
+            echo '<th>Gender</th>';
+            echo '<th>Date of Birth</th>';
+            echo '<th>Occupation</th>';
+            echo '<th>Contact Number</th>';
+            echo '<th>Address</th>';
+            echo '<th>Patient Type</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+
+            $counter = 1;
+            foreach ($patients as $patient) {
+                $rowStyle = ($counter % 2 == 0) ? ' class="alt-row"' : '';
+                
+                // Get the best available name (from existing_info_patients or main table)
+                $fullName = '';
+                if (!empty($patient['student_last_name']) && !empty($patient['student_first_name'])) {
+                    $fullName = $patient['student_last_name'] . ', ' . $patient['student_first_name'];
+                    if (!empty($patient['student_middle_name'])) {
+                        $fullName .= ' ' . $patient['student_middle_name'];
+                    }
+                } else {
+                    $fullName = $patient['full_name'] ?? '';
+                }
+                
+                $gender = '';
+                if (!empty($patient['gender'])) {
+                    $gender = ($patient['gender'] === 'M' || $patient['gender'] === 'Male') ? 'Male' : (($patient['gender'] === 'F' || $patient['gender'] === 'Female') ? 'Female' : $patient['gender']);
+                }
+                
+                $dob = !empty($patient['student_birthdate']) ? date('Y-m-d', strtotime($patient['student_birthdate'])) : (!empty($patient['date_of_birth']) ? date('Y-m-d', strtotime($patient['date_of_birth'])) : '');
+                $occupation = !empty($patient['student_occupation']) ? $patient['student_occupation'] : 'N/A';
+                $contact = $patient['student_mobile_number'] ?? $patient['contact'] ?? 'N/A';
+                $address = $patient['student_home_address'] ?? $patient['address'] ?? 'N/A';
+
+                echo "<tr{$rowStyle}>";
+                echo '<td class="text-center">' . $counter++ . '</td>';
+                echo '<td class="fmt-text text-center">' . ($patient['id'] ?? '') . '</td>';
+                echo '<td class="text-bold">' . htmlspecialchars($fullName) . '</td>';
+                echo '<td class="text-center">' . ($patient['age'] ?? '') . '</td>';
+                echo '<td class="text-center">' . htmlspecialchars($gender) . '</td>';
+                echo '<td class="fmt-date text-center">' . $dob . '</td>';
+                echo '<td>' . htmlspecialchars($occupation) . '</td>';
+                echo '<td class="fmt-text">' . htmlspecialchars($contact) . '</td>';
+                echo '<td>' . htmlspecialchars($address) . '</td>';
+                echo '<td class="text-center">' . ($patient['patient_type'] ?? 'Regular Patient') . '</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody>';
+            echo '</table>';
             
-            // For brevity, I'm showing the structure but you'd keep your existing Excel export code here
+            echo '<br/><br/>';
             
+            // Section II: Health Information
+            echo '<h3>II. HEALTH INFORMATION</h3>';
+            echo '<table>';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th>No.</th>';
+            echo '<th>Patient Name</th>';
+            echo '<th>Blood Type</th>';
+            echo '<th>Height (cm)</th>';
+            echo '<th>Weight (kg)</th>';
+            echo '<th>BMI</th>';
+            echo '<th>Blood Pressure</th>';
+            echo '<th>Temperature</th>';
+            echo '<th>Allergies</th>';
+            echo '<th>Medical History</th>';
+            echo '<th>Current Medications</th>';
+            echo '<th>Family History</th>';
+            echo '<th>Chronic Conditions</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+
+            $counter = 1;
+            foreach ($patients as $patient) {
+                $rowStyle = ($counter % 2 == 0) ? ' class="alt-row"' : '';
+                
+                $fullName = '';
+                if (!empty($patient['student_last_name']) && !empty($patient['student_first_name'])) {
+                    $fullName = $patient['student_last_name'] . ', ' . $patient['student_first_name'];
+                    if (!empty($patient['student_middle_name'])) {
+                        $fullName .= ' ' . $patient['student_middle_name'];
+                    }
+                } else {
+                    $fullName = $patient['full_name'] ?? '';
+                }
+                
+                $height = floatval($patient['height'] ?? 0);
+                $weight = floatval($patient['weight'] ?? 0);
+                $bmi = ($height > 0) ? number_format($weight / (($height / 100) ** 2), 1) : '';
+                
+                echo "<tr{$rowStyle}>";
+                echo '<td class="text-center">' . $counter++ . '</td>';
+                echo '<td>' . htmlspecialchars($fullName) . '</td>';
+                echo '<td class="text-center">' . htmlspecialchars($patient['blood_type'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ($height ?: '') . '</td>';
+                echo '<td class="text-center">' . ($weight ?: '') . '</td>';
+                echo '<td class="text-center">' . $bmi . '</td>';
+                echo '<td class="text-center">' . htmlspecialchars($patient['blood_pressure'] ?? '') . '</td>';
+                echo '<td class="text-center">' . htmlspecialchars($patient['temperature'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['allergies'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['medical_history'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['current_medications'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['family_history'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['chronic_conditions'] ?? '') . '</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody>';
+            echo '</table>';
+            
+            echo '<br/><br/>';
+            
+            // Section III: Physician Information
+            echo '<h3>III. PHYSICIAN INFORMATION</h3>';
+            echo '<table>';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th>No.</th>';
+            echo '<th>Patient Name</th>';
+            echo '<th>Physician Name</th>';
+            echo '<th>Specialty</th>';
+            echo '<th>Office Address</th>';
+            echo '<th>Office Number</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+
+            $counter = 1;
+            foreach ($patients as $patient) {
+                $rowStyle = ($counter % 2 == 0) ? ' class="alt-row"' : '';
+                
+                $fullName = '';
+                if (!empty($patient['student_last_name']) && !empty($patient['student_first_name'])) {
+                    $fullName = $patient['student_last_name'] . ', ' . $patient['student_first_name'];
+                    if (!empty($patient['student_middle_name'])) {
+                        $fullName .= ' ' . $patient['student_middle_name'];
+                    }
+                } else {
+                    $fullName = $patient['full_name'] ?? '';
+                }
+                
+                echo "<tr{$rowStyle}>";
+                echo '<td class="text-center">' . $counter++ . '</td>';
+                echo '<td>' . htmlspecialchars($fullName) . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_physician_name'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_physician_specialty'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_physician_office_address'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_physician_office_number'] ?? '') . '</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody>';
+            echo '</table>';
+            
+            echo '<br/><br/>';
+            
+            // Section IV: Health Questionnaire
+            echo '<h3>IV. HEALTH QUESTIONNAIRE</h3>';
+            echo '<table>';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th>No.</th>';
+            echo '<th>Patient Name</th>';
+            echo '<th>Good Health?</th>';
+            echo '<th>Under Treatment?</th>';
+            echo '<th>Treatment Details</th>';
+            echo '<th>Serious Illness?</th>';
+            echo '<th>Illness Details</th>';
+            echo '<th>Hospitalized?</th>';
+            echo '<th>Hospitalization Details</th>';
+            echo '<th>Taking Medication?</th>';
+            echo '<th>Medication Details</th>';
+            echo '<th>Has Allergies?</th>';
+            echo '<th>Allergy Items</th>';
+            echo '<th>Uses Tobacco?</th>';
+            echo '<th>Uses Alcohol/Drugs?</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+
+            $counter = 1;
+            foreach ($patients as $patient) {
+                $rowStyle = ($counter % 2 == 0) ? ' class="alt-row"' : '';
+                
+                $fullName = '';
+                if (!empty($patient['student_last_name']) && !empty($patient['student_first_name'])) {
+                    $fullName = $patient['student_last_name'] . ', ' . $patient['student_first_name'];
+                    if (!empty($patient['student_middle_name'])) {
+                        $fullName .= ' ' . $patient['student_middle_name'];
+                    }
+                } else {
+                    $fullName = $patient['full_name'] ?? '';
+                }
+                
+                echo "<tr{$rowStyle}>";
+                echo '<td class="text-center">' . $counter++ . '</td>';
+                echo '<td>' . htmlspecialchars($fullName) . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_good_health'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_under_treatment'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_treatment_condition'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_serious_illness_surgery'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_serious_illness_details'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_hospitalized'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_hospitalization_details'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_taking_medication'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_medication_details'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_has_allergies'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_allergy_items'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_uses_tobacco'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_uses_alcohol_drugs'] ?? '') . '</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody>';
+            echo '</table>';
+            
+            echo '<br/><br/>';
+            
+            // Section V: Women's Health (if applicable)
+            echo '<h3>V. WOMEN\'S HEALTH INFORMATION</h3>';
+            echo '<table>';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th>No.</th>';
+            echo '<th>Patient Name</th>';
+            echo '<th>Currently Pregnant?</th>';
+            echo '<th>Currently Nursing?</th>';
+            echo '<th>Birth Control Pills?</th>';
+            echo '<th>Menarche</th>';
+            echo '<th>LMP</th>';
+            echo '<th>Gravida</th>';
+            echo '<th>Para</th>';
+            echo '<th>Abortion</th>';
+            echo '<th>Medical Conditions</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+
+            $counter = 1;
+            foreach ($patients as $patient) {
+                $rowStyle = ($counter % 2 == 0) ? ' class="alt-row"' : '';
+                
+                $fullName = '';
+                if (!empty($patient['student_last_name']) && !empty($patient['student_first_name'])) {
+                    $fullName = $patient['student_last_name'] . ', ' . $patient['student_first_name'];
+                    if (!empty($patient['student_middle_name'])) {
+                        $fullName .= ' ' . $patient['student_middle_name'];
+                    }
+                } else {
+                    $fullName = $patient['full_name'] ?? '';
+                }
+                
+                echo "<tr{$rowStyle}>";
+                echo '<td class="text-center">' . $counter++ . '</td>';
+                echo '<td>' . htmlspecialchars($fullName) . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_is_pregnant'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_is_nursing'] ?? '') . '</td>';
+                echo '<td class="text-center">' . ucfirst($patient['student_takes_birth_control'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_menarche'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_lmp'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_gravida'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_para'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_abortion'] ?? '') . '</td>';
+                echo '<td>' . htmlspecialchars($patient['student_conditions'] ?? '') . '</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody>';
+            echo '</table>';
+
+            // Footer
+            echo '<br/><br/>';
+            echo '<table style="border:none;">';
+            echo '<tr>';
+            echo '<td colspan="11" style="border:none; color: #767676; font-size: 9pt; text-align: center;">';
+            echo '*** END OF REPORT ***<br/>';
+            echo 'This document contains confidential medical information. Handle with care.<br/>';
+            echo 'Generated by Community Health Tracker System - Barangay Luz Health Center';
+            echo '</td>';
+            echo '</tr>';
+            echo '</table>';
+
+            echo '</body></html>';
             exit();
+            
         } catch (Exception $e) {
             $error = "Error exporting to Excel: " . $e->getMessage();
             error_log("Excel Export Error: " . $e->getMessage());
+            $notificationType = 'error';
+            $notificationMessage = $error;
         }
     }
 }
@@ -1449,7 +2225,7 @@ if (isset($_SESSION['success_message'])) {
     unset($_SESSION['success_message']);
 }
 
-// Handle patient deletion - WITH PERMISSION CHECK
+// Handle patient deletion - WITH PERMISSION CHECK (COMPLETE VERSION)
 if (isset($_GET['delete_patient'])) {
     // Check if user has permission to archive patient records
     if (!$canArchive) {
@@ -1458,100 +2234,141 @@ if (isset($_GET['delete_patient'])) {
         exit();
     }
     
-    $patientId = $_GET['delete_patient'];
+    $patientId = (int)$_GET['delete_patient'];
     try {
         require_once __DIR__ . '/../includes/functions.php';
         $pdo->beginTransaction();
+        
+        // Get patient data with ALL medical info
         if (staff_can_view_all()) {
-            $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT 
+                p.*,
+                e.blood_type, e.height, e.weight, e.temperature, e.blood_pressure,
+                e.blood_pressure_systolic, e.blood_pressure_diastolic,
+                e.allergies, e.medical_history, e.current_medications,
+                e.family_history, e.immunization_record, e.chronic_conditions,
+                e.medical_conditions, e.medical_conditions_other,
+                e.student_last_name, e.student_first_name, e.student_middle_name,
+                e.student_birthdate, e.student_religion, e.student_home_address, e.student_occupation,
+                e.student_effective_date, e.student_sex, e.student_nickname,
+                e.student_home_phone, e.student_office_phone, e.student_fax_number,
+                e.student_mobile_number, e.student_email_address,
+                e.parent_guardian_name, e.parent_guardian_occupation,
+                e.student_physician_name, e.student_physician_specialty,
+                e.student_physician_office_address, e.student_physician_office_number,
+                e.student_good_health, e.student_under_treatment, e.student_treatment_condition,
+                e.student_serious_illness_surgery, e.student_serious_illness_details,
+                e.student_hospitalized, e.student_hospitalization_details,
+                e.student_taking_medication, e.student_medication_details,
+                e.student_uses_tobacco, e.student_uses_alcohol_drugs,
+                e.student_has_allergies, e.student_allergy_items, e.student_allergy_other,
+                e.student_bleeding_time, e.student_is_pregnant, e.student_is_nursing,
+                e.student_takes_birth_control, e.student_conditions, e.student_condition_other,
+                e.student_menarche, e.student_lmp, e.student_gravida, e.student_para, e.student_abortion,
+                e.student_signature_name
+            FROM sitio1_patients p
+            LEFT JOIN existing_info_patients e ON p.id = e.patient_id
+            WHERE p.id = ?");
             $stmt->execute([$patientId]);
         } else {
-            $stmt = $pdo->prepare("SELECT * FROM sitio1_patients WHERE id = ? AND added_by = ?");
+            $stmt = $pdo->prepare("SELECT 
+                p.*,
+                e.blood_type, e.height, e.weight, e.temperature, e.blood_pressure,
+                e.blood_pressure_systolic, e.blood_pressure_diastolic,
+                e.allergies, e.medical_history, e.current_medications,
+                e.family_history, e.immunization_record, e.chronic_conditions,
+                e.medical_conditions, e.medical_conditions_other,
+                e.student_last_name, e.student_first_name, e.student_middle_name,
+                e.student_birthdate, e.student_religion, e.student_home_address, e.student_occupation,
+                e.student_effective_date, e.student_sex, e.student_nickname,
+                e.student_home_phone, e.student_office_phone, e.student_fax_number,
+                e.student_mobile_number, e.student_email_address,
+                e.parent_guardian_name, e.parent_guardian_occupation,
+                e.student_physician_name, e.student_physician_specialty,
+                e.student_physician_office_address, e.student_physician_office_number,
+                e.student_good_health, e.student_under_treatment, e.student_treatment_condition,
+                e.student_serious_illness_surgery, e.student_serious_illness_details,
+                e.student_hospitalized, e.student_hospitalization_details,
+                e.student_taking_medication, e.student_medication_details,
+                e.student_uses_tobacco, e.student_uses_alcohol_drugs,
+                e.student_has_allergies, e.student_allergy_items, e.student_allergy_other,
+                e.student_bleeding_time, e.student_is_pregnant, e.student_is_nursing,
+                e.student_takes_birth_control, e.student_conditions, e.student_condition_other,
+                e.student_menarche, e.student_lmp, e.student_gravida, e.student_para, e.student_abortion,
+                e.student_signature_name
+            FROM sitio1_patients p
+            LEFT JOIN existing_info_patients e ON p.id = e.patient_id
+            WHERE p.id = ? AND p.added_by = ?");
             $stmt->execute([$patientId, $_SESSION['user']['id']]);
         }
         $patient = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($patient) {
-            $stmt = $pdo->prepare("SELECT * FROM existing_info_patients WHERE patient_id = ?");
-            $stmt->execute([$patientId]);
-            $medicalInfo = $stmt->fetch(PDO::FETCH_ASSOC);
-
+            // Get deleted_patients table columns
             $stmt = $pdo->prepare("SHOW COLUMNS FROM deleted_patients");
             $stmt->execute();
             $deletedTableColumns = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
+            
+            // Build dynamic INSERT for deleted_patients with ALL fields
             $columns = [];
             $placeholders = [];
             $values = [];
-
+            
+            // Map all patient fields to deleted_patients columns
             foreach ($patient as $column => $value) {
                 if ($column === 'id') {
                     $columns[] = 'original_id';
                     $placeholders[] = '?';
                     $values[] = $value;
-                    continue;
-                }
-
-                if (in_array($column, $deletedTableColumns) && !in_array($column, ['id', 'deleted_at'])) {
+                } elseif (in_array($column, $deletedTableColumns) && !in_array($column, ['id', 'deleted_at', 'deleted_by', 'original_id'])) {
                     $columns[] = $column;
                     $placeholders[] = '?';
                     $values[] = $value;
                 }
             }
-
-            if ($medicalInfo) {
-                $medicalFields = ['gender', 'height', 'weight', 'temperature', 'blood_pressure', 'blood_type', 'allergies', 'medical_history', 'current_medications', 'family_history', 'immunization_record', 'chronic_conditions'];
-                foreach ($medicalFields as $field) {
-                    if (in_array($field, $deletedTableColumns) && !in_array($field, $columns)) {
-                        $columns[] = $field;
-                        $placeholders[] = '?';
-                        $values[] = $medicalInfo[$field] ?? null;
-                    }
-                }
-            }
-
+            
+            // Add deleted_by
             $columns[] = 'deleted_by';
             $placeholders[] = '?';
             $values[] = $_SESSION['user']['id'];
-
+            
+            // Add deleted_at
+            $columns[] = 'deleted_at';
+            $placeholders[] = 'NOW()';
+            
+            // Build and execute insert query
             $insertQuery = "INSERT INTO deleted_patients (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $placeholders) . ")";
-
+            error_log("Archive insert query: " . $insertQuery);
             $stmt = $pdo->prepare($insertQuery);
             $stmt->execute($values);
 
+            // Delete from main tables
             $stmt = $pdo->prepare("DELETE FROM sitio1_patients WHERE id = ?");
             $stmt->execute([$patientId]);
-
+            
             $stmt = $pdo->prepare("DELETE FROM existing_info_patients WHERE patient_id = ?");
             $stmt->execute([$patientId]);
 
             $pdo->commit();
 
-            try {
-                $staff_id = $_SESSION['user']['id'] ?? null;
-                $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
-                $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-                $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
-
-                $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'archive_patient', ?, ?, ?, ?, NOW())");
-                $stmtLog->execute([$staff_id, $patientId, json_encode(['full_name' => $staff_name, 'patient_name' => $patient['full_name'], 'original_id' => $patientId]), $ip, $ua]);
-            } catch (Exception $e) {
-                error_log('Staff activity log error (archive_patient): ' . $e->getMessage());
-            }
-
             $_SESSION['success_message'] = 'Patient record moved to archive successfully!';
-            header('Location: existing_info_patients.php');
+            header('Location: existing_info_patients.php?tab=patients-tab');
             exit();
         } else {
-            $error = 'Patient not found!';
-            $notificationType = 'error';
-            $notificationMessage = $error;
+            throw new Exception('Patient not found');
         }
     } catch (PDOException $e) {
         $pdo->rollBack();
-        $error = 'Error deleting patient record: ' . $e->getMessage();
+        $error = 'Error archiving patient record: ' . $e->getMessage();
         $notificationType = 'error';
         $notificationMessage = $error;
+        error_log("Archive patient error: " . $e->getMessage());
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $error = $e->getMessage();
+        $notificationType = 'error';
+        $notificationMessage = $error;
+        error_log("Archive patient error: " . $e->getMessage());
     }
 }
 
@@ -1620,22 +2437,41 @@ try {
 }
 
 $allPatients = [];
+// Get all patients with their data
 try {
     $selectQuery = "SELECT 
             p.id,
             p.full_name,
-            COALESCE(p.date_of_birth, u.date_of_birth) as date_of_birth,
+            p.date_of_birth,
             p.age,
-            COALESCE(e.gender, p.gender) as gender,
-            p.sitio,
-            p.civil_status,
-            p.occupation,
-            p.phic_no,
-            p.bhw_assigned,
-            p.family_no,
-            p.fourps_member,
+            p.address,
+            p.contact,
+            p.last_checkup,
             p.user_id,
             p.created_at,
+            p.updated_at,
+            p.occupation as main_occupation,  -- Get occupation from main table
+            e.student_last_name,
+            e.student_first_name,
+            e.student_middle_name,
+            e.student_sex as gender,
+            e.student_religion,
+            e.student_home_address,
+            e.student_occupation as student_occupation,  -- Get occupation from existing_info
+            e.student_nickname,
+            e.student_home_phone,
+            e.student_office_phone,
+            e.student_mobile_number,
+            e.student_email_address,
+            e.parent_guardian_name,
+            e.parent_guardian_occupation,
+            e.student_physician_name,
+            e.student_good_health,
+            e.student_has_allergies,
+            e.student_allergy_items,
+            e.student_bleeding_time,
+            e.student_is_pregnant,
+            e.student_signature_name,
             e.blood_type,
             e.height, 
             e.weight, 
@@ -1649,15 +2485,12 @@ try {
             e.family_history,
             u.unique_number,
             u.email as user_email,
-            u.sitio as user_sitio,
-            u.civil_status as user_civil_status,
-            u.occupation as user_occupation,
-            u.gender as user_gender,
-            u.date_of_birth as user_date_of_birth,
             CASE 
                 WHEN p.user_id IS NOT NULL THEN 'Registered Patient'
                 ELSE 'Regular Patient'
-            END as patient_type
+            END as patient_type,
+            -- Combine occupation from both tables (prioritize student_occupation)
+            COALESCE(e.student_occupation, p.occupation, 'N/A') as display_occupation
         FROM sitio1_patients p
         LEFT JOIN existing_info_patients e ON p.id = e.patient_id
         LEFT JOIN sitio1_users u ON p.user_id = u.id
@@ -1679,10 +2512,7 @@ try {
     $dateSortOrder = (isset($_GET['date_sort']) && strtolower($_GET['date_sort']) === 'asc') ? 'ASC' : 'DESC';
     $selectQuery .= " ORDER BY p.created_at $dateSortOrder";
 
-    if ($viewAll) {
-        $limitNeeded = false;
-    } else {
-        $limitNeeded = true;
+    if (!$viewAll) {
         $selectQuery .= " LIMIT ? OFFSET ?";
     }
 
@@ -1698,7 +2528,7 @@ try {
         $paramIndex++;
     }
 
-    if ($limitNeeded) {
+    if (!$viewAll) {
         $stmt->bindValue($paramIndex, (int) $recordsPerPage, PDO::PARAM_INT);
         $paramIndex++;
         $stmt->bindValue($paramIndex, (int) $offset, PDO::PARAM_INT);
@@ -1706,6 +2536,7 @@ try {
 
     $stmt->execute();
     $allPatients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
 } catch (PDOException $e) {
     $error = "Error fetching patient records: " . $e->getMessage();
     error_log("Patient fetch error: " . $e->getMessage());
@@ -1728,16 +2559,38 @@ if (!empty($searchTerm)) {
             $stmt->execute(["%$searchTerm%"]);
             $searchedUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else {
-            $selectQuery = "SELECT p.id, p.full_name, p.date_of_birth, p.age, 
-                            COALESCE(e.gender, p.gender) as gender, p.sitio, p.civil_status, p.occupation,
-                            p.phic_no, p.bhw_assigned, p.family_no, p.fourps_member,
-                            e.blood_type, e.height, e.weight, e.temperature, e.blood_pressure,
-                            CASE WHEN p.user_id IS NOT NULL THEN 'Registered Patient' ELSE 'Regular Patient' END as patient_type
-                        FROM sitio1_patients p 
-                        LEFT JOIN existing_info_patients e ON p.id = e.patient_id 
-                        WHERE p.deleted_at IS NULL AND p.full_name LIKE ?";
+            // In the search section
+$selectQuery = "SELECT 
+    p.id, 
+    p.full_name, 
+    p.date_of_birth, 
+    p.age,
+    p.address,
+    p.contact,
+    p.last_checkup,
+    p.occupation as main_occupation,
+    e.student_last_name,
+    e.student_first_name,
+    e.student_middle_name,
+    e.student_sex as gender,
+    e.student_occupation as student_occupation,
+    COALESCE(e.student_occupation, p.occupation, 'N/A') as display_occupation,
+    CASE WHEN p.user_id IS NOT NULL THEN 'Registered Patient' ELSE 'Regular Patient' END as patient_type
+FROM sitio1_patients p 
+LEFT JOIN existing_info_patients e ON p.id = e.patient_id 
+WHERE p.deleted_at IS NULL 
+AND (
+    p.full_name LIKE ? 
+    OR e.student_last_name LIKE ? 
+    OR e.student_first_name LIKE ?
+    OR e.student_nickname LIKE ?
+    OR e.student_mobile_number LIKE ?
+    OR e.student_email_address LIKE ?
+)";
 
-            $params = ["%$searchTerm%"];
+            $searchPattern = "%$searchTerm%";
+            $params = [$searchPattern, $searchPattern, $searchPattern, $searchPattern, $searchPattern, $searchPattern];
+            
             if (isset($patientTypeFilter) && $patientTypeFilter !== 'all') {
                 if ($patientTypeFilter === 'registered') {
                     $selectQuery .= " AND p.user_id IS NOT NULL";
@@ -1751,7 +2604,7 @@ if (!empty($searchTerm)) {
                 $params[] = $_SESSION['user']['id'];
             }
 
-            $selectQuery .= " ORDER BY p.full_name";
+            $selectQuery .= " ORDER BY p.full_name LIMIT 50";
 
             $stmt = $pdo->prepare($selectQuery);
             $stmt->execute($params);
@@ -1759,6 +2612,7 @@ if (!empty($searchTerm)) {
         }
     } catch (PDOException $e) {
         $error = "Error fetching patients: " . $e->getMessage();
+        error_log("Search error: " . $e->getMessage());
     }
 }
 ?>
@@ -1928,6 +2782,48 @@ if (!empty($searchTerm)) {
         @keyframes spinner-border {
             to { transform: rotate(360deg); }
         }
+
+        .conditions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.condition-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.5rem;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.condition-checkbox:hover {
+    background-color: #e0f2fe;
+    border-color: #93c5fd;
+}
+
+.condition-checkbox input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: #3b82f6;
+    cursor: pointer;
+}
+
+.condition-checkbox label {
+    font-size: 0.875rem;
+    color: #334155;
+    cursor: pointer;
+    flex: 1;
+    font-weight: 500;
+}
+
+.condition-checkbox label:hover {
+    color: #1e40af;
+}
     </style>
 </head>
 
@@ -2178,12 +3074,6 @@ if (!empty($searchTerm)) {
                                         <?php if ($manualSelectMode): ?>
                                             <input type="hidden" name="manual_select" value="true">
                                         <?php endif; ?>
-                                        <select name="patient_type" onchange="this.form.submit()"
-                                            class="custom-select-filter">
-                                            <option value="all" <?= ($patientTypeFilter === 'all' || $patientTypeFilter === '' || !isset($patientTypeFilter)) ? 'selected' : '' ?>>All Patient Types</option>
-                                            <option value="account_access" <?= $patientTypeFilter === 'account_access' ? 'selected' : '' ?>>Account Access</option>
-                                            <option value="regular_patient" <?= $patientTypeFilter === 'regular_patient' ? 'selected' : '' ?>>Regular Patient</option>
-                                        </select>
                                         <select name="date_sort" onchange="this.form.submit()"
                                             class="custom-select-filter ml-2">
                                             <option value="desc" <?= (empty($_GET['date_sort']) || $_GET['date_sort'] === 'desc') ? 'selected' : '' ?>>Newest First</option>
@@ -2287,21 +3177,17 @@ if (!empty($searchTerm)) {
                                         <table class="patient-table">
                                             <thead>
                                                 <tr>
-                                                    <th>R.ID</th>
+                                                    <th>ID</th>
                                                     <th>Name</th>
                                                     <th>Date of Birth</th>
                                                     <th>Age</th>
                                                     <th>Gender</th>
-                                                    <?php if ($sitioExists): ?>
-                                                        <th>Sitio</th>
-                                                    <?php endif; ?>
+                                                    
                                                     <?php if ($civilStatusExists): ?>
                                                         <th>Civil Status</th>
                                                     <?php endif; ?>
-                                                    <?php if ($occupationExists): ?>
-                                                        <th>Occupation</th>
-                                                    <?php endif; ?>
-                                                    <th>Record Type</th>
+                                                    
+                                                    
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
@@ -2315,22 +3201,12 @@ if (!empty($searchTerm)) {
                                                         <td><?= $patient['age'] ?? 'N/A' ?></td>
                                                         <td><?= !empty($patient['gender']) ? (($patient['gender'] === 'male') ? 'Male' : (($patient['gender'] === 'female') ? 'Female' : htmlspecialchars($patient['gender']))) : 'N/A' ?>
                                                         </td>
-                                                        <?php if ($sitioExists): ?>
-                                                            <td><?= htmlspecialchars($patient['sitio'] ?? 'N/A') ?></td>
-                                                        <?php endif; ?>
+                                                        
                                                         <?php if ($civilStatusExists): ?>
                                                             <td><?= htmlspecialchars($patient['civil_status'] ?? 'N/A') ?></td>
                                                         <?php endif; ?>
-                                                        <?php if ($occupationExists): ?>
-                                                            <td><?= htmlspecialchars($patient['occupation'] ?? 'N/A') ?></td>
-                                                        <?php endif; ?>
-                                                        <td>
-                                                            <?php if ($patient['patient_type'] === 'Registered Patient'): ?>
-                                                                <span class="user-badge">Account Access</span>
-                                                            <?php else: ?>
-                                                                <span class="regular-badge">Regular Patient</span>
-                                                            <?php endif; ?>
-                                                        </td>
+                                                        
+                                                        
                                                         <td>
                                                             <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
                                                                 class="btn-view inline-flex items-center mr-2" 
@@ -2470,20 +3346,16 @@ if (!empty($searchTerm)) {
                                         <table class="patient-table">
                                             <thead>
                                                 <tr>
-                                                    <th>R.ID</th>
+                                                    <th>ID</th>
                                                     <th>Name</th>
                                                     <th>Date of Birth</th>
                                                     <th>Age</th>
                                                     <th>Gender</th>
-                                                    <?php if ($sitioExists): ?>
-                                                        <th>Sitio</th>
-                                                    <?php endif; ?>
+                                                    
                                                     <?php if ($civilStatusExists): ?>
                                                         <th>Civil Status</th>
                                                     <?php endif; ?>
-                                                    <?php if ($occupationExists): ?>
-                                                        <th>Occupation</th>
-                                                    <?php endif; ?>
+                                                    
                                                     <th class="record-type-col">Record Type</th>
                                                 </tr>
                                             </thead>
@@ -2497,15 +3369,11 @@ if (!empty($searchTerm)) {
                                                         <td><?= $user['age'] ?? 'N/A' ?></td>
                                                         <td><?= !empty($user['gender']) ? htmlspecialchars($user['gender']) : 'N/A' ?>
                                                         </td>
-                                                        <?php if ($sitioExists): ?>
-                                                            <td><?= htmlspecialchars($user['sitio'] ?? 'N/A') ?></td>
-                                                        <?php endif; ?>
+                                                        
                                                         <?php if ($civilStatusExists): ?>
                                                             <td><?= htmlspecialchars($user['civil_status'] ?? 'N/A') ?></td>
                                                         <?php endif; ?>
-                                                        <?php if ($occupationExists): ?>
-                                                            <td><?= htmlspecialchars($user['occupation'] ?? 'N/A') ?></td>
-                                                        <?php endif; ?>
+                                                        
                                                         <td><span class="user-badge">Registered User</span></td>
                                                     </tr>
                                                 <?php endforeach; ?>
@@ -2563,21 +3431,13 @@ if (!empty($searchTerm)) {
                                                                     onchange="toggleAllSelection(this)">
                                                             </th>
                                                         <?php endif; ?>
-                                                        <th>R.ID</th>
+                                                        <th>ID</th>
                                                         <th>Name</th>
                                                         <th>Date of Birth</th>
                                                         <th>Age</th>
                                                         <th>Gender</th>
-                                                        <?php if ($sitioExists): ?>
-                                                            <th>Sitio</th>
-                                                        <?php endif; ?>
-                                                        <?php if ($civilStatusExists): ?>
-                                                            <th>Civil Status</th>
-                                                        <?php endif; ?>
-                                                        <?php if ($occupationExists): ?>
-                                                            <th>Occupation</th>
-                                                        <?php endif; ?>
-                                                        <th>Record Type</th>
+                                                        
+                                                        
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
@@ -2599,21 +3459,12 @@ if (!empty($searchTerm)) {
                                                             <td><?= $patient['age'] ?? 'N/A' ?></td>
                                                             <td><?= !empty($patient['gender']) ? htmlspecialchars($patient['gender']) : 'N/A' ?>
                                                             </td>
-                                                            <?php if ($sitioExists): ?>
-                                                                <td><?= !empty($patient['sitio']) ? htmlspecialchars($patient['sitio']) : (!empty($patient['user_sitio']) ? htmlspecialchars($patient['user_sitio']) : 'N/A') ?>
-                                                                </td>
-                                                            <?php endif; ?>
-                                                            <?php if ($civilStatusExists): ?>
-                                                                <td><?= !empty($patient['civil_status']) ? htmlspecialchars($patient['civil_status']) : (!empty($patient['user_civil_status']) ? htmlspecialchars($patient['user_civil_status']) : 'N/A') ?>
-                                                                </td>
-                                                            <?php endif; ?>
-                                                            <?php if ($occupationExists): ?>
-                                                                <td><?= !empty($patient['occupation']) ? htmlspecialchars($patient['occupation']) : (!empty($patient['user_occupation']) ? htmlspecialchars($patient['user_occupation']) : 'N/A') ?>
-                                                                </td>
-                                                            <?php endif; ?>
-                                                            <td><?= $patient['patient_type'] === 'Registered Patient' ? '<span class="user-badge">Account Access</span>' : '<span class="regular-badge">Regular Patient</span>' ?>
+                                                            
+                                                           
+                                                            
+                                                            
                                                             <td>
-                                                            <td>
+                                                            
                                                                 <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
                                                                     class="btn-view inline-flex items-center mr-2">
                                                                     <svg class="mr-1 mt-1" style="width:1.5em;height:1.5em;vertical-align:middle;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2643,21 +3494,17 @@ if (!empty($searchTerm)) {
                                     <table class="patient-table">
                                         <thead>
                                             <tr>
-                                                <th>R.ID</th>
+                                                <th>ID</th>
                                                 <th>Name</th>
                                                 <th>Date of Birth</th>
                                                 <th>Age</th>
                                                 <th>Gender</th>
-                                                <?php if ($sitioExists): ?>
-                                                    <th>Sitio</th>
-                                                <?php endif; ?>
+                                                
                                                 <?php if ($civilStatusExists): ?>
                                                     <th>Civil Status</th>
                                                 <?php endif; ?>
-                                                <?php if ($occupationExists): ?>
-                                                    <th>Occupation</th>
-                                                <?php endif; ?>
-                                                <th>Record Type</th>
+                                                
+                                                
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -2675,27 +3522,13 @@ if (!empty($searchTerm)) {
                                                     <td><?= $patient['age'] ?? 'N/A' ?></td>
                                                     <td><?= !empty($patient['gender']) ? htmlspecialchars($patient['gender']) : 'N/A' ?>
                                                     </td>
-                                                    <?php if ($sitioExists): ?>
-                                                        <td><?= !empty($patient['sitio']) ? htmlspecialchars($patient['sitio']) : (!empty($patient['user_sitio']) ? htmlspecialchars($patient['user_sitio']) : 'N/A') ?>
-                                                        </td>
-                                                    <?php endif; ?>
+                                                    
                                                     <?php if ($civilStatusExists): ?>
                                                         <td><?= !empty($patient['civil_status']) ? htmlspecialchars($patient['civil_status']) : (!empty($patient['user_civil_status']) ? htmlspecialchars($patient['user_civil_status']) : 'N/A') ?>
                                                         </td>
                                                     <?php endif; ?>
-                                                    <?php if ($occupationExists): ?>
-                                                        <td><?= !empty($patient['occupation']) ? htmlspecialchars($patient['occupation']) : (!empty($patient['user_occupation']) ? htmlspecialchars($patient['user_occupation']) : 'N/A') ?>
-                                                        </td>
-                                                    <?php endif; ?>
-                                                    <td>
-                                                        <?php if ($patient['patient_type'] === 'Registered Patient'): ?>
-                                                            <span class="user-badge record-type-col">Account Access</span>
-                                                        <?php elseif ($patient['patient_type'] === 'Regular Patient'): ?>
-                                                            <span class="regular-badge record-type-col">Regular Patient</span>
-                                                        <?php else: ?>
-                                                            <span class="regular-badge">Regular Patient</span>
-                                                        <?php endif; ?>
-                                                    </td>
+                                                   
+                                                    
                                                     <td>
                                                         <button type="button" onclick="openViewModal(<?= $patient['id'] ?>)"
                                                             class="btn-view mr-2">
@@ -3543,384 +4376,590 @@ if (!empty($searchTerm)) {
     </div>
 
     <!-- Add Patient Modal -->
-    <div id="addPatientModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal"
-        style="display:none;">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
-            <div class="sticky top-0 z-20 bg-[#2563EB] px-10 py-6 flex items-center">
-                <h3 class="text-xl font-medium flex gap-3 text-center w-full items-center text-white">
-                    <svg width="36" height="36" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <mask id="mask0_989_9772" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0"
-                            width="44" height="44">
-                            <path
-                                d="M38.8125 1H4.4375C2.53902 1 1 2.53902 1 4.4375V38.8125C1 40.711 2.53902 42.25 4.4375 42.25H38.8125C40.711 42.25 42.25 40.711 42.25 38.8125V4.4375C42.25 2.53902 40.711 1 38.8125 1Z"
-                                fill="white" stroke="white" stroke-width="2" stroke-linejoin="round" />
-                            <path d="M21.6247 12.4585V30.7918M12.458 21.6252H30.7913" stroke="black" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                        </mask>
-                        <g mask="url(#mask0_989_9772)">
-                            <path d="M-5.875 -5.875H49.125V49.125H-5.875V-5.875Z" fill="white" />
-                        </g>
-                    </svg>
-                    Registration For New Patient
-                </h3>
-                <button onclick="closeAddPatientModal()" class="modal-close-btn">
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M19.281 18.2198C19.3507 18.2895 19.406 18.3722 19.4437 18.4632C19.4814 18.5543 19.5008 18.6519 19.5008 18.7504C19.5008 18.849 19.4814 18.9465 19.4437 19.0376C19.406 19.1286 19.3507 19.2114 19.281 19.281C19.2114 19.3507 19.1286 19.406 19.0376 19.4437C18.9465 19.4814 18.849 19.5008 18.7504 19.5008C18.6519 19.5008 18.5543 19.4814 18.4632 19.4437C18.3722 19.406 18.2895 19.3507 18.2198 19.281L12.0004 13.0607L5.78104 19.281C5.64031 19.4218 5.44944 19.5008 5.25042 19.5008C5.05139 19.5008 4.86052 19.4218 4.71979 19.281C4.57906 19.1403 4.5 18.9494 4.5 18.7504C4.5 18.5514 4.57906 18.3605 4.71979 18.2198L10.9401 12.0004L4.71979 5.78104C4.57906 5.64031 4.5 5.44944 4.5 5.25042C4.5 5.05139 4.57906 4.86052 4.71979 4.71979C4.86052 4.57906 5.05139 4.5 5.25042 4.5C5.44944 4.5 5.64031 4.57906 5.78104 4.71979L12.0004 10.9401L18.2198 4.71979C18.3605 4.57906 18.5514 4.5 18.7504 4.5C18.9494 4.5 19.1403 4.57906 19.281 4.71979C19.4218 4.86052 19.5008 5.05139 19.5008 5.25042C19.5008 5.44944 19.4218 5.64031 19.281 5.78104L13.0607 12.0004L19.281 18.2198Z" fill="white" />
-                    </svg>
-                </button>
-            </div>
+<div id="addPatientModal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 modal"
+    style="display:none;">
+    <div class="bg-white rounded-lg shadow-2xl w-full max-w-7xl h-[92vh] overflow-hidden flex flex-col">
+        <div class="sticky top-0 z-20 bg-[#2563EB] px-10 py-6 flex items-center">
+            <h3 class="text-xl font-medium flex gap-3 text-center w-full items-center text-white">
+                <svg width="36" height="36" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <mask id="mask0_989_9772" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="44" height="44">
+                        <path d="M38.8125 1H4.4375C2.53902 1 1 2.53902 1 4.4375V38.8125C1 40.711 2.53902 42.25 4.4375 42.25H38.8125C40.711 42.25 42.25 40.711 42.25 38.8125V4.4375C42.25 2.53902 40.711 1 38.8125 1Z" fill="white" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M21.6247 12.4585V30.7918M12.458 21.6252H30.7913" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </mask>
+                    <g mask="url(#mask0_989_9772)">
+                        <path d="M-5.875 -5.875H49.125V49.125H-5.875V-5.875Z" fill="white"/>
+                    </g>
+                </svg>
+                Student Medical Registration Form
+            </h3>
+            <button onclick="closeAddPatientModal()" class="modal-close-btn">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.281 18.2198C19.3507 18.2895 19.406 18.3722 19.4437 18.4632C19.4814 18.5543 19.5008 18.6519 19.5008 18.7504C19.5008 18.849 19.4814 18.9465 19.4437 19.0376C19.406 19.1286 19.3507 19.2114 19.281 19.281C19.2114 19.3507 19.1286 19.406 19.0376 19.4437C18.9465 19.4814 18.849 19.5008 18.7504 19.5008C18.6519 19.5008 18.5543 19.4814 18.4632 19.4437C18.3722 19.406 18.2895 19.3507 18.2198 19.281L12.0004 13.0607L5.78104 19.281C5.64031 19.4218 5.44944 19.5008 5.25042 19.5008C5.05139 19.5008 4.86052 19.4218 4.71979 19.281C4.57906 19.1403 4.5 18.9494 4.5 18.7504C4.5 18.5514 4.57906 18.3605 4.71979 18.2198L10.9401 12.0004L4.71979 5.78104C4.57906 5.64031 4.5 5.44944 4.5 5.25042C4.5 5.05139 4.57906 4.86052 4.71979 4.71979C4.86052 4.57906 5.05139 4.5 5.25042 4.5C5.44944 4.5 5.64031 4.57906 5.78104 4.71979L12.0004 10.9401L18.2198 4.71979C18.3605 4.57906 18.5514 4.5 18.7504 4.5C18.9494 4.5 19.1403 4.57906 19.281 4.71979C19.4218 4.86052 19.5008 5.05139 19.5008 5.25042C19.5008 5.44944 19.4218 5.64031 19.281 5.78104L13.0607 12.0004L19.281 18.2198Z" fill="white"/>
+                </svg>
+            </button>
+        </div>
 
-            <div class="flex-1 overflow-y-auto px-16">
-                <form method="POST" action="" id="patientForm" enctype="multipart/form-data">
-                    <div id="personalInfoStep" class="bg-white my-10">
-                        <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
-                            <svg width="42" height="38" viewBox="0 0 42 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M0 2.06875C0.00381259 1.52162 0.222709 0.997953 0.609402 0.61087C0.996095 0.223787 1.51954 0.00436385 2.06667 0H39.6C40.7417 0 41.6667 0.927083 41.6667 2.06875V35.4312C41.6629 35.9784 41.444 36.502 41.0573 36.8891C40.6706 37.2762 40.1471 37.4956 39.6 37.5H2.06667C1.51836 37.4994 0.992702 37.2812 0.605186 36.8933C0.217671 36.5054 -2.78032e-07 35.9796 0 35.4312V2.06875ZM8.33333 25V29.1667H33.3333V25H8.33333ZM8.33333 8.33333V20.8333H20.8333V8.33333H8.33333ZM25 8.33333V12.5H33.3333V8.33333H25ZM25 16.6667V20.8333H33.3333V16.6667H25ZM12.5 12.5H16.6667V16.6667H12.5V12.5Z" fill="#2563EB" />
-                            </svg>
-                            Personal Information
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div>
-                                <label for="modal_full_name" class="block text-sm font-medium mb-2">
-                                    Full Name <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" id="modal_full_name" name="full_name" placeholder="Enter Full Name"
-                                    required class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-
-                            <div>
-                                <label for="modal_date_of_birth" class="block text-sm font-medium mb-2">
-                                    Date of Birth <span class="text-red-500">*</span>
-                                </label>
-                                <div class="date-input-with-trigger">
-                                    <input type="date" id="modal_date_of_birth" name="date_of_birth" required
-                                        max="<?= date('Y-m-d') ?>"
-                                        class="form-input-modal w-full rounded-xl border-blue-200 py-3 pl-4">
-                                    <button type="button" id="modal_date_of_birth_trigger"
-                                        class="date-input-trigger hover:text-[#1D4ED8]"
-                                        aria-label="Choose date of birth">
-                                        <svg width="50" height="50" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M24.375 3.75H21.5625V2.8125C21.5625 2.56386 21.4637 2.3254 21.2879 2.14959C21.1121 1.97377 20.8736 1.875 20.625 1.875C20.3764 1.875 20.1379 1.97377 19.9621 2.14959C19.7863 2.3254 19.6875 2.56386 19.6875 2.8125V3.75H10.3125V2.8125C10.3125 2.56386 10.2137 2.3254 10.0379 2.14959C9.8621 1.97377 9.62364 1.875 9.375 1.875C9.12636 1.875 8.8879 1.97377 8.71209 2.14959C8.53627 2.3254 8.4375 2.56386 8.4375 2.8125V3.75H5.625C5.12772 3.75 4.65081 3.94754 4.29917 4.29917C3.94754 4.65081 3.75 5.12772 3.75 5.625V24.375C3.75 24.8723 3.94754 25.3492 4.29917 25.7008C4.65081 26.0525 5.12772 26.25 5.625 26.25H24.375C24.8723 26.25 25.3492 26.0525 25.7008 25.7008C26.0525 25.3492 26.25 24.8723 26.25 24.375V5.625C26.25 5.12772 26.0525 4.65081 25.7008 4.29917C25.3492 3.94754 24.8723 3.75 24.375 3.75ZM8.4375 5.625V6.5625C8.4375 6.81114 8.53627 7.0496 8.71209 7.22541C8.8879 7.40123 9.12636 7.5 9.375 7.5C9.62364 7.5 9.8621 7.40123 10.0379 7.22541C10.2137 7.0496 10.3125 6.81114 10.3125 6.5625V5.625H19.6875V6.5625C19.6875 6.81114 19.7863 7.0496 19.9621 7.22541C20.1379 7.40123 20.3764 7.5 20.625 7.5C20.8736 7.5 21.1121 7.40123 21.2879 7.22541C21.4637 7.0496 21.5625 6.81114 21.5625 6.5625V5.625H24.375V9.375H5.625V5.625H8.4375ZM24.375 24.375H5.625V11.25H24.375V24.375ZM16.4062 15.4688C16.4062 15.7469 16.3238 16.0188 16.1693 16.25C16.0147 16.4813 15.7951 16.6615 15.5381 16.768C15.2812 16.8744 14.9984 16.9022 14.7257 16.848C14.4529 16.7937 14.2023 16.6598 14.0056 16.4631C13.809 16.2665 13.675 16.0159 13.6208 15.7431C13.5665 15.4703 13.5944 15.1876 13.7008 14.9306C13.8072 14.6736 13.9875 14.454 14.2187 14.2995C14.45 14.145 14.7219 14.0625 15 14.0625C15.373 14.0625 15.7306 14.2107 15.9944 14.4744C16.2581 14.7381 16.4062 15.0958 16.4062 15.4688ZM21.5625 15.4688C21.5625 15.7469 21.48 16.0188 21.3255 16.25C21.171 16.4813 20.9514 16.6615 20.6944 16.768C20.4374 16.8744 20.1547 16.9022 19.8819 16.848C19.6091 16.7937 19.3585 16.6598 19.1619 16.4631C18.9652 16.2665 18.8313 16.0159 18.777 15.7431C18.7228 15.4703 18.7506 15.1876 18.857 14.9306C18.9635 14.6736 19.1437 14.454 19.375 14.2995C19.6062 14.145 19.8781 14.0625 20.1562 14.0625C20.5292 14.0625 20.8869 14.2107 21.1506 14.4744C21.4143 14.7381 21.5625 15.0958 21.5625 15.4688ZM11.25 20.1562C11.25 20.4344 11.1675 20.7063 11.013 20.9375C10.8585 21.1688 10.6389 21.349 10.3819 21.4555C10.1249 21.5619 9.84219 21.5897 9.5694 21.5355C9.29662 21.4812 9.04605 21.3473 8.84938 21.1506C8.65271 20.954 8.51878 20.7034 8.46452 20.4306C8.41026 20.1578 8.43811 19.8751 8.54454 19.6181C8.65098 19.3611 8.83122 19.1415 9.06248 18.987C9.29374 18.8325 9.56562 18.75 9.84375 18.75C10.2167 18.75 10.5744 18.8982 10.8381 19.1619C11.1018 19.4256 11.25 19.7833 11.25 20.1562ZM16.4062 20.1562C16.4062 20.4344 16.3238 20.7063 16.1693 20.9375C16.0147 21.1688 15.7951 21.349 15.5381 21.4555C15.2812 21.5619 14.9984 21.5897 14.7257 21.5355C14.4529 21.4812 14.2023 21.3473 14.0056 21.1506C13.809 20.954 13.675 20.7034 13.6208 20.4306C13.5665 20.1578 13.5944 19.8751 13.7008 19.6181C13.8072 19.3611 13.9875 19.1415 14.2187 18.987C14.45 18.8325 14.7219 18.75 15 18.75C15.373 18.75 15.7306 18.8982 15.9944 19.1619C16.2581 19.4256 16.4062 19.7833 16.4062 20.1562ZM21.5625 20.1562C21.5625 20.4344 21.48 20.7063 21.3255 20.9375C21.171 21.1688 20.9514 21.349 20.6944 21.4555C20.4374 21.5619 20.1547 21.5897 19.8819 21.5355C19.6091 21.4812 19.3585 21.3473 19.1619 21.1506C18.9652 20.954 18.8313 20.7034 18.777 20.4306C18.7228 20.1578 18.7506 19.8751 18.857 19.6181C18.9635 19.3611 19.1437 19.1415 19.375 18.987C19.6062 18.8325 19.8781 18.75 20.1562 18.75C20.5292 18.75 20.8869 18.8982 21.1506 19.1619C21.4143 19.4256 21.5625 19.7833 21.5625 20.1562Z" fill="#3C96E1"/>
-</svg>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="modal_age" class="block text-sm font-medium mb-2">
-                                    Age (Auto-calculated)
-                                </label>
-                                <input type="number" id="modal_age" name="age" placeholder="0" readonly
-                                    class="form-input-modal w-full rounded-xl bg-[#F0F0F0] border border-blue-200 px-4 py-3 cursor-not-allowed">
-                            </div>
-
-                            <div>
-                                <label for="modal_gender" class="block text-sm font-medium mb-2">
-                                    Gender <span class="text-red-500">*</span>
-                                </label>
-                                <select id="modal_gender" name="gender" required
-                                    class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-
-                            <?php if ($civilStatusExists): ?>
-                                <div>
-                                    <label for="modal_civil_status" class="block text-sm font-medium mb-2">
-                                        Civil Status <span class="text-red-500">*</span>
-                                    </label>
-                                    <select id="modal_civil_status" name="civil_status"
-                                        class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                                        <option value="">Select Status</option>
-                                        <option>Single</option>
-                                        <option>Married</option>
-                                        <option>Widowed</option>
-                                        <option>Separated</option>
-                                        <option>Divorced</option>
-                                    </select>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if ($occupationExists): ?>
-                                <div>
-                                    <label for="modal_occupation" class="block text-sm font-medium mb-2">
-                                        Occupation
-                                    </label>
-                                    <input type="text" id="modal_occupation" name="occupation"
-                                        placeholder="Enter Occupation"
-                                        class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                                </div>
-                            <?php endif; ?>
-
-                            <div>
-                                <label for="modal_phic_no" class="block text-sm font-medium mb-2">
-                                    PHIC No.
-                                </label>
-                                <input type="text" id="modal_phic_no" name="phic_no" placeholder="Enter PHIC Number"
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-
-                            <div>
-                                <label for="modal_bhw_assigned" class="block text-sm font-medium mb-2">
-                                    BHW Assigned
-                                </label>
-                                <input type="text" id="modal_bhw_assigned" name="bhw_assigned"
-                                    placeholder="Enter BHW Name"
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-
-                            <div>
-                                <label for="modal_family_no" class="block text-sm font-medium mb-2">
-                                    Family No.
-                                </label>
-                                <input type="text" id="modal_family_no" name="family_no"
-                                    placeholder="Enter Family Number"
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-
-                            <div>
-                                <label for="modal_fourps_member" class="block text-sm font-medium mb-2">
-                                    4P's Member
-                                </label>
-                                <select id="modal_fourps_member" name="fourps_member"
-                                    class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                                    <option value="No">No</option>
-                                    <option value="Yes">Yes</option>
-                                </select>
-                            </div>
-
-                            <?php if ($sitioExists): ?>
-                                <div>
-                                    <label for="modal_sitio" class="block text-sm font-medium mb-2">
-                                        Sitio <span class="text-red-500">*</span>
-                                    </label>
-                                    <select id="modal_sitio" name="sitio"
-                                        class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                                        <option value="">Select Sitio</option>
-                                        <option value="Kalinao">Kalinao</option>
-                                        <option value="Nangka">Nangka</option>
-                                        <option value="Lubi">Lubi</option>
-                                        <option value="Sta. Cruz">Sta. Cruz</option>
-                                        <option value="Regla">Regla</option>
-                                        <option value="Abellana">Abellana</option>
-                                        <option value="Sto.niño l">Sto.niño l</option>
-                                        <option value="Sto.niño ll">Sto.niño ll</option>
-                                        <option value="Sto.niño lll">Sto.niño lll</option>
-                                        <option value="Zapatera">Zapatera</option>
-                                        <option value="Mabuhay">Mabuhay</option>
-                                        <option value="San Vicente">San Vicente</option>
-                                        <option value="City Central">City Central</option>
-                                        <option value="San. Antonio">San. Antonio</option>
-                                        <option value="San Roque">San Roque</option>
-                                    </select>
-                                </div>
-                            <?php endif; ?>
-                            <div>
-                                <label for="modal_address" class="block text-sm font-medium mb-2">
-                                    Complete Address <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" id="modal_address" name="address"
-                                    placeholder="Enter Complete Address"
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-                            <div>
-                                <label for="modal_contact" class="block text-sm font-medium mb-2">
-                                    Contact Number <span class="text-red-500">*</span>
-                                </label>
-                                <input type="text" id="modal_contact" name="contact" placeholder="Enter Contact Number"
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-                        </div>
-                        <div class="flex justify-end mt-8">
-                            <button type="button" id="nextToMedicalBtn" class="btn-primary px-8 py-3 rounded-full text-white font-medium shadow flex items-center gap-2" disabled>
-                                Next
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="medicalInfoStep" class="bg-white" style="display:none;">
-                        <h3
-                            class="text-2xl border-b border-black-100 font-normal text-blue-700 gap-4 py-6 mb-6 flex items-center">
-                            <svg width="42" height="42" viewBox="0 0 42 42" fill="none"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M14.5833 26.9104V28.125C14.5833 30.6114 15.5711 32.996 17.3292 34.7541C19.0874 36.5123 21.4719 37.5 23.9583 37.5C26.4447 37.5 28.8293 36.5123 30.5875 34.7541C32.3456 32.996 33.3333 30.6114 33.3333 28.125V24.6458C31.9427 24.1544 30.7706 23.1871 30.0243 21.915C29.2779 20.6429 29.0052 19.1479 29.2546 17.6942C29.5039 16.2405 30.2591 14.9218 31.3867 13.9711C32.5144 13.0204 33.9418 12.499 35.4167 12.499C36.8916 12.499 38.319 13.0204 39.4466 13.9711C40.5742 14.9218 41.3295 16.2405 41.5788 17.6942C41.8281 19.1479 41.5555 20.6429 40.8091 21.915C40.0627 23.1871 38.8906 24.1544 37.5 24.6458V28.125C37.5 31.7165 36.0733 35.1608 33.5337 37.7004C30.9942 40.24 27.5498 41.6667 23.9583 41.6667C20.3669 41.6667 16.9225 40.24 14.3829 37.7004C11.8434 35.1608 10.4167 31.7165 10.4167 28.125V26.9104C7.50365 26.418 4.85919 24.9098 2.95235 22.6532C1.04551 20.3967 -0.000452952 17.5377 1.47146e-07 14.5833V4.16667C1.47146e-07 3.0616 0.438987 2.00179 1.22039 1.22039C2.00179 0.438987 3.0616 0 4.16667 0L6.25 0C6.80253 0 7.33244 0.219493 7.72314 0.610194C8.11384 1.00089 8.33333 1.5308 8.33333 2.08333C8.33333 2.63587 8.11384 3.16577 7.72314 3.55647C7.33244 3.94717 6.80253 4.16667 6.25 4.16667H4.16667V14.5833C4.16667 16.7935 5.04464 18.9131 6.60744 20.4759C8.17025 22.0387 10.2899 22.9167 12.5 22.9167C14.7101 22.9167 16.8298 22.0387 18.3926 20.4759C19.9554 18.9131 20.8333 16.7935 20.8333 14.5833V4.16667H18.75C18.1975 4.16667 17.6676 3.94717 17.2769 3.55647C16.8862 3.16577 16.6667 2.63587 16.6667 2.08333C16.6667 1.5308 16.8862 1.00089 17.2769 0.610194C17.6676 0.219493 18.1975 0 18.75 0L20.8333 0C21.9384 0 22.9982 0.438987 23.7796 1.22039C24.561 2.00179 25 3.0616 25 4.16667V14.5833C25.0005 17.5377 23.9545 20.3967 22.0477 22.6532C20.1408 24.9098 17.4963 26.418 14.5833 26.9104ZM35.4167 20.8333C35.9692 20.8333 36.4991 20.6138 36.8898 20.2231C37.2805 19.8324 37.5 19.3025 37.5 18.75C37.5 18.1975 37.2805 17.6676 36.8898 17.2769C36.4991 16.8862 35.9692 16.6667 35.4167 16.6667C34.8641 16.6667 34.3342 16.8862 33.9435 17.2769C33.5528 17.6676 33.3333 18.1975 33.3333 18.75C33.3333 19.3025 33.5528 19.8324 33.9435 20.2231C34.3342 20.6138 34.8641 20.8333 35.4167 20.8333Z"
-                                    fill="#2563EB" />
-                            </svg>
-                            Medical Information
-                        </h3>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div>
-                                <label for="modal_height" class="block text-sm font-medium mb-2">
-                                    Height (cm) <span class="text-red-500">*</span>
-                                </label>
-                                <input type="number" id="modal_height" name="height" placeholder="0.0" required
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-
-                            <div>
-                                <label for="modal_weight" class="block text-sm font-medium mb-2">
-                                    Weight (kg) <span class="text-red-500">*</span>
-                                </label>
-                                <input type="number" id="modal_weight" name="weight" placeholder="0.0" required
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-
-                            <div>
-                                <label for="modal_temperature" class="block text-sm font-medium mb-2">
-                                    Temperature (°C)
-                                </label>
-                                <input type="number" id="modal_temperature" name="temperature" placeholder="0"
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-
-                            <div>
-                                <label for="modal_blood_pressure" class="block text-sm font-medium mb-2">
-                                    Blood Pressure
-                                </label>
-                                <input type="text" id="modal_blood_pressure" name="blood_pressure" placeholder="120/80"
-                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                            </div>
-
-                            <div>
-                                <label for="modal_blood_type" class="block text-sm font-medium mb-2">
-                                    Blood Type <span class="text-red-500">*</span>
-                                </label>
-                                <select id="modal_blood_type" name="blood_type" required
-                                    class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                                    <option value="">Select Blood Type</option>
-                                    <option>A+</option>
-                                    <option>A-</option>
-                                    <option>B+</option>
-                                    <option>B-</option>
-                                    <option>AB+</option>
-                                    <option>AB-</option>
-                                    <option>O+</option>
-                                    <option>O-</option>
-                                    <option>Unknown</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label for="modal_last_checkup" class="block text-sm font-medium mb-2">
-                                    Last Check-up Date
-                                </label>
-                                <div class="date-input-with-trigger">
-                                    <input type="date" id="modal_last_checkup" name="last_checkup"
-                                        class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
-                                    <button type="button" id="modal_last_checkup_trigger"
-                                        class="date-input-trigger hover:text-[#1D4ED8]"
-                                        aria-label="Choose last check-up date">
-                                        <svg width="50" height="50" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M24.375 3.75H21.5625V2.8125C21.5625 2.56386 21.4637 2.3254 21.2879 2.14959C21.1121 1.97377 20.8736 1.875 20.625 1.875C20.3764 1.875 20.1379 1.97377 19.9621 2.14959C19.7863 2.3254 19.6875 2.56386 19.6875 2.8125V3.75H10.3125V2.8125C10.3125 2.56386 10.2137 2.3254 10.0379 2.14959C9.8621 1.97377 9.62364 1.875 9.375 1.875C9.12636 1.875 8.8879 1.97377 8.71209 2.14959C8.53627 2.3254 8.4375 2.56386 8.4375 2.8125V3.75H5.625C5.12772 3.75 4.65081 3.94754 4.29917 4.29917C3.94754 4.65081 3.75 5.12772 3.75 5.625V24.375C3.75 24.8723 3.94754 25.3492 4.29917 25.7008C4.65081 26.0525 5.12772 26.25 5.625 26.25H24.375C24.8723 26.25 25.3492 26.0525 25.7008 25.7008C26.0525 25.3492 26.25 24.8723 26.25 24.375V5.625C26.25 5.12772 26.0525 4.65081 25.7008 4.29917C25.3492 3.94754 24.8723 3.75 24.375 3.75ZM8.4375 5.625V6.5625C8.4375 6.81114 8.53627 7.0496 8.71209 7.22541C8.8879 7.40123 9.12636 7.5 9.375 7.5C9.62364 7.5 9.8621 7.40123 10.0379 7.22541C10.2137 7.0496 10.3125 6.81114 10.3125 6.5625V5.625H19.6875V6.5625C19.6875 6.81114 19.7863 7.0496 19.9621 7.22541C20.1379 7.40123 20.3764 7.5 20.625 7.5C20.8736 7.5 21.1121 7.40123 21.2879 7.22541C21.4637 7.0496 21.5625 6.81114 21.5625 6.5625V5.625H24.375V9.375H5.625V5.625H8.4375ZM24.375 24.375H5.625V11.25H24.375V24.375ZM16.4062 15.4688C16.4062 15.7469 16.3238 16.0188 16.1693 16.25C16.0147 16.4813 15.7951 16.6615 15.5381 16.768C15.2812 16.8744 14.9984 16.9022 14.7257 16.848C14.4529 16.7937 14.2023 16.6598 14.0056 16.4631C13.809 16.2665 13.675 16.0159 13.6208 15.7431C13.5665 15.4703 13.5944 15.1876 13.7008 14.9306C13.8072 14.6736 13.9875 14.454 14.2187 14.2995C14.45 14.145 14.7219 14.0625 15 14.0625C15.373 14.0625 15.7306 14.2107 15.9944 14.4744C16.2581 14.7381 16.4062 15.0958 16.4062 15.4688ZM21.5625 15.4688C21.5625 15.7469 21.48 16.0188 21.3255 16.25C21.171 16.4813 20.9514 16.6615 20.6944 16.768C20.4374 16.8744 20.1547 16.9022 19.8819 16.848C19.6091 16.7937 19.3585 16.6598 19.1619 16.4631C18.9652 16.2665 18.8313 16.0159 18.777 15.7431C18.7228 15.4703 18.7506 15.1876 18.857 14.9306C18.9635 14.6736 19.1437 14.454 19.375 14.2995C19.6062 14.145 19.8781 14.0625 20.1562 14.0625C20.5292 14.0625 20.8869 14.2107 21.1506 14.4744C21.4143 14.7381 21.5625 15.0958 21.5625 15.4688ZM11.25 20.1562C11.25 20.4344 11.1675 20.7063 11.013 20.9375C10.8585 21.1688 10.6389 21.349 10.3819 21.4555C10.1249 21.5619 9.84219 21.5897 9.5694 21.5355C9.29662 21.4812 9.04605 21.3473 8.84938 21.1506C8.65271 20.954 8.51878 20.7034 8.46452 20.4306C8.41026 20.1578 8.43811 19.8751 8.54454 19.6181C8.65098 19.3611 8.83122 19.1415 9.06248 18.987C9.29374 18.8325 9.56562 18.75 9.84375 18.75C10.2167 18.75 10.5744 18.8982 10.8381 19.1619C11.1018 19.4256 11.25 19.7833 11.25 20.1562ZM16.4062 20.1562C16.4062 20.4344 16.3238 20.7063 16.1693 20.9375C16.0147 21.1688 15.7951 21.349 15.5381 21.4555C15.2812 21.5619 14.9984 21.5897 14.7257 21.5355C14.4529 21.4812 14.2023 21.3473 14.0056 21.1506C13.809 20.954 13.675 20.7034 13.6208 20.4306C13.5665 20.1578 13.5944 19.8751 13.7008 19.6181C13.8072 19.3611 13.9875 19.1415 14.2187 18.987C14.45 18.8325 14.7219 18.75 15 18.75C15.373 18.75 15.7306 18.8982 15.9944 19.1619C16.2581 19.4256 16.4062 19.7833 16.4062 20.1562ZM21.5625 20.1562C21.5625 20.4344 21.48 20.7063 21.3255 20.9375C21.171 21.1688 20.9514 21.349 20.6944 21.4555C20.4374 21.5619 20.1547 21.5897 19.8819 21.5355C19.6091 21.4812 19.3585 21.3473 19.1619 21.1506C18.9652 20.954 18.8313 20.7034 18.777 20.4306C18.7228 20.1578 18.7506 19.8751 18.857 19.6181C18.9635 19.3611 19.1437 19.1415 19.375 18.987C19.6062 18.8325 19.8781 18.75 20.1562 18.75C20.5292 18.75 20.8869 18.8982 21.1506 19.1619C21.4143 19.4256 21.5625 19.7833 21.5625 20.1562Z" fill="#3C96E1"/>
-</svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-5">
-                            <div class="flex flex-col gap-2">
-                                <label for="modal_allergies" class="text-gray-700 font-medium">Allergies</label>
-                                <textarea id="modal_allergies" name="allergies" rows="3"
-                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
-                                    placeholder="Food, drug, environmental allergies..."></textarea>
-                            </div>
-
-                            <div class="flex flex-col gap-2">
-                                <label for="modal_current_medications" class="text-gray-700 font-medium">Current
-                                    Medications</label>
-                                <textarea id="modal_current_medications" name="current_medications" rows="3"
-                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
-                                    placeholder="Medications with dosage and frequency..."></textarea>
-                            </div>
-
-                            <div class="flex flex-col gap-2">
-                                <label for="modal_immunization_record" class="text-gray-700 font-medium">Immunization
-                                    Record</label>
-                                <textarea id="modal_immunization_record" name="immunization_record" rows="3"
-                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
-                                    placeholder="Provide immunization history or recent vaccines"></textarea>
-                            </div>
-
-                            <div class="flex flex-col gap-2">
-                                <label for="modal_chronic_conditions" class="text-gray-700 font-medium">Chronic
-                                    Conditions</label>
-                                <textarea id="modal_chronic_conditions" name="chronic_conditions" rows="3"
-                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
-                                    placeholder="Hypertension, diabetes, asthma, etc..."></textarea>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-6 mb-3">
-                            <div class="flex flex-col gap-2">
-                                <label for="modal_medical_history" class="text-gray-700 font-medium">Medical
-                                    History</label>
-                                <textarea id="modal_medical_history" name="medical_history" rows="4"
-                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
-                                    placeholder="Past illnesses, surgeries, hospitalizations, chronic conditions..."></textarea>
-                            </div>
-
-                            <div class="flex flex-col gap-2">
-                                <label for="modal_family_history" class="text-gray-700 font-medium">Family Medical
-                                    History</label>
-                                <textarea id="modal_family_history" name="family_history" rows="4"
-                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
-                                    placeholder="Family history of diseases (parents, siblings)..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <input type="hidden" name="add_patient" value="1">
-                    <input type="hidden" name="consent_given" value="1">
-                </form>
-            </div>
-
-            <div class="sticky bottom-0 bg-white border-t border-blue-100 px-10 py-6">
-                <div class="flex justify-between items-center flex-wrap gap-4">
-                    <span
-                        class="flex items-center text-center gap-3 text-md text-gray-500 bg-gray-100 px-8 py-5 rounded-full">
-                        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                d="M16.6667 33.3333C25.8717 33.3333 33.3333 25.8717 33.3333 16.6667C33.3333 7.46167 25.8717 0 16.6667 0C7.46167 0 0 7.46167 0 16.6667C0 25.8717 7.46167 33.3333 16.6667 33.3333ZM19.1667 9.58333C19.1667 10.3569 18.8594 11.0987 18.3124 11.6457C17.7654 12.1927 17.0235 12.5 16.25 12.5C15.4765 12.5 14.7346 12.1927 14.1876 11.6457C13.6406 11.0987 13.3333 10.3569 13.3333 9.58333C13.3333 8.80978 13.6406 8.06792 14.1876 7.52094C14.7346 6.97396 15.4765 6.66667 16.25 6.66667C17.0235 6.66667 17.7654 6.97396 18.3124 7.52094C18.8594 8.06792 19.1667 8.80978 19.1667 9.58333ZM17.6008 14.87C17.8264 15.0227 18.0111 15.2283 18.1388 15.4689C18.2665 15.7094 18.3333 15.9776 18.3333 16.25V22.72L19.9117 21.9308L21.4033 24.9117L17.4117 26.9075C17.1576 27.0345 16.8752 27.0944 16.5915 27.0816C16.3077 27.0688 16.0319 26.9836 15.7903 26.8343C15.5487 26.6849 15.3493 26.4763 15.2109 26.2282C15.0726 25.9801 15 25.7007 15 25.4167V18.7117L13.655 19.25L12.4167 16.155L16.0475 14.7025C16.3003 14.6013 16.5741 14.5635 16.8449 14.5926C17.1157 14.6216 17.3752 14.7174 17.6008 14.87Z"
-                                fill="black" fill-opacity="0.25" />
+        <div class="flex-1 overflow-y-auto px-16">
+            <form method="POST" action="" id="patientForm" enctype="multipart/form-data">
+                <!-- Step 1: Personal Information -->
+                <div id="personalInfoStep" class="bg-white my-10">
+                    <h3 class="text-2xl font-normal border-b border-black-100 py-6 text-[#2563EB] mb-6 gap-4 flex items-center">
+                        <svg width="42" height="38" viewBox="0 0 42 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M0 2.06875C0.00381259 1.52162 0.222709 0.997953 0.609402 0.61087C0.996095 0.223787 1.51954 0.00436381 2.06667 0H39.6C40.7417 0 41.6667 0.927083 41.6667 2.06875V35.4312C41.6629 35.9784 41.444 36.502 41.0573 36.8891C40.6706 37.2762 40.1471 37.4956 39.6 37.5H2.06667C1.51836 37.4994 0.992702 37.2812 0.605186 36.8933C0.217671 36.5054 -2.78032e-07 35.9796 0 35.4312V2.06875ZM8.33333 25V29.1667H33.3333V25H8.33333ZM8.33333 8.33333V20.8333H20.8333V8.33333H8.33333ZM25 8.33333V12.5H33.3333V8.33333H25ZM25 16.6667V20.8333H33.3333V16.6667H25ZM12.5 12.5H16.6667V16.6667H12.5V12.5Z" fill="#2563EB"/>
                         </svg>
-                        Fields marked with * are required
-                    </span>
+                        Personal Information
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Name Fields -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Last Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="student_last_name" id="student_last_name" 
+                                placeholder="Enter Last Name" required
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">First Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="student_first_name" id="student_first_name" 
+                                placeholder="Enter First Name" required
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Middle Name</label>
+                            <input type="text" name="student_middle_name" id="student_middle_name" 
+                                placeholder="Enter Middle Name"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
 
-                    <div class="flex gap-3">
-                        <button type="button" onclick="clearAddPatientForm()"
-                            class="flex px-6 py-4 text-center items-center gap-3 rounded-md border border-[#2563EB] text-[#2563EB] hover:bg-gray-100 font-medium">
-                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M14.781 13.7198C14.8507 13.7895 14.906 13.8722 14.9437 13.9632C14.9814 14.0543 15.0008 14.1519 15.0008 14.2504C15.0008 14.349 14.9814 14.4465 14.9437 14.5376C14.906 14.6286 14.8507 14.7114 14.781 14.781C14.7114 14.8507 14.6286 14.906 14.5376 14.9437C14.4465 14.9814 14.349 15.0008 14.2504 15.0008C14.1519 15.0008 14.0543 14.9814 13.9632 14.9437C13.8722 14.906 13.7895 14.8507 13.7198 14.781L7.50042 8.56073L1.28104 14.781C1.14031 14.9218 0.94944 15.0008 0.750417 15.0008C0.551394 15.0008 0.360523 14.9218 0.219792 14.781C0.0790615 14.6403 3.92322e-09 14.4494 0 14.2504C-3.92322e-09 14.0514 0.0790615 13.8605 0.219792 13.7198L6.4401 7.50042L0.219792 1.28104C0.0790615 1.14031 0 0.94944 0 0.750417C0 0.551394 0.0790615 0.360523 0.219792 0.219792C0.360523 0.0790615 0.551394 0 0.750417 0C0.94944 0 1.14031 0.0790615 1.28104 0.219792L7.50042 6.4401L13.7198 0.219792C13.8605 0.0790615 14.0514 -3.92322e-09 14.2504 0C14.4494 3.92322e-09 14.6403 0.0790615 14.781 0.219792C14.9218 0.360523 15.0008 0.551394 15.0008 0.750417C15.0008 0.94944 14.9218 1.14031 14.781 1.28104L8.56073 7.50042L14.781 13.7198Z"
-                                    fill="#2563EB" />
+                        <!-- Birthdate and Religion -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Birthdate <span class="text-red-500">*</span></label>
+                            <div class="date-input-with-trigger">
+                                <input type="date" id="student_birthdate" name="student_birthdate" required
+                                    max="<?= date('Y-m-d') ?>"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 py-3 pl-4">
+                                <button type="button" id="student_birthdate_trigger"
+                                    class="date-input-trigger hover:text-[#1D4ED8]"
+                                    aria-label="Choose birthdate">
+                                    <svg width="50" height="50" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M24.375 3.75H21.5625V2.8125C21.5625 2.56386 21.4637 2.3254 21.2879 2.14959C21.1121 1.97377 20.8736 1.875 20.625 1.875C20.3764 1.875 20.1379 1.97377 19.9621 2.14959C19.7863 2.3254 19.6875 2.56386 19.6875 2.8125V3.75H10.3125V2.8125C10.3125 2.56386 10.2137 2.3254 10.0379 2.14959C9.8621 1.97377 9.62364 1.875 9.375 1.875C9.12636 1.875 8.8879 1.97377 8.71209 2.14959C8.53627 2.3254 8.4375 2.56386 8.4375 2.8125V3.75H5.625C5.12772 3.75 4.65081 3.94754 4.29917 4.29917C3.94754 4.65081 3.75 5.12772 3.75 5.625V24.375C3.75 24.8723 3.94754 25.3492 4.29917 25.7008C4.65081 26.0525 5.12772 26.25 5.625 26.25H24.375C24.8723 26.25 25.3492 26.0525 25.7008 25.7008C26.0525 25.3492 26.25 24.8723 26.25 24.375V5.625C26.25 5.12772 26.0525 4.65081 25.7008 4.29917C25.3492 3.94754 24.8723 3.75 24.375 3.75ZM8.4375 5.625V6.5625C8.4375 6.81114 8.53627 7.0496 8.71209 7.22541C8.8879 7.40123 9.12636 7.5 9.375 7.5C9.62364 7.5 9.8621 7.40123 10.0379 7.22541C10.2137 7.0496 10.3125 6.81114 10.3125 6.5625V5.625H19.6875V6.5625C19.6875 6.81114 19.7863 7.0496 19.9621 7.22541C20.1379 7.40123 20.3764 7.5 20.625 7.5C20.8736 7.5 21.1121 7.40123 21.2879 7.22541C21.4637 7.0496 21.5625 6.81114 21.5625 6.5625V5.625H24.375V9.375H5.625V5.625H8.4375ZM24.375 24.375H5.625V11.25H24.375V24.375Z" fill="#3C96E1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Religion</label>
+                            <input type="text" name="student_religion" id="student_religion" 
+                                placeholder="Enter Religion"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+
+                        <!-- Home Address -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Home Address <span class="text-red-500">*</span></label>
+                            <input type="text" name="student_home_address" id="student_home_address" 
+                                placeholder="Enter Complete Home Address" required
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+
+                        <!-- Occupation -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Occupation</label>
+                            <input type="text" name="student_occupation" id="student_occupation" 
+                                placeholder="Enter Occupation"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+
+                        <!-- Effective Date -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Effective Date <span class="text-red-500">*</span></label>
+                            <div class="date-input-with-trigger">
+                                <input type="date" id="student_effective_date" name="student_effective_date" required
+                                    class="form-input-modal w-full rounded-xl border-blue-200 py-3 pl-4">
+                                <button type="button" id="student_effective_date_trigger"
+                                    class="date-input-trigger hover:text-[#1D4ED8]"
+                                    aria-label="Choose effective date">
+                                    <svg width="50" height="50" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M24.375 3.75H21.5625V2.8125C21.5625 2.56386 21.4637 2.3254 21.2879 2.14959C21.1121 1.97377 20.8736 1.875 20.625 1.875C20.3764 1.875 20.1379 1.97377 19.9621 2.14959C19.7863 2.3254 19.6875 2.56386 19.6875 2.8125V3.75H10.3125V2.8125C10.3125 2.56386 10.2137 2.3254 10.0379 2.14959C9.8621 1.97377 9.62364 1.875 9.375 1.875C9.12636 1.875 8.8879 1.97377 8.71209 2.14959C8.53627 2.3254 8.4375 2.56386 8.4375 2.8125V3.75H5.625C5.12772 3.75 4.65081 3.94754 4.29917 4.29917C3.94754 4.65081 3.75 5.12772 3.75 5.625V24.375C3.75 24.8723 3.94754 25.3492 4.29917 25.7008C4.65081 26.0525 5.12772 26.25 5.625 26.25H24.375C24.8723 26.25 25.3492 26.0525 25.7008 25.7008C26.0525 25.3492 26.25 24.8723 26.25 24.375V5.625C26.25 5.12772 26.0525 4.65081 25.7008 4.29917C25.3492 3.94754 24.8723 3.75 24.375 3.75ZM8.4375 5.625V6.5625C8.4375 6.81114 8.53627 7.0496 8.71209 7.22541C8.8879 7.40123 9.12636 7.5 9.375 7.5C9.62364 7.5 9.8621 7.40123 10.0379 7.22541C10.2137 7.0496 10.3125 6.81114 10.3125 6.5625V5.625H19.6875V6.5625C19.6875 6.81114 19.7863 7.0496 19.9621 7.22541C20.1379 7.40123 20.3764 7.5 20.625 7.5C20.8736 7.5 21.1121 7.40123 21.2879 7.22541C21.4637 7.0496 21.5625 6.81114 21.5625 6.5625V5.625H24.375V9.375H5.625V5.625H8.4375ZM24.375 24.375H5.625V11.25H24.375V24.375Z" fill="#3C96E1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sex and Nickname -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Sex <span class="text-red-500">*</span></label>
+                            <select name="student_sex" id="student_sex" required
+                                class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                <option value="">Select Sex</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Nickname</label>
+                            <input type="text" name="student_nickname" id="student_nickname" 
+                                placeholder="Enter Nickname"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+
+                        <!-- Contact Numbers -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Home No.</label>
+                            <input type="text" name="student_home_phone" id="student_home_phone" 
+                                placeholder="Enter Home Number"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Office No.</label>
+                            <input type="text" name="student_office_phone" id="student_office_phone" 
+                                placeholder="Enter Office Number"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Fax No.</label>
+                            <input type="text" name="student_fax_number" id="student_fax_number" 
+                                placeholder="Enter Fax Number"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Mobile No. <span class="text-red-500">*</span></label>
+                            <input type="text" name="student_mobile_number" id="student_mobile_number" 
+                                placeholder="Enter Mobile Number" required
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Email Address</label>
+                            <input type="email" name="student_email_address" id="student_email_address" 
+                                placeholder="Enter Email Address"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+
+                        <!-- Parent/Guardian Information -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Parent/Guardian's Name</label>
+                            <input type="text" name="parent_guardian_name" id="parent_guardian_name" 
+                                placeholder="Enter Parent/Guardian Name"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Parent/Guardian's Occupation</label>
+                            <input type="text" name="parent_guardian_occupation" id="parent_guardian_occupation" 
+                                placeholder="Enter Occupation"
+                                class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end mt-8">
+                        <button type="button" id="nextToMedicalBtn" class="btn-primary px-8 py-3 rounded-full text-white font-medium shadow flex items-center gap-2">
+                            Next: Medical Information
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                             </svg>
-                            Clear Form
-                        </button>
-                        <button type="submit" name="add_patient" form="patientForm"
-                            class="flex items-center text-center gap-3 px-6 py-4 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium shadow">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M21.3112 2.689C21.1225 2.5005 20.8871 2.36569 20.629 2.29846C20.371 2.23122 20.0997 2.234 19.843 2.3065H19.829L1.83461 7.7665C1.54248 7.85069 1.28283 8.02166 1.09007 8.25676C0.897302 8.49185 0.780525 8.77997 0.75521 9.08294C0.729895 9.3859 0.797238 9.6894 0.948314 9.95323C1.09939 10.2171 1.32707 10.4287 1.60117 10.5602L9.56242 14.4377L13.4343 22.3943C13.5547 22.6513 13.7462 22.8685 13.9861 23.0201C14.226 23.1718 14.5042 23.2517 14.788 23.2502C14.8312 23.2502 14.8743 23.2484 14.9174 23.2446C15.2201 23.2201 15.5081 23.1036 15.7427 22.9107C15.9773 22.7178 16.1473 22.4578 16.2299 22.1656L21.6862 4.17119C21.6862 4.1665 21.6862 4.16181 21.6862 4.15712C21.7596 3.90115 21.7636 3.63024 21.6977 3.37223C21.6318 3.11421 21.4984 2.8784 21.3112 2.689ZM14.7965 21.7362L14.7918 21.7493V21.7427L11.0362 14.0271L15.5362 9.52712C15.6709 9.38533 15.7449 9.19651 15.7424 9.00094C15.7399 8.80537 15.6611 8.61852 15.5228 8.48022C15.3845 8.34191 15.1976 8.26311 15.002 8.26061C14.8065 8.2581 14.6177 8.3321 14.4759 8.46681L9.97586 12.9668L2.25742 9.21119H2.25086H2.26399L20.2499 3.75025L14.7965 21.7362Z"
-                                    fill="white" />
-                            </svg>
-                            Register Patient
                         </button>
                     </div>
+                </div>
+
+                <!-- Step 2: Medical Information -->
+                <div id="medicalInfoStep" class="bg-white" style="display:none;">
+                    <h3 class="text-2xl border-b border-black-100 font-normal text-blue-700 gap-4 py-6 mb-6 flex items-center">
+                        <svg width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14.5833 26.9104V28.125C14.5833 30.6114 15.5711 32.996 17.3292 34.7541C19.0874 36.5123 21.4719 37.5 23.9583 37.5C26.4447 37.5 28.8293 36.5123 30.5875 34.7541C32.3456 32.996 33.3333 30.6114 33.3333 28.125V24.6458C31.9427 24.1544 30.7706 23.1871 30.0243 21.915C29.2779 20.6429 29.0052 19.1479 29.2546 17.6942C29.5039 16.2405 30.2591 14.9218 31.3867 13.9711C32.5144 13.0204 33.9418 12.499 35.4167 12.499C36.8916 12.499 38.319 13.0204 39.4466 13.9711C40.5742 14.9218 41.3295 16.2405 41.5788 17.6942C41.8281 19.1479 41.5555 20.6429 40.8091 21.915C40.0627 23.1871 38.8906 24.1544 37.5 24.6458V28.125C37.5 31.7165 36.0733 35.1608 33.5337 37.7004C30.9942 40.24 27.5498 41.6667 23.9583 41.6667C20.3669 41.6667 16.9225 40.24 14.3829 37.7004C11.8434 35.1608 10.4167 31.7165 10.4167 28.125V26.9104C7.50365 26.418 4.85919 24.9098 2.95235 22.6532C1.04551 20.3967 -0.000452952 17.5377 1.47146e-07 14.5833V4.16667C1.47146e-07 3.0616 0.438987 2.00179 1.22039 1.22039C2.00179 0.438987 3.0616 0 4.16667 0L6.25 0C6.80253 0 7.33244 0.219493 7.72314 0.610194C8.11384 1.00089 8.33333 1.5308 8.33333 2.08333C8.33333 2.63587 8.11384 3.16577 7.72314 3.55647C7.33244 3.94717 6.80253 4.16667 6.25 4.16667H4.16667V14.5833C4.16667 16.7935 5.04464 18.9131 6.60744 20.4759C8.17025 22.0387 10.2899 22.9167 12.5 22.9167C14.7101 22.9167 16.8298 22.0387 18.3926 20.4759C19.9554 18.9131 20.8333 16.7935 20.8333 14.5833V4.16667H18.75C18.1975 4.16667 17.6676 3.94717 17.2769 3.55647C16.8862 3.16577 16.6667 2.63587 16.6667 2.08333C16.6667 1.5308 16.8862 1.00089 17.2769 0.610194C17.6676 0.219493 18.1975 0 18.75 0L20.8333 0C21.9384 0 22.9982 0.438987 23.7796 1.22039C24.561 2.00179 25 3.0616 25 4.16667V14.5833C25.0005 17.5377 23.9545 20.3967 22.0477 22.6532C20.1408 24.9098 17.4963 26.418 14.5833 26.9104ZM35.4167 20.8333C35.9692 20.8333 36.4991 20.6138 36.8898 20.2231C37.2805 19.8324 37.5 19.3025 37.5 18.75C37.5 18.1975 37.2805 17.6676 36.8898 17.2769C36.4991 16.8862 35.9692 16.6667 35.4167 16.6667C34.8641 16.6667 34.3342 16.8862 33.9435 17.2769C33.5528 17.6676 33.3333 18.1975 33.3333 18.75C33.3333 19.3025 33.5528 19.8324 33.9435 20.2231C34.3342 20.6138 34.8641 20.8333 35.4167 20.8333Z" fill="#2563EB"/>
+                        </svg>
+                        Medical Information
+                    </h3>
+
+                    <!-- Physician Information -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-4 border-l-4 border-blue-500 pl-3">Physician Information</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Physician's Name</label>
+                                <input type="text" name="student_physician_name" id="student_physician_name" 
+                                    placeholder="Enter Physician's Full Name"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Specialty</label>
+                                <input type="text" name="student_physician_specialty" id="student_physician_specialty" 
+                                    placeholder="Enter Specialty"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Office Address</label>
+                                <input type="text" name="student_physician_office_address" id="student_physician_office_address" 
+                                    placeholder="Enter Office Address"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Office Number</label>
+                                <input type="text" name="student_physician_office_number" id="student_physician_office_number" 
+                                    placeholder="Enter Office Number"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Health Questions -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-4 border-l-4 border-blue-500 pl-3">Health Questionnaire</h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Are you in good health?</label>
+                                <select name="student_good_health" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Are you presently under treatment?</label>
+                                <select name="student_under_treatment" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">If yes, please describe</label>
+                                <textarea name="student_treatment_condition" rows="2"
+                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
+                                    placeholder="Describe the condition and treatment..."></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Have you ever had a serious illness or surgery?</label>
+                                <select name="student_serious_illness_surgery" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">If yes, please describe</label>
+                                <textarea name="student_serious_illness_details" rows="2"
+                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
+                                    placeholder="Describe the illness or surgery..."></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Have you ever been hospitalized?</label>
+                                <select name="student_hospitalized" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">If yes, please describe</label>
+                                <textarea name="student_hospitalization_details" rows="2"
+                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
+                                    placeholder="Describe hospitalization details..."></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Are you currently taking any medication?</label>
+                                <select name="student_taking_medication" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">If yes, please list</label>
+                                <textarea name="student_medication_details" rows="2"
+                                    class="form-textarea-modal w-full rounded-xl border-blue-200 px-4 py-3"
+                                    placeholder="List medications with dosage..."></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Do you use tobacco?</label>
+                                <select name="student_uses_tobacco" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Do you use alcohol or drugs?</label>
+                                <select name="student_uses_alcohol_drugs" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Do you have allergies?</label>
+                                <select name="student_has_allergies" id="student_has_allergies" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Bleeding Time</label>
+                                <input type="text" name="student_bleeding_time" placeholder="e.g., Within normal limits"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                        </div>
+
+                        <!-- Medical Conditions Checklist Section -->
+<div class="bg-white p-8 rounded-2xl border-2 border-blue-100 form-section">
+    <h4 class="text-xl mb-4 font-medium text-[#3C96E1] gap-3 flex items-center">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 8V12M12 16H12.01M4.5 12C4.5 7.85786 7.85786 4.5 12 4.5C16.1421 4.5 19.5 7.85786 19.5 12C19.5 16.1421 16.1421 19.5 12 19.5C7.85786 19.5 4.5 16.1421 4.5 12Z" stroke="#3C96E1" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Medical Conditions Checklist
+    </h4>
+    <p class="text-sm text-gray-500 mb-4">Please check all conditions that apply to the patient:</p>
+    
+    <div class="conditions-grid">
+        <?php
+        $medicalConditionsList = [
+            'High Blood Pressure' => 'high_blood_pressure',
+            'Low Blood Pressure' => 'low_blood_pressure',
+            'Epilepsy / Convulsions' => 'epilepsy',
+            'AIDS or HIV Infections' => 'hiv_aids',
+            'Sexually Transmitted Disease' => 'std',
+            'Stomach Troubles / Ulcer' => 'ulcer',
+            'Fainting Seizure' => 'fainting_seizure',
+            'Rapid Weight Loss' => 'rapid_weight_loss',
+            'Joint Replacement / Implant' => 'joint_replacement',
+            'Heart Surgery' => 'heart_surgery',
+            'Heart Attack' => 'heart_attack',
+            'Thyroid Problem' => 'thyroid'
+        ];
+        
+        foreach ($medicalConditionsList as $label => $value):
+        ?>
+        <div class="condition-checkbox">
+            <input type="checkbox" name="medical_conditions[]" value="<?= htmlspecialchars($label) ?>" id="med_<?= $value ?>">
+            <label for="med_<?= $value ?>"><?= htmlspecialchars($label) ?></label>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <div class="mt-4">
+        <label class="form-label-modal">Other Medical Conditions (Please specify)</label>
+        <input type="text" name="medical_conditions_other" class="form-input-modal" placeholder="Specify other medical conditions not listed above">
+    </div>
+</div>
+
+<!-- Blood Pressure and Blood Type Section -->
+<div class="bg-white p-8 rounded-2xl border-2 border-blue-100 form-section">
+    <h4 class="text-xl mb-4 font-medium text-[#3C96E1] gap-3 flex items-center">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L15 7H9L12 2Z" fill="#3C96E1"/>
+            <path d="M12 22L9 17H15L12 22Z" fill="#3C96E1"/>
+            <path d="M7 9L2 12L7 15V9Z" fill="#3C96E1"/>
+            <path d="M17 9V15L22 12L17 9Z" fill="#3C96E1"/>
+            <circle cx="12" cy="12" r="3" fill="#3C96E1"/>
+        </svg>
+        Vital Signs & Blood Information
+    </h4>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+            <label class="form-label-modal">Blood Type</label>
+            <select name="blood_type" class="form-select-modal">
+                <option value="">Select Blood Type</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="form-label-modal">Blood Pressure</label>
+            <div class="flex gap-2 items-center">
+                <input type="number" name="blood_pressure_systolic" class="form-input-modal w-1/2" placeholder="Systolic">
+                <span class="text-lg font-medium">/</span>
+                <input type="number" name="blood_pressure_diastolic" class="form-input-modal w-1/2" placeholder="Diastolic">
+                <span class="text-sm text-gray-500 ml-1">mmHg</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Example: 120/80</p>
+        </div>
+
+        <div>
+            <label class="form-label-modal">Height (cm)</label>
+            <input type="number" step="0.1" name="height" class="form-input-modal" placeholder="Height in centimeters">
+        </div>
+
+        <div>
+            <label class="form-label-modal">Weight (kg)</label>
+            <input type="number" step="0.1" name="weight" class="form-input-modal" placeholder="Weight in kilograms">
+        </div>
+
+        <div>
+            <label class="form-label-modal">Temperature (°C)</label>
+            <input type="number" step="0.1" name="temperature" class="form-input-modal" placeholder="Body temperature">
+        </div>
+    </div>
+</div>
+
+                        <!-- Allergy Items (conditional) -->
+                        <div id="allergyItemsSection" style="display:none;" class="mt-4">
+                            <label class="block text-sm font-medium mb-2">Please check items that cause allergy:</label>
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                <label class="flex items-center"><input type="checkbox" name="allergy_items[]" value="Food"> Food</label>
+                                <label class="flex items-center"><input type="checkbox" name="allergy_items[]" value="Drugs"> Drugs</label>
+                                <label class="flex items-center"><input type="checkbox" name="allergy_items[]" value="Insect bite"> Insect bite</label>
+                                <label class="flex items-center"><input type="checkbox" name="allergy_items[]" value="Pollen"> Pollen</label>
+                                <label class="flex items-center"><input type="checkbox" name="allergy_items[]" value="Dust"> Dust</label>
+                                <label class="flex items-center"><input type="checkbox" name="allergy_items[]" value="Animals"> Animals</label>
+                            </div>
+                            <div class="mt-3">
+                                <label class="block text-sm font-medium mb-2">Other allergies:</label>
+                                <input type="text" name="student_allergy_other" placeholder="Specify other allergies"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Women's Health Section (for Female patients) -->
+                    <div id="womensHealthSection" style="display:none;" class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-4 border-l-4 border-blue-500 pl-3">Women's Health</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Are you pregnant?</label>
+                                <select name="student_is_pregnant" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Are you nursing?</label>
+                                <select name="student_is_nursing" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Do you take birth control pills?</label>
+                                <select name="student_takes_birth_control" class="form-select-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Menarche</label>
+                                <input type="text" name="student_menarche" placeholder="Age of first menstruation"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">LMP (Last Menstrual Period)</label>
+                                <input type="text" name="student_lmp" placeholder="Date"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </label>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Gravida</label>
+                                <input type="text" name="student_gravida" placeholder="Number of pregnancies"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Para</label>
+                                <input type="text" name="student_para" placeholder="Number of deliveries"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Abortion</label>
+                                <input type="text" name="student_abortion" placeholder="Number of abortions"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">Please check conditions you have:</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Anemia"> Anemia</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Asthma"> Asthma</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Heart disease"> Heart disease</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="High blood"> High blood</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Kidney disease"> Kidney disease</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Goiter"> Goiter</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Diabetes"> Diabetes</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Ulcer"> Ulcer</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Hepatitis"> Hepatitis</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Cancer"> Cancer</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="STD"> STD</label>
+                                    <label class="flex items-center"><input type="checkbox" name="student_conditions[]" value="Epilepsy"> Epilepsy</label>
+                                </div>
+                                <div class="mt-3">
+                                    <label class="block text-sm font-medium mb-2">Other conditions:</label>
+                                    <input type="text" name="student_condition_other" placeholder="Specify other conditions"
+                                        class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signature -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-4 border-l-4 border-blue-500 pl-3">Signature</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Signature over Printed Name</label>
+                                <input type="text" name="student_signature_name" id="student_signature_name" 
+                                    placeholder="Enter signature name"
+                                    class="form-input-modal w-full rounded-xl border-blue-200 px-4 py-3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between mt-8">
+                        <button type="button" id="backToPersonalBtn" class="btn-gray px-8 py-3 rounded-full font-medium flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                            Back: Personal Info
+                        </button>
+                    </div>
+                </div>
+
+                <input type="hidden" name="add_patient" value="1">
+                <input type="hidden" name="consent_given" value="1">
+            </form>
+        </div>
+
+        <div class="sticky bottom-0 bg-white border-t border-blue-100 px-10 py-6">
+            <div class="flex justify-between items-center flex-wrap gap-4">
+                <span class="flex items-center text-center gap-3 text-md text-gray-500 bg-gray-100 px-8 py-5 rounded-full">
+                    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M16.6667 33.3333C25.8717 33.3333 33.3333 25.8717 33.3333 16.6667C33.3333 7.46167 25.8717 0 16.6667 0C7.46167 0 0 7.46167 0 16.6667C0 25.8717 7.46167 33.3333 16.6667 33.3333ZM19.1667 9.58333C19.1667 10.3569 18.8594 11.0987 18.3124 11.6457C17.7654 12.1927 17.0235 12.5 16.25 12.5C15.4765 12.5 14.7346 12.1927 14.1876 11.6457C13.6406 11.0987 13.3333 10.3569 13.3333 9.58333C13.3333 8.80978 13.6406 8.06792 14.1876 7.52094C14.7346 6.97396 15.4765 6.66667 16.25 6.66667C17.0235 6.66667 17.7654 6.97396 18.3124 7.52094C18.8594 8.06792 19.1667 8.80978 19.1667 9.58333ZM17.6008 14.87C17.8264 15.0227 18.0111 15.2283 18.1388 15.4689C18.2665 15.7094 18.3333 15.9776 18.3333 16.25V22.72L19.9117 21.9308L21.4033 24.9117L17.4117 26.9075C17.1576 27.0345 16.8752 27.0944 16.5915 27.0816C16.3077 27.0688 16.0319 26.9836 15.7903 26.8343C15.5487 26.6849 15.3493 26.4763 15.2109 26.2282C15.0726 25.9801 15 25.7007 15 25.4167V18.7117L13.655 19.25L12.4167 16.155L16.0475 14.7025C16.3003 14.6013 16.5741 14.5635 16.8449 14.5926C17.1157 14.6216 17.3752 14.7174 17.6008 14.87Z"
+                            fill="black" fill-opacity="0.25"/>
+                    </svg>
+                    Fields marked with * are required
+                </span>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="clearAddPatientForm()"
+                        class="flex px-6 py-4 text-center items-center gap-3 rounded-md border border-[#2563EB] text-[#2563EB] hover:bg-gray-100 font-medium">
+                        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14.781 13.7198C14.8507 13.7895 14.906 13.8722 14.9437 13.9632C14.9814 14.0543 15.0008 14.1519 15.0008 14.2504C15.0008 14.349 14.9814 14.4465 14.9437 14.5376C14.906 14.6286 14.8507 14.7114 14.781 14.781C14.7114 14.8507 14.6286 14.906 14.5376 14.9437C14.4465 14.9814 14.349 15.0008 14.2504 15.0008C14.1519 15.0008 14.0543 14.9814 13.9632 14.9437C13.8722 14.906 13.7895 14.8507 13.7198 14.781L7.50042 8.56073L1.28104 14.781C1.14031 14.9218 0.94944 15.0008 0.750417 15.0008C0.551394 15.0008 0.360523 14.9218 0.219792 14.781C0.0790615 14.6403 3.92322e-09 14.4494 0 14.2504C-3.92322e-09 14.0514 0.0790615 13.8605 0.219792 13.7198L6.4401 7.50042L0.219792 1.28104C0.0790615 1.14031 0 0.94944 0 0.750417C0 0.551394 0.0790615 0.360523 0.219792 0.219792C0.360523 0.0790615 0.551394 0 0.750417 0C0.94944 0 1.14031 0.0790615 1.28104 0.219792L7.50042 6.4401L13.7198 0.219792C13.8605 0.0790615 14.0514 -3.92322e-09 14.2504 0C14.4494 3.92322e-09 14.6403 0.0790615 14.781 0.219792C14.9218 0.360523 15.0008 0.551394 15.0008 0.750417C15.0008 0.94944 14.9218 1.14031 14.781 1.28104L8.56073 7.50042L14.781 13.7198Z" fill="#2563EB"/>
+                        </svg>
+                        Clear Form
+                    </button>
+                    <button type="submit" name="add_patient" form="patientForm"
+                        class="flex items-center text-center gap-3 px-6 py-4 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium shadow">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21.3112 2.689C21.1225 2.5005 20.8871 2.36569 20.629 2.29846C20.371 2.23122 20.0997 2.234 19.843 2.3065H19.829L1.83461 7.7665C1.54248 7.85069 1.28283 8.02166 1.09007 8.25676C0.897302 8.49185 0.780525 8.77997 0.75521 9.08294C0.729895 9.3859 0.797238 9.6894 0.948314 9.95323C1.09939 10.2171 1.32707 10.4287 1.60117 10.5602L9.56242 14.4377L13.4343 22.3943C13.5547 22.6513 13.7462 22.8685 13.9861 23.0201C14.226 23.1718 14.5042 23.2517 14.788 23.2502C14.8312 23.2502 14.8743 23.2484 14.9174 23.2446C15.2201 23.2201 15.5081 23.1036 15.7427 22.9107C15.9773 22.7178 16.1473 22.4578 16.2299 22.1656L21.6862 4.17119C21.6862 4.1665 21.6862 4.16181 21.6862 4.15712C21.7596 3.90115 21.7636 3.63024 21.6977 3.37223C21.6318 3.11421 21.4984 2.8784 21.3112 2.689ZM14.7965 21.7362L14.7918 21.7493V21.7427L11.0362 14.0271L15.5362 9.52712C15.6709 9.38533 15.7449 9.19651 15.7424 9.00094C15.7399 8.80537 15.6611 8.61852 15.5228 8.48022C15.3845 8.34191 15.1976 8.26311 15.002 8.26061C14.8065 8.2581 14.6177 8.3321 14.4759 8.46681L9.97586 12.9668L2.25742 9.21119H2.25086H2.26399L20.2499 3.75025L14.7965 21.7362Z" fill="white"/>
+                        </svg>
+                        Register Student
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <script>
         // --- Stepper Logic for Add Patient Modal ---
@@ -4840,99 +5879,132 @@ if (!empty($searchTerm)) {
         }
 
         function saveMedicalInformation() {
-            <?php if (!$canManage): ?>
-            showNotification('error', 'You do not have permission to edit patient records.');
-            return;
-            <?php endif; ?>
-            
-            const healthInfoForm = document.getElementById('healthInfoForm');
+    <?php if (!$canManage): ?>
+    showNotification('error', 'You do not have permission to edit patient records.');
+    return;
+    <?php endif; ?>
+    
+    const healthInfoForm = document.getElementById('healthInfoForm');
 
-            if (!healthInfoForm) {
-                showNotification('error', 'Medical form not found. Please reload the page.');
-                return;
-            }
+    if (!healthInfoForm) {
+        showNotification('error', 'Medical form not found. Please reload the page.');
+        return;
+    }
 
-            const requiredFields = healthInfoForm.querySelectorAll('[required]');
-            let isValid = true;
-            let missingFields = [];
+    // Validate required fields
+    const requiredFields = healthInfoForm.querySelectorAll('[required]');
+    let isValid = true;
+    let missingFields = [];
 
-            requiredFields.forEach(field => {
-                if (!field.value.trim()) {
-                    isValid = false;
-                    missingFields.push(field.name.replace('_', ' '));
-                    field.classList.add('field-empty');
-                    field.classList.remove('field-filled');
-                } else {
-                    field.classList.add('field-filled');
-                    field.classList.remove('field-empty');
-                }
-            });
-
-            if (!isValid) {
-                showNotification('error', `Please fill in all required fields: ${missingFields.join(', ')}`);
-                const firstMissing = healthInfoForm.querySelector('.field-empty');
-                if (firstMissing) {
-                    firstMissing.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                    firstMissing.focus();
-                }
-                return;
-            }
-
-            const formData = new FormData(healthInfoForm);
-            const medicalFields = [
-                'height', 'weight', 'blood_type', 'temperature',
-                'blood_pressure', 'allergies', 'medical_history',
-                'current_medications', 'family_history',
-                'immunization_record', 'chronic_conditions', 'gender',
-                'phic_no', 'bhw_assigned', 'family_no', 'fourps_member'
-            ];
-
-            medicalFields.forEach(field => {
-                const element = healthInfoForm.querySelector(`[name="${field}"]`);
-                if (element) {
-                    formData.set(field, element.value);
-                }
-            });
-
-            const saveBtn = document.getElementById('saveMedicalBtn');
-            const originalBtnText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving Record...';
-            saveBtn.disabled = true;
-
-            fetch(healthInfoForm.action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.text())
-                .then(result => {
-                    if (result.includes('successfully') || result.includes('Success') || result.includes('saved')) {
-                        showNotification('success', 'Medical information saved successfully!');
-
-                        const patientId = formData.get('patient_id');
-                        if (patientId) {
-                            setTimeout(() => {
-                                closeViewModal();
-                                setTimeout(() => {
-                                    openViewModal(patientId);
-                                }, 500);
-                            }, 2000);
-                        }
-                    } else {
-                        showNotification('error', 'Error saving medical information. Please try again.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('error', 'Network error: ' + error.message);
-                })
-                .finally(() => {
-                    saveBtn.innerHTML = originalBtnText;
-                    saveBtn.disabled = false;
-                });
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            isValid = false;
+            missingFields.push(field.name || field.id);
+            field.classList.add('border-red-500');
+        } else {
+            field.classList.remove('border-red-500');
         }
+    });
+
+    if (!isValid) {
+        showNotification('error', `Please fill in all required fields: ${missingFields.join(', ')}`);
+        return;
+    }
+
+    const formData = new FormData(healthInfoForm);
+    
+    // Add action flag
+    formData.append('save_health_info', '1');
+
+    const saveBtn = document.getElementById('saveMedicalBtn');
+    const originalBtnText = saveBtn.innerHTML;
+    
+    // Show loading state
+    saveBtn.innerHTML = '<div class="spinner-border spinner-border-sm mr-2" role="status"></div> Saving...';
+    saveBtn.disabled = true;
+
+    // Set timeout to revert button after 2 seconds regardless of response
+    const revertTimeout = setTimeout(() => {
+        if (saveBtn.disabled) {
+            saveBtn.innerHTML = originalBtnText;
+            saveBtn.disabled = false;
+        }
+    }, 2000);
+
+    fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Clear the timeout since we got a response
+        clearTimeout(revertTimeout);
+        
+        // Check if there's a success message
+        if (html.includes('Patient information saved successfully') || 
+            html.includes('successfully') || 
+            html.includes('Patient information saved successfully!')) {
+            
+            showNotification('success', 'Patient information saved successfully!');
+            
+            // Reset button immediately
+            saveBtn.innerHTML = originalBtnText;
+            saveBtn.disabled = false;
+            
+            // Close modal and reload to show updated data
+            setTimeout(() => {
+                closeViewModal();
+                setTimeout(() => {
+                    const patientId = formData.get('patient_id');
+                    if (patientId) {
+                        openViewModal(patientId);
+                    } else {
+                        location.reload();
+                    }
+                }, 500);
+            }, 1500);
+            
+        } else if (html.includes('error') || html.includes('Error')) {
+            // Extract error message
+            const errorMatch = html.match(/error[:\s]*([^<]+)/i);
+            const errorMsg = errorMatch ? errorMatch[1] : 'Failed to save patient information';
+            showNotification('error', errorMsg);
+            
+            // Reset button
+            saveBtn.innerHTML = originalBtnText;
+            saveBtn.disabled = false;
+        } else {
+            showNotification('success', 'Patient information saved successfully!');
+            
+            // Reset button
+            saveBtn.innerHTML = originalBtnText;
+            saveBtn.disabled = false;
+            
+            setTimeout(() => {
+                closeViewModal();
+                setTimeout(() => {
+                    const patientId = formData.get('patient_id');
+                    if (patientId) {
+                        openViewModal(patientId);
+                    } else {
+                        location.reload();
+                    }
+                }, 500);
+            }, 1500);
+        }
+    })
+    .catch(error => {
+        // Clear the timeout
+        clearTimeout(revertTimeout);
+        
+        console.error('Error:', error);
+        showNotification('error', 'Network error: ' + error.message);
+        
+        // Reset button
+        saveBtn.innerHTML = originalBtnText;
+        saveBtn.disabled = false;
+    });
+}
 
         function setupMedicalForm() {
             const healthInfoForm = document.getElementById('healthInfoForm');
@@ -6328,6 +7400,209 @@ if (!empty($searchTerm)) {
                 buttonElement.disabled = false;
             });
         }
+    </script>
+
+    <script>
+        // Handle allergy section visibility
+document.addEventListener('DOMContentLoaded', function() {
+    const allergySelect = document.getElementById('student_has_allergies');
+    const allergySection = document.getElementById('allergyItemsSection');
+    
+    if (allergySelect && allergySection) {
+        allergySelect.addEventListener('change', function() {
+            if (this.value === 'yes') {
+                allergySection.style.display = 'block';
+            } else {
+                allergySection.style.display = 'none';
+            }
+        });
+    }
+    
+    // Handle women's health section based on sex
+    const sexSelect = document.getElementById('student_sex');
+    const womensHealthSection = document.getElementById('womensHealthSection');
+    
+    if (sexSelect && womensHealthSection) {
+        sexSelect.addEventListener('change', function() {
+            if (this.value === 'F') {
+                womensHealthSection.style.display = 'block';
+            } else {
+                womensHealthSection.style.display = 'none';
+            }
+        });
+    }
+    
+    // Stepper navigation
+    const personalStep = document.getElementById('personalInfoStep');
+    const medicalStep = document.getElementById('medicalInfoStep');
+    const nextBtn = document.getElementById('nextToMedicalBtn');
+    const backBtn = document.getElementById('backToPersonalBtn');
+    
+    // Validate personal info fields before proceeding
+    function validatePersonalFields() {
+        const requiredFields = [
+            document.getElementById('student_last_name'),
+            document.getElementById('student_first_name'),
+            document.getElementById('student_birthdate'),
+            document.getElementById('student_home_address'),
+            document.getElementById('student_mobile_number'),
+            document.getElementById('student_sex'),
+            document.getElementById('student_effective_date')
+        ];
+        
+        return requiredFields.every(field => field && field.value && field.value.trim() !== '');
+    }
+    
+    function updateNextBtnState() {
+        if (nextBtn) {
+            nextBtn.disabled = !validatePersonalFields();
+        }
+    }
+    
+    // Add event listeners to personal info fields
+    const personalFields = ['student_last_name', 'student_first_name', 'student_birthdate', 
+                           'student_home_address', 'student_mobile_number', 'student_sex', 'student_effective_date'];
+    
+    personalFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', updateNextBtnState);
+            field.addEventListener('change', updateNextBtnState);
+        }
+    });
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            if (validatePersonalFields()) {
+                personalStep.style.display = 'none';
+                medicalStep.style.display = 'block';
+            } else {
+                showNotification('error', 'Please fill in all required fields in Personal Information.');
+            }
+        });
+    }
+    
+    if (backBtn) {
+        backBtn.addEventListener('click', function() {
+            medicalStep.style.display = 'none';
+            personalStep.style.display = 'block';
+        });
+    }
+    
+    // Auto-calculate age from birthdate
+    const birthdateInput = document.getElementById('student_birthdate');
+    if (birthdateInput) {
+        birthdateInput.addEventListener('change', function() {
+            if (this.value) {
+                const dob = new Date(this.value);
+                const today = new Date();
+                let age = today.getFullYear() - dob.getFullYear();
+                const monthDiff = today.getMonth() - dob.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                    age--;
+                }
+                // Store age in a hidden field or display
+                console.log('Calculated age:', age);
+            }
+        });
+    }
+    
+    // Initialize flatpickr for date fields
+    const dateFields = ['student_birthdate', 'student_effective_date'];
+    dateFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.setAttribute('max', new Date().toISOString().split('T')[0]);
+        }
+    });
+    
+    // Bind date picker triggers
+    function bindDatePickerTrigger(inputId, triggerId) {
+        const dateInput = document.getElementById(inputId);
+        const dateTrigger = document.getElementById(triggerId);
+        if (dateInput && dateTrigger) {
+            dateTrigger.addEventListener('click', function() {
+                if (typeof dateInput.showPicker === 'function') {
+                    dateInput.showPicker();
+                } else {
+                    dateInput.focus();
+                    dateInput.click();
+                }
+            });
+        }
+    }
+    
+    bindDatePickerTrigger('student_birthdate', 'student_birthdate_trigger');
+    bindDatePickerTrigger('student_effective_date', 'student_effective_date_trigger');
+});
+
+// Override openAddPatientModal to reset form and show personal info step
+const originalOpenAddPatient = window.openAddPatientModal;
+window.openAddPatientModal = function() {
+    const personalStep = document.getElementById('personalInfoStep');
+    const medicalStep = document.getElementById('medicalInfoStep');
+    
+    if (personalStep && medicalStep) {
+        personalStep.style.display = 'block';
+        medicalStep.style.display = 'none';
+    }
+    
+    if (typeof originalOpenAddPatient === 'function') {
+        originalOpenAddPatient();
+    } else {
+        const modal = document.getElementById('addPatientModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.style.transition = 'opacity 0.3s ease';
+            }, 10);
+        }
+    }
+    
+    // Reset form
+    const form = document.getElementById('patientForm');
+    if (form) {
+        form.reset();
+    }
+    
+    // Hide conditional sections
+    const allergySection = document.getElementById('allergyItemsSection');
+    const womensHealthSection = document.getElementById('womensHealthSection');
+    if (allergySection) allergySection.style.display = 'none';
+    if (womensHealthSection) womensHealthSection.style.display = 'none';
+};
+    </script>
+
+    <script>
+        // Function to refresh the patient list after adding a new record
+function refreshPatientList() {
+    const searchForm = document.getElementById('mainSearchForm');
+    if (searchForm) {
+        // If there's a search term, resubmit the search
+        const searchInput = document.getElementById('search');
+        if (searchInput && searchInput.value.trim() !== '') {
+            searchForm.submit();
+        } else {
+            // Otherwise, reload the page to show the new record
+            window.location.reload();
+        }
+    } else {
+        window.location.reload();
+    }
+}
+
+// Override the form submission success to refresh
+const originalFormSubmit = document.getElementById('patientForm')?.onsubmit;
+if (document.getElementById('patientForm')) {
+    document.getElementById('patientForm').addEventListener('submit', function(e) {
+        // Let the form submit normally, then refresh after a delay
+        setTimeout(function() {
+            refreshPatientList();
+        }, 2000);
+    });
+}
     </script>
 
 </body>

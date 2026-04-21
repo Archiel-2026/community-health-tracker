@@ -948,7 +948,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </svg>
                     </span>
                 </div>
-                <div class="text-gray-500 text-xl">Students Accounts</div>
+                <div class="text-gray-500 text-xl">Student Accounts</div>
             </div>
 
             <!-- PATIENT RECORDS -->
@@ -967,7 +967,7 @@ require_once __DIR__ . '/../includes/header.php';
                         </svg>
                     </span>
                 </div>
-                <div class="text-gray-500 text-xl">Students Records</div>
+                <div class="text-gray-500 text-xl">Student Records</div>
             </div>
 
             <!-- LINKED ACCOUNTS -->
@@ -1222,7 +1222,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <!-- Log Tabs and Export Button -->
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex gap-2" id="activityLogsTabs">
-                        <button class="log-tab log-tab-active" id="residentTabBtn" type="button">Resident Log</button>
+                        <button class="log-tab log-tab-active" id="residentTabBtn" type="button">Student Log</button>
                         <button class="log-tab" id="staffTabBtn" type="button">Admin Log</button>
                     </div>
                     <button id="exportLogsBtn" class="log-tab log-tab-active" title="Export">

@@ -1292,12 +1292,12 @@ if (isset($_SESSION['user']['id'])) {
                                     Dashboard
                                 </a>
                             </div>
-                            <div class="nav-connection">
+                            <!-- <div class="nav-connection">
                                 <a href="health_records.php"
                                     class="user-nav-tab text-sm md:text-base <?= ($current_page == 'health_records.php') ? 'user-active' : '' ?>">
                                     My Record
                                 </a>
-                            </div>
+                            </div> -->
                             <div class="nav-connection">
                                 <a href="announcements.php"
                                     class="user-nav-tab text-sm md:text-base <?= ($current_page == 'announcements.php') ? 'user-active' : '' ?>">

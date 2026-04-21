@@ -1,210 +1,242 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../config/database.php';
 
-redirectIfNotLoggedIn();
-if (!isStaff()) {
-    header('HTTP/1.0 403 Forbidden');
-    exit();
+// Check if user is logged in
+if (!isset($_SESSION['user']['id'])) {
+    header('HTTP/1.0 401 Unauthorized');
+    exit('Not authenticated');
 }
 
+// Check if user is staff
+if (!isStaff()) {
+    header('HTTP/1.0 403 Forbidden');
+    exit('Access denied');
+}
+
+// Get user permissions
+require_once __DIR__ . '/../includes/functions.php';
+
+// All authenticated staff can print all records
+$canPrint = true;
+
 $patientId = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$noteId = isset($_GET['note_id']) ? intval($_GET['note_id']) : 0; // NEW: Get specific note ID
+$noteId = isset($_GET['note_id']) ? intval($_GET['note_id']) : 0;
 
 if ($patientId <= 0) {
     header('HTTP/1.0 400 Bad Request');
-    exit();
+    exit('Patient ID is required');
+}
+
+// Check if database connection exists
+if (!isset($pdo) || !$pdo) {
+    die('Database connection error. Please check your database configuration.');
 }
 
 try {
-    require_once __DIR__ . '/../includes/functions.php';
-
-    // Get patient basic information with user details AND health info
+    // First, check if the patient exists
+    $checkStmt = $pdo->prepare("SELECT id, full_name FROM sitio1_patients WHERE id = ? AND deleted_at IS NULL");
+    $checkStmt->execute([$patientId]);
+    $patientExists = $checkStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$patientExists) {
+        header('HTTP/1.0 404 Not Found');
+        exit('Patient not found');
+    }
+    
+    // Fetch full patient data - NO added_by restriction
     $query = "SELECT 
-        p.*, 
+        p.id,
+        p.user_id,
+        p.full_name,
+        p.age,
+        p.date_of_birth,
+        p.address,
+        p.contact,
+        p.bhw_assigned,
+        p.last_checkup,
+        p.created_at,
+        p.updated_at,
+        p.phic_no,
+        p.family_no,
+        p.fourps_member,
+        p.consent_given,
+        p.consent_date,
         u.id as user_id,
         u.full_name as user_full_name,
         u.email as user_email, 
         u.age as user_age,
         u.gender as user_gender,
-        u.civil_status as user_civil_status,
         u.occupation as user_occupation,
-        u.address as user_address,
-        u.sitio as user_sitio,
-        u.contact as user_contact,
         u.unique_number,
-        u.date_of_birth as user_date_of_birth,
-        COALESCE(p.full_name, u.full_name) as display_full_name,
-        COALESCE(p.age, u.age) as display_age,
-        COALESCE(p.date_of_birth, u.date_of_birth) as display_date_of_birth,
-        COALESCE(p.gender, u.gender) as display_gender,
-        COALESCE(p.civil_status, u.civil_status) as display_civil_status,
-        COALESCE(p.occupation, u.occupation) as display_occupation,
-        COALESCE(p.address, u.address) as display_address,
-        COALESCE(p.sitio, u.sitio) as display_sitio,
-        COALESCE(p.contact, u.contact) as display_contact
+        u.date_of_birth as user_date_of_birth
     FROM sitio1_patients p 
     LEFT JOIN sitio1_users u ON p.user_id = u.id
-    WHERE p.id = ?";
-
-    $params = [$patientId];
-    if (!staff_can_view_all()) {
-        $query .= " AND p.added_by = ?";
-        $params[] = $_SESSION['user']['id'];
-    }
-
+    WHERE p.id = ? AND p.deleted_at IS NULL";
+    
     $stmt = $pdo->prepare($query);
-    $stmt->execute($params);
+    $stmt->execute([$patientId]);
     $patient = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$patient) {
         header('HTTP/1.0 404 Not Found');
-        exit();
+        exit('Patient data not found');
     }
     
-    // Log staff activity for printing patient record
+    // Get health information from existing_info_patients
+    $healthInfo = [];
     try {
-        $staff_id = $_SESSION['user']['id'] ?? null;
-        $staff_name = $_SESSION['user']['full_name'] ?? 'Unknown';
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-        $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        
-        $pdo->exec("CREATE TABLE IF NOT EXISTS staff_activity_log (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            staff_id INT,
-            action_type VARCHAR(100),
-            related_id INT,
-            details JSON,
-            ip_address VARCHAR(45),
-            user_agent TEXT,
-            created_at DATETIME
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $stmtLog = $pdo->prepare("INSERT INTO staff_activity_log (staff_id, action_type, related_id, details, ip_address, user_agent, created_at) VALUES (?, 'print_patient', ?, ?, ?, ?, NOW())");
-        $stmtLog->execute([$staff_id, $patientId, json_encode(['full_name' => $staff_name, 'patient_name' => $patient['display_full_name'] ?? $patient['full_name'], 'patient_id' => $patientId]), $ip, $ua]);
-    } catch (Exception $e) {
-        error_log('Staff activity log error (print_patient): ' . $e->getMessage());
-    }
-    
-    // Get health information
-    $stmt = $pdo->prepare("SELECT * FROM existing_info_patients WHERE patient_id = ?");
-    $stmt->execute([$patientId]);
-    $healthInfo = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // Initialize as empty array if no health info exists
-    if (!$healthInfo) {
+        $stmt = $pdo->prepare("SELECT * FROM existing_info_patients WHERE patient_id = ?");
+        $stmt->execute([$patientId]);
+        $healthInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$healthInfo) {
+            $healthInfo = [];
+        }
+    } catch (PDOException $e) {
+        error_log('existing_info_patients table error: ' . $e->getMessage());
         $healthInfo = [];
     }
     
-    // Get specific consultation note if note_id is provided
+    // Get doctor name from consultation notes
     $currentDoctor = '';
-    if ($noteId > 0) {
-        $stmt = $pdo->prepare("
-            SELECT doctor_name 
-            FROM consultation_notes 
-            WHERE id = ? AND patient_id = ?
-        ");
-        $stmt->execute([$noteId, $patientId]);
-        $currentNote = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($currentNote && !empty($currentNote['doctor_name'])) {
-            $currentDoctor = $currentNote['doctor_name'];
+    try {
+        if ($noteId > 0) {
+            $stmt = $pdo->prepare("SELECT doctor_name FROM consultation_notes WHERE id = ? AND patient_id = ?");
+            $stmt->execute([$noteId, $patientId]);
+            $currentNote = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($currentNote && !empty($currentNote['doctor_name'])) {
+                $currentDoctor = $currentNote['doctor_name'];
+            }
         }
-    }
-    
-    // If no specific note provided or doctor not found, get latest note's doctor
-    if (empty($currentDoctor)) {
-        $stmt = $pdo->prepare("
-            SELECT doctor_name 
-            FROM consultation_notes 
-            WHERE patient_id = ? 
-            ORDER BY consultation_date DESC, created_at DESC 
-            LIMIT 1
-        ");
-        $stmt->execute([$patientId]);
-        $latestNote = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($latestNote && !empty($latestNote['doctor_name'])) {
-            $currentDoctor = $latestNote['doctor_name'];
+        
+        if (empty($currentDoctor)) {
+            $stmt = $pdo->prepare("SELECT doctor_name FROM consultation_notes WHERE patient_id = ? ORDER BY consultation_date DESC, created_at DESC LIMIT 1");
+            $stmt->execute([$patientId]);
+            $latestNote = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($latestNote && !empty($latestNote['doctor_name'])) {
+                $currentDoctor = $latestNote['doctor_name'];
+            }
         }
+    } catch (PDOException $e) {
+        error_log('consultation_notes table error: ' . $e->getMessage());
     }
     
-    // Fallback to staff name if no doctor found in notes
+    // Fallback to staff name if no doctor found
     if (empty($currentDoctor)) {
-        $currentDoctor = $_SESSION['user']['full_name'] ?? 'Dr. Medical Officer';
+        $currentDoctor = $_SESSION['user']['full_name'] ?? 'School Physician';
     }
-    
-    // Get consultation notes (for internal use only, not displayed in print)
-    $stmt = $pdo->prepare("
-        SELECT 
-            cn.*,
-            u.full_name as created_by_name
-        FROM consultation_notes cn
-        LEFT JOIN sitio1_users u ON cn.created_by = u.id
-        WHERE cn.patient_id = ?
-        ORDER BY cn.consultation_date DESC, cn.created_at DESC
-    ");
-    $stmt->execute([$patientId]);
-    $consultationNotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Get visit history
     $visits = [];
     try {
-        $stmt = $pdo->prepare("SELECT * FROM patient_visits WHERE patient_id = ? ORDER BY visit_date DESC");
+        $stmt = $pdo->prepare("SELECT * FROM patient_visits WHERE patient_id = ? ORDER BY visit_date DESC LIMIT 10");
         $stmt->execute([$patientId]);
         $visits = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        // If table doesn't exist, just continue without visits
         error_log("Visit history not available: " . $e->getMessage());
+        $visits = [];
     }
     
 } catch (PDOException $e) {
+    error_log('Database error in print_patient.php: ' . $e->getMessage());
     header('HTTP/1.0 500 Internal Server Error');
-    exit();
+    exit('Database error: ' . $e->getMessage());
 }
 
-// Format date of birth for display
+// Format display values
+$displayFullName = $patient['full_name'] ?? 'Unknown Patient';
 $dateOfBirthDisplay = '';
-if (!empty($patient['display_date_of_birth'])) {
-    $dateOfBirthDisplay = date('F j, Y', strtotime($patient['display_date_of_birth']));
+if (!empty($patient['date_of_birth'])) {
+    $dateOfBirthDisplay = date('F j, Y', strtotime($patient['date_of_birth']));
+} elseif (!empty($patient['user_date_of_birth'])) {
+    $dateOfBirthDisplay = date('F j, Y', strtotime($patient['user_date_of_birth']));
 }
 
-// Get BHW Assigned from patient table
-$bhwAssigned = !empty($patient['bhw_assigned']) ? $patient['bhw_assigned'] : 'Not Assigned';
-
-// Extract BHW initials for ID
-$bhwInitials = '';
-if ($bhwAssigned !== 'Not Assigned') {
-    $words = explode(' ', $bhwAssigned);
-    foreach ($words as $word) {
-        if (!empty($word)) {
-            $bhwInitials .= strtoupper(substr($word, 0, 1));
-        }
-    }
-    if (empty($bhwInitials)) {
-        $bhwInitials = 'BHW';
-    }
-} else {
-    $bhwInitials = 'BHW';
+// Calculate age if not present
+$age = $patient['age'] ?? $patient['user_age'] ?? '';
+if (empty($age) && !empty($patient['date_of_birth'])) {
+    $dob = new DateTime($patient['date_of_birth']);
+    $today = new DateTime();
+    $age = $dob->diff($today)->y;
 }
 
-// Get staff license number
+// Get data
+$gender = $patient['user_gender'] ?? '';
+$userEmail = $patient['user_email'] ?? '';
+
+// Get BHW Assigned
+$bhwAssigned = !empty($patient['bhw_assigned']) ? $patient['bhw_assigned'] : 'School Nurse';
+
+// Staff license number
 $staffLicenseNo = 'PRC-' . str_pad($_SESSION['user']['id'] ?? '0000', 6, '0', STR_PAD_LEFT);
 
-// Generate HTML for printing
-ob_start();
+// Helper function to format health values
+function formatHealthValue($value, $default = 'Not recorded') {
+    return (!empty($value) && $value !== '') ? htmlspecialchars($value) : '<span class="empty-data">' . $default . '</span>';
+}
+
+// Helper function to format allergy items
+function formatAllergyItems($healthInfo) {
+    $allergies = [];
+    if (!empty($healthInfo['student_allergy_items'])) {
+        if (is_string($healthInfo['student_allergy_items'])) {
+            $items = json_decode($healthInfo['student_allergy_items'], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($items)) {
+                $allergies = $items;
+            } else {
+                $allergies = explode(',', $healthInfo['student_allergy_items']);
+            }
+        } elseif (is_array($healthInfo['student_allergy_items'])) {
+            $allergies = $healthInfo['student_allergy_items'];
+        }
+    }
+    if (!empty($healthInfo['student_allergy_other'])) {
+        $allergies[] = $healthInfo['student_allergy_other'];
+    }
+    $allergies = array_map('trim', $allergies);
+    $allergies = array_filter($allergies);
+    return !empty($allergies) ? implode(', ', $allergies) : '';
+}
+
+// Helper function to format conditions
+function formatConditions($healthInfo) {
+    $conditions = [];
+    if (!empty($healthInfo['student_conditions'])) {
+        if (is_string($healthInfo['student_conditions'])) {
+            $items = json_decode($healthInfo['student_conditions'], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($items)) {
+                $conditions = $items;
+            } else {
+                $conditions = explode(',', $healthInfo['student_conditions']);
+            }
+        } elseif (is_array($healthInfo['student_conditions'])) {
+            $conditions = $healthInfo['student_conditions'];
+        }
+    }
+    if (!empty($healthInfo['student_condition_other'])) {
+        $conditions[] = $healthInfo['student_condition_other'];
+    }
+    $conditions = array_map('trim', $conditions);
+    $conditions = array_filter($conditions);
+    return !empty($conditions) ? implode(', ', $conditions) : '';
+}
+
+// Helper function for yes/no display
+function formatYesNo($value) {
+    if ($value === 'yes' || $value === 'Yes' || $value === 'YES') return 'Yes';
+    if ($value === 'no' || $value === 'No' || $value === 'NO') return 'No';
+    return '<span class="empty-data">Not specified</span>';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Health Record - <?= htmlspecialchars($patient['display_full_name']) ?> - Barangay Luz Health Center</title>
-    <!-- Local Font Awesome for offline support -->
-    <link rel="stylesheet" href="/community-health-tracker/asssets/css/font-awesome.min.css">
+    <title>Student Health Record - <?= htmlspecialchars($displayFullName) ?> - Cebu Eastern College</title>
+    <link rel="icon" type="image/png" href="/community-health-tracker/asssets/images/finallogo.png">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* Bond Paper Style */
         @page {
             size: letter;
             margin: 0.5in;
@@ -217,29 +249,27 @@ ob_start();
         }
         
         body { 
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Poppins', 'Times New Roman', Arial, sans-serif;
             margin: 0;
             padding: 0.5in;
             color: #000;
             background: #ffffff;
             line-height: 1.3;
-            font-size: 12pt;
+            font-size: 11pt;
         }
         
         .document-container {
             max-width: 8.5in;
-            min-height: 11in;
             margin: 0 auto;
             background: white;
-            position: relative;
         }
         
-        /* Official Government Header */
-        .government-header {
+        /* Warm Blue Theme Header */
+        .college-header {
             text-align: center;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 2px solid #000;
+            border-bottom: 2px solid #3C96E1;
         }
         
         .header-row {
@@ -254,26 +284,21 @@ ob_start();
             text-align: center;
         }
         
-        .logo-circle {
+        /* .logo-circle {
             width: 100px;
             height: 100px;
-            border: 2px solid #000;
-            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto;
-            overflow: hidden;
             background: white;
-            position: relative;
-        }
+            overflow: hidden;
+        } */
         
         .logo-circle img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: center;
-            display: block;
         }
         
         .logo-circle.fallback::before {
@@ -283,6 +308,11 @@ ob_start();
             text-align: center;
             padding: 5px;
             line-height: 1.2;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
         }
         
         .header-center {
@@ -292,95 +322,90 @@ ob_start();
         }
         
         .header-center h1 {
-            font-size: 16pt;
+            font-size: 20pt;
             font-weight: 700;
             margin: 0;
             text-transform: uppercase;
+            color: #3C96E1;
         }
         
         .header-center h2 {
             font-size: 14pt;
             font-weight: 600;
-            margin: 2px 0;
+            margin: 5px 0;
+            color: #2c7cb6;
         }
         
         .header-center p {
             font-size: 10pt;
-            margin: 1px 0;
-            font-weight: 400;
+            margin: 2px 0;
+            color: #666;
         }
         
         .document-title {
             text-align: center;
             margin: 25px 0;
             padding: 10px 0;
-            border-top: 2px solid #000;
-            border-bottom: 2px solid #000;
+            border-top: 2px solid #3C96E1;
+            border-bottom: 2px solid #3C96E1;
+            background: #f0f8ff;
         }
         
         .document-title h1 {
             font-size: 18pt;
             font-weight: 700;
             text-transform: uppercase;
+            color: #3C96E1;
             letter-spacing: 1px;
         }
         
-        /* Information Sections */
+        .document-title p {
+            font-size: 11pt;
+            margin-top: 5px;
+            color: #5aadf0;
+        }
+        
         .section {
             margin-bottom: 20px;
+            page-break-inside: avoid;
         }
         
         .section-title {
-            background: #f0f0f0;
+            background: #3C96E1;
+            color: white;
             padding: 8px 12px;
             font-weight: 600;
-            border: 1px solid #000;
             margin-bottom: 10px;
-            font-size: 13pt;
+            font-size: 12pt;
+            border-radius: 3px;
         }
         
         .info-table { 
             width: 100%; 
             border-collapse: collapse; 
             margin-bottom: 15px; 
-            font-size: 11pt;
+            font-size: 10pt;
         }
         
         .info-table th, .info-table td { 
-            border: 1px solid #000; 
+            border: 1px solid #b3d9f7; 
             padding: 8px 10px; 
             text-align: left; 
             vertical-align: top;
         }
         
         .info-table th { 
-            background: #f8f8f8;
+            background: #e6f3ff;
             font-weight: 600;
-            width: 20%;
+            width: 25%;
+            color: #2c7cb6;
         }
         
-        .info-table td {
-            width: 30%;
+        .empty-data {
+            color: #999;
+            font-style: italic;
         }
         
-        .visits-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 10pt;
-        }
-        
-        .visits-table th, .visits-table td { 
-            border: 1px solid #000; 
-            padding: 6px 8px; 
-            text-align: left; 
-        }
-        
-        .visits-table th { 
-            background: #f8f8f8;
-            font-weight: 600;
-        }
-        
-        /* Signature Section */
         .signature-section {
             display: flex;
             justify-content: space-between;
@@ -394,27 +419,18 @@ ob_start();
         }
         
         .signature-line {
-            border-bottom: 1px solid #000;
+            border-bottom: 1px solid #3C96E1;
             margin: 40px 0 8px;
             padding-bottom: 4px;
             min-height: 30px;
             position: relative;
         }
         
-        .signature-name {
-            position: absolute;
-            bottom: 5px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-weight: 600;
-            font-size: 11pt;
-        }
-        
         .signature-label {
             font-weight: 600;
             margin-top: 5px;
-            font-size: 11pt;
+            font-size: 10pt;
+            color: #3C96E1;
         }
         
         .signature-details {
@@ -423,17 +439,15 @@ ob_start();
             margin-top: 3px;
         }
         
-        /* Footer */
         .footer { 
             margin-top: 30px; 
             text-align: center; 
-            font-size: 9pt; 
+            font-size: 8pt; 
             color: #666;
-            border-top: 1px solid #000;
+            border-top: 1px solid #3C96E1;
             padding-top: 10px;
         }
         
-        /* Control Buttons */
         .control-buttons {
             position: fixed;
             top: 10px;
@@ -445,191 +459,83 @@ ob_start();
             z-index: 1000;
             display: flex;
             gap: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
         .control-btn {
-            background: #2c3e50;
+            background: #3C96E1;
             color: white;
             border: none;
             border-radius: 3px;
             padding: 8px 12px;
             cursor: pointer;
             font-size: 11px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
             font-family: 'Poppins', sans-serif;
-            font-weight: 500;
         }
         
         .control-btn:hover {
-            background: #34495e;
+            background: #2c7cb6;
         }
         
-        .zoom-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: 10px;
-        }
-        
-        .zoom-btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .zoom-level {
-            font-size: 11px;
-            font-weight: 600;
-            min-width: 40px;
-            text-align: center;
-        }
-        
-        /* Loading Overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            color: white;
-            font-size: 16px;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Print Styles */
         @media print {
             .no-print { display: none !important; }
             body { 
                 margin: 0; 
                 padding: 0.5in;
-                background: white !important;
             }
             .control-buttons { display: none !important; }
-            .document-container {
-                box-shadow: none;
-                max-width: 100%;
-                min-height: auto;
+            .section-title {
+                background: #3C96E1;
+                color: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
-            .logo-circle img {
+            .document-title {
+                background: #f0f8ff;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .info-table th {
+                background: #e6f3ff;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
         }
         
-        /* Data styling */
-        .data-value {
-            font-weight: 400;
-        }
-        
-        .empty-data {
-            color: #999;
-            font-style: italic;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            body {
-                padding: 20px;
-            }
-            .header-row {
-                flex-direction: column;
-                gap: 15px;
-            }
-            .logo-left, .logo-right {
-                width: 100%;
-            }
-            .control-buttons {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
+        .warning-banner {
+            background: #e6f3ff;
+            border: 1px solid #3C96E1;
+            color: #3C96E1;
+            padding: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 9pt;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
-    <div class="loading-overlay no-print" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <div id="loadingText">Generating Document...</div>
-    </div>
     
-    <!-- Control Buttons -->
-    <div class="control-buttons no-print">
-        <button class="control-btn" onclick="handlePrint()">
-            <i class="fas fa-print"></i> Print
-        </button>
-        <button class="control-btn" onclick="exportToExcel()">
-            <i class="fas fa-file-excel"></i> Excel
-        </button>
-        <button class="control-btn" onclick="exportToPDF()">
-            <i class="fas fa-file-pdf"></i> PDF
-        </button>
-        <button class="control-btn" onclick="window.close()">
-            <i class="fas fa-times"></i> Close
-        </button>
-        
-        <div class="zoom-controls">
-            <button class="zoom-btn" id="zoomOut" title="Zoom Out">
-                <i class="fas fa-search-minus"></i>
-            </button>
-            <div class="zoom-level" id="zoomLevel">100%</div>
-            <button class="zoom-btn" id="zoomIn" title="Zoom In">
-                <i class="fas fa-search-plus"></i>
-            </button>
-        </div>
-    </div>
-    
-    <div class="document-container" id="documentContent">
-        <!-- Official Government Header -->
-        <div class="government-header">
+    <div class="document-container">
+        <!-- Header with CEC Logo (Left) and DOH Logo (Right) -->
+        <div class="college-header">
             <div class="header-row">
                 <div class="logo-left">
-                    <div class="logo-circle" id="dohLogo" data-fallback="DOH SEAL">
-                        <img src="../asssets/images/DOH.webp" alt="Department of Health Seal" 
-                             onerror="this.style.display='none'; document.getElementById('dohLogo').classList.add('fallback')">
+                    <div class="logo-circle" id="cecLogo" data-fallback="CEC">
+                        <img src="../asssets/images/finallogo.png" alt="Cebu Eastern College Logo" 
+                             onerror="this.style.display='none'; this.parentElement.classList.add('fallback')">
                     </div>
                 </div>
-                
                 <div class="header-center">
-                    <h1>BARANGAY LUZ</h1>
-                    <h2>CEBU CITY</h2>
-                    <p>OFFICE OF THE BARANGAY CAPTAIN</p>
-                    <p>BARANGAY HEALTH CENTER</p>
-                    <p>Telephone: (032) 123-4567 • Email: healthcenter@barangayluzcebu.gov.ph</p>
+                    <h1>CEBU EASTERN COLLEGE</h1>
+                    <h2>Student Health Services</h2>
+                    <p>Cebu City, Philippines 6000</p>
+                    <p>(032) 123-4567 | ✉️ clinic@cebueastern.edu.ph</p>
                 </div>
-                
                 <div class="logo-right">
-                    <div class="logo-circle" id="barangayLogo" data-fallback="BARANGAY SEAL">
-                        <img src="../asssets/images/Luz.jpg" alt="Barangay Luz Seal" 
-                             onerror="this.style.display='none'; document.getElementById('barangayLogo').classList.add('fallback')">
+                    <div class="logo-circle" id="dohLogo" data-fallback="DOH">
+                        <img src="../asssets/images/DOH.webp" alt="Department of Health Logo" 
+                             onerror="this.style.display='none'; this.parentElement.classList.add('fallback')">
                     </div>
                 </div>
             </div>
@@ -637,189 +543,230 @@ ob_start();
         
         <!-- Document Title -->
         <div class="document-title">
-            <h1>PATIENT HEALTH RECORD</h1>
+            <h1>COMPLETE STUDENT HEALTH RECORDS</h1>
+            <p>Cebu Eastern College Student Clinic Records</p>
         </div>
         
-        <!-- Document Information -->
-        <div style="text-align: center; margin-bottom: 20px; font-size: 11pt;">
-            <p><strong>Patient ID:</strong> <?= $patientId ?> | <strong>Date Generated:</strong> <?= date('F j, Y') ?> | <strong>Time:</strong> <?= date('g:i A') ?></p>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <p><strong>Student Record ID:</strong> CEC-<?= str_pad($patientId, 6, '0', STR_PAD_LEFT) ?> | <strong>Date Issued:</strong> <?= date('F j, Y') ?></p>
             <?php if (!empty($patient['unique_number'])): ?>
-            <p><strong>Unique Number:</strong> <?= htmlspecialchars($patient['unique_number']) ?></p>
-            <?php endif; ?>
-            <?php if ($noteId > 0): ?>
-            <p><strong>Consultation Note Reference:</strong> Note #<?= $noteId ?></p>
+            <p><strong>Student Number:</strong> <?= htmlspecialchars($patient['unique_number']) ?></p>
             <?php endif; ?>
         </div>
         
-        <!-- Personal Information Section -->
+        <!-- SECTION I: PERSONAL INFORMATION -->
         <div class="section">
-            <div class="section-title">I. PERSONAL INFORMATION</div>
+            <div class="section-title">I. STUDENT PERSONAL INFORMATION</div>
             <table class="info-table">
                 <tr>
+                    <th>Last Name</th>
+                    <td><?= formatHealthValue($healthInfo['student_last_name'] ?? '') ?></td>
+                    <th>First Name</th>
+                    <td><?= formatHealthValue($healthInfo['student_first_name'] ?? '') ?></td>
+                </tr>
+                <tr>
+                    <th>Middle Name</th>
+                    <td><?= formatHealthValue($healthInfo['student_middle_name'] ?? '') ?></td>
                     <th>Full Name</th>
-                    <td class="data-value"><?= htmlspecialchars($patient['display_full_name']) ?></td>
+                    <td><strong><?= htmlspecialchars($displayFullName) ?></strong></td>
+                </tr>
+                <tr>
+                    <th>Sex</th>
+                    <td><?= formatHealthValue($healthInfo['student_sex'] ?? $gender) ?></td>
                     <th>Date of Birth</th>
-                    <td class="data-value"><?= !empty($dateOfBirthDisplay) ? $dateOfBirthDisplay : '<span class="empty-data">Not specified</span>' ?></td>
+                    <td><?= !empty($dateOfBirthDisplay) ? $dateOfBirthDisplay : '<span class="empty-data">Not specified</span>' ?></td>
                 </tr>
                 <tr>
                     <th>Age</th>
-                    <td class="data-value"><?= $patient['display_age'] ?? '<span class="empty-data">Not specified</span>' ?></td>
-                    <th>Gender</th>
-                    <td class="data-value"><?= $patient['display_gender'] ? htmlspecialchars($patient['display_gender']) : '<span class="empty-data">Not specified</span>' ?></td>
-                </tr>
-                <tr>
-                    <th>Civil Status</th>
-                    <td class="data-value"><?= $patient['display_civil_status'] ? htmlspecialchars($patient['display_civil_status']) : '<span class="empty-data">Not specified</span>' ?></td>
-                    <th>Occupation</th>
-                    <td class="data-value"><?= $patient['display_occupation'] ? htmlspecialchars($patient['display_occupation']) : '<span class="empty-data">Not specified</span>' ?></td>
-                </tr>
-                <tr>
+                    <td><?= $age ?: '<span class="empty-data">Not specified</span>' ?> years old</td>
                     <th>Contact Number</th>
-                    <td class="data-value"><?= $patient['display_contact'] ? htmlspecialchars($patient['display_contact']) : '<span class="empty-data">Not specified</span>' ?></td>
-                    <th>Sitio/Purok</th>
-                    <td class="data-value">
-                        <?php
-                        if (!empty($patient['display_sitio'])) {
-                            echo htmlspecialchars($patient['display_sitio']);
-                        } else {
-                            echo '<span class="empty-data">Not specified</span>';
-                        }
-                        ?>
-                    </td>
+                    <td><?= formatHealthValue($healthInfo['student_mobile_number'] ?? $patient['contact'] ?? '') ?></td>
                 </tr>
                 <tr>
                     <th>Complete Address</th>
-                    <td colspan="3" class="data-value"><?= $patient['display_address'] ? htmlspecialchars($patient['display_address']) : '<span class="empty-data">Not specified</span>' ?></td>
+                    <td colspan="3"><?= formatHealthValue($healthInfo['student_home_address'] ?? $patient['address'] ?? '') ?></td>
                 </tr>
-                <tr>
-                    <th>PHIC Number</th>
-                    <td class="data-value"><?= !empty($patient['phic_no']) ? htmlspecialchars($patient['phic_no']) : '<span class="empty-data">Not specified</span>' ?></td>
-                    <th>Family Number</th>
-                    <td class="data-value"><?= !empty($patient['family_no']) ? htmlspecialchars($patient['family_no']) : '<span class="empty-data">Not specified</span>' ?></td>
-                </tr>
-                <tr>
-                    <th>4P's Member</th>
-                    <td class="data-value"><?= !empty($patient['fourps_member']) ? htmlspecialchars($patient['fourps_member']) : '<span class="empty-data">Not specified</span>' ?></td>
-                    <th>BHW Assigned</th>
-                    <td class="data-value"><?= htmlspecialchars($bhwAssigned) ?></td>
-                </tr>
-                <tr>
-                    <th>Last Check-up</th>
-                    <td class="data-value"><?= $patient['last_checkup'] ? date('F j, Y', strtotime($patient['last_checkup'])) : '<span class="empty-data">No record</span>' ?></td>
-                    <th>Patient Type</th>
-                    <td class="data-value">
-                        <?php if (!empty($patient['unique_number'])): ?>
-                        <strong>REGISTERED BARANGAY RESIDENT</strong>
-                        <?php else: ?>
-                        WALK-IN PATIENT
-                        <?php endif; ?>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Date Registered</th>
-                    <td class="data-value"><?= $patient['created_at'] ? date('F j, Y', strtotime($patient['created_at'])) : '<span class="empty-data">Not specified</span>' ?></td>
-                    <th>Consent Given</th>
-                    <td class="data-value">
-                        <?= (!empty($patient['consent_given']) && $patient['consent_given'] == 1) ? 'YES' : 'NO' ?>
-                        <?php if (!empty($patient['consent_date'])): ?>
-                            (<?= date('m/d/Y', strtotime($patient['consent_date'])) ?>)
-                        <?php endif; ?>
-                    </td>
-                </tr>
-                <?php if (!empty($patient['user_email'])): ?>
+                <?php if (!empty($userEmail)): ?>
                 <tr>
                     <th>Email Address</th>
-                    <td colspan="3" class="data-value"><?= htmlspecialchars($patient['user_email']) ?></td>
+                    <td colspan="3"><?= htmlspecialchars($userEmail) ?></td>
+                </tr>
+                <?php endif; ?>
+                <tr>
+                    <th>Religion</th>
+                    <td><?= formatHealthValue($healthInfo['student_religion'] ?? '') ?></td>
+                    <th>Nickname</th>
+                    <td><?= formatHealthValue($healthInfo['student_nickname'] ?? '') ?></td>
+                </tr>
+                <tr>
+                    <th>Parent/Guardian</th>
+                    <td><?= formatHealthValue($healthInfo['parent_guardian_name'] ?? '') ?></td>
+                    <th>Parent/Guardian Occupation</th>
+                    <td><?= formatHealthValue($healthInfo['parent_guardian_occupation'] ?? '') ?></td>
+                </tr>
+                <tr>
+                    <th>Student Type</th>
+                    <td colspan="3"><?= !empty($patient['unique_number']) ? 'Registered Student' : 'Walk-in Student' ?></td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- SECTION II: HEALTH INFORMATION -->
+        <div class="section">
+            <div class="section-title">II. HEALTH INFORMATION & MEDICAL HISTORY</div>
+            <table class="info-table">
+                <tr>
+                    <th>Blood Type</th>
+                    <td><?= formatHealthValue($healthInfo['blood_type'] ?? '') ?></td>
+                    <th>Blood Pressure</th>
+                    <td><?= formatHealthValue($healthInfo['blood_pressure'] ?? '') ?></td>
+                </tr>
+                <tr>
+                    <th>In good health?</th>
+                    <td><?= formatYesNo($healthInfo['student_good_health'] ?? '') ?></td>
+                    <th>Under medical treatment?</th>
+                    <td><?= formatYesNo($healthInfo['student_under_treatment'] ?? '') ?></td>
+                </tr>
+                <?php if (!empty($healthInfo['student_treatment_condition'])): ?>
+                <tr>
+                    <th>Treatment Details</th>
+                    <td colspan="3"><?= htmlspecialchars($healthInfo['student_treatment_condition']) ?></td>
+                </tr>
+                <?php endif; ?>
+                <tr>
+                    <th>Serious illness/surgery?</th>
+                    <td><?= formatYesNo($healthInfo['student_serious_illness_surgery'] ?? '') ?></td>
+                    <th>Ever hospitalized?</th>
+                    <td><?= formatYesNo($healthInfo['student_hospitalized'] ?? '') ?></td>
+                </tr>
+                <?php if (!empty($healthInfo['student_serious_illness_details'])): ?>
+                <tr>
+                    <th>Illness/Surgery Details</th>
+                    <td colspan="3"><?= htmlspecialchars($healthInfo['student_serious_illness_details']) ?></td>
+                </tr>
+                <?php endif; ?>
+                <?php if (!empty($healthInfo['student_hospitalization_details'])): ?>
+                <tr>
+                    <th>Hospitalization Details</th>
+                    <td colspan="3"><?= htmlspecialchars($healthInfo['student_hospitalization_details']) ?></td>
+                </tr>
+                <?php endif; ?>
+                <tr>
+                    <th>Currently taking medication?</th>
+                    <td><?= formatYesNo($healthInfo['student_taking_medication'] ?? '') ?></td>
+                    <th>Has allergies?</th>
+                    <td><?= formatYesNo($healthInfo['student_has_allergies'] ?? '') ?></td>
+                </tr>
+                <?php if (!empty($healthInfo['student_medication_details'])): ?>
+                <tr>
+                    <th>Medication Details</th>
+                    <td colspan="3"><?= htmlspecialchars($healthInfo['student_medication_details']) ?></td>
+                </tr>
+                <?php endif; ?>
+                <?php if (!empty($healthInfo['student_allergy_items']) || !empty($healthInfo['student_allergy_other'])): ?>
+                <tr>
+                    <th>Allergies</th>
+                    <td colspan="3">
+                        <?php 
+                        $allergyText = formatAllergyItems($healthInfo);
+                        echo !empty($allergyText) ? htmlspecialchars($allergyText) : '<span class="empty-data">None reported</span>';
+                        ?>
+                    </td>
+                </tr>
+                <?php endif; ?>
+                <?php if (!empty($healthInfo['student_conditions']) || !empty($healthInfo['student_condition_other'])): ?>
+                <tr>
+                    <th>Medical Conditions</th>
+                    <td colspan="3">
+                        <?php 
+                        $conditionsText = formatConditions($healthInfo);
+                        echo !empty($conditionsText) ? htmlspecialchars($conditionsText) : '<span class="empty-data">None reported</span>';
+                        ?>
+                    </td>
                 </tr>
                 <?php endif; ?>
             </table>
         </div>
         
-        <!-- Health Information Section -->
+        <!-- SECTION III: WOMEN'S HEALTH (if female) -->
+        <?php 
+        $patientSex = $healthInfo['student_sex'] ?? $gender;
+        if ($patientSex === 'F' || $patientSex === 'Female'): 
+        ?>
         <div class="section">
-            <div class="section-title">II. HEALTH INFORMATION</div>
+            <div class="section-title">III. WOMEN'S HEALTH</div>
             <table class="info-table">
                 <tr>
-                    <th>Height</th>
-                    <td class="data-value"><?= isset($healthInfo['height']) && $healthInfo['height'] !== '' ? $healthInfo['height'] . ' cm' : '<span class="empty-data">Not recorded</span>' ?></td>
-                    <th>Weight</th>
-                    <td class="data-value"><?= isset($healthInfo['weight']) && $healthInfo['weight'] !== '' ? $healthInfo['weight'] . ' kg' : '<span class="empty-data">Not recorded</span>' ?></td>
+                    <th>Currently pregnant?</th>
+                    <td><?= formatYesNo($healthInfo['student_is_pregnant'] ?? '') ?></td>
+                    <th>Currently nursing?</th>
+                    <td><?= formatYesNo($healthInfo['student_is_nursing'] ?? '') ?></td>
                 </tr>
                 <tr>
-                    <th>Blood Type</th>
-                    <td class="data-value"><?= isset($healthInfo['blood_type']) && !empty($healthInfo['blood_type']) ? htmlspecialchars($healthInfo['blood_type']) : '<span class="empty-data">Not recorded</span>' ?></td>
-                    <th>Temperature</th>
-                    <td class="data-value"><?= isset($healthInfo['temperature']) && $healthInfo['temperature'] !== '' ? $healthInfo['temperature'] . ' °C' : '<span class="empty-data">Not recorded</span>' ?></td>
+                    <th>Birth control pills?</th>
+                    <td><?= formatYesNo($healthInfo['student_takes_birth_control'] ?? '') ?></td>
+                    <th>LMP (Last Menstrual Period)</th>
+                    <td><?= formatHealthValue($healthInfo['student_lmp'] ?? '') ?></td>
                 </tr>
                 <tr>
-                    <th>Blood Pressure</th>
-                    <td colspan="3" class="data-value"><?= isset($healthInfo['blood_pressure']) && !empty($healthInfo['blood_pressure']) ? htmlspecialchars($healthInfo['blood_pressure']) : '<span class="empty-data">Not recorded</span>' ?></td>
+                    <th>Menarche</th>
+                    <td><?= formatHealthValue($healthInfo['student_menarche'] ?? '') ?></td>
+                    <th>Gravida / Para</th>
+                    <td><?= formatHealthValue($healthInfo['student_gravida'] ?? '') ?> / <?= formatHealthValue($healthInfo['student_para'] ?? '') ?></td>
                 </tr>
                 <tr>
-                    <th>Allergies</th>
-                    <td colspan="3" class="data-value"><?= isset($healthInfo['allergies']) && !empty($healthInfo['allergies']) ? htmlspecialchars($healthInfo['allergies']) : '<span class="empty-data">None reported</span>' ?></td>
+                    <th>Abortion</th>
+                    <td colspan="3"><?= formatHealthValue($healthInfo['student_abortion'] ?? '') ?></td>
+                </tr>
+            </table>
+        </div>
+        <?php endif; ?>
+        
+        <!-- SECTION IV: PHYSICIAN INFORMATION -->
+        <div class="section">
+            <div class="section-title">IV. CLINIC PHYSICIAN INFORMATION</div>
+            <table class="info-table">
+                <tr>
+                    <th>Physician's Name</th>
+                    <td colspan="3"><?= formatHealthValue($healthInfo['student_physician_name'] ?? '') ?></td>
                 </tr>
                 <tr>
-                    <th>Current Medications</th>
-                    <td colspan="3" class="data-value"><?= isset($healthInfo['current_medications']) && !empty($healthInfo['current_medications']) ? htmlspecialchars($healthInfo['current_medications']) : '<span class="empty-data">None reported</span>' ?></td>
+                    <th>Specialty</th>
+                    <td colspan="3"><?= formatHealthValue($healthInfo['student_physician_specialty'] ?? '') ?></td>
                 </tr>
                 <tr>
-                    <th>Medical History</th>
-                    <td colspan="3" class="data-value"><?= isset($healthInfo['medical_history']) && !empty($healthInfo['medical_history']) ? htmlspecialchars($healthInfo['medical_history']) : '<span class="empty-data">None reported</span>' ?></td>
+                    <th>Office Address</th>
+                    <td colspan="3"><?= formatHealthValue($healthInfo['student_physician_office_address'] ?? '') ?></td>
                 </tr>
-                <tr>
-                    <th>Family Medical History</th>
-                    <td colspan="3" class="data-value"><?= isset($healthInfo['family_history']) && !empty($healthInfo['family_history']) ? htmlspecialchars($healthInfo['family_history']) : '<span class="empty-data">None reported</span>' ?></td>
-                </tr>
-                <tr>
-                    <th>Immunization Record</th>
-                    <td colspan="3" class="data-value"><?= isset($healthInfo['immunization_record']) && !empty($healthInfo['immunization_record']) ? htmlspecialchars($healthInfo['immunization_record']) : '<span class="empty-data">Not available</span>' ?></td>
-                </tr>
-                <tr>
-                    <th>Chronic Conditions</th>
-                    <td colspan="3" class="data-value"><?= isset($healthInfo['chronic_conditions']) && !empty($healthInfo['chronic_conditions']) ? htmlspecialchars($healthInfo['chronic_conditions']) : '<span class="empty-data">None reported</span>' ?></td>
-                </tr>
-                <tr>
-                    <th>Health Record Updated</th>
-                    <td colspan="3" class="data-value">
-                        <?php
-                        if (!empty($patient['updated_at'])) {
-                            echo date('F j, Y \a\t g:i A', strtotime($patient['updated_at']));
-                        } elseif (!empty($patient['created_at'])) {
-                            echo date('F j, Y \a\t g:i A', strtotime($patient['created_at']));
-                        } else {
-                            echo '<span class="empty-data">Not recorded</span>';
-                        }
-                        ?>
-                    </td>
+                <td>
+                    <th>Office Number</th>
+                    <td colspan="3"><?= formatHealthValue($healthInfo['student_physician_office_number'] ?? '') ?></td>
                 </tr>
             </table>
         </div>
         
-        <!-- Visit History Section -->
+        <!-- SECTION V: VISIT HISTORY -->
         <?php if (!empty($visits)): ?>
         <div class="section">
-            <div class="section-title">III. MEDICAL VISIT HISTORY (<?= count($visits) ?> Records)</div>
-            <table class="visits-table">
+            <div class="section-title">V. CLINIC VISIT HISTORY</div>
+            <table class="info-table">
                 <thead>
-                    <tr>
-                        <th style="width: 15%">Date</th>
-                        <th style="width: 12%">Time</th>
-                        <th style="width: 15%">Visit Type</th>
-                        <th style="width: 20%">Symptoms/Complaints</th>
-                        <th style="width: 18%">Diagnosis</th>
-                        <th style="width: 20%">Treatment</th>
+                    <tr style="background: #e6f3ff;">
+                        <th>Date</th>
+                        <th>Visit Type</th>
+                        <th>Complaint/Symptoms</th>
+                        <th>Diagnosis</th>
+                        <th>Treatment Given</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($visits as $visit): ?>
                     <tr>
                         <td><?= date('M j, Y', strtotime($visit['visit_date'])) ?></td>
-                        <td><?= date('g:i A', strtotime($visit['visit_date'])) ?></td>
-                        <td><strong><?= strtoupper($visit['visit_type']) ?></strong></td>
-                        <td><?= $visit['symptoms'] ? htmlspecialchars($visit['symptoms']) : '<span class="empty-data">None</span>' ?></td>
-                        <td><?= $visit['diagnosis'] ? htmlspecialchars($visit['diagnosis']) : '<span class="empty-data">None</span>' ?></td>
-                        <td><?= $visit['treatment'] ? htmlspecialchars($visit['treatment']) : '<span class="empty-data">None</span>' ?></td>
+                        <td><?= strtoupper($visit['visit_type'] ?? 'Regular') ?></td>
+                        <td><?= htmlspecialchars($visit['symptoms'] ?? 'None reported') ?></td>
+                        <td><?= htmlspecialchars($visit['diagnosis'] ?? 'Not specified') ?></td>
+                        <td><?= htmlspecialchars($visit['treatment'] ?? 'Not specified') ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -827,282 +774,85 @@ ob_start();
         </div>
         <?php endif; ?>
         
-        <!-- Signature Section - UPDATED TO SHOW CURRENT DOCTOR ONLY -->
+        <!-- Signature Section -->
         <div class="signature-section">
             <div class="signature-box">
-                <div class="signature-line">
-                    <div class="signature-name">
-                        <?= htmlspecialchars($currentDoctor) ?>
-                    </div>
-                </div>
-                <div class="signature-label">ATTENDING PHYSICIAN/MEDICAL STAFF</div>
-                <div class="signature-details">
-                    License No: <?= $staffLicenseNo ?><br>
-                    Date: <?= date('F j, Y') ?>
-                </div>
+                <div class="signature-line"></div>
+                <div class="signature-label"><?= htmlspecialchars($currentDoctor) ?></div>
+                <div class="signature-details">ATTENDING SCHOOL PHYSICIAN<br>License No: <?= $staffLicenseNo ?></div>
             </div>
             
             <div class="signature-box">
-                <div class="signature-line">
-                    <div class="signature-name">
-                        <?= htmlspecialchars($bhwAssigned) ?>
-                    </div>
-                </div>
-                <div class="signature-label">BARANGAY HEALTH WORKER</div>
-                <div class="signature-details">
-                    Barangay Luz Health Center<br>
-                    BHW ID: BHW-LUZ-<?= $bhwInitials ?>-<?= date('Y') ?>-<?= str_pad($patientId, 4, '0', STR_PAD_LEFT) ?>
-                </div>
+                <div class="signature-line"></div>
+                <div class="signature-label"><?= htmlspecialchars($bhwAssigned) ?></div>
+                <div class="signature-details">CLINIC NURSE / HEALTH WORKER</div>
             </div>
         </div>
         
-        <!-- Official Footer -->
+        <div class="signature-section" style="margin-top: 0;">
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div class="signature-label"><?= htmlspecialchars($displayFullName) ?></div>
+                <div class="signature-details">STUDENT / GUARDIAN SIGNATURE<br>Acknowledgment of Medical Services</div>
+            </div>
+            
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div class="signature-label">CLINIC STAFF SIGNATURE</div>
+                <div class="signature-details">Attending Staff</div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
         <div class="footer">
-            <p><strong>BARANGAY LUZ HEALTH CENTER</strong> | Barangay Luz, Cebu City, Philippines 6000</p>
-            <p>This document is generated by the Barangay Health Information System and is considered an official medical record.</p>
-            <p><em>Confidentiality Notice: This document contains privileged and confidential information. Unauthorized disclosure is prohibited under R.A. 10173.</em></p>
-            <p style="margin-top: 8px;">Document generated by: <?= htmlspecialchars($_SESSION['user']['full_name'] ?? 'System') ?> | Page 1 of 1</p>
+            <p><strong>CEBU EASTERN COLLEGE - STUDENT HEALTH SERVICES</strong> | Cebu City, Philippines 6000</p>
+            <p>This is an official student health record. Unauthorized disclosure is prohibited under R.A. 10173 (Data Privacy Act of 2012).</p>
+            <p>Generated by: <?= htmlspecialchars($_SESSION['user']['full_name'] ?? 'System') ?> | Document Code: CEC-SHR-<?= date('Ymd') ?>-<?= str_pad($patientId, 6, '0', STR_PAD_LEFT) ?></p>
+            <p style="margin-top: 5px;">* This is a computer-generated document - Valid without signature *</p>
         </div>
     </div>
 
     <script>
-        // Zoom functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const documentContent = document.getElementById('documentContent');
-            const zoomLevel = document.getElementById('zoomLevel');
-            const zoomInBtn = document.getElementById('zoomIn');
-            const zoomOutBtn = document.getElementById('zoomOut');
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            const loadingText = document.getElementById('loadingText');
-            
-            let currentZoom = 100;
-            
-            function updateZoom() {
-                documentContent.style.transform = `scale(${currentZoom / 100})`;
-                documentContent.style.transformOrigin = 'top center';
-                zoomLevel.textContent = `${currentZoom}%`;
-                
-                // Disable buttons at limits
-                zoomInBtn.disabled = currentZoom >= 150;
-                zoomOutBtn.disabled = currentZoom <= 50;
+        // Print functionality
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            if (btn.textContent.includes('Print')) {
+                btn.addEventListener('click', () => window.print());
             }
-            
-            zoomInBtn.addEventListener('click', function() {
-                if (currentZoom < 150) {
-                    currentZoom += 10;
-                    updateZoom();
-                }
-            });
-            
-            zoomOutBtn.addEventListener('click', function() {
-                if (currentZoom > 50) {
-                    currentZoom -= 10;
-                    updateZoom();
-                }
-            });
-            
-            // Initialize
-            updateZoom();
-            
-            // Global functions for export
-            window.handlePrint = function() {
-                window.print();
-            };
-            
-            window.exportToExcel = function() {
-                showLoading('Generating Excel file...');
-                
-                try {
-                    // Create workbook
-                    const wb = XLSX.utils.book_new();
-                    
-                    // Patient Information Sheet
-                    const patientData = [
-                        ['BARANGAY LUZ HEALTH CENTER - PATIENT HEALTH RECORD'],
-                        ['Official Document - Generated on: <?= date('F j, Y, g:i a') ?>'],
-                        [''],
-                        ['PERSONAL INFORMATION'],
-                        ['Full Name:', '<?= addslashes($patient['display_full_name']) ?>'],
-                        ['Date of Birth:', '<?= !empty($dateOfBirthDisplay) ? $dateOfBirthDisplay : 'Not specified' ?>'],
-                        ['Age:', '<?= $patient['display_age'] ?? 'Not specified' ?>'],
-                        ['Gender:', '<?= addslashes($patient['display_gender'] ?? 'Not specified') ?>'],
-                        ['Civil Status:', '<?= addslashes($patient['display_civil_status'] ?? 'Not specified') ?>'],
-                        ['Occupation:', '<?= addslashes($patient['display_occupation'] ?? 'Not specified') ?>'],
-                        ['Contact Number:', '<?= addslashes($patient['display_contact'] ?? 'Not specified') ?>'],
-                        ['Address:', '<?= addslashes($patient['display_address'] ?? 'Not specified') ?>'],
-                        ['Sitio/Purok:', '<?= addslashes($patient['display_sitio'] ?? 'Not specified') ?>'],
-                        ['PHIC Number:', '<?= addslashes($patient['phic_no'] ?? 'Not specified') ?>'],
-                        ['Family Number:', '<?= addslashes($patient['family_no'] ?? 'Not specified') ?>'],
-                        ['4P\'s Member:', '<?= addslashes($patient['fourps_member'] ?? 'Not specified') ?>'],
-                        ['BHW Assigned:', '<?= addslashes($bhwAssigned) ?>'],
-                        ['Last Check-up:', '<?= $patient['last_checkup'] ? date('F j, Y', strtotime($patient['last_checkup'])) : 'No record' ?>'],
-                        ['Date Registered:', '<?= $patient['created_at'] ? date('F j, Y', strtotime($patient['created_at'])) : 'Not specified' ?>'],
-                        ['Consent Given:', '<?= (!empty($patient['consent_given']) && $patient['consent_given'] == 1) ? 'YES' : 'NO' ?>'],
-                        ['Patient Type:', '<?= !empty($patient['unique_number']) ? 'Registered Barangay Resident' : 'Walk-in Patient' ?>'],
-                        [''],
-                        ['HEALTH INFORMATION'],
-                        ['Height:', '<?= isset($healthInfo['height']) ? $healthInfo['height'] . ' cm' : 'Not recorded' ?>'],
-                        ['Weight:', '<?= isset($healthInfo['weight']) ? $healthInfo['weight'] . ' kg' : 'Not recorded' ?>'],
-                        ['Blood Type:', '<?= isset($healthInfo['blood_type']) ? addslashes($healthInfo['blood_type']) : 'Not recorded' ?>'],
-                        ['Blood Pressure:', '<?= isset($healthInfo['blood_pressure']) ? addslashes($healthInfo['blood_pressure']) : 'Not recorded' ?>'],
-                        ['Temperature:', '<?= isset($healthInfo['temperature']) ? $healthInfo['temperature'] . ' °C' : 'Not recorded' ?>'],
-                        ['Allergies:', '<?= isset($healthInfo['allergies']) ? addslashes($healthInfo['allergies']) : 'None reported' ?>'],
-                        ['Current Medications:', '<?= isset($healthInfo['current_medications']) ? addslashes($healthInfo['current_medications']) : 'None reported' ?>'],
-                        ['Medical History:', '<?= isset($healthInfo['medical_history']) ? addslashes($healthInfo['medical_history']) : 'None reported' ?>'],
-                        ['Family History:', '<?= isset($healthInfo['family_history']) ? addslashes($healthInfo['family_history']) : 'None reported' ?>'],
-                        ['Immunization Record:', '<?= isset($healthInfo['immunization_record']) ? addslashes($healthInfo['immunization_record']) : 'Not available' ?>'],
-                        ['Chronic Conditions:', '<?= isset($healthInfo['chronic_conditions']) ? addslashes($healthInfo['chronic_conditions']) : 'None reported' ?>'],
-                        ['Health Record Updated:', '<?= $patient['updated_at'] ? date('F j, Y \a\t g:i A', strtotime($patient['updated_at'])) : ($patient['created_at'] ? date('F j, Y \a\t g:i A', strtotime($patient['created_at'])) : 'Not recorded') ?>'],
-                        [''],
-                        ['CURRENT CONSULTATION INFORMATION'],
-                        ['Attending Physician:', '<?= addslashes($currentDoctor) ?>'],
-                        [''],
-                        ['SIGNATURES'],
-                        ['Attending Physician:', '<?= addslashes($currentDoctor) ?>'],
-                        ['License No:', '<?= $staffLicenseNo ?>'],
-                        ['Barangay Health Worker:', '<?= addslashes($bhwAssigned) ?>'],
-                        ['BHW ID:', 'BHW-LUZ-<?= $bhwInitials ?>-<?= date('Y') ?>-<?= str_pad($patientId, 4, '0', STR_PAD_LEFT) ?>'],
-                        [''],
-                        ['DOCUMENT INFORMATION'],
-                        ['Generated by:', '<?= addslashes($_SESSION['user']['full_name'] ?? 'System') ?>'],
-                        ['Patient ID:', '<?= $patientId ?>'],
-                        ['Barangay Luz Health Center', 'Cebu City, Philippines']
-                    ];
-                    
-                    const patientWs = XLSX.utils.aoa_to_sheet(patientData);
-                    XLSX.utils.book_append_sheet(wb, patientWs, 'Patient Record');
-                    
-                    // Visit History Sheet
-                    if (<?= !empty($visits) ? 'true' : 'false' ?>) {
-                        const visitsData = [
-                            ['VISIT HISTORY - BARANGAY LUZ HEALTH CENTER'],
-                            ['Patient: <?= addslashes($patient['display_full_name']) ?>'],
-                            [''],
-                            ['Visit Date', 'Visit Time', 'Visit Type', 'Symptoms', 'Diagnosis', 'Treatment', 'Prescription', 'Notes']
-                        ];
-                        
-                        <?php foreach ($visits as $visit): ?>
-                        visitsData.push([
-                            '<?= date('Y-m-d', strtotime($visit['visit_date'])) ?>',
-                            '<?= date('H:i', strtotime($visit['visit_date'])) ?>',
-                            '<?= addslashes(ucfirst($visit['visit_type'])) ?>',
-                            '<?= addslashes($visit['symptoms'] ?? '') ?>',
-                            '<?= addslashes($visit['diagnosis'] ?? '') ?>',
-                            '<?= addslashes($visit['treatment'] ?? '') ?>',
-                            '<?= addslashes($visit['prescription'] ?? '') ?>',
-                            '<?= addslashes($visit['notes'] ?? '') ?>'
-                        ]);
-                        <?php endforeach; ?>
-                        
-                        const visitsWs = XLSX.utils.aoa_to_sheet(visitsData);
-                        XLSX.utils.book_append_sheet(wb, visitsWs, 'Visit History');
-                    }
-                    
-                    // Generate and download
-                    const fileName = `Barangay_Luz_Health_Record_<?= preg_replace('/[^a-zA-Z0-9]/', '_', $patient['display_full_name']) ?>_<?= date('Y-m-d') ?>.xlsx`;
-                    XLSX.writeFile(wb, fileName);
-                    
-                } catch (error) {
-                    alert('Error generating Excel file: ' + error.message);
-                    console.error('Excel export error:', error);
-                } finally {
-                    hideLoading();
-                }
-            };
-            
-            window.exportToPDF = function() {
-                showLoading('Generating PDF document...');
-                
-                // Use html2canvas to capture the document
-                html2canvas(document.getElementById('documentContent'), {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                }).then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF('p', 'mm', 'letter');
-                    
-                    const imgWidth = 216; // Letter width in mm
-                    const pageHeight = 279; // Letter height in mm
-                    const imgHeight = canvas.height * imgWidth / canvas.width;
-                    let heightLeft = imgHeight;
-                    let position = 0;
-                    
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                    
-                    while (heightLeft >= 0) {
-                        position = heightLeft - imgHeight;
-                        pdf.addPage();
-                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                        heightLeft -= pageHeight;
-                    }
-                    
-                    pdf.save(`Barangay_Luz_Health_Record_<?= preg_replace('/[^a-zA-Z0-9]/', '_', $patient['display_full_name']) ?>_<?= date('Y-m-d') ?>.pdf`);
-                    hideLoading();
-                }).catch(error => {
-                    alert('Error generating PDF: ' + error.message);
-                    console.error('PDF export error:', error);
-                    hideLoading();
-                });
-            };
-            
-            function showLoading(text) {
-                if (loadingText) loadingText.textContent = text;
-                if (loadingOverlay) loadingOverlay.style.display = 'flex';
-            }
-            
-            function hideLoading() {
-                if (loadingOverlay) loadingOverlay.style.display = 'none';
-            }
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
-                if (e.ctrlKey || e.metaKey) {
-                    switch(e.key) {
-                        case 'p':
-                            e.preventDefault();
-                            handlePrint();
-                            break;
-                        case 'e':
-                            e.preventDefault();
-                            exportToExcel();
-                            break;
-                        case 'd':
-                            e.preventDefault();
-                            exportToPDF();
-                            break;
-                    }
-                }
-            });
-
-            // Check if images loaded successfully
-            window.addEventListener('load', function() {
-                const dohImg = document.querySelector('.logo-left img');
-                const barangayImg = document.querySelector('.logo-right img');
-                
-                // Check if images failed to load
-                if (dohImg && !dohImg.complete) {
-                    dohImg.onerror = function() {
-                        this.style.display = 'none';
-                        document.getElementById('dohLogo').classList.add('fallback');
-                    };
-                }
-                
-                if (barangayImg && !barangayImg.complete) {
-                    barangayImg.onerror = function() {
-                        this.style.display = 'none';
-                        document.getElementById('barangayLogo').classList.add('fallback');
-                    };
-                }
-            });
         });
+        
+        // Keyboard shortcut for print
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+        });
+        
+        // Image error handling
+        const cecLogo = document.getElementById('cecLogo');
+        const dohLogo = document.getElementById('dohLogo');
+        
+        if (cecLogo) {
+            const img = cecLogo.querySelector('img');
+            if (img && !img.complete) {
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    cecLogo.classList.add('fallback');
+                    cecLogo.setAttribute('data-fallback', 'CEC');
+                };
+            }
+        }
+        
+        if (dohLogo) {
+            const img = dohLogo.querySelector('img');
+            if (img && !img.complete) {
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    dohLogo.classList.add('fallback');
+                    dohLogo.setAttribute('data-fallback', 'DOH');
+                };
+            }
+        }
     </script>
 </body>
 </html>
-<?php
-$html = ob_get_clean();
-echo $html;
-?>
