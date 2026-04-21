@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 12, 2026 at 10:16 AM
+-- Generation Time: Apr 21, 2026 at 07:48 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -162,7 +162,8 @@ INSERT INTO `announcement_views` (`id`, `announcement_id`, `viewer_token`, `view
 (18, 369, '6d29e9bf724b98367448de599178f67c', '2026-04-07 16:40:38'),
 (20, 373, '28a8b31cf0cc2c16ccca3ce9d8c32421', '2026-04-09 21:28:50'),
 (21, 375, 'a792a22563307a9bd23352d939ae9500', '2026-04-11 11:59:29'),
-(22, 377, 'e1b65d5acf842b8f8963eb3091ce7f45', '2026-04-12 03:28:20');
+(22, 377, 'e1b65d5acf842b8f8963eb3091ce7f45', '2026-04-12 03:28:20'),
+(24, 378, 'cfa06a20db2cced8495316cfa801bef9', '2026-04-14 14:43:12');
 
 -- --------------------------------------------------------
 
@@ -190,6 +191,27 @@ CREATE TABLE `audit_logs` (
 
 INSERT INTO `audit_logs` (`id`, `user_id`, `user_type`, `action`, `table_affected`, `record_id`, `old_values`, `new_values`, `ip_address`, `user_agent`, `created_at`) VALUES
 (1, 2, 'staff', 'create patient', 'sitio1_patients', 10, NULL, NULL, '::1', NULL, '2025-05-04 01:40:46');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `barangay_sitio_mapping`
+--
+
+CREATE TABLE `barangay_sitio_mapping` (
+  `id` int(11) NOT NULL,
+  `barangay_name` varchar(255) NOT NULL,
+  `sitios` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `barangay_sitio_mapping`
+--
+
+INSERT INTO `barangay_sitio_mapping` (`id`, `barangay_name`, `sitios`, `created_at`, `updated_at`) VALUES
+(1, 'Barangay Luz', 'Kalinao,Nangka,Lubi,Sta. Cruz,Regla,Abellana,Sto.niño l,Sto.niño ll,Sto.niño lll,Zapatera,Mabuhay,San Vicente,City Central,San Antonio,San Roque', '2026-04-14 06:35:14', NULL);
 
 -- --------------------------------------------------------
 
@@ -297,36 +319,8 @@ CREATE TABLE `consultation_notes` (
 --
 
 INSERT INTO `consultation_notes` (`id`, `patient_id`, `note`, `consultation_date`, `consultation_time`, `next_consultation_date`, `doctor_name`, `created_by`, `created_at`, `updated_at`, `status`, `completed_at`, `completed_by`, `completed_by_name`) VALUES
-(97, 811, 'test1test1test1', '2026-03-10', NULL, '2026-03-28', 'Dr. test1', 12, '2026-03-10 15:30:38', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(98, 811, 'test2test2test2', '2026-03-10', NULL, '2026-04-03', 'Dr. test2', 12, '2026-03-10 15:31:02', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(99, 811, 'test3test3test3', '2026-03-10', NULL, '2026-03-25', 'Dr. test3', 12, '2026-03-10 15:32:33', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(100, 811, 'test3test3test3', '2026-03-10', NULL, '2026-03-11', 'Dr. test4', 12, '2026-03-10 15:32:48', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(101, 811, 'testr2testr2testr2', '2026-03-10', NULL, '2026-03-19', 'Dr. test5', 12, '2026-03-10 15:55:40', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(102, 814, 'Testing1Testing1Testing1Testing1', '2026-03-10', NULL, '2026-03-20', 'Dr. Testing1', 12, '2026-03-10 16:04:30', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(103, 814, 'Testing2Testing2Testing2Testing2', '2026-03-10', NULL, '2026-03-12', 'Dr. Testing2', 12, '2026-03-10 16:04:49', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(104, 816, 'hello the patient has rabies', '2026-03-11', NULL, '2026-03-24', 'Dr. wakwak', 12, '2026-03-11 04:34:01', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(105, 816, 'salve need to take his medication on time', '2026-03-11', NULL, '2026-03-26', 'Dr. leandro labos', 12, '2026-03-11 04:34:41', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(106, 816, 'arda needs to see a brain doctor', '2026-03-11', NULL, '2026-03-28', 'Dr. miras', 12, '2026-03-11 04:35:21', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(108, 321, 'You have high fever', '2026-03-14', NULL, '2026-03-25', 'Dr. Luzviminda Trinidad', 13, '2026-03-14 08:35:05', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(109, 814, 'Testing for review', '2026-03-14', NULL, '2026-03-21', 'Dr. Allan Cayetano', 13, '2026-03-14 10:03:20', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(111, 323, 'Hello naa kay hubag sa lubot', '2026-03-29', NULL, '2026-03-30', 'Dr. Lance Christine Gallardo', 13, '2026-03-29 14:12:46', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(112, 323, 'Nibalhin sa agtang', '2026-03-29', NULL, '2026-03-31', 'Dr. Archiel R. Cabanag', 13, '2026-03-29 14:14:44', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(113, 817, 'Helllo sir kumustas', '2026-04-03', NULL, '2026-04-04', 'Dr. Arlene Okora', 13, '2026-04-03 11:58:07', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(114, 820, 'Hello sir', '2026-04-03', NULL, '2026-04-04', 'Dr. Gina Tan', 13, '2026-04-03 14:35:01', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(115, 819, 'asdasdsadas', '2026-04-03', NULL, '2026-04-04', 'Dr. Willy Ong', 13, '2026-04-03 15:12:56', '2026-04-06 14:54:30', 'pending', NULL, NULL, NULL),
-(116, 820, 'asdsad', '2026-04-04', NULL, NULL, 'Dr. asdsad', 13, '2026-04-04 07:55:49', '2026-04-07 06:39:44', 'completed', '2026-04-07 14:39:44', 13, 'Archiel R. Cabanag'),
-(120, 811, 'Hello sir', '2026-04-07', NULL, '2026-04-08', 'Dr. Warren Miras', 13, '2026-04-07 06:05:32', '2026-04-07 06:48:45', 'completed', '2026-04-07 14:48:45', 13, 'Archiel R. Cabanag'),
-(121, 819, 'Hello Everyone', '2026-04-07', NULL, '2026-04-08', 'Dr. Ramon Arancillo', 13, '2026-04-07 06:57:27', NULL, 'pending', NULL, NULL, NULL),
-(124, 811, 'Hello everyone', '2026-04-07', NULL, '2026-04-08', 'Dr. Rowelisa Cabanag', 13, '2026-04-07 13:22:40', '2026-04-07 23:48:53', 'completed', NULL, NULL, NULL),
-(130, 821, 'Hello Maam', '2026-04-08', NULL, '2026-04-08', 'Dr. Nicanor Abueva', 13, '2026-04-08 00:10:29', NULL, 'pending', NULL, NULL, NULL),
-(131, 821, 'Hello Sir Raffy', '2026-04-08', NULL, '2026-04-09', 'Dr. Raffy Tulfo', 13, '2026-04-08 00:12:53', NULL, 'pending', NULL, NULL, NULL),
-(134, 811, 'Hello Sir', '2026-04-08', NULL, '2026-04-09', 'Dr. Leandro Miras', 13, '2026-04-08 08:43:59', NULL, 'pending', NULL, NULL, NULL),
-(135, 824, 'You need rest', '2026-04-09', NULL, '2026-04-13', 'Dr. Willy Ong', 12, '2026-04-09 13:13:46', NULL, 'pending', NULL, NULL, NULL),
-(138, 815, 'adasd', '2026-04-11', NULL, '2026-04-13', 'Dr. asdasd', 16, '2026-04-11 17:31:58', NULL, 'pending', NULL, NULL, NULL),
-(139, 815, 'adasd', '2026-04-11', NULL, '2026-04-13', 'Dr. dasdsa', 15, '2026-04-11 18:38:21', NULL, 'pending', NULL, NULL, NULL),
-(140, 815, 'test', '2026-04-11', NULL, '2026-04-13', 'Dr. Hey', 16, '2026-04-11 18:57:05', NULL, 'pending', NULL, NULL, NULL),
-(141, 828, 'asdasdas', '2026-04-11', NULL, '2026-04-13', 'Dr. sdfsdfsd', 14, '2026-04-11 19:24:12', NULL, 'pending', NULL, NULL, NULL),
-(142, 823, 'test', '2026-04-11', NULL, '2026-04-13', 'Dr. test', 14, '2026-04-11 19:24:42', NULL, 'pending', NULL, NULL, NULL);
+(146, 842, 'Hello Sir', '2026-04-21', NULL, '2026-04-08', 'Dr. Willy Ong', 15, '2026-04-21 02:53:46', NULL, 'pending', NULL, NULL, NULL),
+(147, 842, 'Hello Sir', '2026-04-21', NULL, '2026-04-22', 'Dr. Will Ong III', 15, '2026-04-21 02:54:18', NULL, 'pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -394,25 +388,67 @@ CREATE TABLE `deleted_patients` (
   `added_by` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `deleted_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `deleted_by` int(11) DEFAULT NULL
+  `deleted_by` int(11) DEFAULT NULL,
+  `blood_pressure_systolic` varchar(10) DEFAULT NULL,
+  `blood_pressure_diastolic` varchar(10) DEFAULT NULL,
+  `medical_conditions` text DEFAULT NULL,
+  `medical_conditions_other` varchar(500) DEFAULT NULL,
+  `height` decimal(5,2) DEFAULT NULL,
+  `weight` decimal(5,2) DEFAULT NULL,
+  `temperature` decimal(4,1) DEFAULT NULL,
+  `blood_type` varchar(10) DEFAULT NULL,
+  `student_last_name` varchar(255) DEFAULT NULL,
+  `student_first_name` varchar(255) DEFAULT NULL,
+  `student_middle_name` varchar(255) DEFAULT NULL,
+  `student_birthdate` date DEFAULT NULL,
+  `student_religion` varchar(255) DEFAULT NULL,
+  `student_home_address` text DEFAULT NULL,
+  `student_occupation` varchar(255) DEFAULT NULL,
+  `student_effective_date` date DEFAULT NULL,
+  `student_sex` varchar(10) DEFAULT NULL,
+  `student_nickname` varchar(255) DEFAULT NULL,
+  `student_home_phone` varchar(50) DEFAULT NULL,
+  `student_office_phone` varchar(50) DEFAULT NULL,
+  `student_fax_number` varchar(50) DEFAULT NULL,
+  `student_mobile_number` varchar(50) DEFAULT NULL,
+  `student_email_address` varchar(255) DEFAULT NULL,
+  `parent_guardian_name` varchar(255) DEFAULT NULL,
+  `parent_guardian_occupation` varchar(255) DEFAULT NULL,
+  `student_physician_name` varchar(255) DEFAULT NULL,
+  `student_physician_specialty` varchar(255) DEFAULT NULL,
+  `student_physician_office_address` text DEFAULT NULL,
+  `student_physician_office_number` varchar(50) DEFAULT NULL,
+  `student_good_health` varchar(10) DEFAULT NULL,
+  `student_under_treatment` varchar(10) DEFAULT NULL,
+  `student_treatment_condition` text DEFAULT NULL,
+  `student_serious_illness_surgery` varchar(10) DEFAULT NULL,
+  `student_serious_illness_details` text DEFAULT NULL,
+  `student_hospitalized` varchar(10) DEFAULT NULL,
+  `student_hospitalization_details` text DEFAULT NULL,
+  `student_taking_medication` varchar(10) DEFAULT NULL,
+  `student_medication_details` text DEFAULT NULL,
+  `student_uses_tobacco` varchar(10) DEFAULT NULL,
+  `student_uses_alcohol_drugs` varchar(10) DEFAULT NULL,
+  `student_has_allergies` varchar(10) DEFAULT NULL,
+  `student_allergy_items` text DEFAULT NULL,
+  `student_allergy_other` varchar(500) DEFAULT NULL,
+  `student_bleeding_time` varchar(100) DEFAULT NULL,
+  `student_is_pregnant` varchar(10) DEFAULT NULL,
+  `student_is_nursing` varchar(10) DEFAULT NULL,
+  `student_takes_birth_control` varchar(10) DEFAULT NULL,
+  `student_menarche` varchar(50) DEFAULT NULL,
+  `student_lmp` varchar(50) DEFAULT NULL,
+  `student_gravida` varchar(50) DEFAULT NULL,
+  `student_para` varchar(50) DEFAULT NULL,
+  `student_abortion` varchar(50) DEFAULT NULL,
+  `student_conditions` text DEFAULT NULL,
+  `student_condition_other` varchar(500) DEFAULT NULL,
+  `student_signature_name` varchar(255) DEFAULT NULL,
+  `sitio` varchar(255) DEFAULT NULL,
+  `civil_status` varchar(100) DEFAULT NULL,
+  `occupation` varchar(255) DEFAULT NULL,
+  `blood_pressure` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `deleted_patients`
---
-
-INSERT INTO `deleted_patients` (`id`, `original_id`, `full_name`, `date_of_birth`, `age`, `gender`, `address`, `contact`, `last_checkup`, `added_by`, `user_id`, `deleted_at`, `deleted_by`) VALUES
-(133, 813, 'Archiel Cabanag', '2002-05-26', 23, 'Male', 'Toong Cebu City', '09206001470', '2026-02-25', 9, NULL, '2026-02-26 15:47:41', 9),
-(148, 315, 'Roberto Mendoza', '1995-05-25', 30, 'Male', '321 Quezon Blvd.', '09567890123', '2026-02-18', 12, NULL, '2026-04-05 07:30:48', 13),
-(149, 316, 'Isabel Cruz', '1988-12-12', 37, 'Female', '654 MacArthur Hwy', '09678901234', '2026-02-01', 12, NULL, '2026-04-05 07:30:52', 13),
-(150, 317, 'Antonio Fernandez', '1975-04-03', 50, 'Male', '987 Luna St.', '09789012345', '2026-01-15', 12, NULL, '2026-04-05 07:31:00', 13),
-(151, 318, 'Teresa Villanueva', '1992-08-08', 33, 'Female', '147 Osmena St.', '09890123456', '2026-02-12', 12, NULL, '2026-04-05 07:31:03', 13),
-(152, 319, 'Ramon Santos', '1983-06-21', 42, 'Male', '258 Panganiban St.', '09901234567', '2026-01-20', 12, NULL, '2026-04-05 07:31:06', 13),
-(153, 320, 'Carmen Hernandez', '1987-10-05', 38, 'Female', '369 Roxas Blvd.', '09012345678', '2026-02-08', 12, NULL, '2026-04-05 07:31:09', 13),
-(155, 822, 'Archiel R. Cabanag', '2002-05-05', 23, 'Male', 'Barangay Luz, Cebu City', '09504206113', '2026-03-31', 13, NULL, '2026-04-05 07:31:14', 13),
-(158, 825, 'Allan Khey', '1967-08-11', 58, 'Male', 'Barangay Luz, Cebu City', '09504206113', '2026-02-24', 12, NULL, '2026-04-06 03:28:13', 13),
-(161, 826, 'Jhea Claire L. Oropesa', '2002-01-26', 24, 'Female', 'Barangay Luz, Cebu City', '09816497664', '2025-09-02', 13, 235, '2026-04-08 08:18:41', 13),
-(163, 827, 'Warren Miguel Miras', '2022-06-22', 3, 'Male', 'Barangay Luz, Cebu City', '09312312421', '2026-04-10', 13, NULL, '2026-04-10 00:59:42', 13);
 
 -- --------------------------------------------------------
 
@@ -423,6 +459,55 @@ INSERT INTO `deleted_patients` (`id`, `original_id`, `full_name`, `date_of_birth
 CREATE TABLE `existing_info_patients` (
   `id` int(11) NOT NULL,
   `patient_id` int(11) NOT NULL,
+  `student_last_name` varchar(100) DEFAULT NULL,
+  `student_first_name` varchar(100) DEFAULT NULL,
+  `student_middle_name` varchar(100) DEFAULT NULL,
+  `student_birthdate` date DEFAULT NULL,
+  `student_religion` varchar(100) DEFAULT NULL,
+  `student_home_address` text DEFAULT NULL,
+  `student_occupation` varchar(150) DEFAULT NULL,
+  `student_effective_date` date DEFAULT NULL,
+  `student_sex` enum('M','F') DEFAULT NULL,
+  `student_nickname` varchar(100) DEFAULT NULL,
+  `student_home_phone` varchar(50) DEFAULT NULL,
+  `student_office_phone` varchar(50) DEFAULT NULL,
+  `student_fax_number` varchar(50) DEFAULT NULL,
+  `student_mobile_number` varchar(50) DEFAULT NULL,
+  `student_email_address` varchar(150) DEFAULT NULL,
+  `parent_guardian_name` varchar(150) DEFAULT NULL,
+  `parent_guardian_occupation` varchar(150) DEFAULT NULL,
+  `student_physician_name` varchar(150) DEFAULT NULL,
+  `student_physician_specialty` varchar(150) DEFAULT NULL,
+  `student_physician_office_address` text DEFAULT NULL,
+  `student_physician_office_number` varchar(50) DEFAULT NULL,
+  `student_good_health` enum('yes','no') DEFAULT NULL,
+  `student_under_treatment` enum('yes','no') DEFAULT NULL,
+  `student_treatment_condition` text DEFAULT NULL,
+  `student_serious_illness_surgery` enum('yes','no') DEFAULT NULL,
+  `student_serious_illness_details` text DEFAULT NULL,
+  `student_hospitalized` enum('yes','no') DEFAULT NULL,
+  `student_hospitalization_details` text DEFAULT NULL,
+  `student_taking_medication` enum('yes','no') DEFAULT NULL,
+  `student_medication_details` text DEFAULT NULL,
+  `student_uses_tobacco` enum('yes','no') DEFAULT NULL,
+  `student_uses_alcohol_drugs` enum('yes','no') DEFAULT NULL,
+  `student_has_allergies` enum('yes','no') DEFAULT NULL,
+  `student_allergy_items` text DEFAULT NULL,
+  `student_allergy_other` varchar(255) DEFAULT NULL,
+  `student_bleeding_time` varchar(100) DEFAULT NULL,
+  `student_is_pregnant` enum('yes','no') DEFAULT NULL,
+  `student_is_nursing` enum('yes','no') DEFAULT NULL,
+  `student_takes_birth_control` enum('yes','no') DEFAULT NULL,
+  `student_conditions` text DEFAULT NULL,
+  `medical_conditions` text DEFAULT NULL,
+  `medical_conditions_other` varchar(500) DEFAULT NULL,
+  `student_condition_other` varchar(255) DEFAULT NULL,
+  `student_menopause` varchar(100) DEFAULT NULL,
+  `student_menarche` varchar(100) DEFAULT NULL,
+  `student_lmp` varchar(100) DEFAULT NULL,
+  `student_gravida` varchar(100) DEFAULT NULL,
+  `student_para` varchar(100) DEFAULT NULL,
+  `student_abortion` varchar(100) DEFAULT NULL,
   `gender` varchar(10) DEFAULT NULL,
   `height` decimal(5,2) DEFAULT NULL,
   `weight` decimal(5,2) DEFAULT NULL,
@@ -431,71 +516,27 @@ CREATE TABLE `existing_info_patients` (
   `medical_history` text DEFAULT NULL,
   `current_medications` text DEFAULT NULL,
   `family_history` text DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
   `temperature` decimal(4,2) DEFAULT NULL,
   `blood_pressure` varchar(20) DEFAULT NULL,
+  `blood_pressure_systolic` varchar(10) DEFAULT NULL,
+  `blood_pressure_diastolic` varchar(10) DEFAULT NULL,
   `immunization_record` text DEFAULT NULL,
   `chronic_conditions` text DEFAULT NULL,
-  `family_medical_history` text DEFAULT NULL
+  `family_medical_history` text DEFAULT NULL,
+  `student_signature_name` varchar(150) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `existing_info_patients`
 --
 
-INSERT INTO `existing_info_patients` (`id`, `patient_id`, `gender`, `height`, `weight`, `blood_type`, `allergies`, `medical_history`, `current_medications`, `family_history`, `updated_at`, `temperature`, `blood_pressure`, `immunization_record`, `chronic_conditions`, `family_medical_history`) VALUES
-(291, 321, 'Male', 166.00, 73.00, 'B+', 'Iodine', 'Post-heart attack 2020', 'Aspirin, Metoprolol', 'Strong heart disease history', '2026-03-14 08:35:22', 36.30, '140/90', 'Cardiac rehab', 'Heart Disease', NULL),
-(292, 322, 'Female', 163.00, 57.00, 'O+', 'Cats', 'Allergic rhinitis', 'Cetirizine PRN', 'Allergies in family', NULL, 36.70, '110/68', 'Complete', 'Allergies', NULL),
-(293, 323, 'Male', 171.00, 76.00, 'AB+', 'None', 'Healthy', 'None', 'No issues', NULL, 36.50, '120/78', 'Up to date', 'None', NULL),
-(294, 324, 'Female', 159.00, 63.00, 'A-', 'None', 'Hypothyroidism', 'Levothyroxine', 'Mother thyroid issues', NULL, 36.60, '122/75', 'Complete', 'Thyroid Disorder', NULL),
-(295, 325, 'Male', 167.00, 82.00, 'B-', 'Alcohol', 'Gout', 'Allopurinol', 'Father had gout', NULL, 36.80, '130/84', 'Up to date', 'Gout', NULL),
-(296, 326, 'Male', 178.00, 70.00, 'O-', 'None', 'No issues', 'None', 'Healthy family', NULL, 36.40, '115/70', 'Complete', 'None', NULL),
-(297, 327, 'Female', 156.00, 65.00, 'A+', 'Sulfa', 'Type 2 diabetes', 'Metformin', 'Both parents diabetic', NULL, 36.70, '132/86', 'Diabetes education', 'Diabetes', NULL),
-(298, 328, 'Male', 173.00, 79.00, 'AB-', 'None', 'Hypertension', 'Amlodipine', 'Father hypertensive', NULL, 36.50, '138/88', 'Up to date', 'Hypertension', NULL),
-(299, 329, 'Female', 161.00, 59.00, 'B+', 'Dust mites', 'Mild asthma', 'Fluticasone inhaler', 'Sister asthmatic', NULL, 36.60, '118/74', 'Asthma action plan', 'Asthma', NULL),
-(300, 330, 'Male', 164.00, 68.00, 'O+', 'NSAIDs', 'Osteoarthritis', 'Acetaminophen', 'Mother had arthritis', NULL, 36.80, '125/80', 'Complete', 'Arthritis', NULL),
-(301, 331, 'Female', 166.00, 61.00, 'A-', 'None', 'Healthy', 'None', 'No history', NULL, 36.40, '112/71', 'Complete', 'None', NULL),
-(302, 332, 'Male', 176.00, 74.00, 'AB+', 'Chocolate', 'Chronic headaches', 'Ibuprofen PRN', 'Father had migraines', NULL, 36.70, '118/76', 'Up to date', 'Migraine', NULL),
-(303, 333, 'Female', 157.00, 66.00, 'B-', 'None', 'High cholesterol', 'Rosuvastatin', 'Mother high cholesterol', NULL, 36.50, '124/78', 'Complete', 'Hyperlipidemia', NULL),
-(304, 334, 'Male', 169.00, 71.00, 'O-', 'Latex', 'None', 'None', 'No conditions', NULL, 36.60, '116/72', 'Complete', 'None', NULL),
-(305, 335, 'Female', 162.00, 53.00, 'A+', 'Penicillin', 'Mild anemia', 'Iron supplements', 'Mother anemic', NULL, 36.90, '114/73', 'Complete', 'Anemia', NULL),
-(306, 336, 'Male', 165.00, 85.00, 'B+', 'None', 'Diabetes with neuropathy', 'Metformin, Gabapentin', 'Family history diabetes', NULL, 36.30, '142/92', 'Diabetic care plan', 'Diabetes', NULL),
-(307, 337, 'Female', 160.00, 58.00, 'AB-', 'None', 'Hyperthyroidism', 'Methimazole', 'Aunt thyroid issues', NULL, 36.70, '128/82', 'Complete', 'Thyroid Disorder', NULL),
-(308, 338, 'Male', 177.00, 73.00, 'O+', 'None', 'Healthy', 'None', 'No issues', NULL, 36.50, '117/74', 'Complete', 'None', NULL),
-(309, 339, 'Male', 168.00, 77.00, 'A-', 'Codeine', 'High blood pressure', 'Hydrochlorothiazide', 'Both parents hypertensive', NULL, 36.60, '136/88', 'Up to date', 'Hypertension', NULL),
-(310, 340, 'Female', 159.00, 56.00, 'B-', 'Multiple', 'Allergies', 'Antihistamines', 'Allergic family', NULL, 36.80, '115/72', 'Allergy shots', 'Allergies', NULL),
-(311, 341, 'Male', 170.00, 81.00, 'AB+', 'None', 'Heart bypass 2021', 'Multiple cardiac meds', 'Strong heart history', NULL, 36.40, '135/85', 'Cardiac rehab', 'Heart Disease', NULL),
-(312, 342, 'Female', 164.00, 59.00, 'O-', 'None', 'No known conditions', 'None', 'No family history', NULL, 36.70, '113/70', 'Complete', 'None', NULL),
-(313, 343, 'Male', 166.00, 84.00, 'A+', 'Seafood', 'Gout attacks', 'Colchicine PRN', 'Father had gout', NULL, 36.50, '129/83', 'Complete', 'Gout', NULL),
-(314, 344, 'Female', 158.00, 64.00, 'B+', 'Dust', 'Moderate asthma', 'Advair diskus', 'Sister asthmatic', NULL, 36.60, '121/76', 'Asthma plan', 'Asthma', NULL),
-(315, 345, 'Male', 172.00, 78.00, 'AB-', 'None', 'Cholesterol issues', 'Simvastatin', 'Father high cholesterol', NULL, 36.70, '126/80', 'Complete', 'Hyperlipidemia', NULL),
-(316, 346, 'Female', 163.00, 55.00, 'O+', 'None', 'Frequent migraines', 'Rizatriptan', 'Mother migraines', NULL, 36.40, '111/69', 'Complete', 'Migraine', NULL),
-(317, 347, 'Male', 169.00, 79.00, 'A-', 'Penicillin', 'Diabetes Type 2', 'Glipizide', 'Both parents diabetic', NULL, 36.80, '134/86', 'Diabetes care', 'Diabetes', NULL),
-(318, 348, 'Female', 161.00, 60.00, 'B-', 'None', 'Healthy', 'None', 'No issues', NULL, 36.50, '116/73', 'Complete', 'None', NULL),
-(319, 349, 'Male', 167.00, 73.00, 'AB+', 'None', 'Joint pain', 'Celecoxib', 'Mother arthritis', NULL, 36.60, '127/81', 'Complete', 'Arthritis', NULL),
-(320, 350, 'Female', 160.00, 51.00, 'O-', 'None', 'Low iron', 'Iron supplements', 'Sister anemic', NULL, 36.90, '114/71', 'Complete', 'Anemia', NULL),
-(321, 351, 'Male', 171.00, 82.00, 'A+', 'Sulfa', 'High BP', 'Lisinopril', 'Father hypertensive', NULL, 36.70, '139/89', 'Up to date', 'Hypertension', NULL),
-(322, 352, 'Female', 165.00, 62.00, 'B+', 'Pollen', 'No issues', 'None', 'No history', NULL, 36.50, '112/70', 'Complete', 'None', NULL),
-(323, 353, 'Male', 173.00, 76.00, 'AB-', 'Latex', 'Skin allergies', 'Topical steroids', 'Allergic family', NULL, 36.60, '119/75', 'Complete', 'Allergies', NULL),
-(324, 354, 'Female', 162.00, 57.00, 'O+', 'None', 'Thyroid condition', 'Levothyroxine', 'Mother thyroid issues', NULL, 36.80, '123/77', 'Complete', 'Thyroid Disorder', NULL),
-(325, 355, 'Male', 168.00, 80.00, 'A-', 'Alcohol', 'Gout', 'Febuxostat', 'Uncle had gout', NULL, 36.40, '131/84', 'Complete', 'Gout', NULL),
-(326, 356, 'Female', 164.00, 58.00, 'B-', 'None', 'Healthy', 'None', 'No issues', NULL, 36.70, '115/72', 'Complete', 'None', NULL),
-(327, 357, 'Male', 175.00, 77.00, 'AB+', 'Dust', 'Mild asthma', 'Albuterol PRN', 'Father asthmatic', NULL, 36.50, '120/76', 'Asthma plan', 'Asthma', NULL),
-(328, 358, 'Female', 159.00, 63.00, 'O-', 'None', 'Headaches', 'Naproxen PRN', 'Mother migraines', NULL, 36.60, '117/73', 'Complete', 'Migraine', NULL),
-(329, 359, 'Male', 166.00, 74.00, 'A+', 'None', 'Heart condition', 'Multiple cardiac meds', 'Family heart disease', NULL, 36.30, '137/87', 'Cardiac care', 'Heart Disease', NULL),
-(330, 360, 'Female', 160.00, 66.00, 'B+', 'Penicillin', 'Diabetes', 'Metformin', 'Both parents diabetic', NULL, 36.80, '133/85', 'Diabetes education', 'Diabetes', NULL),
-(337, 811, 'Male', 45.00, 45.00, 'A+', 'Quality Testing', 'Quality Testing', 'Quality Testing', 'Quality Testing', '2026-04-02 12:30:00', 45.00, '120/80', 'Quality Testing', 'Quality Testing', NULL),
-(338, 814, 'Male', 45.00, 55.00, 'A+', 'Hello Everyone this is only a testing to test the final testing', 'Hello Everyone this is only a testing to test the final testing', 'Hello Everyone this is only a testing to test the final testing', 'Perfect Test', '2026-03-28 14:54:32', 45.00, '120/80', 'Hello Everyone this is only a testing to test the final testing', 'Hello Everyone this is only a testing to test the final testing', NULL),
-(340, 816, 'Female', 152.00, 54.00, 'AB+', 'none', 'test', 'amlodipine', 'test', '2026-04-01 13:57:58', 36.00, '120/80', 'test', 'testtest', NULL),
-(341, 817, 'Female', 55.00, 55.00, 'A+', 'None', 'None', 'None', 'None', NULL, 55.00, '120/80', 'None', 'None', NULL),
-(342, 818, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', NULL, 45.00, '120/80', 'None', 'None', NULL),
-(343, 819, 'Male', 45.00, 45.00, 'A-', 'asdf', 'asdsa', 'asd', 'asd', '2026-04-04 16:54:00', 45.00, '120/80', 'asd', 'asdas', NULL),
-(344, 820, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', NULL, 45.00, '120/80', 'None', 'None', NULL),
-(345, 821, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', '2026-04-11 16:53:04', 45.00, '120/90', 'None', 'None', NULL),
-(347, 823, 'Male', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', '2026-04-05 00:21:16', 45.00, '120/90', 'None', 'None', NULL),
-(348, 824, 'Female', 45.00, 45.00, 'A+', 'None', 'None', 'None', 'None', '2026-04-09 13:10:52', 45.00, '120/90', 'None', 'None', NULL),
-(368, 815, 'Male', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(369, 828, 'Male', 45.00, 45.00, 'O+', 'None', 'None', 'None', 'None', '2026-04-11 19:22:39', 45.00, '120/90', 'None', 'None', NULL);
+INSERT INTO `existing_info_patients` (`id`, `patient_id`, `student_last_name`, `student_first_name`, `student_middle_name`, `student_birthdate`, `student_religion`, `student_home_address`, `student_occupation`, `student_effective_date`, `student_sex`, `student_nickname`, `student_home_phone`, `student_office_phone`, `student_fax_number`, `student_mobile_number`, `student_email_address`, `parent_guardian_name`, `parent_guardian_occupation`, `student_physician_name`, `student_physician_specialty`, `student_physician_office_address`, `student_physician_office_number`, `student_good_health`, `student_under_treatment`, `student_treatment_condition`, `student_serious_illness_surgery`, `student_serious_illness_details`, `student_hospitalized`, `student_hospitalization_details`, `student_taking_medication`, `student_medication_details`, `student_uses_tobacco`, `student_uses_alcohol_drugs`, `student_has_allergies`, `student_allergy_items`, `student_allergy_other`, `student_bleeding_time`, `student_is_pregnant`, `student_is_nursing`, `student_takes_birth_control`, `student_conditions`, `medical_conditions`, `medical_conditions_other`, `student_condition_other`, `student_menopause`, `student_menarche`, `student_lmp`, `student_gravida`, `student_para`, `student_abortion`, `gender`, `height`, `weight`, `blood_type`, `allergies`, `medical_history`, `current_medications`, `family_history`, `temperature`, `blood_pressure`, `blood_pressure_systolic`, `blood_pressure_diastolic`, `immunization_record`, `chronic_conditions`, `family_medical_history`, `student_signature_name`, `created_at`, `updated_at`) VALUES
+(10, 838, 'Casola', 'Ronie', 'Solo', '1999-06-24', 'Roman Catholic', 'Tisa Cebu City Near Labangon', 'Student Teacher', '2026-04-07', 'M', 'Jaycar', '09312312421', '09816497664', '5234324', '09312312421', 'roniecasola@gmail.com', 'Jociel Studio', 'Jociel Studio', 'Willy Ong', 'Special', 'Tisa Cebu City Near Labangon', '4543534', 'yes', 'yes', 'Testing for review', 'yes', 'Testing for review', 'yes', 'Testing for review', 'yes', 'Testing for review', NULL, 'yes', 'yes', 'Animals, Testing for review', 'Testing for review', 'Note for Testing', NULL, NULL, NULL, NULL, '[\"High Blood Pressure\",\"Testing for review\"]', 'Testing for review', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 45.00, 45.00, 'A+', NULL, NULL, NULL, NULL, 45.00, '120/80', '120', '80', NULL, NULL, NULL, 'Note for Testing', '2026-04-20 17:45:07', '2026-04-20 17:45:07'),
+(11, 837, 'Otida', 'Jaycar', 'Sulu', '2002-05-26', 'Roman Catholic', 'Tisa Cebu City Near Labangon', 'Student', '2002-06-13', 'M', 'Jaycar', '09312312421', '', '5234324', '09312312421', 'jaycarotida@gmail.com', 'Jociel Studio', 'Jociel Studio', 'Willy Ong III', 'Special', 'Tisa Cebu City Near Labangon', '4543534', 'yes', 'yes', '', 'yes', '', 'yes', '', 'yes', '', 'yes', 'yes', 'yes', NULL, '', 'Note for Testing', '', '', '', NULL, '[\"High Blood Pressure\",\"Testing for review\"]', 'Testing for review', '', NULL, '', '', '', '', '', NULL, 45.00, 45.00, 'A+', NULL, NULL, NULL, NULL, 45.00, '120/80', '120', '80', NULL, NULL, NULL, 'Kristine Bancure', '2026-04-20 17:46:54', '2026-04-20 17:47:00'),
+(12, 842, 'Cabanag', 'Archiel', 'Sulu', '2002-05-26', 'Roman Catholic', 'Duljo Fatima, Cebu City', 'Student', '2024-01-25', 'M', 'Archiel', '09312312421', '09816497664', '5234324', '09312312421', 'cabanagarchiel@gmail.com', 'Jociel Studio', 'Jociel Studio', 'Willy Ong III', 'Special Child', 'Tisa Cebu City Near Labangon', '4543534', 'yes', 'yes', 'None of Above', 'yes', 'None of Above', 'yes', 'None of Above', 'yes', 'None of Above', 'yes', 'yes', 'yes', 'Pollen, Testing for review', 'Testing for review', 'Note for Testing', '', '', '', NULL, '[\"High Blood Pressure\",\"Testing for review\"]', 'Testing for review', '', NULL, '', '', '', '', '', NULL, 45.00, 45.00, 'A+', NULL, NULL, NULL, NULL, 45.00, '120/80', '120', '80', NULL, NULL, NULL, 'Kristine Bancure', '2026-04-21 00:57:07', '2026-04-21 02:52:26'),
+(13, 843, 'Labos', 'Leandro', 'Sulu', '1999-05-05', 'Roman Catholic', 'Tisa Cebu City Near Labangon', 'Student', '2026-04-01', 'M', 'Leandro', '09312312421', '09816497664', '5234324', '09312312421', 'leandrolabos822@gmail.com', 'Jociel Studio', 'Jociel Studio', 'Willy Ong III', 'Special Child', 'Tisa Cebu City Near Labangon', '4543534', 'yes', 'yes', 'None of Above', 'yes', 'None of Above', 'yes', 'None of Above', 'yes', 'None of Above', 'yes', 'yes', 'yes', 'Food, Dust', '', 'Note for Testing', '', '', '', NULL, '[\"High Blood Pressure\",\"Low Blood Pressure\",\"Epilepsy \\/ Convulsions\",\"Sexually Transmitted Disease\",\"Stomach Troubles \\/ Ulcer\",\"Testing for review\"]', 'Testing for review', '', NULL, '', '', '', '', '', NULL, 45.00, 45.00, 'A+', NULL, NULL, NULL, NULL, 45.00, '120/80', '120', '80', NULL, NULL, NULL, 'Kristine Bancure', '2026-04-21 05:33:33', '2026-04-21 05:34:18');
 
 -- --------------------------------------------------------
 
@@ -610,7 +651,9 @@ INSERT INTO `resident_activity_log` (`id`, `resident_id`, `action_type`, `relate
 (35, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-10 06:52:57'),
 (36, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-12 00:35:42'),
 (37, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-12 00:39:42'),
-(38, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-12 00:39:47');
+(38, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-12 00:39:47'),
+(39, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-14 14:42:24'),
+(40, 222, 'view_announcement', 352, '{\"announcement_title\":\"Follow-Up Consultation Required\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-04-14 16:47:23');
 
 -- --------------------------------------------------------
 
@@ -821,7 +864,9 @@ INSERT INTO `sitio1_announcements` (`id`, `staff_id`, `title`, `message`, `prior
 (374, 12, 'For All Resident', 'Oral Defense for all students', 'medium', '', '2026-04-10', '2026-04-09 13:30:35', NULL, 'expired', 'public', 'basic', NULL),
 (375, 13, 'Test Announcemnt', 'Test', 'normal', '', '2026-04-11', '2026-04-10 01:04:06', NULL, 'expired', 'landing_page', 'basic', NULL),
 (376, 13, 'TEst2 Announcement', 'awdwd', 'medium', '', '2026-04-11', '2026-04-10 01:04:52', NULL, 'expired', 'public', 'basic', NULL),
-(377, 15, 'Hello Announcement', 'Hello Announcement', 'normal', '', '2026-04-13', '2026-04-11 19:27:46', NULL, 'active', 'landing_page', 'basic', NULL);
+(377, 15, 'Hello Announcement', 'Hello Announcement', 'normal', '', '2026-04-13', '2026-04-11 19:27:46', NULL, 'expired', 'landing_page', 'basic', NULL),
+(378, 15, 'Test Announcement', 'Hello Test', 'high', '', '2026-04-15', '2026-04-14 06:43:03', NULL, 'expired', 'landing_page', 'basic', '/community-health-tracker/uploads/announcements/69dde1f7f1f3f.png'),
+(379, 15, 'All Student Announcement', 'All Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student AnnouncementAll Student Announcement', 'medium', '', '2026-04-15', '2026-04-14 06:45:13', NULL, 'expired', 'public', 'basic', NULL);
 
 -- --------------------------------------------------------
 
@@ -871,8 +916,25 @@ CREATE TABLE `sitio1_patients` (
   `family_no` varchar(50) DEFAULT NULL,
   `fourps_member` enum('Yes','No') DEFAULT 'No',
   `full_name` varchar(100) NOT NULL,
+  `student_last_name` varchar(100) DEFAULT NULL,
+  `student_first_name` varchar(100) DEFAULT NULL,
+  `student_middle_name` varchar(100) DEFAULT NULL,
+  `student_nickname` varchar(100) DEFAULT NULL,
+  `student_religion` varchar(100) DEFAULT NULL,
+  `student_nationality` varchar(100) DEFAULT NULL,
+  `student_home_address` text DEFAULT NULL,
+  `student_home_no` varchar(50) DEFAULT NULL,
+  `student_office_no` varchar(50) DEFAULT NULL,
+  `student_fax_no` varchar(50) DEFAULT NULL,
+  `student_mobile_no` varchar(50) DEFAULT NULL,
+  `student_email` varchar(150) DEFAULT NULL,
+  `student_effective_date` date DEFAULT NULL,
+  `student_parent_guardian_name` varchar(150) DEFAULT NULL,
+  `student_parent_guardian_occupation` varchar(150) DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
   `age` int(11) DEFAULT NULL,
+  `gender` varchar(20) DEFAULT NULL,
+  `occupation` varchar(255) DEFAULT NULL,
   `address` text DEFAULT NULL,
   `sitio` varchar(255) DEFAULT NULL,
   `disease` varchar(255) DEFAULT NULL,
@@ -884,11 +946,8 @@ CREATE TABLE `sitio1_patients` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `deleted_at` datetime DEFAULT NULL,
   `restored_at` timestamp NULL DEFAULT NULL,
-  `gender` varchar(10) DEFAULT NULL,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `consultation_type` varchar(20) DEFAULT 'onsite',
-  `civil_status` varchar(20) DEFAULT NULL,
-  `occupation` varchar(100) DEFAULT NULL,
   `consent_given` tinyint(1) DEFAULT 0,
   `consent_date` datetime DEFAULT NULL,
   `patient_record_uid` varchar(50) DEFAULT NULL
@@ -898,59 +957,11 @@ CREATE TABLE `sitio1_patients` (
 -- Dumping data for table `sitio1_patients`
 --
 
-INSERT INTO `sitio1_patients` (`id`, `user_id`, `phic_no`, `bhw_assigned`, `family_no`, `fourps_member`, `full_name`, `date_of_birth`, `age`, `address`, `sitio`, `disease`, `immunization_status`, `contact`, `last_checkup`, `medical_history`, `added_by`, `created_at`, `deleted_at`, `restored_at`, `gender`, `updated_at`, `consultation_type`, `civil_status`, `occupation`, `consent_given`, `consent_date`, `patient_record_uid`) VALUES
-(321, NULL, '112233445566', 'Nestor Javier', 'FAM011', 'Yes', 'Fernando Lopez', '1972-01-17', 54, '741 Del Pilar St.', 'Zapatera', 'Heart Disease', NULL, '09112233445', '2026-01-10', 'Post-heart attack 2020', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-14 08:35:22', 'onsite', 'Married', 'Retired', 1, '2026-02-23 08:09:33', 'PAT-20260305-FER-3255'),
-(322, NULL, '223344556677', 'Virginia Cruz', 'FAM012', 'No', 'Luzviminda Flores', '1991-06-30', 34, '852 P. Burgos St.', 'City Central', 'Allergic Rhinitis', NULL, '09223344556', '2026-02-14', 'Seasonal allergies', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'online', 'Single', 'Nurse', 1, '2026-02-23 08:09:33', 'PAT-20260305-LUZ-5738'),
-(323, NULL, '334455667788', 'Rogelio Dizon', 'FAM013', 'Yes', 'Rolando Castro', '1980-12-02', 45, '963 M.H. del Pilar', 'Sta. Cruz', 'None', NULL, '09334455667', '2026-01-25', 'Healthy', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Mechanic', 1, '2026-02-23 08:09:33', 'PAT-20260305-ROL-4031'),
-(324, NULL, '445566778899', 'Corazon Aquino', 'FAM014', 'No', 'Evelyn Garcia', '1984-09-14', 41, '159 Mabini Extension', 'Nangka', 'Thyroid Disorder', NULL, '09445566778', '2026-02-03', 'Hypothyroidism', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Married', 'Bank Teller', 1, '2026-02-23 08:09:33', 'PAT-20260305-EVE-2916'),
-(325, NULL, '556677889900', 'Benigno Santiago', 'FAM015', 'Yes', 'Gregorio Velasco', '1977-07-07', 48, '753 Taft Ave.', 'Zapatera', 'Gout', NULL, '09556677889', '2026-01-18', 'Gout attacks', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Tricycle Driver', 1, '2026-02-23 08:09:33', 'PAT-20260305-GRE-8315'),
-(326, NULL, '667788990011', 'Salvador Laurel', 'FAM016', 'No', 'Manuel Torres', '1993-03-28', 32, '951 Rizal Street', 'San Roque', 'None', NULL, '09667788990', '2026-02-17', 'No medical issues', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'online', 'Single', 'Barista', 1, '2026-02-23 08:09:33', 'PAT-20260305-MAN-7045'),
-(327, NULL, '778899001122', 'Jovita Salonga', 'FAM017', 'Yes', 'Gloria Araneta', '1981-11-11', 44, '357 Legaspi St.', 'City Central', 'Diabetes', NULL, '09778899001', '2026-01-05', 'Type 2 diabetes', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Divorced', 'Store Owner', 1, '2026-02-23 08:09:33', 'PAT-20260305-GLO-9836'),
-(328, NULL, '889900112233', 'Rene Espina', 'FAM018', 'No', 'Rodrigo Duterte', '1979-05-19', 46, '624 Magallanes St.', 'Sta. Cruz', 'Hypertension', NULL, '09889900112', '2026-02-09', 'High BP since 2018', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Government Employee', 1, '2026-02-23 08:09:33', 'PAT-20260310-ROD-9327'),
-(329, NULL, '990011223344', 'Leticia Ramos', 'FAM019', 'Yes', 'Nenita Pimentel', '1986-08-23', 39, '813 Burgos Ave.', 'Nangka', 'Asthma', NULL, '09990011223', '2026-01-30', 'Mild asthma', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Married', 'Teacher', 1, '2026-02-23 08:09:33', 'PAT-20260130-NEN-9900'),
-(330, NULL, '101112131415', 'Emmanuel Pelaez', 'FAM020', 'No', 'Victor Recto', '1974-02-14', 52, '246 Kalayaan St.', 'Zapatera', 'Arthritis', NULL, '09001122334', '2026-02-20', 'Osteoarthritis', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Farmer', 1, '2026-02-23 08:09:33', 'PAT-20260220-VIC-1011'),
-(331, NULL, '121314151617', 'Helena Benitez', 'FAM021', 'Yes', 'Rosario Cruz', '1994-04-09', 31, '528 Katipunan St.', 'San Roque', 'None', NULL, '09122334455', '2026-02-16', 'Healthy', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'online', 'Single', 'Graphic Designer', 1, '2026-02-23 08:09:33', 'PAT-20260216-ROS-1213'),
-(332, NULL, '131415161718', 'Raul Manglapus', 'FAM022', 'No', 'Alfredo Lim', '1989-10-31', 36, '735 Lacson St.', 'City Central', 'Migraine', NULL, '09233445566', '2026-01-22', 'Chronic headaches', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Single', 'IT Specialist', 1, '2026-02-23 08:09:33', 'PAT-20260122-ALF-1314'),
-(333, NULL, '141516171819', 'Eva Estrada', 'FAM023', 'Yes', 'Lourdes Tan', '1976-12-25', 49, '942 Arnaiz St.', 'Sta. Cruz', 'High Cholesterol', NULL, '09344556677', '2026-02-07', 'High cholesterol', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Married', 'Accountant', 1, '2026-02-23 08:09:33', 'PAT-20260207-LOU-1415'),
-(334, NULL, '151617181920', 'Gaudencio Rosales', 'FAM024', 'No', 'Ricardo Cuevas', '1982-06-06', 43, '159 P. Gomez St.', 'Nangka', 'None', NULL, '09455667788', '2026-01-12', 'No conditions', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'online', 'Married', 'Electrician', 1, '2026-02-23 08:09:33', 'PAT-20260112-RIC-1516'),
-(335, NULL, '161718192021', 'Teresita Diaz', 'FAM025', 'Yes', 'Fe Mercado', '1987-09-19', 38, '268 Vito Cruz St.', 'Zapatera', 'Anemia', NULL, '09566778899', '2026-02-11', 'Mild anemia', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Single', 'Call Center Agent', 1, '2026-02-23 08:09:33', 'PAT-20260211-FE-1617'),
-(336, NULL, '171819202122', 'Luis Villafuerte', 'FAM026', 'No', 'Rogelio Roxas', '1973-03-03', 52, '377 Escolta St.', 'San Roque', 'Diabetes', NULL, '09677889900', '2026-01-08', 'Diabetes with neuropathy', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Janitor', 1, '2026-02-23 08:09:33', 'PAT-20260108-ROG-1718'),
-(337, NULL, '181920212223', 'Consuelo Madrigal', 'FAM027', 'Yes', 'Milagros Reyes', '1984-07-15', 41, '486 A. Flores St.', 'City Central', 'Thyroid Disorder', NULL, '09788990011', '2026-02-13', 'Hyperthyroidism', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Married', 'Dental Assistant', 1, '2026-02-23 08:09:33', 'PAT-20260213-MIL-1819'),
-(338, NULL, '192021222324', 'Ramon Mitra', 'FAM028', 'No', 'Romeo David', '1990-01-01', 36, '595 Padre Faura St.', 'Sta. Cruz', 'None', NULL, '09899001122', '2026-02-19', 'Healthy', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'online', 'Single', 'Photographer', 1, '2026-02-23 08:09:33', 'PAT-20260219-ROM-1920'),
-(339, NULL, '202122232425', 'Hilario Davide', 'FAM029', 'Yes', 'Francisco Tatad', '1978-08-08', 47, '704 Pedro Gil St.', 'Nangka', 'Hypertension', NULL, '09900112233', '2026-01-27', 'High blood pressure', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Carpenter', 1, '2026-02-23 08:09:33', 'PAT-20260127-FRA-2021'),
-(340, NULL, '212223242526', 'Linda Amorsolo', 'FAM030', 'No', 'Susan Fernandez', '1985-02-28', 40, '813 Herrera St.', 'Zapatera', 'Allergies', NULL, '09011223344', '2026-02-04', 'Multiple allergies', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Married', 'Waitress', 1, '2026-02-23 08:09:33', 'PAT-20260204-SUS-2122'),
-(341, NULL, '222324252627', 'Arturo Tolentino', 'FAM031', 'Yes', 'Jose Cojuangco', '1971-10-10', 54, '922 Victoria St.', 'San Roque', 'Heart Disease', NULL, '09122334455', '2026-01-17', 'Heart bypass 2021', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Businessman', 1, '2026-02-23 08:09:33', 'PAT-20260117-JOS-2223'),
-(342, NULL, '232425262728', 'Socorro Ramos', 'FAM032', 'No', 'Luz Bautista', '1988-04-04', 37, '231 Junquera St.', 'City Central', 'None', NULL, '09233445566', '2026-02-06', 'No known conditions', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'online', 'Single', 'HR Staff', 1, '2026-02-23 08:09:33', 'PAT-20260206-LUZ-2324'),
-(343, NULL, '242526272829', 'Rafael Alunan', 'FAM033', 'Yes', 'Eduardo Cojuangco', '1976-05-20', 49, '342 Colon St.', 'Sta. Cruz', 'Gout', NULL, '09344556677', '2026-01-23', 'Gout attacks', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Truck Driver', 1, '2026-02-23 08:09:33', 'PAT-20260123-EDU-2425'),
-(344, NULL, '252627282930', 'Nelia Sancho', 'FAM034', 'No', 'Charito Planas', '1983-12-12', 42, '453 Pelaez St.', 'Nangka', 'Asthma', NULL, '09455667788', '2026-02-02', 'Moderate asthma', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Married', 'Office Clerk', 1, '2026-02-23 08:09:33', 'PAT-20260202-CHA-2526'),
-(345, NULL, '262728293031', 'Isagani Cruz', 'FAM035', 'Yes', 'Reynaldo Puno', '1980-09-09', 45, '564 D. Jakosalem St.', 'Zapatera', 'High Cholesterol', NULL, '09566778899', '2026-01-19', 'Cholesterol issues', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Police Officer', 1, '2026-02-23 08:09:33', 'PAT-20260119-REY-2627'),
-(346, NULL, '272829303132', 'Lorna Verano', 'FAM036', 'No', 'Imelda Cruz', '1992-07-07', 33, '675 B. Rodriguez St.', 'San Roque', 'Migraine', NULL, '09677889900', '2026-02-15', 'Frequent migraines', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'online', 'Single', 'Student', 1, '2026-02-23 08:09:33', 'PAT-20260215-IME-2728'),
-(347, NULL, '282930313233', 'Bernardo Bernardo', 'FAM037', 'Yes', 'Leo Martinez', '1974-11-11', 51, '786 V. Rama St.', 'City Central', 'Diabetes', NULL, '09788990011', '2026-01-13', 'Diabetes Type 2', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Actor', 1, '2026-02-23 08:09:33', 'PAT-20260113-LEO-2829'),
-(348, NULL, '293031323334', 'Mely Tagasa', 'FAM038', 'No', 'Nova Villa', '1981-02-14', 44, '897 F. Ramos St.', 'Sta. Cruz', 'None', NULL, '09899001122', '2026-02-09', 'Healthy', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'online', 'Married', 'Actress', 1, '2026-02-23 08:09:33', 'PAT-20260209-NOV-2930'),
-(349, NULL, '303132333435', 'Subas Herrero', 'FAM039', 'Yes', 'Joel Torre', '1977-06-18', 48, '108 M. Velez St.', 'Nangka', 'Arthritis', NULL, '09900112233', '2026-01-26', 'Joint pain', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Actor', 1, '2026-02-23 08:09:33', 'PAT-20260126-JOE-3031'),
-(350, NULL, '313233343536', 'Chichay Daluz', 'FAM040', 'No', 'Caridad Sanchez', '1986-03-25', 39, '219 Sikatuna St.', 'Zapatera', 'Anemia', NULL, '09011223344', '2026-02-10', 'Low iron', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Single', 'Teacher', 1, '2026-02-23 08:09:33', 'PAT-20260210-CAR-3132'),
-(351, NULL, '323334353637', 'Rolly Quizon', 'FAM041', 'Yes', 'Dolphy Jr', '1972-08-30', 53, '320 Katipunan St.', 'San Roque', 'Hypertension', NULL, '09122334455', '2026-01-07', 'High BP', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Comedian', 1, '2026-02-23 08:09:33', 'PAT-20260107-DOL-3233'),
-(352, NULL, '333435363738', 'Zsa Zsa Padilla', 'FAM042', 'No', 'Kuh Ledesma', '1989-01-15', 37, '431 Quezon St.', 'City Central', 'None', NULL, '09233445566', '2026-02-12', 'No issues', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'online', 'Single', 'Singer', 1, '2026-02-23 08:09:33', 'PAT-20260212-KUH-3334'),
-(353, NULL, '343536373839', 'Martin Nievera', 'FAM043', 'Yes', 'Gary Valenciano', '1983-10-05', 42, '542 R. Landon St.', 'Sta. Cruz', 'Allergies', NULL, '09344556677', '2026-01-28', 'Skin allergies', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Singer', 1, '2026-02-23 08:09:33', 'PAT-20260128-GAR-3435'),
-(354, NULL, '353637383940', 'Regine Velasquez', 'FAM044', 'No', 'Sarah Geronimo', '1994-05-22', 31, '653 Gen. Maxilom Ave.', 'Nangka', 'Thyroid', NULL, '09455667788', '2026-02-17', 'Thyroid condition', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'online', 'Single', 'Singer', 1, '2026-02-23 08:09:33', 'PAT-20260217-SAR-3536'),
-(355, NULL, '363738394041', 'Ogie Alcasid', 'FAM045', 'Yes', 'Rico J Puno', '1975-12-09', 50, '764 M. Cuenco St.', 'Zapatera', 'Gout', NULL, '09566778899', '2026-01-14', 'Gout', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Musician', 1, '2026-02-23 08:09:33', 'PAT-20260114-RIC-3637'),
-(356, NULL, '373839404142', 'Sharon Cuneta', 'FAM046', 'No', 'Judy Ann Santos', '1988-04-28', 37, '875 Gorordo Ave.', 'San Roque', 'None', NULL, '09677889900', '2026-02-05', 'Healthy', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'online', 'Married', 'Actress', 1, '2026-02-23 08:09:33', 'PAT-20260205-JUD-3738'),
-(357, NULL, '383940414243', 'Aga Muhlach', 'FAM047', 'Yes', 'Richard Gomez', '1979-07-16', 46, '986 Escario St.', 'City Central', 'Asthma', NULL, '09788990011', '2026-01-21', 'Mild asthma', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Actor', 1, '2026-02-23 08:09:33', 'PAT-20260121-RIC-3839'),
-(358, NULL, '394041424344', 'Dawn Zulueta', 'FAM048', 'No', 'Maricel Soriano', '1982-09-02', 43, '197 Salinas Dr.', 'Sta. Cruz', 'Migraine', NULL, '09899001122', '2026-02-14', 'Headaches', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Married', 'Actress', 1, '2026-02-23 08:09:33', 'PAT-20260214-MAR-3940'),
-(359, NULL, '404142434445', 'Cesar Montano', 'FAM049', 'Yes', 'Christopher de Leon', '1970-06-12', 55, '308 F. Cabahug St.', 'Nangka', 'Heart Disease', NULL, '09900112233', '2026-01-03', 'Heart condition', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Male', '2026-03-10 15:04:03', 'onsite', 'Married', 'Director', 1, '2026-02-23 08:09:33', 'PAT-20260303-CHR-7352'),
-(360, NULL, '414243444546', 'Nora Aunor', 'FAM050', 'No', 'Vilma Santos', '1985-11-20', 40, '419 Juana Osmena St.', 'Zapatera', 'Diabetes', NULL, '09011223344', '2026-02-19', 'Diabetes', NULL, '2026-02-23 00:09:33', NULL, NULL, 'Female', '2026-03-10 15:04:03', 'onsite', 'Single', 'Actress', 1, '2026-02-23 08:09:33', 'PAT-20260219-VIL-4142'),
-(811, 222, '0000000', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Archiel R. Cabanag', '2002-05-26', 23, 'Labangon Cebu City', 'San Vicente', NULL, NULL, '09816497664', '2026-02-09', NULL, NULL, '2026-02-28 02:31:49', NULL, '2026-02-28 02:31:49', 'Male', '2026-04-02 12:30:00', 'onsite', 'Single', 'Student Teacher', 0, NULL, 'PAT-20260310-ARC-8402'),
-(814, NULL, '524323', 'Jinky Figuracion', '09206001470', 'Yes', 'Creshiel Manloloyo', '2002-07-04', 23, 'Barangay Luz, Cebu City', 'Sto.niño lll', NULL, NULL, '09816497664', '2026-03-03', NULL, NULL, '2026-03-02 16:58:45', NULL, NULL, 'Male', '2026-03-28 14:54:32', 'onsite', 'Single', 'Student Teacher', 1, '2026-03-03 00:58:45', 'PAT-20260305-CRE-4178'),
-(815, 223, NULL, NULL, NULL, 'No', 'Warren Miguel Miras', '1998-02-03', 28, 'tisa cebu', '', NULL, NULL, '09504206113', '2026-03-12', NULL, 12, '2026-04-11 17:02:42', NULL, '2026-04-11 17:02:42', 'Male', '2026-04-11 17:02:42', 'onsite', '', '', 0, NULL, NULL),
-(816, 226, '09087656n', 'Archiel R. Cabanag', '0000', 'Yes', 'Juzaly VIllaruz', '1989-07-06', 36, '440 Kalinao St Bo luz Cebu City', 'City Central', NULL, NULL, '09290880524', '2026-03-05', NULL, NULL, '2026-03-05 06:24:12', NULL, NULL, 'Female', '2026-04-01 13:57:58', 'onsite', 'Married', 'Teacher', 1, '2026-03-05 14:24:12', 'PAT-20260313-JUZ-8159'),
-(817, 229, '123456', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Lance Christine Gallardo', '2000-09-08', 25, 'Lahug, Cebu City Philippines', 'San Vicente', NULL, NULL, '09816497664', '2026-04-03', NULL, 13, '2026-04-03 11:30:05', NULL, NULL, 'Female', '2026-04-03 11:30:23', 'onsite', 'Married', 'Teacher', 1, '2026-04-03 19:30:05', 'PAT-20260403-LAN-6271'),
-(818, 231, '524323', 'Archiel R. Cabanag', '098231421423423', 'Yes', 'Jaycar Otida', '2002-06-12', 23, 'Barangay Luz, Cebu City', 'Zapatera', NULL, NULL, '09504206113', '2026-04-03', NULL, 13, '2026-04-03 13:02:57', NULL, NULL, 'Male', '2026-04-03 13:03:15', 'onsite', 'Single', 'Student Teacher', 1, '2026-04-03 21:02:57', 'PAT-20260403-JAY-1838'),
-(819, 232, '524323', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Clint Mingo', '2006-10-20', 19, 'Barangay Luz, Cebu City', 'San. Antonio', NULL, NULL, '09312312421', '2026-04-06', NULL, 13, '2026-04-03 13:27:43', NULL, NULL, 'Male', '2026-04-04 16:54:00', 'onsite', 'Married', 'Student', 1, '2026-04-03 21:27:43', 'PAT-20260403-CLI-8785'),
-(820, 234, '524323', 'Jinky Figuracion', '098231421423423', 'Yes', 'Christian Figuracion', '2002-10-17', 23, 'Labangon Cebu City', 'City Central', NULL, NULL, '09290880524', '2026-04-03', NULL, 13, '2026-04-03 14:29:19', NULL, NULL, 'Male', '2026-04-03 14:32:16', 'onsite', 'Married', 'Teacher', 1, '2026-04-03 22:29:19', 'PAT-20260403-CHR-8236'),
-(821, 227, '524323', 'Jinky Figuracion', '09206001470', 'No', 'Creshiel Manloloyo', '2001-05-31', 24, 'Labangon Cebu City', 'San. Antonio', NULL, NULL, '09504206113', '2025-09-10', NULL, 13, '2026-04-04 18:30:47', NULL, NULL, 'Male', '2026-04-11 16:53:04', 'onsite', 'Married', 'Student Teacher', 1, '2026-04-05 02:30:47', 'PAT-20260405-CRE-3279'),
-(823, NULL, '524323', 'Archiel R. Cabanag', '09206001470', 'Yes', 'Jerecho Latosa', '2002-05-08', 23, 'Barangay Luz, Cebu City', 'San Vicente', NULL, NULL, '09290880524', '2002-06-11', NULL, 12, '2026-04-05 00:14:53', NULL, NULL, 'Male', '2026-04-05 00:21:16', 'onsite', 'Married', 'Teacher', 1, '2026-04-05 08:14:53', NULL),
-(824, 233, '524323', 'Jinky Figuracion', '09206001470', 'Yes', 'Jociel Studio', '2002-05-09', 23, 'Barangay Luz, Cebu City', 'San Roque', NULL, NULL, '09206001470', '2026-03-29', NULL, 12, '2026-04-05 00:20:09', NULL, NULL, 'Female', '2026-04-10 01:11:02', 'onsite', 'Married', 'Student Teacher', 1, '2026-04-05 08:20:09', 'PAT-20260410-JOC-5078'),
-(828, NULL, '524323', 'Jinky Figuracion', '09206001470', 'Yes', 'Creshiel Manloloyo', '2026-03-29', 0, 'Labangon Cebu City', 'San. Antonio', NULL, NULL, '09312312421', '2026-04-12', NULL, 16, '2026-04-11 18:51:24', NULL, NULL, 'Male', '2026-04-11 19:22:39', 'onsite', 'Single', 'Student Teacher', 1, '2026-04-12 02:51:24', NULL);
+INSERT INTO `sitio1_patients` (`id`, `user_id`, `phic_no`, `bhw_assigned`, `family_no`, `fourps_member`, `full_name`, `student_last_name`, `student_first_name`, `student_middle_name`, `student_nickname`, `student_religion`, `student_nationality`, `student_home_address`, `student_home_no`, `student_office_no`, `student_fax_no`, `student_mobile_no`, `student_email`, `student_effective_date`, `student_parent_guardian_name`, `student_parent_guardian_occupation`, `date_of_birth`, `age`, `gender`, `occupation`, `address`, `sitio`, `disease`, `immunization_status`, `contact`, `last_checkup`, `medical_history`, `added_by`, `created_at`, `deleted_at`, `restored_at`, `updated_at`, `consultation_type`, `consent_given`, `consent_date`, `patient_record_uid`) VALUES
+(837, NULL, NULL, NULL, NULL, 'No', 'Otida, Jaycar Sulu', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2002-05-26', 23, NULL, NULL, 'Tisa Cebu City Near Labangon', NULL, NULL, NULL, '09312312421', '2026-04-20', NULL, 13, '2026-04-20 17:46:54', NULL, '2026-04-20 17:46:54', '2026-04-20 17:47:00', 'onsite', 0, NULL, NULL),
+(838, NULL, NULL, NULL, NULL, 'No', 'Casola, Ronie Solo', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '1999-06-24', 26, 'M', NULL, 'Tisa Cebu City Near Labangon', NULL, NULL, NULL, '09312312421', '2026-04-20', NULL, 13, '2026-04-20 17:45:07', NULL, '2026-04-20 17:45:07', '2026-04-20 17:45:07', 'onsite', 0, NULL, NULL),
+(842, NULL, NULL, NULL, NULL, 'No', 'Cabanag, Archiel Sulu', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2002-05-26', 23, NULL, NULL, 'Duljo Fatima, Cebu City', NULL, NULL, NULL, '09312312421', '2026-04-21', NULL, 13, '2026-04-21 00:57:07', NULL, NULL, '2026-04-21 02:52:26', 'onsite', 1, '2026-04-21 08:57:07', NULL),
+(843, NULL, NULL, NULL, NULL, 'No', 'Labos, Leandro Sulu', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '1999-05-05', 26, NULL, NULL, 'Tisa Cebu City Near Labangon', NULL, NULL, NULL, '09312312421', '2026-04-21', NULL, 15, '2026-04-21 05:33:33', NULL, NULL, '2026-04-21 05:34:18', 'onsite', 1, '2026-04-21 13:33:33', NULL);
 
 -- --------------------------------------------------------
 
@@ -1902,7 +1913,338 @@ INSERT INTO `staff_activity_log` (`id`, `staff_id`, `action_type`, `related_id`,
 (950, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:03:49'),
 (951, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:05:11'),
 (952, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:05:18'),
-(953, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:05:37');
+(953, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-04-12 09:05:37'),
+(954, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 12:47:52'),
+(955, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 12:48:07'),
+(956, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 13:43:35'),
+(957, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 13:43:52'),
+(958, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 13:48:22'),
+(959, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 13:48:39'),
+(960, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 13:50:49'),
+(961, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 13:57:06'),
+(962, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:28:29'),
+(963, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:36:05'),
+(964, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:38:19'),
+(965, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:38:47'),
+(966, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:39:24'),
+(967, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:39:51'),
+(968, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:40:26'),
+(969, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:40:28'),
+(970, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:40:35'),
+(971, 13, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:40:42'),
+(972, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:40:52'),
+(973, 13, 'print_patient', 828, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Creshiel Manloloyo\",\"patient_id\":828}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:40:55'),
+(974, 13, 'staff_logout', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:41:23'),
+(975, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:41:33'),
+(976, 15, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:41:51'),
+(977, 15, 'view_patient', 811, '{\"patient_id\":811,\"patient_name\":\"Archiel R. Cabanag\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:42:03'),
+(978, 15, 'send_announcement', 378, '{\"title\":\"Test Announcement\",\"audience_type\":\"landing_page\",\"announcement_type\":\"basic\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:43:03'),
+(979, 15, 'send_announcement', 379, '{\"title\":\"All Student Announcement\",\"audience_type\":\"public\",\"target_count\":11,\"announcement_type\":\"basic\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:46:08'),
+(980, 15, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:46:42'),
+(981, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 14:46:48'),
+(982, 15, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 15:48:44'),
+(983, 15, 'view_patient', 815, '{\"patient_id\":815,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 15:48:47'),
+(984, 15, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-14 15:48:50'),
+(985, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 12:25:17'),
+(986, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 12:25:43'),
+(987, 13, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 12:25:46'),
+(988, 13, 'view_patient', 821, '{\"patient_id\":821,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 12:25:51'),
+(989, 13, 'staff_logout', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 12:26:12'),
+(990, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 12:28:35'),
+(991, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 12:33:15'),
+(992, 13, 'view_patient', 823, '{\"patient_id\":823,\"patient_name\":\"Jerecho Latosa\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 12:33:18'),
+(993, 13, 'staff_logout', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-17 12:33:22'),
+(994, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 12:36:57'),
+(995, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 12:43:58'),
+(996, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:18:41'),
+(997, 13, 'add_patient', 829, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Warren Miguel Miras\",\"patient_id\":\"829\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:20:43'),
+(998, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:20:55'),
+(999, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:21:11'),
+(1000, 13, 'print_patient', 829, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Warren Miguel Miras\",\"patient_id\":829}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:21:14'),
+(1001, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:21:41'),
+(1002, 13, 'staff_logout', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:21:47'),
+(1003, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:22:05'),
+(1004, 15, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:22:14'),
+(1005, 15, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:22:33'),
+(1006, 15, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:27:36'),
+(1007, 15, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:28:59'),
+(1008, 15, 'view_patient', 824, '{\"patient_id\":824,\"patient_name\":\"Jociel Studio\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:29:08'),
+(1009, 15, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-17 14:33:29'),
+(1010, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 09:24:56'),
+(1011, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 09:25:09'),
+(1012, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 09:44:25'),
+(1013, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:01:17'),
+(1014, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:02:08'),
+(1015, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:14:30'),
+(1016, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:16:17'),
+(1017, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:16:32'),
+(1018, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:17:45'),
+(1019, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"Creshiel Manloloyo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:18:40'),
+(1020, 13, 'update_patient', 828, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Creshiel Manloloyo\",\"patient_id\":828,\"fields\":{\"gender\":\"Male\",\"height\":null,\"weight\":null,\"temperature\":null,\"blood_pressure\":\"120\\/90\",\"blood_type\":\"A+\",\"allergies\":\"Local Anesthetic (ex. Lidocaine), Others: asd\",\"medical_history\":\"Good health: Yes; Under treatment: Yes; Serious illness \\/ surgery: Yes; Uses tobacco: No; Condition being treated: asd; Illness \\/ operation details: asdas; Medication details: asdasd; Bleeding time: asd; Conditions: High Blood Pressure\",\"current_medications\":\"asdasd\",\"family_history\":\"High Blood Pressure\",\"immunization_record\":null,\"chronic_conditions\":\"High Blood Pressure\"}}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:19:33'),
+(1021, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"asd asd asd\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:19:36'),
+(1022, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:19:42'),
+(1023, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:33:33'),
+(1024, 13, 'view_patient', 828, '{\"patient_id\":828,\"patient_name\":\"asd asd asd\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:33:47'),
+(1025, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:40:08'),
+(1026, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 10:42:17'),
+(1027, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 13:25:39'),
+(1028, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-19 13:58:42'),
+(1029, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-19 21:36:55'),
+(1030, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-19 21:37:08'),
+(1031, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-19 23:27:27'),
+(1032, 13, 'view_patient', 829, '{\"patient_id\":829,\"patient_name\":\"Warren Miguel Miras\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-19 23:30:48'),
+(1033, 13, 'add_patient', 833, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Cabanag, Archiel Rosel\",\"patient_id\":\"833\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-19 23:53:42'),
+(1034, 13, 'add_patient', 834, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Cabanag, Archiel Rosel\",\"patient_id\":\"834\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-19 23:57:55'),
+(1035, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:06:02'),
+(1036, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:13:27'),
+(1037, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:23:00'),
+(1038, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:24:17'),
+(1039, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:25:01'),
+(1040, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:25:53'),
+(1041, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:31:04'),
+(1042, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:43:42'),
+(1043, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:46:40'),
+(1044, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:50:07'),
+(1045, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:53:20'),
+(1046, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:56:12'),
+(1047, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:57:48'),
+(1048, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 00:59:40'),
+(1049, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 01:00:38'),
+(1050, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 01:17:03'),
+(1051, 13, 'print_patient', 834, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Cabanag, Archiel Rosel\",\"patient_id\":834}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 01:17:04'),
+(1052, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 01:18:17'),
+(1053, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 01:20:48'),
+(1054, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 01:38:47'),
+(1055, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 01:48:29'),
+(1056, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 01:58:11'),
+(1057, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:05:29'),
+(1058, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:07:07'),
+(1059, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:09:57'),
+(1060, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:10:21'),
+(1061, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:11:23'),
+(1062, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:15:23'),
+(1063, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:33:42'),
+(1064, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:34:25'),
+(1065, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:34:32'),
+(1066, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:34:43'),
+(1067, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:34:51'),
+(1068, 13, 'add_patient', 835, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Miras, Warren Miguel\",\"patient_id\":\"835\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:36:20'),
+(1069, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:36:22'),
+(1070, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:36:34'),
+(1071, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:40:38'),
+(1072, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:40:46'),
+(1073, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:41:14'),
+(1074, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:41:24'),
+(1075, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:43:51'),
+(1076, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:43:56'),
+(1077, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:08'),
+(1078, 13, 'update_patient', 834, '{\"patient_name\":\"Cabanag, Archiel\",\"patient_id\":834}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:11'),
+(1079, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:13'),
+(1080, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:20');
+INSERT INTO `staff_activity_log` (`id`, `staff_id`, `action_type`, `related_id`, `details`, `ip_address`, `user_agent`, `created_at`) VALUES
+(1081, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:25'),
+(1082, 13, 'update_patient', 834, '{\"patient_name\":\"Cabanag, Archiel\",\"patient_id\":834}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:32'),
+(1083, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:34'),
+(1084, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:49'),
+(1085, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:53'),
+(1086, 13, 'update_patient', 834, '{\"patient_name\":\"Cabanag boi, Archiel\",\"patient_id\":834}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:56'),
+(1087, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:45:58'),
+(1088, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:46:23'),
+(1089, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:46:26'),
+(1090, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:47:40'),
+(1091, 13, 'update_patient', 835, '{\"patient_name\":\"Miras, Warren\",\"patient_id\":835}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:47:53'),
+(1092, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:47:55'),
+(1093, 13, 'update_patient', 835, '{\"patient_name\":\"Miras, Warren\",\"patient_id\":835}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:48:01'),
+(1094, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:48:03'),
+(1095, 13, 'update_patient', 835, '{\"patient_name\":\"Miras, Warren\",\"patient_id\":835}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:48:06'),
+(1096, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:48:08'),
+(1097, 13, 'update_patient', 835, '{\"patient_name\":\"Miras, Warren\",\"patient_id\":835}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:49:06'),
+(1098, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:49:08'),
+(1099, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:49:35'),
+(1100, 13, 'update_patient', 835, '{\"patient_name\":\"Miras, Warren\",\"patient_id\":835}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:49:41'),
+(1101, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:49:43'),
+(1102, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:51:07'),
+(1103, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:51:36'),
+(1104, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:52:35'),
+(1105, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:53:22'),
+(1106, 13, 'update_patient', 835, '{\"patient_name\":\"Miras, Warren\",\"patient_id\":835}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:53:24'),
+(1107, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:53:26'),
+(1108, 13, 'update_patient', 835, '{\"patient_name\":\"Miras, Warren\",\"patient_id\":835}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:53:36'),
+(1109, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:53:38'),
+(1110, 13, 'update_patient', 835, '{\"patient_name\":\"Miras, Warren\",\"patient_id\":835}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:53:46'),
+(1111, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:53:48'),
+(1112, 13, 'staff_logout', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:54:42'),
+(1113, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:54:59'),
+(1114, 15, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:55:06'),
+(1115, 15, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:56:13'),
+(1116, 15, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:57:46'),
+(1117, 15, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:57:55'),
+(1118, 15, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:58:03'),
+(1119, 15, 'update_patient', 835, '{\"patient_name\":\"Miras, Warren\",\"patient_id\":835}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:58:05'),
+(1120, 15, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:58:07'),
+(1121, 15, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:58:38'),
+(1122, 15, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:59:39'),
+(1123, 15, 'staff_logout', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 02:59:50'),
+(1124, 16, 'staff_login', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:00:12'),
+(1125, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:00:19'),
+(1126, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:00:22'),
+(1127, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:00:50'),
+(1128, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:00:56'),
+(1129, 16, 'update_patient', 834, '{\"patient_name\":\"Cabanag boi, Archiel\",\"patient_id\":834}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:01:06'),
+(1130, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:01:09'),
+(1131, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:01:12'),
+(1132, 16, 'staff_login', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:13:40'),
+(1133, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:13:46'),
+(1134, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:24:03'),
+(1135, 16, 'add_patient', 836, '{\"full_name\":\"Leandro Labos\",\"patient_name\":\"Labos, Leandro Solo\",\"patient_id\":\"836\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:36:34'),
+(1136, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:36:38'),
+(1137, 16, 'update_patient', 836, '{\"patient_name\":\"Labos, Leandro\",\"patient_id\":836}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:36:46'),
+(1138, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:36:48'),
+(1139, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:38:17'),
+(1140, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:38:26'),
+(1141, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:38:36'),
+(1142, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:38:41'),
+(1143, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:39:21'),
+(1144, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:39:30'),
+(1145, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:46:22'),
+(1146, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:46:39'),
+(1147, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 03:46:45'),
+(1148, 16, 'staff_login', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:05:51'),
+(1149, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:15:35'),
+(1150, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:17:10'),
+(1151, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:23:43'),
+(1152, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:23:55'),
+(1153, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:27:41'),
+(1154, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:27:50'),
+(1155, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:31:59'),
+(1156, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:35:17'),
+(1157, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:39:20'),
+(1158, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:39:56'),
+(1159, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:40:03'),
+(1160, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:44:35'),
+(1161, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:44:41'),
+(1162, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:44:48'),
+(1163, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:44:55'),
+(1164, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:45:04'),
+(1165, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:47:38'),
+(1166, 16, 'update_patient', 836, '{\"patient_name\":\"Labos, Leandro\",\"patient_id\":836}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:47:45'),
+(1167, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:47:47'),
+(1168, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:49:17'),
+(1169, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:49:31'),
+(1170, 16, 'update_patient', 834, '{\"patient_name\":\"Cabanag boi, Archiel\",\"patient_id\":834}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:49:33'),
+(1171, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:49:35'),
+(1172, 16, 'update_patient', 834, '{\"patient_name\":\"Cabanag boi, Archiel\",\"patient_id\":834}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:49:58'),
+(1173, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:50:00'),
+(1174, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:57:23'),
+(1175, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 11:57:43'),
+(1176, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:02:17'),
+(1177, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:06:21'),
+(1178, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:08:41'),
+(1179, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:10:21'),
+(1180, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:11:08'),
+(1181, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:11:50'),
+(1182, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:12:35'),
+(1183, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:13:06'),
+(1184, 16, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:13:57'),
+(1185, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:15:36'),
+(1186, 16, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:29:05'),
+(1187, 16, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:37:13'),
+(1188, 16, 'staff_logout', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '2026-04-20 12:38:34'),
+(1189, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:22:08'),
+(1190, 13, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:28:01'),
+(1191, 13, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:53:30'),
+(1192, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag boi, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:53:48'),
+(1193, 13, 'update_patient', 834, '{\"patient_name\":\"Cabanag, Archiel\",\"patient_id\":834}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:53:53'),
+(1194, 13, 'view_patient', 834, '{\"patient_id\":834,\"patient_name\":\"Cabanag, Archiel Rosel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:53:55'),
+(1195, 13, 'add_patient', 837, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Otida, Jaycar Sulu\",\"patient_id\":\"837\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:56:48'),
+(1196, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:56:52'),
+(1197, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:57:04'),
+(1198, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:57:55'),
+(1199, 13, 'update_patient', 837, '{\"patient_name\":\"Otida, Jaycar\",\"patient_id\":837}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:58:04'),
+(1200, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 22:58:06'),
+(1201, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:01:03'),
+(1202, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:31:03'),
+(1203, 13, 'view_patient', 836, '{\"patient_id\":836,\"patient_name\":\"Labos, Leandro Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:35:17'),
+(1204, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:36:01'),
+(1205, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:36:38'),
+(1206, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:37:52'),
+(1207, 13, 'update_patient', 837, '{\"patient_name\":\"Otida, Jaycar\",\"patient_id\":837}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:38:11'),
+(1208, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:38:14'),
+(1209, 13, 'add_patient', 838, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Casola, Ronie Solo\",\"patient_id\":\"838\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:42:39'),
+(1210, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:42:41'),
+(1211, 13, 'update_patient', 838, '{\"patient_name\":\"Casola, Ronie\",\"patient_id\":838}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:42:46'),
+(1212, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:42:48'),
+(1213, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:44:51'),
+(1214, 13, 'update_patient', 838, '{\"patient_name\":\"Casola, Ronie\",\"patient_id\":838}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:45:14'),
+(1215, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:45:16'),
+(1216, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:47:37'),
+(1217, 13, 'update_patient', 838, '{\"patient_name\":\"Casola, Ronie\",\"patient_id\":838,\"medical_conditions\":\"[\\\"High Blood Pressure\\\",\\\"Testing for review\\\"]\",\"blood_pressure\":\"120\\/80\",\"blood_type\":\"A+\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:47:42'),
+(1218, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:47:44'),
+(1219, 13, 'update_patient', 838, '{\"patient_name\":\"Casola, Ronie\",\"patient_id\":838,\"medical_conditions\":\"[\\\"High Blood Pressure\\\",\\\"Testing for review\\\"]\",\"blood_pressure\":\"120\\/80\",\"blood_type\":\"A+\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:47:52'),
+(1220, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:47:54'),
+(1221, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:48:03'),
+(1222, 13, 'update_patient', 837, '{\"patient_name\":\"Otida, Jaycar\",\"patient_id\":837,\"medical_conditions\":\"[\\\"High Blood Pressure\\\",\\\"Testing for review\\\"]\",\"blood_pressure\":\"120\\/80\",\"blood_type\":\"A+\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:48:19'),
+(1223, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:48:21'),
+(1224, 13, 'add_patient', 841, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Torion, Lyvicon Figuracion\",\"patient_id\":\"841\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:58:46'),
+(1225, 13, 'view_patient', 841, '{\"patient_id\":841,\"patient_name\":\"Torion, Lyvicon Figuracion\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-20 23:58:49'),
+(1226, 13, 'view_patient', 835, '{\"patient_id\":835,\"patient_name\":\"Miras, Warren Miguel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 00:40:04'),
+(1227, 13, 'archive_patient', 841, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Torion, Lyvicon Figuracion\",\"original_id\":\"841\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 00:40:26'),
+(1228, 13, 'archive_patient', 834, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Cabanag, Archiel Rosel\",\"original_id\":\"834\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 00:40:42'),
+(1229, 13, 'archive_patient', 835, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Miras, Warren Miguel\",\"original_id\":\"835\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 00:45:37'),
+(1230, 13, 'archive_patient', 836, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Labos, Leandro Solo\",\"original_id\":\"836\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 00:46:23'),
+(1231, 13, 'archive_patient', 837, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Otida, Jaycar Sulu\",\"original_id\":837}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:03:02'),
+(1232, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:04:15'),
+(1233, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:06:59'),
+(1234, 13, 'update_patient', 838, '{\"patient_name\":\"Casola, Ronie\",\"patient_id\":838,\"medical_conditions\":\"[\\\"High Blood Pressure\\\",\\\"Testing for review\\\"]\",\"blood_pressure\":\"120\\/80\",\"blood_type\":\"A+\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:07:06'),
+(1235, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:07:08'),
+(1236, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:09:55'),
+(1237, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:11:41'),
+(1238, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:41:34'),
+(1239, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:41:49'),
+(1240, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:41:52'),
+(1241, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:42:06'),
+(1242, 13, 'archive_patient', 837, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Otida, Jaycar Sulu\",\"original_id\":837}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:44:11'),
+(1243, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:44:17'),
+(1244, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:45:00'),
+(1245, 13, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:45:12'),
+(1246, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:45:18'),
+(1247, 13, 'update_patient', 837, '{\"patient_name\":\"Otida, Jaycar\",\"patient_id\":837,\"medical_conditions\":\"[\\\"High Blood Pressure\\\",\\\"Testing for review\\\"]\",\"blood_pressure\":\"120\\/80\",\"blood_type\":\"A+\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:46:43'),
+(1248, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:46:45'),
+(1249, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:46:57'),
+(1250, 13, 'update_patient', 837, '{\"patient_name\":\"Otida, Jaycar\",\"patient_id\":837,\"medical_conditions\":\"[\\\"High Blood Pressure\\\",\\\"Testing for review\\\"]\",\"blood_pressure\":\"120\\/80\",\"blood_type\":\"A+\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:47:00'),
+(1251, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:47:02'),
+(1252, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 01:48:22'),
+(1253, 13, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 08:35:31'),
+(1254, 13, 'staff_login', NULL, '{\"full_name\":\"Archiel R. Cabanag\",\"username\":\"Archiel\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 08:36:04'),
+(1255, 13, 'add_patient', 842, '{\"full_name\":\"Archiel R. Cabanag\",\"patient_name\":\"Cabanag, Archiel Sulu\",\"patient_id\":\"842\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 08:57:07'),
+(1256, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:51:12'),
+(1257, 15, 'view_patient', 842, '{\"patient_id\":842,\"patient_name\":\"Cabanag, Archiel Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:51:32'),
+(1258, 15, 'view_patient', 842, '{\"patient_id\":842,\"patient_name\":\"Cabanag, Archiel Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:51:45'),
+(1259, 15, 'staff_logout', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:51:57'),
+(1260, 16, 'staff_login', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:05'),
+(1261, 16, 'view_patient', 842, '{\"patient_id\":842,\"patient_name\":\"Cabanag, Archiel Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:12'),
+(1262, 16, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:17'),
+(1263, 16, 'view_patient', 842, '{\"patient_id\":842,\"patient_name\":\"Cabanag, Archiel Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:20'),
+(1264, 16, 'update_patient', 842, '{\"patient_name\":\"Cabanag, Archiel\",\"patient_id\":842,\"medical_conditions\":\"[\\\"High Blood Pressure\\\",\\\"Testing for review\\\"]\",\"blood_pressure\":\"120\\/80\",\"blood_type\":\"A+\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:26'),
+(1265, 16, 'view_patient', 842, '{\"patient_id\":842,\"patient_name\":\"Cabanag, Archiel Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:28'),
+(1266, 16, 'view_patient', 838, '{\"patient_id\":838,\"patient_name\":\"Casola, Ronie Solo\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:33'),
+(1267, 16, 'staff_logout', NULL, '{\"full_name\":\"Leandro Labos\",\"username\":\"Leandro\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:37'),
+(1268, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:44'),
+(1269, 15, 'view_patient', 842, '{\"patient_id\":842,\"patient_name\":\"Cabanag, Archiel Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:50'),
+(1270, 15, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:52:56'),
+(1271, 15, 'view_patient', 842, '{\"patient_id\":842,\"patient_name\":\"Cabanag, Archiel Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:53:09'),
+(1272, 15, 'view_patient', 837, '{\"patient_id\":837,\"patient_name\":\"Otida, Jaycar Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:53:12'),
+(1273, 15, 'view_patient', 842, '{\"patient_id\":842,\"patient_name\":\"Cabanag, Archiel Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 10:53:28');
+INSERT INTO `staff_activity_log` (`id`, `staff_id`, `action_type`, `related_id`, `details`, `ip_address`, `user_agent`, `created_at`) VALUES
+(1274, 15, 'staff_login', NULL, '{\"full_name\":\"Warren Miguel Miras\",\"username\":\"Warren\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 13:28:47'),
+(1275, 15, 'view_patient', 842, '{\"patient_id\":842,\"patient_name\":\"Cabanag, Archiel Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 13:29:01'),
+(1276, 15, 'add_patient', 843, '{\"full_name\":\"Warren Miguel Miras\",\"patient_name\":\"Labos, Leandro Sulu\",\"patient_id\":\"843\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 13:33:33'),
+(1277, 15, 'view_patient', 843, '{\"patient_id\":843,\"patient_name\":\"Labos, Leandro Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 13:33:37'),
+(1278, 15, 'view_patient', 843, '{\"patient_id\":843,\"patient_name\":\"Labos, Leandro Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 13:34:12'),
+(1279, 15, 'update_patient', 843, '{\"patient_name\":\"Labos, Leandro\",\"patient_id\":843,\"medical_conditions\":\"[\\\"High Blood Pressure\\\",\\\"Low Blood Pressure\\\",\\\"Epilepsy \\\\\\/ Convulsions\\\",\\\"Sexually Transmitted Disease\\\",\\\"Stomach Troubles \\\\\\/ Ulcer\\\",\\\"Testing for review\\\"]\",\"blood_pressure\":\"120\\/80\",\"blood_type\":\"A+\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 13:34:18'),
+(1280, 15, 'view_patient', 843, '{\"patient_id\":843,\"patient_name\":\"Labos, Leandro Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 13:34:20'),
+(1281, 15, 'view_patient', 843, '{\"patient_id\":843,\"patient_name\":\"Labos, Leandro Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 13:34:33'),
+(1282, 15, 'view_patient', 843, '{\"patient_id\":843,\"patient_name\":\"Labos, Leandro Sulu\"}', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36', '2026-04-21 13:36:25');
 
 -- --------------------------------------------------------
 
@@ -1955,9 +2297,9 @@ CREATE TABLE `staff_role_permissions` (
 --
 
 INSERT INTO `staff_role_permissions` (`position`, `can_manage_patient_records`, `can_access_consultation_notes`, `can_create_consultation_notes`, `can_export_patient_records`, `can_archive_patient_records`, `can_print_patient_records`, `created_at`, `updated_at`, `can_add_patient_records`) VALUES
-('Assistant Doctor', 1, 0, 0, 0, 0, 0, '2026-04-11 17:16:46', '2026-04-11 19:26:54', 0),
-('Nurse', 1, 0, 0, 1, 0, 0, '2026-04-11 17:16:46', '2026-04-12 01:05:31', 1),
-('Working Scholar', 1, 0, 0, 1, 0, 1, '2026-04-11 17:16:46', '2026-04-11 18:58:05', 0);
+('Assistant Doctor', 1, 1, 1, 0, 1, 1, '2026-04-11 17:16:46', '2026-04-21 05:34:29', 0),
+('Nurse', 1, 0, 0, 1, 1, 1, '2026-04-11 17:16:46', '2026-04-20 16:40:20', 1),
+('Working Scholar', 1, 0, 0, 1, 1, 1, '2026-04-11 17:16:46', '2026-04-20 04:33:10', 0);
 
 -- --------------------------------------------------------
 
@@ -2797,7 +3139,71 @@ INSERT INTO `user_activity_log` (`id`, `user_id`, `action_type`, `action_timesta
 (814, 222, 'logout', '2026-04-12 03:42:51', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
 (815, 222, 'login', '2026-04-12 03:43:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
 (816, 222, 'logout', '2026-04-12 03:43:55', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
-(817, 13, 'login', '2026-04-12 09:03:35', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36');
+(817, 13, 'login', '2026-04-12 09:03:35', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'),
+(818, 222, 'login', '2026-04-14 12:47:23', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(819, 13, 'login', '2026-04-14 12:47:52', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(820, 1, 'login', '2026-04-14 12:49:39', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(821, 222, 'logout', '2026-04-14 12:51:24', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(822, 222, 'login', '2026-04-14 14:08:02', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(823, 222, 'logout', '2026-04-14 14:15:18', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(824, 13, 'logout', '2026-04-14 14:41:23', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(825, 15, 'login', '2026-04-14 14:41:33', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(826, 222, 'login', '2026-04-14 14:42:16', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(827, 222, 'view_announcement', '2026-04-14 14:42:24', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(828, 222, 'logout', '2026-04-14 14:42:54', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(829, 223, 'login', '2026-04-14 14:47:15', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(830, 223, 'logout', '2026-04-14 14:47:40', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(831, 222, 'login', '2026-04-14 14:47:48', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(832, 222, 'logout', '2026-04-14 15:12:02', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(833, 222, 'login', '2026-04-14 15:27:28', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(834, 222, 'logout', '2026-04-14 15:28:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(835, 222, 'login', '2026-04-14 16:34:19', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(836, 222, 'logout', '2026-04-14 16:45:03', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(837, 222, 'login', '2026-04-14 16:46:27', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(838, 222, 'view_announcement', '2026-04-14 16:47:23', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(839, 222, 'logout', '2026-04-14 16:48:19', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'),
+(840, 13, 'login', '2026-04-17 12:25:17', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(841, 13, 'logout', '2026-04-17 12:26:12', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(842, 13, 'login', '2026-04-17 12:28:35', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(843, 13, 'logout', '2026-04-17 12:33:22', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(844, 222, 'login', '2026-04-17 12:34:40', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(845, 13, 'login', '2026-04-17 12:36:57', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(846, 222, 'logout', '2026-04-17 12:37:10', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(847, 222, 'login', '2026-04-17 12:37:52', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(848, 13, 'login', '2026-04-17 14:18:41', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(849, 13, 'logout', '2026-04-17 14:21:47', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(850, 15, 'login', '2026-04-17 14:22:05', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(851, 222, 'logout', '2026-04-17 14:26:41', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(852, 222, 'login', '2026-04-19 09:22:47', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(853, 13, 'login', '2026-04-19 09:24:56', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(854, 13, 'login', '2026-04-19 10:33:33', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(855, 222, 'logout', '2026-04-19 10:40:20', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(856, 13, 'login', '2026-04-19 13:25:39', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(857, 13, 'login', '2026-04-19 21:36:55', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(858, 13, 'login', '2026-04-19 23:27:27', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(859, 13, 'logout', '2026-04-20 02:54:42', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(860, 15, 'login', '2026-04-20 02:54:59', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(861, 1, 'login', '2026-04-20 02:57:03', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(862, 15, 'logout', '2026-04-20 02:59:50', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(863, 16, 'login', '2026-04-20 03:00:12', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(864, 16, 'login', '2026-04-20 03:13:40', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(865, 16, 'login', '2026-04-20 11:05:51', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0');
+INSERT INTO `user_activity_log` (`id`, `user_id`, `action_type`, `action_timestamp`, `ip_address`, `user_agent`) VALUES
+(866, 16, 'logout', '2026-04-20 12:38:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(867, 222, 'login', '2026-04-20 12:38:45', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(868, 1, 'logout', '2026-04-20 22:21:57', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(869, 13, 'login', '2026-04-20 22:22:08', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(870, 1, 'login', '2026-04-20 22:22:34', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(871, 13, 'login', '2026-04-21 08:36:04', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(872, 15, 'login', '2026-04-21 10:51:12', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(873, 15, 'logout', '2026-04-21 10:51:57', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(874, 16, 'login', '2026-04-21 10:52:05', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(875, 16, 'logout', '2026-04-21 10:52:37', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(876, 15, 'login', '2026-04-21 10:52:44', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(877, 15, 'login', '2026-04-21 13:28:47', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(878, 1, 'login', '2026-04-21 13:30:19', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'),
+(879, 222, 'logout', '2026-04-21 13:35:57', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0'),
+(880, 222, 'login', '2026-04-21 13:36:11', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0');
 
 -- --------------------------------------------------------
 
@@ -2922,6 +3328,13 @@ ALTER TABLE `announcement_views`
 --
 ALTER TABLE `audit_logs`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `barangay_sitio_mapping`
+--
+ALTER TABLE `barangay_sitio_mapping`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `barangay_name` (`barangay_name`);
 
 --
 -- Indexes for table `child_health_records`
@@ -3131,12 +3544,18 @@ ALTER TABLE `announcement_targets`
 -- AUTO_INCREMENT for table `announcement_views`
 --
 ALTER TABLE `announcement_views`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `barangay_sitio_mapping`
+--
+ALTER TABLE `barangay_sitio_mapping`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
@@ -3155,19 +3574,19 @@ ALTER TABLE `city_health_report_logs`
 -- AUTO_INCREMENT for table `consultation_notes`
 --
 ALTER TABLE `consultation_notes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=148;
 
 --
 -- AUTO_INCREMENT for table `deleted_patients`
 --
 ALTER TABLE `deleted_patients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=165;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT for table `existing_info_patients`
 --
 ALTER TABLE `existing_info_patients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=370;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `health_campaigns`
@@ -3191,7 +3610,7 @@ ALTER TABLE `report_logs`
 -- AUTO_INCREMENT for table `resident_activity_log`
 --
 ALTER TABLE `resident_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `sitio1_account_linking_history`
@@ -3209,7 +3628,7 @@ ALTER TABLE `sitio1_activity_log`
 -- AUTO_INCREMENT for table `sitio1_announcements`
 --
 ALTER TABLE `sitio1_announcements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=378;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=380;
 
 --
 -- AUTO_INCREMENT for table `sitio1_appointments`
@@ -3227,7 +3646,7 @@ ALTER TABLE `sitio1_consultations`
 -- AUTO_INCREMENT for table `sitio1_patients`
 --
 ALTER TABLE `sitio1_patients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=829;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=844;
 
 --
 -- AUTO_INCREMENT for table `sitio1_staff`
@@ -3245,7 +3664,7 @@ ALTER TABLE `sitio1_users`
 -- AUTO_INCREMENT for table `staff_activity_log`
 --
 ALTER TABLE `staff_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=954;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1283;
 
 --
 -- AUTO_INCREMENT for table `staff_documents`
@@ -3257,7 +3676,7 @@ ALTER TABLE `staff_documents`
 -- AUTO_INCREMENT for table `user_activity_log`
 --
 ALTER TABLE `user_activity_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=818;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=881;
 
 --
 -- AUTO_INCREMENT for table `user_announcements`
